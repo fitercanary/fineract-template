@@ -107,6 +107,11 @@ rat {
     '**/.gitignore',
     '**/.gitkeep',
 	'**/*.iml',
+    '**/*.ipr',
+    '**/*.iws',
+    '**/*.prpt',
+    '**/*.properties',
+    '**/*.PROPERTIES',
 	//Notice files
 	'**/NOTICE_RELEASE',
 	'**/NOTICE_SOURCE',	
@@ -191,6 +196,15 @@ if (project.hasProperty('env') && project.getProperty('env') == 'dev') {
     apply from: 'dependencies.gradle'
 }
 
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url "${project.pentahoRepoURL}"
+  }
+    // mavenLocal() // useful for local dev using MariaDB4j SNAPSHOTs (not needed for real-world non-SNAPHOT builds)
+}
+
 /* Enable Oauth2 authentication based on environment, default to HTTP basic auth */
 if (project.hasProperty('security') && project.getProperty('security') == 'oauth') {
     if(project.hasProperty('twofactor') && project.getProperty('twofactor') == 'enabled') {
@@ -239,10 +253,20 @@ task dist(type:Zip){
         include '**/*'
 		into('apps')
 	}
+    from('src/main/pentahoReports/') {
+        fileMode = 0755
+        include '*'
+        into('pentahoReports')
+    }
     from('../api-docs/') {
         fileMode = 0755
         include '*'
         into('api-docs')
+    }
+    from('src/main/pentahoReports/') {
+        fileMode = 0755
+        include '*'
+        into('pentahoReports')
     }
     from('../fineract-db/') {
         fileMode = 0755
@@ -259,6 +283,18 @@ task dist(type:Zip){
     into(baseName + '-' + version)
 }
 
+task deployPentahoReports() {
+    def pentahoReportDir = System.properties['user.home'] + System.properties['file.separator'] + '.mifosx' + System.properties['file.separator'] + 'pentahoReports'
+    copy {
+        from "src/main/pentahoReports"
+        into pentahoReportDir
+    }
+
+    doLast {
+        println ':deployPentahoReports - moving pentaho reports under: ' + pentahoReportDir
+    }
+}
+
 compileJava{
     dependsOn rat
 }
@@ -272,6 +308,10 @@ findbugs {
 }
 
 war {
+    it.dependsOn deployPentahoReports
+    from('../licenses') { // notice the parens
+        into "WEB-INF/licenses/" // no leading slash
+    }
 	from('../licenses/binary/') { // notice the parens
 		into "WEB-INF/licenses/binary/" // no leading slash
 	}

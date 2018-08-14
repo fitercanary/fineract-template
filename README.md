@@ -79,4 +79,4 @@ Apache Fineract / Mifos X Demo (November 2016) - <https://www.youtube.com/watch?
 
 More Information
 ============
-More details of the project can be found at <https://cwiki.apache.org/confluence/display/FINERACT>.
+More details of the project can be found at <https://cwiki.apache.org/confluence/display/FINERACT>. 

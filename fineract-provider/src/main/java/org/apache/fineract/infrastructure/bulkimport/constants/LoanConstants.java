@@ -67,9 +67,17 @@ public class LoanConstants {
     public static final int LOOKUP_CLIENT_EXTERNAL_ID=44;//AS
     public static final int LOOKUP_ACTIVATION_DATE_COL = 45;//AT
     public static final int LINK_ACCOUNT_ID = 46;//AU
+	public static final int IS_TRANCHE_LOAN_COL = 47;//AV
 
     public static final String LOAN_TYPE_INDIVIDUAL="Individual";
     public static final String LOAN_TYPE_GROUP="Group";
     public static final String LOAN_TYPE_JLG="JLG" ;
+
+	//Tranche sheet columns
+	public static final int TRANCHE_CLIENT_NAME_COL = 0;//A
+	public static final int TRANCHE_CLIENT_EXTERNAL_COL = 1;//B
+	public static final int TRANCHE_EXPECTED_DISBURSEMENT_DATE_COL = 2;//C
+	public static final int TRANCHE_DISBURSEMENT_DATE_COL = 3;//D
+	public static final int TRANCHE_PRINCIPAL_COL = 4;//E
 
 }

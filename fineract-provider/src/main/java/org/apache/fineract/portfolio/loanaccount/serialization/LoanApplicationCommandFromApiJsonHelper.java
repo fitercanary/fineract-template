@@ -40,6 +40,7 @@ import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestMethod;
@@ -96,13 +97,15 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             LoanApiConstants.isTopup, LoanApiConstants.loanIdToClose, LoanApiConstants.datatables, LoanApiConstants.isEqualAmortizationParam));
 
     private final FromJsonHelper fromApiJsonHelper;
+	private final LoanRepository loanRepository;
     private final CalculateLoanScheduleQueryFromApiJsonHelper apiJsonHelper;
 
     @Autowired
     public LoanApplicationCommandFromApiJsonHelper(final FromJsonHelper fromApiJsonHelper,
-            final CalculateLoanScheduleQueryFromApiJsonHelper apiJsonHelper) {
+            final CalculateLoanScheduleQueryFromApiJsonHelper apiJsonHelper, final LoanRepository loanRepository) {
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.apiJsonHelper = apiJsonHelper;
+		this.loanRepository = loanRepository;
     }
 
     public void validateForCreate(final String json, final boolean isMeetingMandatoryForJLGLoans, final LoanProduct loanProduct) {
@@ -183,6 +186,16 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         if (this.fromApiJsonHelper.parameterExists(externalIdParameterName, element)) {
             final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParameterName, element);
             baseDataValidator.reset().parameter(externalIdParameterName).value(externalId).ignoreIfNull().notExceedingLengthOf(100);
+			if (StringUtils.isNotEmpty(externalId)) {
+				Loan loan = this.loanRepository.findByExternalId(externalId);
+				if (loan != null) {
+					baseDataValidator
+							.reset()
+							.parameter(externalIdParameterName)
+							.failWithCode("loan.with.external.id.exists",
+									"A loan with the external id '" + externalId + "' already exists");
+				}
+			}
         }
 
         final String fundIdParameterName = "fundId";
@@ -558,6 +571,16 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             atLeastOneParameterPassedForUpdate = true;
             final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParameterName, element);
             baseDataValidator.reset().parameter(externalIdParameterName).value(externalId).ignoreIfNull().notExceedingLengthOf(100);
+			if (StringUtils.isNotEmpty(externalId)) {
+				Loan loan = this.loanRepository.findByExternalId(externalId);
+				if (loan != null && !loan.getId().equals(existingLoanApplication.getId())) {
+					baseDataValidator
+							.reset()
+							.parameter(externalIdParameterName)
+							.failWithCode("loan.with.external.id.exists",
+									"A loan with the external id '" + externalId + "' already exists");
+				}
+			}
         }
 
         final String fundIdParameterName = "fundId";

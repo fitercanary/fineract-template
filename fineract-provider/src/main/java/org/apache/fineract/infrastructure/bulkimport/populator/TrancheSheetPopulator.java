@@ -27,56 +27,33 @@ import org.apache.poi.ss.usermodel.Workbook;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OfficeSheetPopulator extends AbstractWorkbookPopulator {
+public class TrancheSheetPopulator extends AbstractWorkbookPopulator {
 
-	private List<OfficeData> offices;
-
-	private static final int ID_COL = 0;
-	private static final int OFFICE_NAME_COL = 1;
-
-	public OfficeSheetPopulator(final List<OfficeData> offices) {
-		this.offices = offices;
-	}
-
+	private static final int CLIENT_COL = 0;
+	private static final int LOAN_EXTERNAL_ID_COL = 1;
+	private static final int EXPECTED_DISBURSEMENT_DATE_COL = 2;
+	private static final int DISBURSEMENT_DATE_COL = 3;
+	private static final int PRINCIPAL_COL = 4;
 
 	@Override
 	public void populate(final Workbook workbook, String dateFormat) {
-		int rowIndex = 1;
-		Sheet officeSheet = workbook.createSheet(TemplatePopulateImportConstants.OFFICE_SHEET_NAME);
+		Sheet officeSheet = workbook.createSheet(TemplatePopulateImportConstants.TRANCH_SHEET_NAME);
 		setLayout(officeSheet);
-
-		populateOffices(officeSheet, rowIndex);
-		officeSheet.protectSheet("");
-	}
-
-	private void populateOffices(Sheet officeSheet, int rowIndex) {
-		for (OfficeData office : offices) {
-			Row row = officeSheet.createRow(rowIndex);
-			writeLong(ID_COL, row, office.getId());
-			writeString(OFFICE_NAME_COL, row, office.name().trim().replaceAll("[ )(]", "_"));
-			rowIndex++;
-		}
 	}
 
 	private void setLayout(Sheet worksheet) {
-		worksheet.setColumnWidth(ID_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
-		worksheet.setColumnWidth(OFFICE_NAME_COL, TemplatePopulateImportConstants.MEDIUM_COL_SIZE);
+		worksheet.setColumnWidth(CLIENT_COL, TemplatePopulateImportConstants.LARGE_COL_SIZE);
+		worksheet.setColumnWidth(LOAN_EXTERNAL_ID_COL, TemplatePopulateImportConstants.MEDIUM_COL_SIZE);
+		worksheet.setColumnWidth(EXPECTED_DISBURSEMENT_DATE_COL, TemplatePopulateImportConstants.LARGE_COL_SIZE);
+		worksheet.setColumnWidth(DISBURSEMENT_DATE_COL, TemplatePopulateImportConstants.LARGE_COL_SIZE);
+		worksheet.setColumnWidth(PRINCIPAL_COL, TemplatePopulateImportConstants.MEDIUM_COL_SIZE);
 		Row rowHeader = worksheet.createRow(TemplatePopulateImportConstants.ROWHEADER_INDEX);
 		rowHeader.setHeight(TemplatePopulateImportConstants.ROW_HEADER_HEIGHT);
-		writeString(ID_COL, rowHeader, "ID");
-		writeString(OFFICE_NAME_COL, rowHeader, "Name");
-	}
-
-	public List<OfficeData> getOffices() {
-		return offices;
-	}
-
-	public List<String> getOfficeNames() {
-		List<String> officeNames = new ArrayList<>();
-		for (OfficeData office : offices) {
-			officeNames.add(office.name());
-		}
-		return officeNames;
+		writeString(CLIENT_COL, rowHeader, "Client");
+		writeString(LOAN_EXTERNAL_ID_COL, rowHeader, "Loan External ID");
+		writeString(EXPECTED_DISBURSEMENT_DATE_COL, rowHeader, "Expected Disbursement Date");
+		writeString(DISBURSEMENT_DATE_COL, rowHeader, "Disbursement Date");
+		writeString(PRINCIPAL_COL, rowHeader, "Principal");
 	}
 
 }

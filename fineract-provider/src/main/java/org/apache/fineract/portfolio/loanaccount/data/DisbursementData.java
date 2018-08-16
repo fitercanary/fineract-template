@@ -28,10 +28,11 @@ import java.math.BigDecimal;
 public class DisbursementData implements Comparable<DisbursementData> {
 
 	@SuppressWarnings("unused")
-	private final Long id;
-	private final LocalDate expectedDisbursementDate;
-	private final LocalDate actualDisbursementDate;
-	private final BigDecimal principal;
+	private Long id;
+	private LocalDate expectedDisbursementDate;
+	private LocalDate actualDisbursementDate;
+	private BigDecimal principal;
+	private BigDecimal transactionAmount;
 	@SuppressWarnings("unused")
 	private final String loanChargeId;
 	private final BigDecimal chargeAmount;
@@ -137,4 +138,59 @@ public class DisbursementData implements Comparable<DisbursementData> {
 		return this.waivedChargeAmount;
 	}
 
+	public void setLocale(String locale) {
+		this.locale = locale;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public String getDateFormat() {
+		return dateFormat;
+	}
+
+	public void setDateFormat(String dateFormat) {
+		this.dateFormat = dateFormat;
+	}
+
+	public BigDecimal getPrincipal() {
+		return principal;
+	}
+
+	public void setPrincipal(BigDecimal principal) {
+		this.principal = principal;
+	}
+
+	public BigDecimal getTransactionAmount() {
+		return transactionAmount;
+	}
+
+	public void setTransactionAmount(BigDecimal transactionAmount) {
+		this.transactionAmount = transactionAmount;
+	}
+
+	public LocalDate getExpectedDisbursementDate() {
+		return expectedDisbursementDate;
+	}
+
+	public void setExpectedDisbursementDate(LocalDate expectedDisbursementDate) {
+		this.expectedDisbursementDate = expectedDisbursementDate;
+	}
+
+	public LocalDate getActualDisbursementDate() {
+		return actualDisbursementDate;
+	}
+
+	public void setActualDisbursementDate(LocalDate actualDisbursementDate) {
+		this.actualDisbursementDate = actualDisbursementDate;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
 }

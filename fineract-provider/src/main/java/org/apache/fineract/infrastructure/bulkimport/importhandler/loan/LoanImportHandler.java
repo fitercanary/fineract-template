@@ -34,11 +34,16 @@ import org.apache.fineract.infrastructure.bulkimport.importhandler.helper.DateSe
 import org.apache.fineract.infrastructure.bulkimport.importhandler.helper.EnumOptionDataValueSerializer;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanAccountData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanApprovalData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargeData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanDisbursementDetails;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanDisbursementDetailsRepository;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
@@ -62,11 +67,13 @@ public class LoanImportHandler implements ImportHandler {
 	private List<DisbursementData> disbursalDates;
 	private List<String> statuses;
 
+	private final LoanDisbursementDetailsRepository loanDisbursementDetailsRepository;
 	private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
 	@Autowired
-	public LoanImportHandler(final PortfolioCommandSourceWritePlatformService
-									 commandsSourceWritePlatformService) {
+	public LoanImportHandler(final LoanDisbursementDetailsRepository loanDisbursementDetailsRepository,
+							 final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
+		this.loanDisbursementDetailsRepository = loanDisbursementDetailsRepository;
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
 	}
 
@@ -282,7 +289,6 @@ public class LoanImportHandler implements ImportHandler {
 				Row trancheRow = trancheSheet.getRow(rowIndex);
 				String trancheExternalId = ImportHandlerUtils.readAsString(LoanConstants.TRANCHE_CLIENT_EXTERNAL_COL, trancheRow);
 				if (externalId.equals(trancheExternalId)) {
-
 					LocalDate disbursementDate = ImportHandlerUtils.readAsDate(LoanConstants.TRANCHE_DISBURSEMENT_DATE_COL, trancheRow);
 					LocalDate expectedDisbursementDate = ImportHandlerUtils.readAsDate(LoanConstants.TRANCHE_EXPECTED_DISBURSEMENT_DATE_COL, trancheRow);
 					BigDecimal tranchePrincipal = BigDecimal.valueOf(ImportHandlerUtils.readAsDouble(LoanConstants.TRANCHE_PRINCIPAL_COL, trancheRow));
@@ -415,24 +421,43 @@ public class LoanImportHandler implements ImportHandler {
 	private Integer importDisbursalData(CommandProcessingResult result, int rowIndex, String dateFormat) {
 		if (approvalDates.get(rowIndex) != null && disbursalDates.get(rowIndex) != null) {
 
-			DisbursementData disbusalData = disbursalDates.get(rowIndex);
-			String linkAccountId = disbusalData.getLinkAccountId();
+			DisbursementData disbursementData = disbursalDates.get(rowIndex);
+			String linkAccountId = disbursementData.getLinkAccountId();
 			GsonBuilder gsonBuilder = new GsonBuilder();
 			gsonBuilder.registerTypeAdapter(LocalDate.class, new DateSerializer(dateFormat));
 			if (linkAccountId != null && linkAccountId != "") {
-				String payload = gsonBuilder.create().toJson(disbusalData);
+				String payload = gsonBuilder.create().toJson(disbursementData);
 				final CommandWrapper commandRequest = new CommandWrapperBuilder() //
 						.disburseLoanToSavingsApplication(result.getLoanId()) //
 						.withJson(payload) //
 						.build(); //
-				final CommandProcessingResult loanDisburseToSavingsResult = commandsSourceWritePlatformService.logCommandSource(commandRequest);
+				commandsSourceWritePlatformService.logCommandSource(commandRequest);
 			} else {
-				String payload = gsonBuilder.create().toJson(disbusalData);
+				String payload = gsonBuilder.create().toJson(disbursementData);
 				final CommandWrapper commandRequest = new CommandWrapperBuilder() //
 						.disburseLoanApplication(result.getLoanId()) //
 						.withJson(payload) //
 						.build(); //
-				final CommandProcessingResult loanDisburseResult = commandsSourceWritePlatformService.logCommandSource(commandRequest);
+				commandsSourceWritePlatformService.logCommandSource(commandRequest);
+			}
+			List<LoanDisbursementDetails> disbursementDetails = this.loanDisbursementDetailsRepository.findByLoanId(result.getLoanId());
+			for (LoanDisbursementDetails disbursementDetail : disbursementDetails) {
+				if (disbursementDetail.actualDisbursementDate() == null && !disbursementDetail.expectedDisbursementDateAsLocalDate().isAfter(DateUtils.getLocalDateOfTenant())) {
+					DisbursementData dd = disbursementDetail.toData();
+					dd.setActualDisbursementDate(dd.getExpectedDisbursementDate());
+					dd.setTransactionAmount(dd.getPrincipal());
+					dd.setExpectedDisbursementDate(null);
+					dd.setPrincipal(null);
+					dd.setId(null);
+					dd.setDateFormat(disbursementData.getDateFormat());
+					dd.setLocale(disbursementData.getLocale());
+					String payload = gsonBuilder.create().toJson(dd);
+					final CommandWrapper commandRequest = new CommandWrapperBuilder() //
+							.disburseLoanApplication(result.getLoanId()) //
+							.withJson(payload) //
+							.build(); //
+					commandsSourceWritePlatformService.logCommandSource(commandRequest);
+				}
 			}
 		}
 		return 3;

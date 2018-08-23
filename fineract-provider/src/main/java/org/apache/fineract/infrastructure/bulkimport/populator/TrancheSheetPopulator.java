@@ -19,13 +19,9 @@
 package org.apache.fineract.infrastructure.bulkimport.populator;
 
 import org.apache.fineract.infrastructure.bulkimport.constants.TemplatePopulateImportConstants;
-import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TrancheSheetPopulator extends AbstractWorkbookPopulator {
 
@@ -35,10 +31,13 @@ public class TrancheSheetPopulator extends AbstractWorkbookPopulator {
 	private static final int DISBURSEMENT_DATE_COL = 3;
 	private static final int PRINCIPAL_COL = 4;
 
+	public TrancheSheetPopulator() {
+	}
+
 	@Override
 	public void populate(final Workbook workbook, String dateFormat) {
-		Sheet officeSheet = workbook.createSheet(TemplatePopulateImportConstants.TRANCH_SHEET_NAME);
-		setLayout(officeSheet);
+		Sheet trancheSheet = workbook.createSheet(TemplatePopulateImportConstants.TRANCH_SHEET_NAME);
+		setLayout(trancheSheet);
 	}
 
 	private void setLayout(Sheet worksheet) {
@@ -54,6 +53,7 @@ public class TrancheSheetPopulator extends AbstractWorkbookPopulator {
 		writeString(EXPECTED_DISBURSEMENT_DATE_COL, rowHeader, "Expected Disbursement Date");
 		writeString(DISBURSEMENT_DATE_COL, rowHeader, "Disbursement Date");
 		writeString(PRINCIPAL_COL, rowHeader, "Principal");
+
 	}
 
 }

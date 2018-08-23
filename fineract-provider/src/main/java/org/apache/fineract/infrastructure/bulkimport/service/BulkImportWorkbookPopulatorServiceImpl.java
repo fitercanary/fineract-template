@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.bulkimport.populator.RoleSheetPopulato
 import org.apache.fineract.infrastructure.bulkimport.populator.SavingsAccountSheetPopulator;
 import org.apache.fineract.infrastructure.bulkimport.populator.SavingsProductSheetPopulator;
 import org.apache.fineract.infrastructure.bulkimport.populator.SharedProductsSheetPopulator;
+import org.apache.fineract.infrastructure.bulkimport.populator.TrancheSheetPopulator;
 import org.apache.fineract.infrastructure.bulkimport.populator.WorkbookPopulator;
 import org.apache.fineract.infrastructure.bulkimport.populator.centers.CentersWorkbookPopulator;
 import org.apache.fineract.infrastructure.bulkimport.populator.chartofaccounts.ChartOfAccountsWorkbook;
@@ -391,7 +392,8 @@ public class BulkImportWorkbookPopulatorServiceImpl implements BulkImportWorkboo
 		List<CurrencyData> currencies = fetchCurrencies();
 		return new LoanWorkbookPopulator(new OfficeSheetPopulator(offices), new ClientSheetPopulator(clients, offices),
 				new GroupSheetPopulator(groups, offices), new PersonnelSheetPopulator(staff, offices),
-				new LoanProductSheetPopulator(loanProducts), new ExtrasSheetPopulator(funds, paymentTypes, currencies));
+				new LoanProductSheetPopulator(loanProducts), new ExtrasSheetPopulator(funds, paymentTypes, currencies),
+				new TrancheSheetPopulator());
 	}
 
 	private List<CurrencyData> fetchCurrencies() {

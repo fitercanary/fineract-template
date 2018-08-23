@@ -58,14 +58,15 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
 
 	public LoanWorkbookPopulator(OfficeSheetPopulator officeSheetPopulator, ClientSheetPopulator clientSheetPopulator,
 								 GroupSheetPopulator groupSheetPopulator, PersonnelSheetPopulator personnelSheetPopulator,
-								 LoanProductSheetPopulator productSheetPopulator, ExtrasSheetPopulator extrasSheetPopulator) {
+								 LoanProductSheetPopulator productSheetPopulator, ExtrasSheetPopulator extrasSheetPopulator,
+								 TrancheSheetPopulator trancheSheetPopulator) {
 		this.officeSheetPopulator = officeSheetPopulator;
 		this.clientSheetPopulator = clientSheetPopulator;
 		this.groupSheetPopulator = groupSheetPopulator;
 		this.personnelSheetPopulator = personnelSheetPopulator;
 		this.productSheetPopulator = productSheetPopulator;
 		this.extrasSheetPopulator = extrasSheetPopulator;
-		this.trancheSheetPopulator = new TrancheSheetPopulator();
+		this.trancheSheetPopulator = trancheSheetPopulator;
 	}
 
 	@Override
@@ -146,6 +147,8 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
 				SpreadsheetVersion.EXCEL97.getLastRowIndex(), LoanConstants.REPAYMENT_TYPE_COL, LoanConstants.REPAYMENT_TYPE_COL);
 		CellRangeAddressList lastrepaymentDateRange = new CellRangeAddressList(1,
 				SpreadsheetVersion.EXCEL97.getLastRowIndex(), LoanConstants.LAST_REPAYMENT_DATE_COL, LoanConstants.LAST_REPAYMENT_DATE_COL);
+		CellRangeAddressList isTrancheRange = new CellRangeAddressList(1,
+				SpreadsheetVersion.EXCEL97.getLastRowIndex(), LoanConstants.IS_TRANCHE_LOAN_COL, LoanConstants.IS_TRANCHE_LOAN_COL);
 		DataValidationHelper validationHelper = new HSSFDataValidationHelper((HSSFSheet) worksheet);
 
 		setNames(worksheet);
@@ -210,6 +213,8 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
 				.createIntegerConstraint(DataValidationConstraint.OperatorType.GREATER_OR_EQUAL, "0", null);
 		DataValidationConstraint lastRepaymentDateConstraint = validationHelper
 				.createDateConstraint(DataValidationConstraint.OperatorType.BETWEEN, "=$I1", "=TODAY()", dateFormat);
+		DataValidationConstraint isTrancheConstraint = validationHelper
+				.createExplicitListConstraint(new String[]{ "TRUE", "FALSE" });
 
 		DataValidation officeValidation = validationHelper.createValidation(officeNameConstraint, officeNameRange);
 		DataValidation loanTypeValidation = validationHelper.createValidation(loanTypeConstraint, loanTypeRange);
@@ -258,6 +263,7 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
 				.createValidation(graceOnInterestChargedConstraint, graceOnInterestChargedRange);
 		DataValidation interestFrequencyValidation = validationHelper.createValidation(interestFrequencyConstraint,
 				interestFrequencyRange);
+		DataValidation isTrancheValidation = validationHelper.createValidation(isTrancheConstraint, isTrancheRange);
 
 		interestFrequencyValidation.setSuppressDropDownArrow(true);
 
@@ -288,7 +294,7 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
 		worksheet.addValidationData(graceOnInterestChargedValidation);
 		worksheet.addValidationData(lastRepaymentDateValidation);
 		worksheet.addValidationData(repaymentTypeValidation);
-
+		worksheet.addValidationData(isTrancheValidation);
 	}
 
 	private void setLayout(Sheet worksheet) {

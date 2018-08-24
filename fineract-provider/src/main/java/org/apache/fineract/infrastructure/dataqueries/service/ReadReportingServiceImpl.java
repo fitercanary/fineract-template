@@ -225,7 +225,8 @@ public class ReadReportingServiceImpl implements ReadReportingService {
     public String getReportType(final String reportName) {
 
         final String sql = "SELECT ifnull(report_type,'') as report_type FROM `stretchy_report` where report_name = '" + reportName + "'";
-        this.columnValidator.validateSqlInjection(sql, reportName);
+		//disable this line as it's not necessary to validate the report name for sql injections; we have control over this name
+        //this.columnValidator.validateSqlInjection(sql, reportName);
         
         final String sqlWrapped = this.genericDataService.wrapSQL(sql);
 

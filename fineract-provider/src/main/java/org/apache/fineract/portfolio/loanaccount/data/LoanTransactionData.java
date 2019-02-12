@@ -121,16 +121,16 @@ public class LoanTransactionData {
     public static LoanTransactionData importInstance(BigDecimal repaymentAmount,LocalDate repaymentDate,
             Long repaymentTypeId, String accountNumber,Integer checkNumber,Integer routingCode,
             Integer receiptNumber, Integer bankNumber,Integer loanAccountId,String transactionType,
-            Integer rowIndex,String locale, String dateFormat){
+            Integer rowIndex,String locale, String dateFormat,String externalId){
         return new LoanTransactionData(repaymentAmount, repaymentDate, repaymentTypeId, accountNumber,
                 checkNumber, routingCode, receiptNumber, bankNumber, loanAccountId, "",
-                rowIndex,locale,dateFormat);
+                rowIndex,locale,dateFormat,externalId);
     }
 
     private LoanTransactionData(BigDecimal transactionAmount,LocalDate transactionDate, Long paymentTypeId,
             String accountNumber,Integer checkNumber,Integer routingCode,Integer receiptNumber,
             Integer bankNumber,Integer accountId,String transactionType,Integer rowIndex,String locale,
-            String dateFormat) {
+            String dateFormat,String externalId) {
         this.transactionAmount = transactionAmount;
         this.transactionDate = transactionDate;
         this.paymentTypeId = paymentTypeId;
@@ -158,7 +158,7 @@ public class LoanTransactionData {
         this.penaltyChargesPortion = null;
         this.overpaymentPortion = null;
         this.unrecognizedIncomePortion = null;
-        this.externalId = null;
+        this.externalId = externalId;
         this.transfer = null;
         this.fixedEmiAmount = null;
         this.outstandingLoanBalance = null;

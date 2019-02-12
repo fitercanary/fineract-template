@@ -82,6 +82,7 @@ public class LoanRepaymentImportHandler implements ImportHandler {
          repaymentAmount = BigDecimal.valueOf(ImportHandlerUtils.readAsDouble(LoanRepaymentConstants.AMOUNT_COL, row));
         LocalDate repaymentDate = ImportHandlerUtils.readAsDate(LoanRepaymentConstants.REPAID_ON_DATE_COL, row);
         String repaymentType = ImportHandlerUtils.readAsString(LoanRepaymentConstants.REPAYMENT_TYPE_COL, row);
+        String externalId = ImportHandlerUtils.readAsString(LoanRepaymentConstants.CLIENT_EXTERNAL_ID, row);
         Long repaymentTypeId = ImportHandlerUtils.getIdByName(workbook.getSheet(TemplatePopulateImportConstants.EXTRAS_SHEET_NAME), repaymentType);
         String accountNumber = ImportHandlerUtils.readAsString(LoanRepaymentConstants.ACCOUNT_NO_COL, row);
         Integer checkNumber = ImportHandlerUtils.readAsInt(LoanRepaymentConstants.CHECK_NO_COL, row);
@@ -89,7 +90,7 @@ public class LoanRepaymentImportHandler implements ImportHandler {
         Integer receiptNumber = ImportHandlerUtils.readAsInt(LoanRepaymentConstants.RECEIPT_NO_COL, row);
         Integer bankNumber = ImportHandlerUtils.readAsInt(LoanRepaymentConstants.BANK_NO_COL, row);
         return LoanTransactionData.importInstance(repaymentAmount, repaymentDate, repaymentTypeId, accountNumber,
-                checkNumber, routingCode, receiptNumber, bankNumber, loanAccountId, "", row.getRowNum(),locale,dateFormat);
+                checkNumber, routingCode, receiptNumber, bankNumber, loanAccountId, "", row.getRowNum(),locale,dateFormat,externalId);
     }
 
     public Count importEntity(String dateFormat) {

@@ -451,7 +451,9 @@ public class LoanAccountData {
 	public String getLoanProductName() {
 		return loanProductName;
 	}
-
+	public String getExternalId() {
+		return this.externalId;
+	}
 	public static final Comparator<LoanAccountData> ClientNameComparator = new Comparator<LoanAccountData>() {
 
 		@Override

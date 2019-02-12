@@ -89,6 +89,7 @@ public class BulkImportApiResource {
             if (type == null)
                 throw new ImportTypeNotFoundException(entityType);
                 importData = this.bulkImportWorkbookService.getImports(type);
+                
         }
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, importData);

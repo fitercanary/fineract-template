@@ -1230,4 +1230,7 @@ public class LoanProductData {
     public BigDecimal getMaxInterestRatePerPeriod() {
         return maxInterestRatePerPeriod;
     }
+    public String getExternalId() {
+    		return this.externalId;
+    }
 }

@@ -56,5 +56,5 @@ INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `c
 -- code inserts
 
 INSERT INTO `m_code` (`code_name`, `is_system_defined`) VALUES ('MARITAL STATUS', 1);
-INSERT INTO `m_code` (`code_name`, `is_system_defined`) VALUES ('RELATIONSHIP', 1);
+UPDATE `m_code` SET `is_system_defined` = 1 WHERE `code_name` = 'RELATIONSHIP';
 INSERT INTO `m_code` (`code_name`, `is_system_defined`) VALUES ('PROFESSION', 1);

@@ -98,6 +98,10 @@ public class SavingsAccountRepositoryWrapper {
     public SavingsAccount findNonClosedAccountByAccountNumber(@Param("accountNumber") String accountNumber) {
         return this.repository.findNonClosedAccountByAccountNumber(accountNumber) ;
     }
+
+	public SavingsAccount findByAccountNumber(@Param("accountNumber") String accountNumber) {
+		return this.repository.findByAccountNumber(accountNumber) ;
+	}
     
     public SavingsAccount save(final SavingsAccount account) {
         return this.repository.save(account);

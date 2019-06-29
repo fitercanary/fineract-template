@@ -2747,7 +2747,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return this.accountNumber;
     }
 
-    private Money minRequiredBalanceDerived(final MonetaryCurrency currency) {
+	public void setAccountNumber(String accountNumber) {
+		this.accountNumber = accountNumber;
+	}
+
+	private Money minRequiredBalanceDerived(final MonetaryCurrency currency) {
         Money minReqBalance = Money.zero(currency);
         if (this.enforceMinRequiredBalance) {
             minReqBalance = minReqBalance.plus(this.minRequiredBalance);

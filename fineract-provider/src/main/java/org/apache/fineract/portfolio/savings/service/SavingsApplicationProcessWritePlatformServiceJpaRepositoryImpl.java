@@ -75,7 +75,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl implements SavingsApplicationProcessWritePlatformService {
+public class
+		SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl implements SavingsApplicationProcessWritePlatformService {
 
     private final static Logger logger = LoggerFactory.getLogger(SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl.class);
 
@@ -96,22 +97,23 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+	private final NubanAccountService nubanAccountService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
 	
     @Autowired
     public SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final SavingsAccountRepositoryWrapper savingAccountRepository, final SavingsAccountAssembler savingAccountAssembler,
-            final SavingsAccountDataValidator savingsAccountDataValidator, final AccountNumberGenerator accountNumberGenerator,
-            final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
-            final SavingsProductRepository savingsProductRepository, final NoteRepository noteRepository,
-            final StaffRepositoryWrapper staffRepository,
-            final SavingsAccountApplicationTransitionApiJsonValidator savingsAccountApplicationTransitionApiJsonValidator,
-            final SavingsAccountChargeAssembler savingsAccountChargeAssembler, final CommandProcessingService commandProcessingService,
-            final SavingsAccountDomainService savingsAccountDomainService,
-            final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final BusinessEventNotifierService businessEventNotifierService,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
+																		  final SavingsAccountRepositoryWrapper savingAccountRepository, final SavingsAccountAssembler savingAccountAssembler,
+																		  final SavingsAccountDataValidator savingsAccountDataValidator, final AccountNumberGenerator accountNumberGenerator,
+																		  final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
+																		  final SavingsProductRepository savingsProductRepository, final NoteRepository noteRepository,
+																		  final StaffRepositoryWrapper staffRepository,
+																		  final SavingsAccountApplicationTransitionApiJsonValidator savingsAccountApplicationTransitionApiJsonValidator,
+																		  final SavingsAccountChargeAssembler savingsAccountChargeAssembler, final CommandProcessingService commandProcessingService,
+																		  final SavingsAccountDomainService savingsAccountDomainService,
+																		  final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+																		  final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+																		  final BusinessEventNotifierService businessEventNotifierService,
+																		  NubanAccountService nubanAccountService, final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.savingAccountAssembler = savingAccountAssembler;
@@ -129,7 +131,8 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.businessEventNotifierService = businessEventNotifierService ;
-        this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
+		this.nubanAccountService = nubanAccountService;
+		this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
     }
 
     /*
@@ -206,7 +209,16 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         if (account.isAccountNumberRequiresAutoGeneration()) {
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
             account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+			String serialNumber = account.getAccountNumber();
+			String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber);
+			SavingsAccount existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
 
+			while(existingAccount != null) {
+				serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+				nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber);
+				existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
+			}
+			account.setAccountNumber(nubanAccountNumber);
             this.savingAccountRepository.save(account);
         }
     }

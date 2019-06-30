@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidati
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.account.api.AccountTransfersApiConstants;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountConstant;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -55,7 +56,10 @@ public class AccountTransfersDataValidator {
 			AccountDetailConstants.toOfficeIdParamName, AccountDetailConstants.toClientIdParamName,
 			AccountDetailConstants.toAccountTypeParamName, AccountDetailConstants.toAccountIdParamName,
 			AccountTransfersApiConstants.transferDateParamName, AccountTransfersApiConstants.transferAmountParamName,
-			AccountTransfersApiConstants.transferDescriptionParamName));
+			AccountTransfersApiConstants.transferDescriptionParamName, SavingsAccountConstant.notesParamName,
+			SavingsAccountConstant.notesImageParamName, SavingsAccountConstant.categoryParamName, SavingsAccountConstant.remarksParamName,
+			SavingsAccountConstant.longitudeParamName, SavingsAccountConstant.latitudeParamName, SavingsAccountConstant.imageTagParamName,
+			SavingsAccountConstant.transactionBrandParamName));
 
 
     @Autowired

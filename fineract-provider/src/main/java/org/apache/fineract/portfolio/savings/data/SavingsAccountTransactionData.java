@@ -28,6 +28,7 @@ import org.apache.fineract.portfolio.account.data.AccountTransferData;
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
+import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.joda.time.LocalDate;
 
@@ -52,7 +53,17 @@ public class SavingsAccountTransactionData {
     private final LocalDate submittedOnDate;
     private final boolean interestedPostedAsOn;
     private final String submittedByUsername;
-    private final String note ;
+    private final String note;
+
+	//Transaction request properties
+	private String category;
+	private String imageTag;
+	private String latitude;
+	private String longitude;
+	private String noteImage;
+	private String notes;
+	private String remarks;
+	private String transactionBrandName;
     
     // templates
     final Collection<PaymentTypeData> paymentTypeOptions;
@@ -222,4 +233,15 @@ public class SavingsAccountTransactionData {
                 savingsAccountTransactionData.transfer, savingsAccountTransactionData.paymentTypeOptions,
                 savingsAccountTransactionData.interestedPostedAsOn,savingsAccountTransactionData.submittedByUsername, savingsAccountTransactionData.note);
     }
+
+	public void setTransactionRequest(SavingsTransactionRequest savingsTransactionRequest) {
+		this.notes = savingsTransactionRequest.getNotes();
+		this.remarks = savingsTransactionRequest.getRemarks();
+		this.category = savingsTransactionRequest.getCategory();
+		this.imageTag = savingsTransactionRequest.getImageTag();
+		this.latitude = savingsTransactionRequest.getLatitude();
+		this.longitude = savingsTransactionRequest.getLongitude();
+		this.noteImage = savingsTransactionRequest.getNoteImage();
+		this.transactionBrandName = savingsTransactionRequest.getTransactionBrandName();
+	}
 }

@@ -142,6 +142,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt,
                     transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
 
+			this.savingsAccountWritePlatformService.saveTransactionRequest(command, deposit);
+
             final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(command,
                     fromSavingsAccount, toSavingsAccount, withdrawal, deposit);
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
@@ -187,6 +189,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt,
                     transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+
+			this.savingsAccountWritePlatformService.saveTransactionRequest(command, deposit);
 
             final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleLoanToSavingsTransfer(command,
                     fromLoanAccount, toSavingsAccount, deposit, loanRefundTransaction);

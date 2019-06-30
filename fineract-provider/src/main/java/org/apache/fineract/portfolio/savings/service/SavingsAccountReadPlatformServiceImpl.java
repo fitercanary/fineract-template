@@ -69,6 +69,8 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumD
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
+import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
+import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -805,7 +807,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             sqlBuilder.append("pt.value as paymentTypeName, ");
-            sqlBuilder.append("tr.is_manual as postInterestAsOn ");
+            sqlBuilder.append("tr.is_manual as postInterestAsOn, req.* ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -815,6 +817,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_payment_type pt on pd.payment_type_id = pt.id ");
             sqlBuilder.append(" left join m_appuser au on au.id=tr.appuser_id ");
             sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id ") ;
+			sqlBuilder.append(" left join m_transaction_request req ON req.transaction_id=tr.id ") ;
             this.schemaSql = sqlBuilder.toString();
         }
 
@@ -888,8 +891,20 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             }
             final String submittedByUsername = rs.getString("submittedByUsername");
             final String note = rs.getString("transactionNote") ;
-            return SavingsAccountTransactionData.create(id, transactionType, paymentDetailData, savingsId, accountNo, date, currency,
+			SavingsAccountTransactionData transactionData = SavingsAccountTransactionData.create(id, transactionType, paymentDetailData, savingsId, accountNo, date, currency,
                     amount, outstandingChargeAmount, runningBalance, reversed, transfer, submittedOnDate, postInterestAsOn, submittedByUsername, note);
+
+			SavingsTransactionRequest savingsTransactionRequest = new SavingsTransactionRequest();
+			savingsTransactionRequest.setNotes(rs.getString("notes"));
+			savingsTransactionRequest.setRemarks(rs.getString("remarks"));
+			savingsTransactionRequest.setCategory(rs.getString("category"));
+			savingsTransactionRequest.setImageTag(rs.getString("image_tag"));
+			savingsTransactionRequest.setLatitude(rs.getString("latitude"));
+			savingsTransactionRequest.setLongitude(rs.getString("longitude"));
+			savingsTransactionRequest.setNoteImage(rs.getString("note_image"));
+			savingsTransactionRequest.setTransactionBrandName(rs.getString("transaction_brand_name"));
+			transactionData.setTransactionRequest(savingsTransactionRequest);
+			return transactionData;
         }
     }
 

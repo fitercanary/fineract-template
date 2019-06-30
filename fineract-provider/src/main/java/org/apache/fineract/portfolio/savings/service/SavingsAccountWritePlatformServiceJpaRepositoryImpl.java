@@ -113,28 +113,29 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final AppUserRepositoryWrapper appuserRepository;
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+	private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
-            final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
-            final SavingsAccountAssembler savingAccountAssembler,
-            final SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
-            final SavingsAccountChargeDataValidator savingsAccountChargeDataValidator,
-            final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
-            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
-            final JournalEntryWritePlatformService journalEntryWritePlatformService,
-            final SavingsAccountDomainService savingsAccountDomainService, final NoteRepository noteRepository,
-            final AccountTransfersReadPlatformService accountTransfersReadPlatformService, final HolidayRepositoryWrapper holidayRepository,
-            final WorkingDaysRepositoryWrapper workingDaysRepository,
-            final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
-            final ChargeRepositoryWrapper chargeRepository, final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository,
-            final SavingsAccountDataValidator fromApiJsonDeserializer, final StaffRepositoryWrapper staffRepository,
-            final ConfigurationDomainService configurationDomainService,
-            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-            final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+															   final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
+															   final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
+															   final SavingsAccountAssembler savingAccountAssembler,
+															   final SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
+															   final SavingsAccountChargeDataValidator savingsAccountChargeDataValidator,
+															   final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
+															   final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+															   final JournalEntryWritePlatformService journalEntryWritePlatformService,
+															   final SavingsAccountDomainService savingsAccountDomainService, final NoteRepository noteRepository,
+															   final AccountTransfersReadPlatformService accountTransfersReadPlatformService, final HolidayRepositoryWrapper holidayRepository,
+															   final WorkingDaysRepositoryWrapper workingDaysRepository,
+															   final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
+															   final ChargeRepositoryWrapper chargeRepository, final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository,
+															   final SavingsAccountDataValidator fromApiJsonDeserializer, final StaffRepositoryWrapper staffRepository,
+															   final ConfigurationDomainService configurationDomainService,
+															   final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
+															   final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
+															   final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
+															   final BusinessEventNotifierService businessEventNotifierService, SavingsTransactionRequestRepository savingsTransactionRequestRepository) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -160,7 +161,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.appuserRepository = appuserRepository;
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
-    }
+		this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
+	}
 
     @Transactional
     @Override
@@ -253,6 +255,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
                 transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
 
+		this.saveTransactionRequest(command, deposit);
+
         final String noteText = command.stringValueOfParameterNamed("note");
         if (StringUtils.isNotBlank(noteText)) {
             final Note note = Note.savingsTransactionNote(account, deposit, noteText);
@@ -269,6 +273,34 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .build();
        
     }
+
+	@Override
+	public void saveTransactionRequest(JsonCommand command, SavingsAccountTransaction transaction) {
+
+		String notes = command.stringValueOfParameterNamed(SavingsApiConstants.notesParamName);
+		String remarks = command.stringValueOfParameterNamed(SavingsApiConstants.remarksParamName);
+		String category = command.stringValueOfParameterNamed(SavingsApiConstants.categoryParamName);
+		String imageTag = command.stringValueOfParameterNamed(SavingsApiConstants.imageTagParamName);
+		String latitude = command.stringValueOfParameterNamed(SavingsApiConstants.latitudeParamName);
+		String longitude = command.stringValueOfParameterNamed(SavingsApiConstants.longitudeParamName);
+		String notesImage = command.stringValueOfParameterNamed(SavingsApiConstants.notesImageParamName);
+		String transactionBrand = command.stringValueOfParameterNamed(SavingsApiConstants.transactionBrandParamName);
+
+		if (notes != null || remarks != null || category != null || imageTag != null ||
+				latitude != null || longitude != null || notesImage != null || transactionBrand != null) {
+			SavingsTransactionRequest transactionRequest = new SavingsTransactionRequest();
+			transactionRequest.setNotes(notes);
+			transactionRequest.setRemarks(remarks);
+			transactionRequest.setCategory(category);
+			transactionRequest.setImageTag(imageTag);
+			transactionRequest.setLatitude(latitude);
+			transactionRequest.setLongitude(longitude);
+			transactionRequest.setNoteImage(notesImage);
+			transactionRequest.setTransaction(transaction);
+			transactionRequest.setTransactionBrandName(transactionBrand);
+			this.savingsTransactionRequestRepository.saveAndFlush(transactionRequest);
+		}
+	}
 
     private Long saveTransactionToGenerateTransactionId(final SavingsAccountTransaction transaction) {
         this.savingsAccountTransactionRepository.saveAndFlush(transaction);
@@ -301,6 +333,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
         final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate,
                 transactionAmount, paymentDetail, transactionBooleanValues);
+
+		this.saveTransactionRequest(command, withdrawal);
 
         final String noteText = command.stringValueOfParameterNamed("note");
         if (StringUtils.isNotBlank(noteText)) {

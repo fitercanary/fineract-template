@@ -145,6 +145,16 @@ public class    SavingsApiConstants {
     public static final String reversedParamName = "reversed";
     public static final String dateParamName = "date";
 
+	// transaction request parameters
+	public static final String notesParamName = "notes";
+	public static final String remarksParamName = "remarks";
+	public static final String categoryParamName = "category";
+	public static final String imageTagParamName = "imageTag";
+	public static final String latitudeParamName = "latitude";
+	public static final String longitudeParamName = "longitude";
+	public static final String notesImageParamName = "notesImage";
+	public static final String transactionBrandParamName = "transactionBrand";
+
     // charges parameters
     public static final String chargeIdParamName = "chargeId";
     public static final String chargesParamName = "charges";

@@ -152,8 +152,8 @@ public class    SavingsApiConstants {
 	public static final String imageTagParamName = "imageTag";
 	public static final String latitudeParamName = "latitude";
 	public static final String longitudeParamName = "longitude";
-	public static final String notesImageParamName = "notesImage";
-	public static final String transactionBrandParamName = "transactionBrand";
+	public static final String notesImageParamName = "noteImage";
+	public static final String transactionBrandParamName = "transactionBrandName";
 
     // charges parameters
     public static final String chargeIdParamName = "chargeId";

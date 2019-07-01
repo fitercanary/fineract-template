@@ -44,7 +44,7 @@ public class SavingsAccountTransactionData {
     private final String accountNo;
     private final LocalDate date;
     private final CurrencyData currency;
-    private final PaymentDetailData paymentDetailData;
+    private PaymentDetailData paymentDetailData;
     private final BigDecimal amount;
     private final BigDecimal outstandingChargeAmount;
     private final BigDecimal runningBalance;
@@ -54,16 +54,6 @@ public class SavingsAccountTransactionData {
     private final boolean interestedPostedAsOn;
     private final String submittedByUsername;
     private final String note;
-
-	//Transaction request properties
-	private String category;
-	private String imageTag;
-	private String latitude;
-	private String longitude;
-	private String noteImage;
-	private String notes;
-	private String remarks;
-	private String transactionBrandName;
     
     // templates
     final Collection<PaymentTypeData> paymentTypeOptions;
@@ -235,13 +225,17 @@ public class SavingsAccountTransactionData {
     }
 
 	public void setTransactionRequest(SavingsTransactionRequest savingsTransactionRequest) {
-		this.notes = savingsTransactionRequest.getNotes();
-		this.remarks = savingsTransactionRequest.getRemarks();
-		this.category = savingsTransactionRequest.getCategory();
-		this.imageTag = savingsTransactionRequest.getImageTag();
-		this.latitude = savingsTransactionRequest.getLatitude();
-		this.longitude = savingsTransactionRequest.getLongitude();
-		this.noteImage = savingsTransactionRequest.getNoteImage();
-		this.transactionBrandName = savingsTransactionRequest.getTransactionBrandName();
+		if (this.paymentDetailData == null) {
+			this.paymentDetailData = new PaymentDetailData();
+		}
+		this.paymentDetailData.setNotes(savingsTransactionRequest.getNotes());
+		this.paymentDetailData.setRemarks(savingsTransactionRequest.getRemarks());
+		this.paymentDetailData.setCategory(savingsTransactionRequest.getCategory());
+		this.paymentDetailData.setImageTag(savingsTransactionRequest.getImageTag());
+		this.paymentDetailData.setLatitude(savingsTransactionRequest.getLatitude());
+		this.paymentDetailData.setLongitude(savingsTransactionRequest.getLongitude());
+		this.paymentDetailData.setNoteImage(savingsTransactionRequest.getNoteImage());
+		this.paymentDetailData.setTransactionBrandName(savingsTransactionRequest.getTransactionBrandName());
+
 	}
 }

@@ -329,14 +329,14 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 				transactionRequest = new SavingsTransactionRequest();
 				transactionRequest.setTransaction(transaction);
 			}
-			transactionRequest.setNotes(notes);
-			transactionRequest.setRemarks(remarks);
-			transactionRequest.setCategory(category);
-			transactionRequest.setImageTag(imageTag);
-			transactionRequest.setLatitude(latitude);
-			transactionRequest.setLongitude(longitude);
-			transactionRequest.setNoteImage(notesImage);
-			transactionRequest.setTransactionBrandName(transactionBrand);
+			if (notes != null) transactionRequest.setNotes(notes);
+			if (remarks != null) transactionRequest.setRemarks(remarks);
+			if (category != null) transactionRequest.setCategory(category);
+			if (imageTag != null) transactionRequest.setImageTag(imageTag);
+			if (latitude != null) transactionRequest.setLatitude(latitude);
+			if (longitude != null) transactionRequest.setLongitude(longitude);
+			if (notesImage != null) transactionRequest.setNoteImage(notesImage);
+			if (transactionBrand != null) transactionRequest.setTransactionBrandName(transactionBrand);
 			this.savingsTransactionRequestRepository.saveAndFlush(transactionRequest);
 		}
 	}

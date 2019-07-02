@@ -103,10 +103,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     private final SavingsAccountTransactionTemplateMapper transactionTemplateMapper;
     private final SavingsAccountTransactionsMapper transactionsMapper;
     private final SavingAccountMapper savingAccountMapper;
+    private final SavingsAccountTransactionDataMapper savingsAccountTransactionDataMapper;
     // private final SavingsAccountAnnualFeeMapper annualFeeMapper;
 
     // pagination
     private final PaginationHelper<SavingsAccountData> paginationHelper = new PaginationHelper<>();
+    private final PaginationHelper<SavingsAccountTransactionData> paginationHelperForTransaction = new PaginationHelper<>();
 
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
     private final ColumnValidator columnValidator;
@@ -128,6 +130,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         this.transactionTemplateMapper = new SavingsAccountTransactionTemplateMapper();
         this.transactionsMapper = new SavingsAccountTransactionsMapper();
         this.savingAccountMapper = new SavingAccountMapper();
+        this.savingsAccountTransactionDataMapper=new SavingsAccountTransactionDataMapper();
         // this.annualFeeMapper = new SavingsAccountAnnualFeeMapper();
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
@@ -760,6 +763,83 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
 
     @Override
+   public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId,SearchParameters searchParameters){
+        List<Object> paramList = new ArrayList<>();
+        paramList.add(accountId);
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(this.savingsAccountTransactionDataMapper.schema());
+        if(searchParameters!=null) {
+            if (searchParameters.isLimited()) {
+                sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+                if (searchParameters.isOffset()) {
+                    sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+                }
+            }
+        }
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.savingsAccountTransactionDataMapper);
+     }
+
+    private static final class SavingsAccountTransactionDataMapper implements RowMapper<SavingsAccountTransactionData> {
+
+        private final String schema;
+
+        public SavingsAccountTransactionDataMapper() {
+            final StringBuilder builder = new StringBuilder(400);
+
+            builder.append("s.id as id, s.savings_account_id as savingsAccountId, s.office_id as officeId, s.payment_detail_id as paymentDetailId,s.transaction_type_enum as typeOf, ");
+            builder.append("s.transaction_date as dateOf,s.amount as amount,s.is_reversed as reversed, s.running_balance_derived as runningBalance, ");
+            builder.append("s.cumulative_balance_derived as cumulativeBalance, s.balance_end_date_derived as balanceEndDate, ");
+            builder.append("s.balance_number_of_days_derived as balanceNumberOfDays, s.overdraft_amount_derived as overdraftAmount, ");
+            builder.append("s.created_date as createdDate, s.appuser_id as appUserId, ");
+            builder.append("s.is_manual as isManualTransaction, s.release_id_of_hold_amount as releaseIdOfHoldAmountTransaction ");
+            builder.append("from m_savings_account_transaction s ");
+            builder.append("where s.savings_account_id  = ?");
+
+            this.schema = builder.toString();
+        }
+
+        public String schema() {
+            return this.schema;
+        }
+
+        @Override
+        public SavingsAccountTransactionData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+
+            final Long id = JdbcSupport.getLong(rs, "id");
+            final Long savingsAccountId = JdbcSupport.getLong(rs, "savingsAccountId");
+            final Long officeId = JdbcSupport.getLong(rs, "officeId");
+            final Long paymentDetailId = JdbcSupport.getLong(rs, "paymentDetailId");
+            final Integer typeOf = JdbcSupport.getInteger(rs, "typeOf");
+
+            final LocalDate dateOf = JdbcSupport.getLocalDate(rs, "dateOf");
+            final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,"amount");
+            final boolean reversed = rs.getBoolean("reversed");
+            final BigDecimal runningBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,"runningBalance");
+
+            final BigDecimal cumulativeBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,"cumulativeBalance");
+            final LocalDate balanceEndDate = JdbcSupport.getLocalDate(rs,"balanceEndDate");
+
+            final Integer balanceNumberOfDays =JdbcSupport.getInteger(rs,"balanceNumberOfDays");
+            final BigDecimal overdraftAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,"overdraftAmount");
+
+            final LocalDate createdDate = JdbcSupport.getLocalDate(rs, "createdDate");
+            final Long appUserId = JdbcSupport.getLong(rs, "appUserId");
+
+            final boolean isManualTransaction = rs.getBoolean("isManualTransaction");
+            final Long releaseIdOfHoldAmountTransaction = JdbcSupport.getLong(rs, "releaseIdOfHoldAmountTransaction");
+
+
+            return SavingsAccountTransactionData.instance(id, savingsAccountId, officeId, paymentDetailId, typeOf, dateOf,
+                    amount, reversed, runningBalance, cumulativeBalance, balanceEndDate, balanceNumberOfDays,
+                    overdraftAmount, createdDate, appUserId, isManualTransaction, releaseIdOfHoldAmountTransaction);
+
+        }
+    }
+
+    @Override
     public SavingsAccountTransactionData retrieveSavingsTransaction(final Long savingsId, final Long transactionId,
             DepositAccountType depositAccountType) {
 
@@ -817,7 +897,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_payment_type pt on pd.payment_type_id = pt.id ");
             sqlBuilder.append(" left join m_appuser au on au.id=tr.appuser_id ");
             sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id ") ;
-			sqlBuilder.append(" left join m_transaction_request req ON req.transaction_id=tr.id ") ;
+            sqlBuilder.append(" left join m_transaction_request req ON req.transaction_id=tr.id ") ;
             this.schemaSql = sqlBuilder.toString();
         }
 
@@ -884,27 +964,27 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 final boolean toTransferReversed = rs.getBoolean("toTransferReversed");
                 final String toTransferDescription = rs.getString("toTransferDescription");
 
-                
+
 
                 transfer = AccountTransferData.transferBasicDetails(toTransferId, currency, toTransferAmount, toTransferDate,
                         toTransferDescription, toTransferReversed);
             }
             final String submittedByUsername = rs.getString("submittedByUsername");
             final String note = rs.getString("transactionNote") ;
-			SavingsAccountTransactionData transactionData = SavingsAccountTransactionData.create(id, transactionType, paymentDetailData, savingsId, accountNo, date, currency,
+            SavingsAccountTransactionData transactionData = SavingsAccountTransactionData.create(id, transactionType, paymentDetailData, savingsId, accountNo, date, currency,
                     amount, outstandingChargeAmount, runningBalance, reversed, transfer, submittedOnDate, postInterestAsOn, submittedByUsername, note);
 
-			SavingsTransactionRequest savingsTransactionRequest = new SavingsTransactionRequest();
-			savingsTransactionRequest.setNotes(rs.getString("notes"));
-			savingsTransactionRequest.setRemarks(rs.getString("remarks"));
-			savingsTransactionRequest.setCategory(rs.getString("category"));
-			savingsTransactionRequest.setImageTag(rs.getString("image_tag"));
-			savingsTransactionRequest.setLatitude(rs.getString("latitude"));
-			savingsTransactionRequest.setLongitude(rs.getString("longitude"));
-			savingsTransactionRequest.setNoteImage(rs.getString("note_image"));
-			savingsTransactionRequest.setTransactionBrandName(rs.getString("transaction_brand_name"));
-			transactionData.setTransactionRequest(savingsTransactionRequest);
-			return transactionData;
+            SavingsTransactionRequest savingsTransactionRequest = new SavingsTransactionRequest();
+            savingsTransactionRequest.setNotes(rs.getString("notes"));
+            savingsTransactionRequest.setRemarks(rs.getString("remarks"));
+            savingsTransactionRequest.setCategory(rs.getString("category"));
+            savingsTransactionRequest.setImageTag(rs.getString("image_tag"));
+            savingsTransactionRequest.setLatitude(rs.getString("latitude"));
+            savingsTransactionRequest.setLongitude(rs.getString("longitude"));
+            savingsTransactionRequest.setNoteImage(rs.getString("note_image"));
+            savingsTransactionRequest.setTransactionBrandName(rs.getString("transaction_brand_name"));
+            transactionData.setTransactionRequest(savingsTransactionRequest);
+            return transactionData;
         }
     }
 

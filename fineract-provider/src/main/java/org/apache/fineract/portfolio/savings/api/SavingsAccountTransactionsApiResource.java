@@ -42,6 +42,7 @@ import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamE
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -53,6 +54,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
+import org.apache.fineract.infrastructure.core.service.SearchParameters;
+
 
 @Path("/savingsaccounts/{savingsId}/transactions")
 @Component
@@ -198,5 +201,22 @@ public class SavingsAccountTransactionsApiResource {
         }
 
         return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @GET
+    @Path("/retrieveAllSavingAccTransactions")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
+                                          @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
+
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        SearchParameters searchParameters = SearchParameters.forPagination(offset, limit);
+        final Page<SavingsAccountTransactionData> savingsAccountTransactionData =
+                this.savingsAccountReadPlatformService.retrieveAllSavingAccTransactions(savingsId, searchParameters);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+        return this.toApiJsonSerializer.serialize(settings, savingsAccountTransactionData,
+                SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
     }
 }

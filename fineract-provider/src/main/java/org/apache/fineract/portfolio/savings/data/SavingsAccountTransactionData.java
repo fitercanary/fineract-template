@@ -72,6 +72,22 @@ public class SavingsAccountTransactionData {
     private String receiptNumber;
     private String bankNumber;
 
+    //SavingAccTransaction
+
+    private Long officeId;
+    private Long paymentDetailId;
+    private Integer typeOf;
+    private LocalDate dateOf;
+    private BigDecimal cumulativeBalance;
+    private LocalDate balanceEndDate;
+    private Integer balanceNumberOfDays;
+    private BigDecimal overdraftAmount;
+    private LocalDate createdDate;
+    private Long appUserId;
+    private boolean isManualTransaction;
+    private Long releaseIdOfHoldAmountTransaction;
+
+
     public static SavingsAccountTransactionData importInstance(BigDecimal transactionAmount,LocalDate transactionDate,
             Long paymentTypeId,String accountNumber, String checkNumber, String routingCode,
             String receiptNumber, String bankNumber,Long savingsAccountId,
@@ -238,4 +254,61 @@ public class SavingsAccountTransactionData {
 		this.paymentDetailData.setTransactionBrandName(savingsTransactionRequest.getTransactionBrandName());
 
 	}
+
+    private SavingsAccountTransactionData( Long id, Long savingsAccountId,  Long officeId,  Long paymentDetailId,
+                                           Integer typeOf,  LocalDate dateOf, BigDecimal amount, boolean reversed, BigDecimal runningBalance, BigDecimal cumulativeBalance,
+                                           LocalDate balanceEndDate,
+                                           Integer balanceNumberOfDays,  BigDecimal overdraftAmount,  LocalDate createdDate,
+                                           Long appUserId,  boolean isManualTransaction,  Long releaseIdOfHoldAmountTransaction){
+        this.id = id;
+        this.transactionType = null;
+        this.accountId = null;
+        this.accountNo = null;
+        this.date = null;
+        this.currency = null;
+        this.paymentDetailData = null;
+        this.amount = amount;
+        this.outstandingChargeAmount = null;
+        this.runningBalance = runningBalance;
+        this.reversed = reversed;
+        this.transfer = null;
+        this.submittedOnDate = null;
+        this.interestedPostedAsOn = false;
+        this.rowIndex = null;
+        this.savingsAccountId=savingsAccountId;
+        this.dateFormat= null;
+        this.locale= null;
+        this.transactionDate = null;
+        this.transactionAmount = null;
+        this.paymentTypeId = null;
+        this.accountNumber = null;
+        this.checkNumber = null;
+        this.routingCode = null;
+        this.receiptNumber = null;
+        this.bankNumber = null;
+        this.paymentTypeOptions = null;
+        this.submittedByUsername = null;
+        this.note = null;
+        this.officeId = officeId;
+        this.paymentDetailId = paymentDetailId;
+        this.typeOf = typeOf;
+        this.dateOf = dateOf;
+        this.cumulativeBalance = cumulativeBalance;
+        this.balanceEndDate = balanceEndDate;
+        this.balanceNumberOfDays = balanceNumberOfDays;
+        this.overdraftAmount = overdraftAmount;
+        this.createdDate = createdDate;
+        this.appUserId = appUserId;
+        this.isManualTransaction=isManualTransaction;
+        this.releaseIdOfHoldAmountTransaction=releaseIdOfHoldAmountTransaction;
+    }
+
+    public static SavingsAccountTransactionData instance(Long id, Long savingsAccountId,  Long officeId,  Long paymentDetailId,
+                                                         Integer typeOf,  LocalDate dateOf, BigDecimal amount, boolean reversed, BigDecimal runningBalance, BigDecimal cumulativeBalance,  LocalDate balanceEndDate,
+                                                         Integer balanceNumberOfDays,  BigDecimal overdraftAmount,  LocalDate createdDate,
+                                                         Long appUserId,  boolean isManualTransaction,  Long releaseIdOfHoldAmountTransaction){
+        return new SavingsAccountTransactionData(id, savingsAccountId, officeId, paymentDetailId, typeOf, dateOf,
+                amount, reversed, runningBalance, cumulativeBalance, balanceEndDate, balanceNumberOfDays,
+                overdraftAmount, createdDate, appUserId, isManualTransaction, releaseIdOfHoldAmountTransaction);
+    }
 }

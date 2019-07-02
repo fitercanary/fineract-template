@@ -21,7 +21,11 @@ package org.apache.fineract.portfolio.savings.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface SavingsTransactionRequestRepository extends JpaRepository<SavingsTransactionRequest, Long>, JpaSpecificationExecutor<SavingsTransactionRequest> {
 
+	@Query("select request from SavingsTransactionRequest request where request.transaction.id = :transactionId")
+	SavingsTransactionRequest findByTransactionId(@Param("transactionId") Long transactionId);
 }

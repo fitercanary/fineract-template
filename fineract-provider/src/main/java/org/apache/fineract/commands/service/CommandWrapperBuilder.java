@@ -1267,6 +1267,17 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+	public CommandWrapperBuilder modifySavingsTransactionRequest(final Long accountId, final Long transactionId) {
+		this.actionName = "MODIFY_TRANSACTION_REQUEST";
+		this.entityName = "SAVINGSACCOUNT";
+		this.savingsId = accountId;
+		this.entityId = accountId;
+		this.subentityId = transactionId;
+		this.transactionId = transactionId.toString();
+		this.href = "/savingsaccounts/" + accountId + "/transactions/" + transactionId + "?command=modifyTransactionRequest";
+		return this;
+	}
+
     public CommandWrapperBuilder savingsAccountInterestCalculation(final Long accountId) {
         this.actionName = "CALCULATEINTEREST";
         this.entityName = "SAVINGSACCOUNT";

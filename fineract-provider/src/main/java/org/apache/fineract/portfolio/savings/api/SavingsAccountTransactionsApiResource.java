@@ -205,7 +205,10 @@ public class SavingsAccountTransactionsApiResource {
         } else if (is(commandParam, SavingsApiConstants.COMMAND_ADJUST_TRANSACTION)) {
             final CommandWrapper commandRequest = builder.adjustSavingsAccountTransaction(savingsId, transactionId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        } else if (is(commandParam,SavingsApiConstants.COMMAND_RELEASE_AMOUNT)) {
+        } else if (is(commandParam, SavingsApiConstants.COMMAND_ADJUST_TRANSACTION_REQUEST)) {
+			final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsId, transactionId).build();
+			result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+		} else if (is(commandParam,SavingsApiConstants.COMMAND_RELEASE_AMOUNT)) {
             final CommandWrapper commandRequest = builder.releaseAmount(savingsId, transactionId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }

@@ -768,7 +768,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         paramList.add(accountId);
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
-        sqlBuilder.append(this.savingsAccountTransactionDataMapper.schema());
+        sqlBuilder.append(this.transactionsMapper.schema());
+		sqlBuilder.append("where tr.savings_account_id  = ?");
         if(searchParameters!=null) {
             if (searchParameters.isLimited()) {
                 sqlBuilder.append(" limit ").append(searchParameters.getLimit());
@@ -778,7 +779,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             }
         }
         final String sqlCountRows = "SELECT FOUND_ROWS()";
-        return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.savingsAccountTransactionDataMapper);
+        return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.transactionsMapper);
      }
 
     private static final class SavingsAccountTransactionDataMapper implements RowMapper<SavingsAccountTransactionData> {
@@ -882,8 +883,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.id as savingsId, sa.account_no as accountNo,");
             sqlBuilder.append("pd.payment_type_id as paymentType,pd.account_number as accountNumber,pd.check_number as checkNumber, ");
             sqlBuilder.append("pd.receipt_number as receiptNumber, pd.bank_number as bankNumber,pd.routing_code as routingCode, ");
-            sqlBuilder
-                    .append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
+            sqlBuilder.append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             sqlBuilder.append("pt.value as paymentTypeName, ");

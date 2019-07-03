@@ -18,17 +18,6 @@
  */
 package org.apache.fineract.portfolio.self.savings.api;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.savings.api.SavingsAccountChargesApiResource;
 import org.apache.fineract.portfolio.savings.api.SavingsAccountTransactionsApiResource;
@@ -40,6 +29,17 @@ import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/self/savingsaccounts")
 @Component
@@ -71,8 +71,8 @@ public class SelfSavingsApiResource {
 
 	@GET
 	@Path("{accountId}")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes({MediaType.APPLICATION_JSON})
+	@Produces({MediaType.APPLICATION_JSON})
 	public String retrieveSavings(
 			@PathParam("accountId") final Long accountId,
 			@DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus,
@@ -84,13 +84,13 @@ public class SelfSavingsApiResource {
 
 		final boolean staffInSelectedOfficeOnly = false;
 		return this.savingsAccountsApiResource.retrieveOne(accountId,
-				staffInSelectedOfficeOnly, chargeStatus, uriInfo);
+				staffInSelectedOfficeOnly, chargeStatus, null, null, uriInfo);
 	}
 
 	@GET
 	@Path("{accountId}/transactions/{transactionId}")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes({MediaType.APPLICATION_JSON})
+	@Produces({MediaType.APPLICATION_JSON})
 	public String retrieveSavingsTransaction(
 			@PathParam("accountId") final Long accountId,
 			@PathParam("transactionId") final Long transactionId,
@@ -106,8 +106,8 @@ public class SelfSavingsApiResource {
 
 	@GET
 	@Path("{accountId}/charges")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes({MediaType.APPLICATION_JSON})
+	@Produces({MediaType.APPLICATION_JSON})
 	public String retrieveAllSavingsAccountCharges(
 			@PathParam("accountId") final Long accountId,
 			@DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus,
@@ -122,8 +122,8 @@ public class SelfSavingsApiResource {
 
 	@GET
 	@Path("{accountId}/charges/{savingsAccountChargeId}")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes({MediaType.APPLICATION_JSON})
+	@Produces({MediaType.APPLICATION_JSON})
 	public String retrieveSavingsAccountCharge(
 			@PathParam("accountId") final Long accountId,
 			@PathParam("savingsAccountChargeId") final Long savingsAccountChargeId,

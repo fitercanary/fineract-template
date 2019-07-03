@@ -59,7 +59,7 @@ public class AccountTransfersDataValidator {
 			AccountTransfersApiConstants.transferDescriptionParamName, SavingsAccountConstant.notesParamName,
 			SavingsAccountConstant.notesImageParamName, SavingsAccountConstant.categoryParamName, SavingsAccountConstant.remarksParamName,
 			SavingsAccountConstant.longitudeParamName, SavingsAccountConstant.latitudeParamName, SavingsAccountConstant.imageTagParamName,
-			SavingsAccountConstant.transactionBrandParamName));
+			SavingsAccountConstant.transactionBrandParamName, AccountDetailConstants.beneficiaryNarrationParamName));
 
 
     @Autowired

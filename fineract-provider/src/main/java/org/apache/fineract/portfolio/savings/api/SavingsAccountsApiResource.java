@@ -158,18 +158,21 @@ public class SavingsAccountsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("accountId") final Long accountId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
-            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @Context final UriInfo uriInfo) {
+            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus,
+			@QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive"))) { throw new UnrecognizedQueryParamException(
-                "status", chargeStatus, new Object[] { "all", "active", "inactive" }); }
+		if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "offset") || is(chargeStatus, "limit"))) {
+			throw new UnrecognizedQueryParamException(
+					"status", chargeStatus, new Object[]{"all", "active", "inactive", "offset", "limit"});
+		}
 
         final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(accountId);
 
         final Set<String> mandatoryResponseParameters = new HashSet<>();
         final SavingsAccountData savingsAccountTemplate = populateTemplateAndAssociations(accountId, savingsAccount,
-                staffInSelectedOfficeOnly, chargeStatus, uriInfo, mandatoryResponseParameters);
+                staffInSelectedOfficeOnly, chargeStatus, uriInfo, mandatoryResponseParameters, offset, limit);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
@@ -179,10 +182,11 @@ public class SavingsAccountsApiResource {
 
     private SavingsAccountData populateTemplateAndAssociations(final Long accountId, final SavingsAccountData savingsAccount,
             final boolean staffInSelectedOfficeOnly, final String chargeStatus, final UriInfo uriInfo,
-            final Set<String> mandatoryResponseParameters) {
+            final Set<String> mandatoryResponseParameters, Integer offset, Integer limit) {
 
         Collection<SavingsAccountTransactionData> transactions = null;
         Collection<SavingsAccountChargeData> charges = null;
+		Integer transactionCount = null;
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
@@ -193,11 +197,26 @@ public class SavingsAccountsApiResource {
 
             if (associationParameters.contains(SavingsApiConstants.transactions)) {
                 mandatoryResponseParameters.add(SavingsApiConstants.transactions);
-                final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
-                        .retrieveAllTransactions(accountId, DepositAccountType.SAVINGS_DEPOSIT);
-                if (!CollectionUtils.isEmpty(currentTransactions)) {
-                    transactions = currentTransactions;
-                }
+				if (offset != null && limit != null) {
+					SearchParameters searchParameters = SearchParameters.forPagination(offset, limit);
+					final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
+							.retrieveAllSavingAccTransactions(accountId, searchParameters);
+					Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
+					if (!CollectionUtils.isEmpty(currentTransactions)) {
+						transactions = currentTransactions;
+					}
+					transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
+				} else {
+					final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
+							.retrieveAllTransactions(accountId, DepositAccountType.SAVINGS_DEPOSIT);
+					if (!CollectionUtils.isEmpty(currentTransactions)) {
+						transactions = currentTransactions;
+					}
+					if (transactions != null) {
+						transactionCount = transactions.size();
+					}
+				}
+
             }
 
             if (associationParameters.contains(SavingsApiConstants.charges)) {
@@ -217,7 +236,9 @@ public class SavingsAccountsApiResource {
                     savingsAccount.productId(), staffInSelectedOfficeOnly);
         }
 
-        return SavingsAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
+		SavingsAccountData savingsAccountData = SavingsAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
+		savingsAccountData.setTransactionCount(transactionCount);
+		return savingsAccountData;
     }
 
     @PUT
@@ -241,6 +262,23 @@ public class SavingsAccountsApiResource {
 
         return this.toApiJsonSerializer.serialize(result);
     }
+
+	@POST
+	@Path("modifytransactionrequest/{transactionId}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String adjustTransaction(@PathParam("transactionId") final Long transactionId, final String apiRequestBodyAsJson) {
+
+		String jsonApiRequest = apiRequestBodyAsJson;
+		if (StringUtils.isBlank(jsonApiRequest)) {
+			jsonApiRequest = "{}";
+		}
+		SavingsAccountTransactionData savingsAccountTransaction = this.savingsAccountReadPlatformService.retrieveSavingsTransaction(transactionId);
+		final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
+		final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsAccountTransaction.getSavingsAccountId(), transactionId).build();
+		CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+		return this.toApiJsonSerializer.serialize(result);
+	}
 
     @POST
     @Path("{accountId}")

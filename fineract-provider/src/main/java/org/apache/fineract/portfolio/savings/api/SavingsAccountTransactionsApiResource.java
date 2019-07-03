@@ -180,7 +180,7 @@ public class SavingsAccountTransactionsApiResource {
                     "Concurrent Transactions being made on this savings account: " + lockingFailureException.getMessage());
         } catch (CannotAcquireLockException cannotAcquireLockException) {
             throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations.unable.to.acquire.lock",
-                    "Unable to acquir lock for this transaction: " + cannotAcquireLockException.getMessage());
+                    "Unable to acquire lock for this transaction: " + cannotAcquireLockException.getMessage());
         }
     }
 

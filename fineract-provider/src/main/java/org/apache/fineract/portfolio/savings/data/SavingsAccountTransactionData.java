@@ -136,7 +136,7 @@ public class SavingsAccountTransactionData {
     }
 
     public Long getSavingsAccountId() {
-        return savingsAccountId;
+        return savingsAccountId != null ? savingsAccountId : accountId;
     }
 
     public SavingsAccountTransactionEnumData getTransactionType() {

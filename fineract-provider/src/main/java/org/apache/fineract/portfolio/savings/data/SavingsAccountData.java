@@ -76,6 +76,7 @@ public class SavingsAccountData {
     private final Integer daysToDormancy;
     private final Integer daysToEscheat;
     private final BigDecimal savingsAmountOnHold;
+	private Integer transactionCount;
 
     // associations
     private final SavingsAccountSummaryData summary;
@@ -785,4 +786,8 @@ public class SavingsAccountData {
     public void setDatatables(final List<DatatableData> datatables) {
         this.datatables = datatables;
     }
+
+	public void setTransactionCount(Integer transactionCount) {
+		this.transactionCount = transactionCount;
+	}
 }

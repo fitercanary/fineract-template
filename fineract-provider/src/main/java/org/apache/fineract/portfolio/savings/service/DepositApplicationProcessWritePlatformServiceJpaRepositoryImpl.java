@@ -125,22 +125,23 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+	private final NubanAccountService nubanAccountService;
 
     @Autowired
     public DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final SavingsAccountRepositoryWrapper savingAccountRepository, final DepositAccountAssembler depositAccountAssembler,
-            final DepositAccountDataValidator depositAccountDataValidator, final AccountNumberGenerator accountNumberGenerator,
-            final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
-            final SavingsProductRepository savingsProductRepository, final NoteRepository noteRepository,
-            final StaffRepositoryWrapper staffRepository,
-            final SavingsAccountApplicationTransitionApiJsonValidator savingsAccountApplicationTransitionApiJsonValidator,
-            final SavingsAccountChargeAssembler savingsAccountChargeAssembler,
-            final FixedDepositAccountRepository fixedDepositAccountRepository,
-            final RecurringDepositAccountRepository recurringDepositAccountRepository,
-            final AccountAssociationsRepository accountAssociationsRepository, final FromJsonHelper fromJsonHelper,
-            final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+																		  final SavingsAccountRepositoryWrapper savingAccountRepository, final DepositAccountAssembler depositAccountAssembler,
+																		  final DepositAccountDataValidator depositAccountDataValidator, final AccountNumberGenerator accountNumberGenerator,
+																		  final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
+																		  final SavingsProductRepository savingsProductRepository, final NoteRepository noteRepository,
+																		  final StaffRepositoryWrapper staffRepository,
+																		  final SavingsAccountApplicationTransitionApiJsonValidator savingsAccountApplicationTransitionApiJsonValidator,
+																		  final SavingsAccountChargeAssembler savingsAccountChargeAssembler,
+																		  final FixedDepositAccountRepository fixedDepositAccountRepository,
+																		  final RecurringDepositAccountRepository recurringDepositAccountRepository,
+																		  final AccountAssociationsRepository accountAssociationsRepository, final FromJsonHelper fromJsonHelper,
+																		  final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
+																		  final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+																		  final BusinessEventNotifierService businessEventNotifierService, NubanAccountService nubanAccountService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.depositAccountAssembler = depositAccountAssembler;
@@ -161,7 +162,8 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.businessEventNotifierService = businessEventNotifierService;
-    }
+		this.nubanAccountService = nubanAccountService;
+	}
 
     /*
      * Guaranteed to throw an exception no matter what the data integrity issue
@@ -214,7 +216,16 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             if (account.isAccountNumberRequiresAutoGeneration()) {
                 AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.CLIENT);
                 account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+				String serialNumber = account.getAccountNumber();
+				String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+				SavingsAccount existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
 
+				while(existingAccount != null) {
+					serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+					nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+					existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
+				}
+				account.updateAccountNo(nubanAccountNumber);
                 this.savingAccountRepository.save(account);
             }
 
@@ -272,9 +283,18 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             this.recurringDepositAccountRepository.save(account);
 
             if (account.isAccountNumberRequiresAutoGeneration()) {
-                final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository
-                        .findByAccountType(EntityAccountType.SAVINGS);
-                account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+                final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
+				account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+				String serialNumber = account.getAccountNumber();
+				String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+				SavingsAccount existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
+
+				while(existingAccount != null) {
+					serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+					nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+					existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
+				}
+				account.updateAccountNo(nubanAccountNumber);
             }
 
             final Long savingsId = account.getId();

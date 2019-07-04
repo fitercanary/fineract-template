@@ -24,6 +24,6 @@ public interface NubanAccountService {
 
 	String generateNextSerialNumber(String serialNumber);
 
-	String generateNubanAccountNumber(String serialNumber);
+	String generateNubanAccountNumber(String serialNumber, String prefix);
 
 }

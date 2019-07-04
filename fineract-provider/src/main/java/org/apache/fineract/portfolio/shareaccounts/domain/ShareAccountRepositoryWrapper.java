@@ -39,6 +39,10 @@ public class ShareAccountRepositoryWrapper {
 		}
 		return account ;
 	}
+
+	public ShareAccount findByAccountNumber(String accountNumber) {
+		return this.shareAccountRepository.findByAccountNumber(accountNumber);
+	}
 	public void save(final ShareAccount shareAccount) {
 		this.shareAccountRepository.save(shareAccount) ;
 	}

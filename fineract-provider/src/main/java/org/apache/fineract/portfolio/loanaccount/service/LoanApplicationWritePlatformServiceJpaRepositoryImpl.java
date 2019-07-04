@@ -117,6 +117,7 @@ import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.service.NubanAccountService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -174,6 +175,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 	private final GlobalConfigurationRepositoryWrapper globalConfigurationRepository;
 	private final FineractEntityToEntityMappingRepository repository;
 	private final FineractEntityRelationRepository fineractEntityRelationRepository;
+	private final NubanAccountService nubanAccountService;
 
 	@Autowired
 	public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
@@ -196,7 +198,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 																final LoanScheduleAssembler loanScheduleAssembler, final LoanUtilService loanUtilService,
 																final CalendarReadPlatformService calendarReadPlatformService, final GlobalConfigurationRepositoryWrapper globalConfigurationRepository,
 																final FineractEntityToEntityMappingRepository repository, final FineractEntityRelationRepository fineractEntityRelationRepository,
-																final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
+																final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, NubanAccountService nubanAccountService) {
 		this.context = context;
 		this.fromJsonHelper = fromJsonHelper;
 		this.loanApplicationTransitionApiJsonValidator = loanApplicationTransitionApiJsonValidator;
@@ -231,6 +233,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 		this.globalConfigurationRepository = globalConfigurationRepository;
 		this.repository = repository;
 		this.fineractEntityRelationRepository = fineractEntityRelationRepository;
+		this.nubanAccountService = nubanAccountService;
 	}
 
 	private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -361,7 +364,17 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 			if (newLoanApplication.isAccountNumberRequiresAutoGeneration()) {
 				final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository
 						.findByAccountType(EntityAccountType.LOAN);
-				newLoanApplication.updateAccountNo(this.accountNumberGenerator.generate(newLoanApplication, accountNumberFormat));
+				String serialNumber = this.accountNumberGenerator.generate(newLoanApplication, accountNumberFormat);
+
+				String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "2");
+				Loan existingAccount = this.loanRepositoryWrapper.findLoanByAccountNumber(nubanAccountNumber);
+
+				while (existingAccount != null) {
+					serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+					nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "2");
+					existingAccount = this.loanRepositoryWrapper.findLoanByAccountNumber(nubanAccountNumber);
+				}
+				newLoanApplication.updateAccountNo(nubanAccountNumber);
 				this.loanRepositoryWrapper.save(newLoanApplication);
 			}
 

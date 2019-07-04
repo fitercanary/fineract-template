@@ -61,6 +61,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.service.NubanAccountService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -83,16 +84,17 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
+	private final NubanAccountService nubanAccountService;
 
     @Autowired
-    public DepositAccountDomainServiceJpa(final PlatformSecurityContext context,final SavingsAccountRepositoryWrapper savingsAccountRepository,
-            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
-            final JournalEntryWritePlatformService journalEntryWritePlatformService, final AccountNumberGenerator accountNumberGenerator,
-            final DepositAccountAssembler depositAccountAssembler, final SavingsAccountDomainService savingsAccountDomainService,
-            final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
-            final ConfigurationDomainService configurationDomainService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final CalendarInstanceRepository calendarInstanceRepository) {
+    public DepositAccountDomainServiceJpa(final PlatformSecurityContext context, final SavingsAccountRepositoryWrapper savingsAccountRepository,
+										  final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+										  final JournalEntryWritePlatformService journalEntryWritePlatformService, final AccountNumberGenerator accountNumberGenerator,
+										  final DepositAccountAssembler depositAccountAssembler, final SavingsAccountDomainService savingsAccountDomainService,
+										  final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+										  final ConfigurationDomainService configurationDomainService,
+										  final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+										  final CalendarInstanceRepository calendarInstanceRepository, NubanAccountService nubanAccountService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -104,7 +106,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
-    }
+		this.nubanAccountService = nubanAccountService;
+	}
 
     @Transactional
     @Override
@@ -366,7 +369,16 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private void autoGenerateAccountNumber(final SavingsAccount account) {
         if (account.isAccountNumberRequiresAutoGeneration()) {
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
-            account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+			account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+			String serialNumber = account.getAccountNumber();
+			String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+			SavingsAccount existingAccount = this.savingsAccountRepository.findByAccountNumber(nubanAccountNumber);
+			while(existingAccount != null) {
+				serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+				nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+				existingAccount = this.savingsAccountRepository.findByAccountNumber(nubanAccountNumber);
+			}
+			account.updateAccountNo(nubanAccountNumber);
             this.savingsAccountRepository.save(account);
         }
     }

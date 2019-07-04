@@ -210,15 +210,15 @@ public class
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
             account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
 			String serialNumber = account.getAccountNumber();
-			String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber);
+			String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
 			SavingsAccount existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
 
 			while(existingAccount != null) {
 				serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
-				nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber);
+				nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
 				existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
 			}
-			account.setAccountNumber(nubanAccountNumber);
+			account.updateAccountNo(nubanAccountNumber);
             this.savingAccountRepository.save(account);
         }
     }

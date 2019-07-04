@@ -154,6 +154,9 @@ public interface LoanRepository extends JpaRepository<Loan, Long>, JpaSpecificat
     @Query(FIND_BY_ACCOUNT_NUMBER)
     Loan findNonClosedLoanByAccountNumber(@Param("accountNumber") String accountNumber);
 
+	@Query("select loan from Loan loan where loan.accountNumber = :accountNumber")
+	Loan findLoanByAccountNumber(@Param("accountNumber") String accountNumber);
+
     @Query(FIND_NON_CLOSED_LOAN_THAT_BELONGS_TO_CLIENT)
     Loan findNonClosedLoanThatBelongsToClient(@Param("loanId") Long loanId, @Param("clientId") Long clientId);
 

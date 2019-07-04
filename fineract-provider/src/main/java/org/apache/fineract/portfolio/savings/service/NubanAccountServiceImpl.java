@@ -47,11 +47,13 @@ public class NubanAccountServiceImpl implements NubanAccountService {
 	 * Therefore, the NUBAN code for this illustration is 000021457-0.
 	 *
 	 * @param serialNumber Serial number
+	 * @param prefix Account prefix
 	 * @return NUBAN account number
 	 */
 	@Override
-	public String generateNubanAccountNumber(String serialNumber) {
+	public String generateNubanAccountNumber(String serialNumber, String prefix) {
 		int[] nubanMultipliers = new int[]{3, 7, 3, 3, 7, 3, 3, 7, 3, 3, 7, 3};
+		serialNumber = prefix + serialNumber.substring(1);
 		String extendSerialNumber = VFD_UNIQUE_CODE_IDENTIFIER + serialNumber;
 		//Step1
 		int digit = 0;
@@ -62,6 +64,6 @@ public class NubanAccountServiceImpl implements NubanAccountService {
 		//Step2 & 3
 		digit = 10 - (digit % 10);
 		if (digit == 0) digit = 0;
-		return "1" + serialNumber.substring(1) + digit;
+		return serialNumber + digit;
 	}
 }

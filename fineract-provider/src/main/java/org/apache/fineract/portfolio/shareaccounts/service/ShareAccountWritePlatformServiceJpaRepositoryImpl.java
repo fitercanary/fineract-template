@@ -50,6 +50,8 @@ import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants;
 import org.apache.fineract.portfolio.common.service.BusinessEventNotifierService;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.service.NubanAccountService;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountChargePaidBy;
@@ -81,16 +83,18 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final NoteRepository noteRepository;
 
     private final BusinessEventNotifierService businessEventNotifierService;
+
+	private final NubanAccountService nubanAccountService;
     
     @Autowired
     public ShareAccountWritePlatformServiceJpaRepositoryImpl(final ShareAccountDataSerializer accountDataSerializer,
-            final ShareAccountRepositoryWrapper shareAccountRepository, 
-            final ShareProductRepositoryWrapper shareProductRepository,
-            final AccountNumberGenerator accountNumberGenerator,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final JournalEntryWritePlatformService journalEntryWritePlatformService,
-            final NoteRepository noteRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+															 final ShareAccountRepositoryWrapper shareAccountRepository,
+															 final ShareProductRepositoryWrapper shareProductRepository,
+															 final AccountNumberGenerator accountNumberGenerator,
+															 final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+															 final JournalEntryWritePlatformService journalEntryWritePlatformService,
+															 final NoteRepository noteRepository,
+															 final BusinessEventNotifierService businessEventNotifierService, NubanAccountService nubanAccountService) {
         this.accountDataSerializer = accountDataSerializer;
         this.shareAccountRepository = shareAccountRepository;
         this.shareProductRepository = shareProductRepository ;
@@ -99,7 +103,8 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
         this.noteRepository = noteRepository;
         this.businessEventNotifierService = businessEventNotifierService;
-    }
+		this.nubanAccountService = nubanAccountService;
+	}
 
     @Override
     public CommandProcessingResult createShareAccount(JsonCommand jsonCommand) {
@@ -130,7 +135,17 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private void generateAccountNumber(final ShareAccount account) {
         if (account.isAccountNumberRequiresAutoGeneration()) {
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SHARES);
-            account.updateAccountNumber(this.accountNumberGenerator.generate(account, accountNumberFormat));
+			account.updateAccountNumber(this.accountNumberGenerator.generate(account, accountNumberFormat));
+			String serialNumber = account.getAccountNumber();
+			String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+			ShareAccount existingAccount = this.shareAccountRepository.findByAccountNumber(nubanAccountNumber);
+
+			while(existingAccount != null) {
+				serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+				nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+				existingAccount = this.shareAccountRepository.findByAccountNumber(nubanAccountNumber);
+			}
+			account.updateAccountNumber(nubanAccountNumber);
             this.shareAccountRepository.save(account);
         }
     }

@@ -64,4 +64,6 @@ public interface SavingsAccountReadPlatformService {
 
     Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters);
 
+	Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters, String text, String filterCategories, String startDate, String endDate);
+
 }

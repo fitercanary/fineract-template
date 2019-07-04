@@ -81,7 +81,7 @@ public class SavingsAccountData {
     // associations
     private final SavingsAccountSummaryData summary;
     @SuppressWarnings("unused")
-    private final Collection<SavingsAccountTransactionData> transactions;
+    private Collection<SavingsAccountTransactionData> transactions;
 
     private final Collection<SavingsAccountChargeData> charges;
 
@@ -786,6 +786,10 @@ public class SavingsAccountData {
     public void setDatatables(final List<DatatableData> datatables) {
         this.datatables = datatables;
     }
+
+	public void setTransactions(Collection<SavingsAccountTransactionData> transactions) {
+		this.transactions = transactions;
+	}
 
 	public void setTransactionCount(Integer transactionCount) {
 		this.transactionCount = transactionCount;

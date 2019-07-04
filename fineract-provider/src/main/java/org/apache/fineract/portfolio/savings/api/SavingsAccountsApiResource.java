@@ -164,20 +164,20 @@ public class SavingsAccountsApiResource {
     public String retrieveOne(@PathParam("accountId") final Long accountId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
             @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus,
-			@QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit, @Context final UriInfo uriInfo) {
+			@QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-		if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "offset") || is(chargeStatus, "limit"))) {
+		if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber") || is(chargeStatus, "pageSize"))) {
 			throw new UnrecognizedQueryParamException(
-					"status", chargeStatus, new Object[]{"all", "active", "inactive", "offset", "limit"});
+					"status", chargeStatus, new Object[]{"all", "active", "inactive", "pageNumber", "pageSize"});
 		}
 
         final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(accountId);
 
         final Set<String> mandatoryResponseParameters = new HashSet<>();
         final SavingsAccountData savingsAccountTemplate = populateTemplateAndAssociations(accountId, savingsAccount,
-                staffInSelectedOfficeOnly, chargeStatus, uriInfo, mandatoryResponseParameters, offset, limit);
+                staffInSelectedOfficeOnly, chargeStatus, uriInfo, mandatoryResponseParameters, pageNumber, pageSize);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
@@ -187,7 +187,7 @@ public class SavingsAccountsApiResource {
 
     private SavingsAccountData populateTemplateAndAssociations(final Long accountId, final SavingsAccountData savingsAccount,
             final boolean staffInSelectedOfficeOnly, final String chargeStatus, final UriInfo uriInfo,
-            final Set<String> mandatoryResponseParameters, Integer offset, Integer limit) {
+            final Set<String> mandatoryResponseParameters, Integer pageNumber, Integer pageSize) {
 
         Collection<SavingsAccountTransactionData> transactions = null;
         Collection<SavingsAccountChargeData> charges = null;
@@ -202,13 +202,15 @@ public class SavingsAccountsApiResource {
 
             if (associationParameters.contains(SavingsApiConstants.transactions)) {
                 mandatoryResponseParameters.add(SavingsApiConstants.transactions);
-				if (offset != null && limit != null) {
-					SearchParameters searchParameters = SearchParameters.forPagination(offset, limit);
+				if (pageNumber != null && pageSize != null) {
+					SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
 					final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
 							.retrieveAllSavingAccTransactions(accountId, searchParameters);
 					Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
 					if (!CollectionUtils.isEmpty(currentTransactions)) {
 						transactions = currentTransactions;
+					} else {
+						transactions = new ArrayList<>();
 					}
 					transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
 				} else {

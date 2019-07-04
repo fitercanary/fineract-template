@@ -47,6 +47,7 @@ import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,7 @@ import org.apache.fineract.infrastructure.core.service.SearchParameters;
 public class SavingsAccountTransactionsApiResource {
 
     private final PlatformSecurityContext context;
+	private final DefaultToApiJsonSerializer<SavingsAccountData> toSavingsAccountApiJsonSerializer;
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
@@ -71,13 +73,15 @@ public class SavingsAccountTransactionsApiResource {
 
     @Autowired
     public SavingsAccountTransactionsApiResource(final PlatformSecurityContext context,
-            final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer,
-            final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            final ApiRequestParameterHelper apiRequestParameterHelper,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+												 DefaultToApiJsonSerializer<SavingsAccountData> toSavingsAccountApiJsonSerializer,
+												 final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer,
+												 final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+												 final ApiRequestParameterHelper apiRequestParameterHelper,
+												 final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+												 PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
         this.context = context;
-        this.toApiJsonSerializer = toApiJsonSerializer;
+		this.toSavingsAccountApiJsonSerializer = toSavingsAccountApiJsonSerializer;
+		this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
@@ -92,15 +96,37 @@ public class SavingsAccountTransactionsApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	public String retrieveAllSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
-												   @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
+												   @QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize) {
 
 		this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
-		SearchParameters searchParameters = SearchParameters.forPagination(offset, limit);
+		SearchParameters searchParameters = pageNumber != null && pageSize != null ? SearchParameters.forPagination(pageNumber, pageSize) : null;
 		final Page<SavingsAccountTransactionData> savingsAccountTransactionData =
 				this.savingsAccountReadPlatformService.retrieveAllSavingAccTransactions(savingsId, searchParameters);
 		final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
 		return this.toApiJsonSerializer.serialize(settings, savingsAccountTransactionData,
+				SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
+	}
+
+	@GET
+	@Path("filter")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveAllFilteredSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
+												   @QueryParam("text") final String text, @QueryParam("filterCategories") final String filterCategories,
+												   @QueryParam("startDate") final String startDate, @QueryParam("endDate") final String endDate,
+												   @QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize) {
+
+		this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+		SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(savingsId);
+		SearchParameters searchParameters = pageNumber != null && pageSize != null ? SearchParameters.forPagination(pageNumber, pageSize) : null;
+		final Page<SavingsAccountTransactionData> savingsAccountTransactionData =
+				this.savingsAccountReadPlatformService.retrieveAllSavingAccTransactions(savingsId, searchParameters, text, filterCategories, startDate, endDate);
+		savingsAccount.setTransactions(savingsAccountTransactionData.getPageItems());
+		savingsAccount.setTransactionCount(savingsAccountTransactionData.getTotalFilteredRecords());
+		final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+		return this.toSavingsAccountApiJsonSerializer.serialize(settings, savingsAccount,
 				SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
 	}
 

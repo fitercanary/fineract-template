@@ -771,15 +771,76 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 		sqlBuilder.append(this.transactionsMapper.schema());
 		sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
 		if (searchParameters != null) {
+			int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
 			if (searchParameters.isLimited()) {
 				sqlBuilder.append(" limit ").append(searchParameters.getLimit());
 				if (searchParameters.isOffset()) {
-					sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+					sqlBuilder.append(" offset ").append(offset);
 				}
 			}
 		}
 		final String sqlCountRows = "SELECT FOUND_ROWS()";
 		return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.transactionsMapper);
+	}
+
+	@Override
+	public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters, String text, String filterCategories, String startDate, String endDate) {
+		List<Object> paramList = new ArrayList<>();
+		paramList.add(accountId);
+		paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
+		final StringBuilder sqlBuilder = new StringBuilder(200);
+		sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+		sqlBuilder.append(this.transactionsMapper.schema());
+		sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? ");
+		sqlBuilder.append(this.buildTransactionFilter(text, filterCategories, startDate, endDate));
+		sqlBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+		if (searchParameters != null) {
+			int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
+			if (searchParameters.isLimited()) {
+				sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+				if (searchParameters.isOffset()) {
+					sqlBuilder.append(" offset ").append(offset);
+				}
+			}
+		}
+		final String sqlCountRows = "SELECT FOUND_ROWS()";
+		return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.transactionsMapper);
+	}
+
+	private String buildTransactionFilter(String text, String filterCategories, String startDate, String endDate) {
+		StringBuilder filterBuilder = new StringBuilder("");
+		if (filterCategories != null) {
+			String[] categories = filterCategories.split(",");
+			String filter = "'" + categories[0].trim() + "'";
+			for (int i = 1; i < categories.length; i++) {
+				filter += ", " + "'" + categories[i].trim() + "'";
+			}
+			filterBuilder.append(" and req.category in (");
+			filterBuilder.append(filter);
+			filterBuilder.append(") ");
+		} else if (text != null) {
+			String filter = "'%" + text.trim() + "%'";
+			filterBuilder.append(" and (req.category LIKE ");
+			filterBuilder.append(filter);
+			filterBuilder.append(" or req.notes LIKE ");
+			filterBuilder.append(filter);
+			filterBuilder.append(" or req.remarks LIKE ");
+			filterBuilder.append(filter);
+			filterBuilder.append(" or req.transaction_brand_name LIKE ");
+			filterBuilder.append(filter);
+			filterBuilder.append(") ");
+		}
+		if (startDate != null) {
+			startDate = "'" + startDate + "'";
+			filterBuilder.append(" and tr.transaction_date >= ");
+			filterBuilder.append(startDate);
+		}
+		if (endDate != null) {
+			endDate = "'" + endDate + "'";
+			filterBuilder.append(" and tr.transaction_date <= ");
+			filterBuilder.append(endDate);
+		}
+		return filterBuilder.toString();
 	}
 
 	private static final class SavingsAccountTransactionDataMapper implements RowMapper<SavingsAccountTransactionData> {
@@ -859,7 +920,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 	}
 
     /*
-     * @Override public Collection<SavingsAccountAnnualFeeData>
+	 * @Override public Collection<SavingsAccountAnnualFeeData>
      * retrieveAccountsWithAnnualFeeDue() { final String sql = "select " +
      * this.annualFeeMapper.schema() +
      * " where sa.annual_fee_next_due_date is not null and sa.annual_fee_next_due_date <= NOW()"
@@ -1133,7 +1194,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			// rs.getBigDecimal("withdrawalFeeAmount");
 
             /*
-             * EnumOptionData withdrawalFeeType = null; final Integer
+			 * EnumOptionData withdrawalFeeType = null; final Integer
              * withdrawalFeeTypeValue = JdbcSupport.getInteger(rs,
              * "withdrawalFeeTypeEnum"); if (withdrawalFeeTypeValue != null) {
              * withdrawalFeeType =

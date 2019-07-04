@@ -203,8 +203,9 @@ public class LoanRepaymentWorkbookPopulator extends AbstractWorkbookPopulator {
 		
 		for (int j = 0; j < clientsWithActiveLoans.size(); j++) {
 			Name name = loanRepaymentWorkbook.createName();
-			name.setNameName("Account_" + clientsWithActiveLoans.get(j).replaceAll(" ", "_").replaceAll("-", "_") + "_"
-					+ clientIdsWithActiveLoans.get(j) + "_");
+			String theName = "Account_" + clientsWithActiveLoans.get(j).replaceAll(" ", "_").replaceAll("-", "_") + "_" + clientIdsWithActiveLoans.get(j) + "_";
+			theName = theName.replaceAll("\\W", "_");
+			name.setNameName(theName);
 			name.setRefersToFormula(
 					TemplatePopulateImportConstants.LOAN_REPAYMENT_SHEET_NAME+"!$S$" + clientNameToBeginEndIndexes.get(clientsWithActiveLoans.get(j))[0] + ":$S$"
 							+ clientNameToBeginEndIndexes.get(clientsWithActiveLoans.get(j))[1]);

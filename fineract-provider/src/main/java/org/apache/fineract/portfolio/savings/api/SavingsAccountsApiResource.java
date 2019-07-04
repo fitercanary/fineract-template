@@ -19,9 +19,11 @@
 package org.apache.fineract.portfolio.savings.api;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -50,7 +52,9 @@ import org.apache.fineract.infrastructure.bulkimport.service.BulkImportWorkbookP
 import org.apache.fineract.infrastructure.bulkimport.service.BulkImportWorkbookService;
 import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
@@ -64,6 +68,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -264,20 +269,28 @@ public class SavingsAccountsApiResource {
     }
 
 	@POST
-	@Path("modifytransactionrequest/{transactionId}")
+	@Path("modifytransactionrequest")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String adjustTransaction(@PathParam("transactionId") final Long transactionId, final String apiRequestBodyAsJson) {
+	public String adjustTransaction(final String apiRequestBodyAsJson) {
 
 		String jsonApiRequest = apiRequestBodyAsJson;
 		if (StringUtils.isBlank(jsonApiRequest)) {
 			jsonApiRequest = "{}";
 		}
-		SavingsAccountTransactionData savingsAccountTransaction = this.savingsAccountReadPlatformService.retrieveSavingsTransaction(transactionId);
-		final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
-		final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsAccountTransaction.getSavingsAccountId(), transactionId).build();
-		CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-		return this.toApiJsonSerializer.serialize(result);
+		JSONObject jsonObject = new JSONObject(jsonApiRequest);
+		if (jsonObject.has("transactionId")) {
+			Long transactionId = jsonObject.getLong("transactionId");
+			SavingsAccountTransactionData savingsAccountTransaction = this.savingsAccountReadPlatformService.retrieveSavingsTransaction(transactionId);
+			final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
+			final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsAccountTransaction.getSavingsAccountId(), transactionId).build();
+			CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+			return this.toApiJsonSerializer.serialize(result);
+		} else {
+			List<ApiParameterError> errors = new ArrayList<>();
+			errors.add(ApiParameterError.generalError("transactionId.missing.from.payload", "transactionId is required in the payload"));
+			throw new PlatformApiDataValidationException(errors);
+		}
 	}
 
     @POST

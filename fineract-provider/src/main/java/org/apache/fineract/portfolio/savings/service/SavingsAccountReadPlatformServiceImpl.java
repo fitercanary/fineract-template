@@ -809,7 +809,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
 	private String buildTransactionFilter(String text, String filterCategories, String startDate, String endDate) {
 		StringBuilder filterBuilder = new StringBuilder("");
-		if (filterCategories != null) {
+		if (StringUtils.isNotBlank(filterCategories)) {
 			String[] categories = filterCategories.split(",");
 			String filter = "'" + categories[0].trim() + "'";
 			for (int i = 1; i < categories.length; i++) {
@@ -818,7 +818,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			filterBuilder.append(" and req.category in (");
 			filterBuilder.append(filter);
 			filterBuilder.append(") ");
-		} else if (text != null) {
+		} else if (StringUtils.isNotBlank(text)) {
 			String filter = "'%" + text.trim() + "%'";
 			filterBuilder.append(" and (req.category LIKE ");
 			filterBuilder.append(filter);
@@ -830,12 +830,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			filterBuilder.append(filter);
 			filterBuilder.append(") ");
 		}
-		if (startDate != null) {
+		if (StringUtils.isNotBlank(startDate)) {
 			startDate = "'" + startDate + "'";
 			filterBuilder.append(" and tr.transaction_date >= ");
 			filterBuilder.append(startDate);
 		}
-		if (endDate != null) {
+		if (StringUtils.isNotBlank(endDate)) {
 			endDate = "'" + endDate + "'";
 			filterBuilder.append(" and tr.transaction_date <= ");
 			filterBuilder.append(endDate);

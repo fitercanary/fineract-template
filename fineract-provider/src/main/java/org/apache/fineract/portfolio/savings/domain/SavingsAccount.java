@@ -2359,7 +2359,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.charges.remove(charge);
     }
 
-    public void waiveCharge(final Long savingsAccountChargeId, final AppUser user) {
+
+        public void waiveCharge(final Long savingsAccountChargeId, final AppUser user) {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
@@ -3019,7 +3020,43 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
         return actualChanges;
     }
-    
+
+    public Map<String, Object> applyOverdraft(final Boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal nominalAnnualInterestRateOverdraft,
+                                              final BigDecimal minOverdraftForInterestCalculation) {
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        if (isClosed()) {
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.invalid.account.is.closed");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+
+        if (isNotActive()) {
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.invalid.account.is.not.active");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+
+        actualChanges.put(SavingsApiConstants.allowOverdraftParamName,allowOverdraft.booleanValue());
+        actualChanges.put(SavingsApiConstants.overdraftLimitParamName, overdraftLimit);
+        actualChanges.put(SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName, nominalAnnualInterestRateOverdraft);
+        actualChanges.put(SavingsApiConstants.minOverdraftForInterestCalculationParamName, minOverdraftForInterestCalculation);
+
+        this.allowOverdraft = allowOverdraft.booleanValue();
+        this.overdraftLimit = overdraftLimit;
+        this.nominalAnnualInterestRateOverdraft = nominalAnnualInterestRateOverdraft;
+        this.minOverdraftForInterestCalculation = minOverdraftForInterestCalculation;
+
+        return actualChanges;
+    }
+
+
     public Integer getSubStatus() {
         return this.sub_status;
     }

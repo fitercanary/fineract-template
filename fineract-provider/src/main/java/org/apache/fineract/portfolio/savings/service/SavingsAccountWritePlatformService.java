@@ -108,4 +108,6 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult unblockDebits(Long savingsId);
 
     CommandProcessingResult releaseAmount(Long savingsId, Long transactionId);
+
+    CommandProcessingResult applyOverdraft(Long savingsId, JsonCommand command);
 }

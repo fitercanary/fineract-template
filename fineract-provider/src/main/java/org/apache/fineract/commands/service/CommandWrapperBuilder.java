@@ -2329,6 +2329,14 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?command=postInterestAsOn";
         return this;
     }
+    public CommandWrapperBuilder savingsAccountApplyOverdraft(final Long accountId) {
+        this.actionName = "APPLYOVERDRAFT";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=applyOverdraft";
+        return this;
+    }
 
     public CommandWrapperBuilder createLoanRescheduleRequest(final String entityName) {
         this.actionName = "CREATE";

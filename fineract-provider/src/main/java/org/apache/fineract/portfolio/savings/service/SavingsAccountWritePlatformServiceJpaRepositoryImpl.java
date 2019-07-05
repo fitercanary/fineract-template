@@ -1627,4 +1627,33 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 		return new CommandProcessingResultBuilder().withEntityId(savingsId).withOfficeId(account.officeId())
 				.withClientId(account.clientId()).withGroupId(account.groupId()).withSavingsId(savingsId).with(changes).build();
 	}
+
+
+	@Transactional
+	@Override
+	public CommandProcessingResult applyOverdraft(Long savingsAccountId, JsonCommand command) {
+
+		this.context.authenticatedUser();
+		this.fromApiJsonDeserializer.validateApplyOverdraftParams(command.json());
+		final SavingsAccount savingsForUpdate = this.savingAccountRepositoryWrapper.findOneWithNotFoundDetection(savingsAccountId);
+
+		final Boolean allowOverdraft = command.booleanObjectValueOfParameterNamed("allowOverdraft");
+		final BigDecimal overdraftLimit = command.bigDecimalValueOfParameterNamed("overdraftLimit");
+		final BigDecimal nominalAnnualInterestRateOverdraft = command.bigDecimalValueOfParameterNamed("nominalAnnualInterestRateOverdraft");
+		final BigDecimal minOverdraftForInterestCalculation = command.bigDecimalValueOfParameterNamed("minOverdraftForInterestCalculation");
+
+		final Map<String, Object> actualChanges = savingsForUpdate.applyOverdraft(allowOverdraft, overdraftLimit, nominalAnnualInterestRateOverdraft,
+				minOverdraftForInterestCalculation);
+
+		this.savingAccountRepositoryWrapper.saveAndFlush(savingsForUpdate);
+
+		return new CommandProcessingResultBuilder()
+				.withEntityId(savingsForUpdate.getId()) //
+				.withOfficeId(savingsForUpdate.officeId()) //
+				.withClientId(savingsForUpdate.clientId()) //
+				.withGroupId(savingsForUpdate.groupId()) //
+				.withSavingsId(savingsAccountId) //
+				.with(actualChanges) //
+				.build();
+	}
 }

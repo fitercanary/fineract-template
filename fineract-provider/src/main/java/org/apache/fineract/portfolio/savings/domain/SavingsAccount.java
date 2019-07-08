@@ -279,6 +279,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     @Column(name = "min_overdraft_for_interest_calculation", scale = 6, precision = 19, nullable = true)
     private BigDecimal minOverdraftForInterestCalculation;
 
+    @Temporal(TemporalType.DATE)
+    @Column(name = "overdraft_startedon_date")
+    protected Date overdraftStartedOnDate;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "overdraft_closedon_date")
+    protected Date overdraftClosedOnDate;
+
     @Column(name = "enforce_min_required_balance")
     private boolean enforceMinRequiredBalance;
 
@@ -348,7 +356,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, enforceMinRequiredBalance,
-                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax);
+                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
+                withHoldTax);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -3022,7 +3031,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public Map<String, Object> applyOverdraft(final Boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal nominalAnnualInterestRateOverdraft,
-                                              final BigDecimal minOverdraftForInterestCalculation) {
+                                              final BigDecimal minOverdraftForInterestCalculation, final LocalDate overdraftStartedOnDate,
+                                              final LocalDate overdraftClosedOnDate ) {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
@@ -3043,15 +3053,23 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
 
+
         actualChanges.put(SavingsApiConstants.allowOverdraftParamName,allowOverdraft.booleanValue());
         actualChanges.put(SavingsApiConstants.overdraftLimitParamName, overdraftLimit);
         actualChanges.put(SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName, nominalAnnualInterestRateOverdraft);
         actualChanges.put(SavingsApiConstants.minOverdraftForInterestCalculationParamName, minOverdraftForInterestCalculation);
+        actualChanges.put(SavingsApiConstants.overdraftStartedOnDateParamName, overdraftStartedOnDate);
+        actualChanges.put(SavingsApiConstants.overdraftClosedOnDateParamName, overdraftClosedOnDate);
 
         this.allowOverdraft = allowOverdraft.booleanValue();
         this.overdraftLimit = overdraftLimit;
         this.nominalAnnualInterestRateOverdraft = nominalAnnualInterestRateOverdraft;
         this.minOverdraftForInterestCalculation = minOverdraftForInterestCalculation;
+        if(overdraftStartedOnDate!=null)
+        this.overdraftStartedOnDate = overdraftStartedOnDate.toDate();
+
+        if(overdraftClosedOnDate!=null)
+        this.overdraftClosedOnDate = overdraftClosedOnDate.toDate();
 
         return actualChanges;
     }
@@ -3106,5 +3124,22 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     private boolean isOverdraft() {
     		return allowOverdraft;
     }
+
+    public Date getOverdraftStartedOnDate() {
+        return overdraftStartedOnDate;
+    }
+
+    public void setOverdraftStartedOnDate(Date overdraftStartedOnDate) {
+        this.overdraftStartedOnDate = overdraftStartedOnDate;
+    }
+
+    public Date getOverdraftClosedOnDate() {
+        return overdraftClosedOnDate;
+    }
+
+    public void setOverdraftClosedOnDate(Date overdraftClosedOnDate) {
+        this.overdraftClosedOnDate = overdraftClosedOnDate;
+    }
+
 
 }

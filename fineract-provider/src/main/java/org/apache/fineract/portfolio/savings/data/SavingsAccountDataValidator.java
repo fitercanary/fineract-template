@@ -40,6 +40,8 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minRequi
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftStartedOnDateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftClosedOnDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.productIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
@@ -445,6 +447,15 @@ public class SavingsAccountDataValidator {
             baseDataValidator.reset().parameter(minOverdraftForInterestCalculationParamName).value(minOverdraftForInterestCalculation).ignoreIfNull().zeroOrPositiveAmount();
         }
 
+        if (this.fromApiJsonHelper.parameterExists(overdraftStartedOnDateParamName, element)) {
+            final LocalDate overdraftStartedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(overdraftStartedOnDateParamName, element);
+            baseDataValidator.reset().parameter(overdraftStartedOnDateParamName).value(overdraftStartedOnDate).ignoreIfNull();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(overdraftClosedOnDateParamName, element)) {
+            final LocalDate overdraftClosedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(overdraftClosedOnDateParamName, element);
+            baseDataValidator.reset().parameter(overdraftClosedOnDateParamName).value(overdraftClosedOnDate).ignoreIfNull();
+        }
     }
 
     public void validateForAssignSavingsOfficer(final String json) {

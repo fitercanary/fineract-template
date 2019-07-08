@@ -1641,9 +1641,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 		final BigDecimal overdraftLimit = command.bigDecimalValueOfParameterNamed("overdraftLimit");
 		final BigDecimal nominalAnnualInterestRateOverdraft = command.bigDecimalValueOfParameterNamed("nominalAnnualInterestRateOverdraft");
 		final BigDecimal minOverdraftForInterestCalculation = command.bigDecimalValueOfParameterNamed("minOverdraftForInterestCalculation");
-
+        final LocalDate overdraftStartedOnDate = command.localDateValueOfParameterNamed("overdraftStartedOnDate");
+		final LocalDate overdraftClosedOnDate = command.localDateValueOfParameterNamed("overdraftClosedOnDate");
 		final Map<String, Object> actualChanges = savingsForUpdate.applyOverdraft(allowOverdraft, overdraftLimit, nominalAnnualInterestRateOverdraft,
-				minOverdraftForInterestCalculation);
+				minOverdraftForInterestCalculation, overdraftStartedOnDate ,overdraftClosedOnDate);
 
 		this.savingAccountRepositoryWrapper.saveAndFlush(savingsForUpdate);
 

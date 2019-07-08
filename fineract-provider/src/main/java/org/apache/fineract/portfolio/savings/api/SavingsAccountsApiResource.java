@@ -345,7 +345,10 @@ public class SavingsAccountsApiResource {
             final CommandWrapper commandRequest = builder.unassignSavingsOfficer(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
-        } else if (is(commandParam, SavingsApiConstants.COMMAND_BLOCK_DEBIT)) {
+        } else if (is(commandParam, "applyOverdraft")) {
+            final CommandWrapper commandRequest = builder.savingsAccountApplyOverdraft(accountId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }else if (is(commandParam, SavingsApiConstants.COMMAND_BLOCK_DEBIT)) {
             final CommandWrapper commandRequest = builder.blockDebitsFromSavingsAccount(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, SavingsApiConstants.COMMAND_UNBLOCK_DEBIT)) {
@@ -431,4 +434,5 @@ public class SavingsAccountsApiResource {
                 fileDetail,locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
+
 }

@@ -412,7 +412,19 @@ public class SavingsAccountDataValidator {
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
-    private void validateOverdraftParams(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
+    public void validateApplyOverdraftParams( final String json) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                SavingsAccountConstant.SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS);
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        validateOverdraftParams( baseDataValidator,  element);
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+    public void validateOverdraftParams(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
         if (this.fromApiJsonHelper.parameterExists(allowOverdraftParamName, element)) {
             final Boolean allowOverdraft = this.fromApiJsonHelper.extractBooleanNamed(allowOverdraftParamName, element);
             baseDataValidator.reset().parameter(allowOverdraftParamName).value(allowOverdraft).ignoreIfNull().validateForBooleanValue();

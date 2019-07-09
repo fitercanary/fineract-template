@@ -19,7 +19,7 @@
 package org.apache.fineract.portfolio.savings.domain;
 
 import java.util.List;
-
+import java.util.Date;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -52,4 +52,7 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
 
 	@Query("select sa from SavingsAccount sa where sa.accountNumber = :accountNumber")
 	SavingsAccount findByAccountNumber(@Param("accountNumber") String accountNumber);
+
+	@Query("select sa from SavingsAccount sa where sa.overdraftStartedOnDate = :date or sa.overdraftClosedOnDate = :date")
+    List<SavingsAccount>findByOverdraftStartDateOrClosedDate(@Param("date") Date date);
 }

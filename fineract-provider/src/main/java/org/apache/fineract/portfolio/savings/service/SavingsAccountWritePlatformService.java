@@ -19,7 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.util.Set;
-
+import java.util.List;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.organisation.office.domain.Office;
@@ -110,4 +110,7 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult releaseAmount(Long savingsId, Long transactionId);
 
     CommandProcessingResult applyOverdraft(Long savingsId, JsonCommand command);
+
+    void startOrCloseSavingsAccountOverdraft(List <SavingsAccount> savingsAccountList);
+
 }

@@ -1657,4 +1657,19 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 				.with(actualChanges) //
 				.build();
 	}
+
+    @Transactional
+    @Override
+   	public void startOrCloseSavingsAccountOverdraft(List <SavingsAccount> savingsAccountList){
+        LocalDate today = LocalDate.now();
+        for(SavingsAccount savingAccount : savingsAccountList){
+            if((today.toDate()).equals(savingAccount.getOverdraftStartedOnDate())){
+                savingAccount.startOverdraft();
+            }
+            else{
+                savingAccount.closeOverdraft();
+            }
+            this.savingAccountRepositoryWrapper.saveAndFlush(savingAccount);
+        }
+    }
 }

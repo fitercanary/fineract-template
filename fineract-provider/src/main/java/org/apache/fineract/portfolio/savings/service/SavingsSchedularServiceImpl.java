@@ -105,4 +105,14 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
 			}
 		}
     }
+
+    @CronTarget(jobName = JobName.CHECK_VALIDITY_OF_OVERDRAFT)
+    @Override
+    public void checkValidityForOverdraft() throws JobExecutionException {
+        LocalDate today = LocalDate.now();
+        final List<SavingsAccount> savingsAccounts = this.savingAccountRepositoryWrapper
+                .findByOverdraftStartDateOrClosedDate(today.toDate());
+        if(savingsAccounts!=null || !savingsAccounts.isEmpty())
+            this.savingsAccountWritePlatformService.startOrCloseOverdraft(savingsAccounts);
+    }
 }

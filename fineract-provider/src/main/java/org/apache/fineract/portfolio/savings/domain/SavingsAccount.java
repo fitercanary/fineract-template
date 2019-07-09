@@ -3074,7 +3074,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return actualChanges;
     }
 
-
     public Integer getSubStatus() {
         return this.sub_status;
     }
@@ -3142,4 +3141,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
 
+    public void startOverdraft(){
+        this.allowOverdraft = true;
+    }
+
+    public void closeOverdraft(){
+        this.allowOverdraft = false;
+    }
 }

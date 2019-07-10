@@ -47,6 +47,7 @@ public class ClientPersonConstants {
     public static final int IS_ACTIVE_ADDRESS_COL=25;//Z
     public static final int WARNING_COL = 26;//AA
     public static final int STATUS_COL = 27;//AB
+    public static final int MOTHERS_MAIDEN_NAME_COL=28;//AC
     public static final int RELATIONAL_OFFICE_NAME_COL = 35;//AJ
     public static final int RELATIONAL_OFFICE_OPENING_DATE_COL = 36;//AK
     public static final int LOOKUP_GENDER_COL = 37;//AL

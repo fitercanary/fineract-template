@@ -113,6 +113,6 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
         final List<SavingsAccount> savingsAccounts = this.savingAccountRepositoryWrapper
                 .findByOverdraftStartDateOrClosedDate(today.toDate());
         if(savingsAccounts!=null || !savingsAccounts.isEmpty())
-            this.savingsAccountWritePlatformService.startOrCloseOverdraft(savingsAccounts);
+            this.savingsAccountWritePlatformService.startOrCloseSavingsAccountOverdraft(savingsAccounts);
     }
 }

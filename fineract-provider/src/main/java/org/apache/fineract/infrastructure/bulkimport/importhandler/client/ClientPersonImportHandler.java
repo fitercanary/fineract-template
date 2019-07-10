@@ -94,6 +94,9 @@ public class ClientPersonImportHandler implements ImportHandler {
 			activationDate = submittedOn;
 		}
 		String mobileNo = ImportHandlerUtils.readAsString(ClientPersonConstants.MOBILE_NO_COL, row);
+
+		String mothersMaidenName = ImportHandlerUtils.readAsString(ClientPersonConstants.MOTHERS_MAIDEN_NAME_COL, row);
+
 		LocalDate dob = ImportHandlerUtils.readAsDate(ClientPersonConstants.DOB_COL, row);
 
 		String clientType = ImportHandlerUtils.readAsString(ClientPersonConstants.CLIENT_TYPE_COL, row);
@@ -157,7 +160,7 @@ public class ClientPersonImportHandler implements ImportHandler {
 					city, postalCode, isActiveAddress, stateProvinceId, countryId);
 		}
 		return ClientData.importClientPersonInstance(legalFormId, row.getRowNum(), firstName, lastName, middleName, submittedOn, activationDate, active, externalId,
-				officeId, staffId, mobileNo, dob, clientTypeId, genderId, clientClassicationId, isStaff, addressDataObj, locale, dateFormat);
+				officeId, staffId, mobileNo,mothersMaidenName, dob, clientTypeId, genderId, clientClassicationId, isStaff, addressDataObj, locale, dateFormat);
 
 	}
 

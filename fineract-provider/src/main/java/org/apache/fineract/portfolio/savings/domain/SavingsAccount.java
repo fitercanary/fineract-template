@@ -3065,12 +3065,17 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.overdraftLimit = overdraftLimit;
         this.nominalAnnualInterestRateOverdraft = nominalAnnualInterestRateOverdraft;
         this.minOverdraftForInterestCalculation = minOverdraftForInterestCalculation;
-        if(overdraftStartedOnDate!=null)
-        this.overdraftStartedOnDate = overdraftStartedOnDate.toDate();
+        if(overdraftStartedOnDate!=null) {
+            this.overdraftStartedOnDate = overdraftStartedOnDate.toDate();
+        }else{
+            this.overdraftStartedOnDate = null;
+        }
 
-        if(overdraftClosedOnDate!=null)
-        this.overdraftClosedOnDate = overdraftClosedOnDate.toDate();
-
+        if(overdraftClosedOnDate!=null) {
+            this.overdraftClosedOnDate = overdraftClosedOnDate.toDate();
+        }else{
+            this.overdraftClosedOnDate = null;
+        }
         return actualChanges;
     }
 

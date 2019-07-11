@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountDateException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
@@ -100,7 +101,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
@@ -123,7 +123,6 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdraw
 
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
-
 	private final PlatformSecurityContext context;
 	private final SavingsAccountDataValidator fromApiJsonDeserializer;
 	private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
@@ -1635,6 +1634,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
 		this.context.authenticatedUser();
 		this.fromApiJsonDeserializer.validateApplyOverdraftParams(command.json());
+		validateOverdraftInputDates(command);
 		final SavingsAccount savingsForUpdate = this.savingAccountRepositoryWrapper.findOneWithNotFoundDetection(savingsAccountId);
 
 		final Boolean allowOverdraft = command.booleanObjectValueOfParameterNamed("allowOverdraft");
@@ -1672,4 +1672,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             this.savingAccountRepositoryWrapper.saveAndFlush(savingAccount);
         }
     }
+	private void validateOverdraftInputDates(final JsonCommand command) {
+		final LocalDate startDate = command.localDateValueOfParameterNamed("overdraftStartedOnDate");
+		final LocalDate closeDate = command.localDateValueOfParameterNamed("overdraftClosedOnDate");
+		if (startDate != null && closeDate != null) {
+			if (closeDate.isBefore(startDate)) {
+				throw new SavingsAccountDateException(startDate.toString(), closeDate.toString()); }
+		}
+	}
 }

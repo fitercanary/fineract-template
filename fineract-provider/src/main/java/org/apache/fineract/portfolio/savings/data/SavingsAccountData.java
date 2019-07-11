@@ -67,6 +67,8 @@ public class SavingsAccountData {
     private final BigDecimal minRequiredBalance;
     private final boolean enforceMinRequiredBalance;
     private final BigDecimal minBalanceForInterestCalculation;
+    private final LocalDate overdraftStartedOnDate;
+    private final LocalDate overdraftClosedOnDate;
     private final BigDecimal onHoldFunds;
     private final boolean withHoldTax;
     private final TaxGroupData taxGroup;
@@ -187,6 +189,8 @@ public class SavingsAccountData {
         this.annualFee = null;
         this.nominalAnnualInterestRateOverdraft = null;
         this.minOverdraftForInterestCalculation = null;
+        this.overdraftStartedOnDate=null;
+        this.overdraftClosedOnDate=null;
         this.datatables = null;
         this.productId = productId;
         this.dateFormat=dateFormat;
@@ -308,6 +312,8 @@ public class SavingsAccountData {
         this.annualFee = null;
         this.nominalAnnualInterestRateOverdraft = null;
         this.minOverdraftForInterestCalculation = null;
+        this.overdraftStartedOnDate=null;
+        this.overdraftClosedOnDate=null;
         this.datatables = null;
         this.productId = productId;
         this.dateFormat= dateFormat;
@@ -333,7 +339,8 @@ public class SavingsAccountData {
             final BigDecimal overdraftLimit, final BigDecimal minRequiredBalance,
             final boolean enforceMinRequiredBalance, final BigDecimal minBalanceForInterestCalculation,
             final BigDecimal onHoldFunds, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, 
+            final BigDecimal minOverdraftForInterestCalculation, final LocalDate overdraftStartedOnDate, final LocalDate overdraftClosedOnDate,
+                                              final boolean withHoldTax, final TaxGroupData taxGroup,
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
             final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold) {
 
@@ -349,7 +356,7 @@ public class SavingsAccountData {
         final Collection<SavingsAccountTransactionData> transactions = null;
         final Collection<SavingsAccountChargeData> charges = null;
         final Collection<ChargeData> chargeOptions = null;
-
+/*
         return new SavingsAccountData(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, interestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -357,8 +364,18 @@ public class SavingsAccountData {
                 productOptions, fieldOfficerOptions, interestCompoundingPeriodTypeOptions,
                 interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
+                minRequiredBalance,overdraftStartedOnDate,overdraftClosedOnDate, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate, overdraftClosedOnDate, withHoldTax, taxGroup,
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);*/
+        return new SavingsAccountData (id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
+                productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, interestRate,
+                interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
+                minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, transactions,
+                productOptions, fieldOfficerOptions, interestCompoundingPeriodTypeOptions,
+                interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
+                lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,overdraftStartedOnDate,overdraftClosedOnDate, withHoldTax, taxGroup,
                 lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
     }
 
@@ -394,6 +411,8 @@ public class SavingsAccountData {
         final BigDecimal overdraftLimit = null;
         final BigDecimal nominalAnnualInterestRateOverdraft = null;
         final BigDecimal minOverdraftForInterestCalculation = null;
+        final LocalDate overdraftStartedOnDate =null;
+        final LocalDate overdraftClosedOnDate=null;
         final BigDecimal minRequiredBalance = null;
         final boolean enforceMinRequiredBalance = false;
         final BigDecimal minBalanceForInterestCalculation = null;
@@ -431,7 +450,7 @@ public class SavingsAccountData {
                 interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,overdraftStartedOnDate,overdraftClosedOnDate, withHoldTax, taxGroup,
                 lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
     }
 
@@ -465,6 +484,8 @@ public class SavingsAccountData {
         final BigDecimal overdraftLimit = null;
         final BigDecimal nominalAnnualInterestRateOverdraft = null;
         final BigDecimal minOverdraftForInterestCalculation = null;
+        final LocalDate overdraftStartedOnDate=null;
+        final LocalDate overdraftClosedOnDate=null;
         final BigDecimal minRequiredBalance = null;
         final boolean enforceMinRequiredBalance = false;
         final BigDecimal minBalanceForInterestCalculation = null;
@@ -502,7 +523,7 @@ public class SavingsAccountData {
                 interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate,  overdraftClosedOnDate, withHoldTax, taxGroup,
                 lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
     }
 
@@ -537,7 +558,7 @@ public class SavingsAccountData {
                 template.lockinPeriodFrequencyTypeOptions, template.withdrawalFeeTypeOptions, charges, template.chargeOptions, account.allowOverdraft,
                 account.overdraftLimit, account.minRequiredBalance, account.enforceMinRequiredBalance,
                 account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
-                account.minOverdraftForInterestCalculation, account.withHoldTax, account.taxGroup, 
+                account.minOverdraftForInterestCalculation, account.overdraftStartedOnDate, account.overdraftClosedOnDate, account.withHoldTax, account.taxGroup,
                 account.lastActiveTransactionDate, account.isDormancyTrackingActive, account.daysToInactive, 
                 account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold);
     }
@@ -563,7 +584,7 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, account.allowOverdraft,
                 account.overdraftLimit, account.minRequiredBalance, account.enforceMinRequiredBalance,
                 account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
-                account.minOverdraftForInterestCalculation, account.withHoldTax, account.taxGroup, account.lastActiveTransactionDate, 
+                account.minOverdraftForInterestCalculation,  account.overdraftStartedOnDate, account.overdraftClosedOnDate, account.withHoldTax, account.taxGroup, account.lastActiveTransactionDate,
                 account.isDormancyTrackingActive, account.daysToInactive, account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold);
     }
 
@@ -599,6 +620,8 @@ public class SavingsAccountData {
         final BigDecimal overdraftLimit = null;
         final BigDecimal nominalAnnualInterestRateOverdraft = null;
         final BigDecimal minOverdraftForInterestCalculation = null;
+        final LocalDate overdraftStartedOnDate=null;
+        final LocalDate overdraftClosedOnDate=null;
         final BigDecimal minRequiredBalance = null;
         final boolean enforceMinRequiredBalance = false;
         final BigDecimal minBalanceForInterestCalculation = null;
@@ -636,7 +659,7 @@ public class SavingsAccountData {
                 interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,  overdraftStartedOnDate, overdraftClosedOnDate, withHoldTax, taxGroup,
                 lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
     }
 
@@ -659,7 +682,7 @@ public class SavingsAccountData {
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal minRequiredBalance,
             final boolean enforceMinRequiredBalance, final BigDecimal minBalanceForInterestCalculation,
             final BigDecimal onHoldFunds, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, 
+            final BigDecimal minOverdraftForInterestCalculation,   final LocalDate overdraftStartedOnDate, final LocalDate overdraftClosedOnDate, final boolean withHoldTax, final TaxGroupData taxGroup,
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
             final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold) {
         this.id = id;
@@ -716,6 +739,8 @@ public class SavingsAccountData {
         this.overdraftLimit = overdraftLimit;
         this.nominalAnnualInterestRateOverdraft = nominalAnnualInterestRateOverdraft;
         this.minOverdraftForInterestCalculation = minOverdraftForInterestCalculation;
+        this.overdraftStartedOnDate=overdraftStartedOnDate;
+        this.overdraftClosedOnDate=overdraftClosedOnDate;
         this.minRequiredBalance = minRequiredBalance;
         this.enforceMinRequiredBalance = enforceMinRequiredBalance;
         this.minBalanceForInterestCalculation = minBalanceForInterestCalculation;

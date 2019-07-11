@@ -117,9 +117,6 @@ public class EmailCampaign extends AbstractPersistableCustom<Long> {
     @Column(name="is_visible",nullable = true)
     private boolean isVisible;
 
-    @Column(name = "previous_run_status", nullable = true)
-    private String previousRunStatus;
-
     @Column(name = "previous_run_error_log", nullable = true)
     private String previousRunErrorLog;
 

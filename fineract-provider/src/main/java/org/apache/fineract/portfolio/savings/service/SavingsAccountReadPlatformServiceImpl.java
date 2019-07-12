@@ -1133,8 +1133,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			sqlBuilder.append("sp.overdraft_limit as overdraftLimit, ");
 			sqlBuilder.append("sp.nominal_annual_interest_rate_overdraft as nominalAnnualInterestRateOverdraft, ");
 			sqlBuilder.append("sp.min_overdraft_for_interest_calculation as minOverdraftForInterestCalculation, ");
-			sqlBuilder.append("sp.overdraft_startedon_date as overdraftStartedOnDate, ");
-			sqlBuilder.append("sp.overdraft_closedon_date as overdraftClosedOnDate, ");
+		/*	sqlBuilder.append("sp.overdraft_startedon_date as overdraftStartedOnDate, ");
+			sqlBuilder.append("sp.overdraft_closedon_date as overdraftClosedOnDate, ");*/
 			sqlBuilder.append("sp.withhold_tax as withHoldTax,");
 			sqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName, ");
 
@@ -1213,8 +1213,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 					"nominalAnnualInterestRateOverdraft");
 			final BigDecimal minOverdraftForInterestCalculation = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,
 					"minOverdraftForInterestCalculation");
-			final LocalDate overdraftStartedOnDate = JdbcSupport.getLocalDate(rs, "overdraftStartedOnDate");
-			final LocalDate  overdraftClosedOnDate= JdbcSupport.getLocalDate(rs, "overdraftClosedOnDate");
+	/*		final LocalDate overdraftStartedOnDate = JdbcSupport.getLocalDate(rs, "overdraftStartedOnDate");
+			final LocalDate  overdraftClosedOnDate= JdbcSupport.getLocalDate(rs, "overdraftClosedOnDate");*/
 
 			final BigDecimal minRequiredBalance = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "minRequiredBalance");
 			final boolean enforceMinRequiredBalance = rs.getBoolean("enforceMinRequiredBalance");
@@ -1278,7 +1278,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 					nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
 					interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
 					summary, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
-					minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,overdraftStartedOnDate, overdraftClosedOnDate,withHoldTax,
+					minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,null, null,withHoldTax,
 					taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
 		}
 	}

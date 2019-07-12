@@ -184,10 +184,11 @@ public class Charge extends AbstractPersistableCustom<Long> {
                         .failWithCodeNoParameterAddedToErrorCode("not.allowed.charge.calculation.type.for.savings");
             }
 
-            if (!(ChargeTimeType.fromInt(getChargeTimeType()).isWithdrawalFee() || ChargeTimeType.fromInt(getChargeTimeType()).isSavingsNoActivityFee())
+            if (!(ChargeTimeType.fromInt(getChargeTimeType()).isWithdrawalFee() || ChargeTimeType.fromInt(getChargeTimeType()).isSavingsNoActivityFee()
+                    || ChargeTimeType.fromInt(getChargeTimeType()).isOverdraftFee())
                     && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfAmount()) {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(this.chargeCalculation)
-                        .failWithCodeNoParameterAddedToErrorCode("savings.charge.calculation.type.percentage.allowed.only.for.withdrawal.or.NoActivity");
+                        .failWithCodeNoParameterAddedToErrorCode("savings.charge.calculation.type.percentage.allowed.only.for.withdrawal.overdraft.or.NoActivity");
             }
 
         } else if (isLoanCharge()) {

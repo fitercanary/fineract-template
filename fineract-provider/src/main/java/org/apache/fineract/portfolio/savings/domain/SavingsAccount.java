@@ -970,12 +970,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final MathContext mc = MathContext.DECIMAL64;
        final BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
        final BigDecimal accountBalance = this.getAccountBalance();
-        int comp = BigDecimal.ZERO.compareTo(accountBalance);
-        if(comp>=0){
+        int compare = BigDecimal.ZERO.compareTo(accountBalance);
+        if(compare>=0){
             overdraftAmount = transactionAmount;
         }else{
-            int comp1 = BigDecimal.ZERO.compareTo(accountBalance.subtract(transactionAmount , mc));
-            if(comp1>=0 ){
+            int compare1 = BigDecimal.ZERO.compareTo(accountBalance.subtract(transactionAmount , mc));
+            if(compare1>=0 ){
                  overdraftAmount= accountBalance.subtract(transactionAmount, mc);
             }
             else{

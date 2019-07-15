@@ -52,7 +52,8 @@ import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeWithoutMandatoryFieldException;
 import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * @author dv6
  * 
@@ -125,6 +126,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     @Temporal(TemporalType.DATE)
     @Column(name = "inactivated_on_date")
     private Date inactivationDate;
+
+
+    private final static Logger logger = LoggerFactory.getLogger(SavingsAccountCharge.class);
+
 
     public static SavingsAccountCharge createNewFromJson(final SavingsAccount savingsAccount, final Charge chargeDefinition,
             final JsonCommand command) {
@@ -221,11 +226,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
 
         final BigDecimal transactionAmount = new BigDecimal(0);
-
+        logger.info("Before populateDerivedFields chargeAmount "+chargeAmount);
         populateDerivedFields(transactionAmount, chargeAmount);
 
         if (this.isWithdrawalFee()
-        		|| this.isSavingsNoActivity()) {
+        		|| this.isSavingsNoActivity()|| this.isOverdraftFee()) {
             this.amountOutstanding = BigDecimal.ZERO;
         }
 
@@ -246,7 +251,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     }
 
     private void populateDerivedFields(final BigDecimal transactionAmount, final BigDecimal chargeAmount) {
-
+        logger.info("in side populateDerivedFields");
         switch (ChargeCalculationType.fromInt(this.chargeCalculation)) {
             case INVALID:
                 this.percentage = null;
@@ -269,9 +274,13 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             case PERCENT_OF_AMOUNT:
                 this.percentage = chargeAmount;
                 this.amountPercentageAppliedTo = transactionAmount;
+                logger.info("in side PERCENT_OF_AMOUNT percentage "+this.percentage+
+                        "  amountPercentageAppliedTo  "+this.amountPercentageAppliedTo);
                 this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
+                logger.info("in side PERCENT_OF_AMOUNT  calculated amount "+this.amount);
                 this.amountPaid = null;
                 this.amountOutstanding = calculateOutstanding();
+                logger.info("in side PERCENT_OF_AMOUNT  calculated amountOutstanding "+this.amountOutstanding);
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
@@ -537,12 +546,14 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     }
 
     private BigDecimal percentageOf(final BigDecimal value, final BigDecimal percentage) {
-
+        logger.info("inside percentageOf ");
         BigDecimal percentageOf = BigDecimal.ZERO;
 
         if (isGreaterThanZero(value)) {
+            logger.info("inside percentageOf if condition");
             final MathContext mc = new MathContext(8, MoneyHelper.getRoundingMode());
             final BigDecimal multiplicand = percentage.divide(BigDecimal.valueOf(100l), mc);
+            logger.info("inside percentageOf if condition multiplicand "+multiplicand);
             percentageOf = value.multiply(multiplicand, mc);
         }
 
@@ -712,6 +723,19 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         }
         this.amountOutstanding = amountPaybale;
+        return amountPaybale;
+    }
+
+    public BigDecimal updateOverdraftFeeAmount(final BigDecimal overdraftAmount) {
+        BigDecimal amountPaybale = BigDecimal.ZERO;
+        final MathContext mc = MathContext.DECIMAL64;
+        if (ChargeCalculationType.fromInt(this.chargeCalculation).isFlat()) {
+            amountPaybale = this.amount;
+        } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfAmount()) {
+            amountPaybale = overdraftAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
+        }
+        this.amount = amountPaybale.add(this.amount,mc).abs();
+        this.amountOutstanding = amountPaybale.add(this.amountOutstanding,mc).abs();
         return amountPaybale;
     }
 

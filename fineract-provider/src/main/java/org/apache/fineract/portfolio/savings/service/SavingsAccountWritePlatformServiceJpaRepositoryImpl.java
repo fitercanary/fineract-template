@@ -367,8 +367,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 		final boolean isApplyWithdrawFee = true;
 		final boolean isInterestTransfer = false;
 		final boolean isWithdrawBalance = false;
+        final boolean isApplyOverdraftFee = true;
 		final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
-				isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
+				isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance,isApplyOverdraftFee);
 		final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate,
 				transactionAmount, paymentDetail, transactionBooleanValues);
 
@@ -954,11 +955,13 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 		Integer chargeTimeType = chargeDefinition.getChargeTimeType();
 		LocalDate dueAsOfDateParam = command.localDateValueOfParameterNamed(dueAsOfDateParamName);
 		if ((chargeTimeType.equals(ChargeTimeType.WITHDRAWAL_FEE.getValue())
-				|| chargeTimeType.equals(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue())) && dueAsOfDateParam != null) {
+				|| chargeTimeType.equals(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue())
+				|| chargeTimeType.equals(ChargeTimeType.OVERDRAFT_FEE.getValue())) && dueAsOfDateParam != null) {
 			baseDataValidator.reset().parameter(dueAsOfDateParamName).value(dueAsOfDateParam.toString(fmt))
 					.failWithCodeNoParameterAddedToErrorCode(
 							"charge.due.date.is.invalid.for." + ChargeTimeType.fromInt(chargeTimeType).getCode());
 		}
+		//calculation is in this line
 		final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewFromJson(savingsAccount, chargeDefinition, command);
 
 		if (savingsAccountCharge.getDueLocalDate() != null) {

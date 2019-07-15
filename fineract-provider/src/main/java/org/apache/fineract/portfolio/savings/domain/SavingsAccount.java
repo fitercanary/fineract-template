@@ -775,7 +775,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     private BigDecimal getEffectiveOverdraftInterestRateAsFraction(MathContext mc) {
+        if(this.nominalAnnualInterestRateOverdraft!=null)
         return this.nominalAnnualInterestRateOverdraft.divide(BigDecimal.valueOf(100l), mc);
+
+        return BigDecimal.ZERO;
     }
 
     @SuppressWarnings("unused")
@@ -962,7 +965,32 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             startInterestCalculationLocalDate = getActivationLocalDate();
         return startInterestCalculationLocalDate;
     }
+    public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee ,final boolean applyOverdraftFee) {
+        BigDecimal overdraftAmount;
+        final MathContext mc = MathContext.DECIMAL64;
+       final BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
+       final BigDecimal accountBalance = this.getAccountBalance();
+        int compare = BigDecimal.ZERO.compareTo(accountBalance);
+        if(compare>=0){
+            overdraftAmount = transactionAmount;
+        }else{
+            int compare1 = BigDecimal.ZERO.compareTo(accountBalance.subtract(transactionAmount , mc));
+            if(compare1>=0 ){
+                 overdraftAmount= accountBalance.subtract(transactionAmount, mc);
+            }
+            else{
+                overdraftAmount= BigDecimal.ZERO;
+            }
+        }
+        final  BigDecimal overdraftTransactionAmount = overdraftAmount;
+        SavingsAccountTransaction withdraw= withdraw( transactionDTO,  applyWithdrawFee);
 
+        if (applyOverdraftFee) {
+
+            calculateOverdraftFee(overdraftTransactionAmount);
+        }
+        return withdraw;
+    }
     public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee) {
 
         if (!isTransactionsAllowed()) {
@@ -1037,6 +1065,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             if (charge.isWithdrawalFee() && charge.isActive()) {
                 charge.updateWithdralFeeAmount(transactionAmoount);
                 this.payCharge(charge, charge.getAmountOutstanding(this.getCurrency()), transactionDate, user);
+            }
+        }
+    }
+    private void calculateOverdraftFee(final BigDecimal overdraftTransactionAmoount) {
+
+        for (SavingsAccountCharge charge : this.charges()) {
+            if (charge.isOverdraftFee() && charge.isActive()) {
+                charge.updateOverdraftFeeAmount(overdraftTransactionAmoount);
             }
         }
     }
@@ -2456,6 +2492,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
 
+        // Only one overdraft fee is supported per account
+        if (savingsAccountCharge.isOverdraftFee()) {
+            if (this.isOverdraftFeeExists()) {
+                baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("multiple.overdraft.fee.per.account.not.supported");
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
         // Only one annual fee is supported per account
         if (savingsAccountCharge.isAnnualFee()) {
             if (this.isAnnualFeeExists()) {
@@ -2490,7 +2533,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         return false;
     }
-
+    private boolean isOverdraftFeeExists() {
+        for (SavingsAccountCharge charge : this.charges()) {
+            if (charge.isOverdraftFee() ) return true;
+        }
+        return false;
+    }
     private boolean isAnnualFeeExists() {
         for (SavingsAccountCharge charge : this.charges()) {
             if (charge.isAnnualFee()) return true;

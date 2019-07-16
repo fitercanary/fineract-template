@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.client.domain;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -27,6 +28,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.joda.time.LocalDate;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
@@ -59,29 +64,51 @@ public class ClientIdentifier extends AbstractAuditableCustom<AppUser, Long> {
 
     @Column(name = "active")
     private Integer active;
-    
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "issued_date")
+    private Date issueDate;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "expiry_date")
+    private Date expiryDate;
+
     public static ClientIdentifier fromJson(final Client client, final CodeValue documentType, final JsonCommand command) {
         final String documentKey = command.stringValueOfParameterNamed("documentKey");
         final String description = command.stringValueOfParameterNamed("description");
         final String status = command.stringValueOfParameterNamed("status");
-        return new ClientIdentifier(client, documentType, documentKey, status, description);
+        final LocalDate issueDate =command.localDateValueOfParameterNamed("issueDate");
+        final LocalDate expiryDate =command.localDateValueOfParameterNamed("expiryDate");
+
+        return new ClientIdentifier(client, documentType, documentKey, status, description, issueDate, expiryDate);
     }
 
     protected ClientIdentifier() {
         //
     }
 
-    private ClientIdentifier(final Client client, final CodeValue documentType, final String documentKey, final String statusName, String description) {
+    private ClientIdentifier(final Client client, final CodeValue documentType, final String documentKey, final String statusName,final String description,
+    final LocalDate issueDate, final LocalDate expiryDate ) {
         this.client = client;
         this.documentType = documentType;
         this.documentKey = StringUtils.defaultIfEmpty(documentKey, null);
         this.description = StringUtils.defaultIfEmpty(description, null);
         ClientIdentifierStatus statusEnum = ClientIdentifierStatus.valueOf(statusName.toUpperCase());
-        this.active = null;      
+        this.active = null;
+        this.issueDate = null;
+        this.expiryDate = null;
         if(statusEnum.isActive()){
-        	this.active = statusEnum.getValue();
+            this.active = statusEnum.getValue();
         }
         this.status = statusEnum.getValue();
+
+        if(issueDate != null) {
+            this.issueDate = issueDate.toDate();
+        }
+
+        if(expiryDate != null) {
+            this.expiryDate = expiryDate.toDate();
+        }
     }
 
     public void update(final CodeValue documentType) {

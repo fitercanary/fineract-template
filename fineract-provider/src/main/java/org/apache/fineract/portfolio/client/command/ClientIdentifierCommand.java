@@ -20,7 +20,7 @@ package org.apache.fineract.portfolio.client.command;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import org.joda.time.LocalDate;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
@@ -35,12 +35,17 @@ public class ClientIdentifierCommand {
     private final String documentKey;
     private final String description;
 	private final String status;
+    private final LocalDate issueDate;
+    private final LocalDate expiryDate;
 
-    public ClientIdentifierCommand(final Long documentTypeId, final String documentKey, final String statusString, final String description) {
+    public ClientIdentifierCommand(final Long documentTypeId, final String documentKey, final String statusString, final String description,
+                                   final LocalDate issueDate, final LocalDate expiryDate) {
         this.documentTypeId = documentTypeId;
         this.documentKey = documentKey;
         this.status = statusString;
         this.description = description;
+        this.issueDate = issueDate;
+        this.expiryDate = expiryDate;
     }
 
     public Long getDocumentTypeId() {
@@ -55,6 +60,11 @@ public class ClientIdentifierCommand {
         return this.description;
     }
 
+    public LocalDate getIssueDate() { return issueDate; }
+
+    public LocalDate getExpiryDate() { return expiryDate; }
+
+
     public void validateForCreate() {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
 
@@ -62,6 +72,8 @@ public class ClientIdentifierCommand {
 
         baseDataValidator.reset().parameter("documentTypeId").value(this.documentTypeId).notNull().integerGreaterThanZero();
         baseDataValidator.reset().parameter("documentKey").value(this.documentKey).notBlank();
+        baseDataValidator.reset().parameter("issueDate").value(this.issueDate).ignoreIfNull();
+        baseDataValidator.reset().parameter("expiryDate").value(this.expiryDate).ignoreIfNull();
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }

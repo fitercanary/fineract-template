@@ -38,6 +38,7 @@ import org.apache.fineract.portfolio.client.domain.ClientIdentifierRepository;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.exception.ClientIdentifierNotFoundException;
 import org.apache.fineract.portfolio.client.exception.DuplicateClientIdentifierException;
+import org.apache.fineract.portfolio.client.exception.ClientIdentifierDateException;
 import org.apache.fineract.portfolio.client.serialization.ClientIdentifierCommandFromApiJsonDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.joda.time.LocalDate;
 
 @Service
 public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements ClientIdentifierWritePlatformService {
@@ -77,8 +79,9 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
         final ClientIdentifierCommand clientIdentifierCommand = this.clientIdentifierCommandFromApiJsonDeserializer
                 .commandFromApiJson(command.json());
         clientIdentifierCommand.validateForCreate();
-
+        validateClientIdentifierInputDates(command);
         final String documentKey = clientIdentifierCommand.getDocumentKey();
+
         String documentTypeLabel = null;
         Long documentTypeId = null;
         try {
@@ -86,6 +89,7 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
 
             final CodeValue documentType = this.codeValueRepository.findOneWithNotFoundDetection(clientIdentifierCommand
                     .getDocumentTypeId());
+
             documentTypeId = documentType.getId();
             documentTypeLabel = documentType.label();
 
@@ -203,5 +207,13 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
 
     private void logAsErrorUnexpectedDataIntegrityException(final Exception dve) {
         logger.error(dve.getMessage(), dve);
+    }
+    private void validateClientIdentifierInputDates(final JsonCommand command) {
+        final LocalDate issueDate = command.localDateValueOfParameterNamed("issueDate");
+        final LocalDate expiryDate = command.localDateValueOfParameterNamed("expiryDate");
+        if (issueDate != null && expiryDate != null) {
+            if (expiryDate.isBefore(issueDate)) {
+                throw new ClientIdentifierDateException(issueDate.toString(), expiryDate.toString()); }
+        }
     }
 }

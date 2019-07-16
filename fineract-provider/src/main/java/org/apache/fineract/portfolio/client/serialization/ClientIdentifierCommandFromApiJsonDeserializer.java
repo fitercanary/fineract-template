@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+import org.joda.time.LocalDate;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
 import org.apache.fineract.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
@@ -47,7 +47,8 @@ public final class ClientIdentifierCommandFromApiJsonDeserializer extends Abstra
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("documentTypeId", "documentKey","status", "description"));
+    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("documentTypeId", "documentKey","status", "description",
+            "issueDate", "expiryDate", "locale","dateFormat"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -69,6 +70,8 @@ public final class ClientIdentifierCommandFromApiJsonDeserializer extends Abstra
         final String documentKey = this.fromApiJsonHelper.extractStringNamed("documentKey", element);
         final String documentDescription = this.fromApiJsonHelper.extractStringNamed("documentDescription", element);
         final String statusString = this.fromApiJsonHelper.extractStringNamed("status", element);
-        return new ClientIdentifierCommand(documentTypeId, documentKey, statusString, documentDescription);
+        final LocalDate issueDate= this.fromApiJsonHelper.extractLocalDateNamed("issueDate", element);
+         final LocalDate expiryDate= this.fromApiJsonHelper.extractLocalDateNamed("expiryDate", element);
+        return new ClientIdentifierCommand(documentTypeId, documentKey, statusString, documentDescription, issueDate, expiryDate);
     }
 }

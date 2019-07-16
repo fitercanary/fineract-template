@@ -42,48 +42,47 @@ public final class SavingsHelper {
 
     private final CompoundInterestHelper compoundInterestHelper = new CompoundInterestHelper();
 
-    public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
-            final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
-            final Integer financialYearBeginningMonth,List<LocalDate> postInterestAsOn) {
+	public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
+																   final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
+																   final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn) {
 
-        final List<LocalDateInterval> postingPeriods = new ArrayList<>();
-        LocalDate periodStartDate = startInterestCalculationLocalDate;
-        LocalDate periodEndDate = periodStartDate;
-        LocalDate actualPeriodStartDate = periodStartDate;
-             
-        while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
-           
-          final  LocalDate  interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
-                    interestPostingUpToDate, financialYearBeginningMonth);
-           
-            periodEndDate = interestPostingLocalDate.minusDays(1);
-            
-            if (!postInterestAsOn.isEmpty()) {
-                for (LocalDate transactiondate : postInterestAsOn) {
-					if (periodStartDate.isBefore(transactiondate)
-							&& (periodEndDate.isAfter(transactiondate) || periodEndDate
-									.isEqual(transactiondate))) {
-                        periodEndDate = transactiondate.minusDays(1);
-                        actualPeriodStartDate = periodEndDate;
-                        break;
-                    }
-                }
-            }
-            
-            postingPeriods.add(LocalDateInterval.create(periodStartDate, periodEndDate));
-                     
-            if (actualPeriodStartDate.isEqual(periodEndDate))
-            {
-                periodEndDate = actualPeriodStartDate.plusDays(1);
-                periodStartDate = actualPeriodStartDate.plusDays(1);
-            }else{
-            periodEndDate = interestPostingLocalDate;
-            periodStartDate = interestPostingLocalDate;
-            }
-        }
+		final List<LocalDateInterval> postingPeriods = new ArrayList<>();
+		LocalDate periodStartDate = startInterestCalculationLocalDate;
+		LocalDate periodEndDate = periodStartDate;
+		LocalDate actualPeriodStartDate = periodStartDate;
 
-        return postingPeriods;
-    }
+		while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
+
+			final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
+					interestPostingUpToDate, financialYearBeginningMonth);
+
+			periodEndDate = interestPostingLocalDate.minusDays(1);
+
+			if (!postInterestAsOn.isEmpty()) {
+				for (LocalDate transactionDate : postInterestAsOn) {
+					if (periodStartDate.isBefore(transactionDate)
+							&& (periodEndDate.isAfter(transactionDate) || periodEndDate
+							.isEqual(transactionDate))) {
+						periodEndDate = transactionDate.minusDays(1);
+						actualPeriodStartDate = periodEndDate;
+						break;
+					}
+				}
+			}
+
+			postingPeriods.add(LocalDateInterval.create(periodStartDate, periodEndDate));
+
+			if (actualPeriodStartDate.isEqual(periodEndDate)) {
+				periodEndDate = actualPeriodStartDate.plusDays(1);
+				periodStartDate = actualPeriodStartDate.plusDays(1);
+			} else {
+				periodEndDate = interestPostingLocalDate;
+				periodStartDate = interestPostingLocalDate;
+			}
+		}
+
+		return postingPeriods;
+	}
 
     private LocalDate determineInterestPostingPeriodEndDateFrom(final LocalDate periodStartDate,
             final  SavingsPostingInterestPeriodType interestPostingPeriodType, final LocalDate interestPostingUpToDate,

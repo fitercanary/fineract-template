@@ -369,6 +369,10 @@ public class SavingsEnumerations {
                 optionData = new EnumOptionData(SavingsPostingInterestPeriodType.ANNUAL.getValue().longValue(), codePrefix
                         + SavingsPostingInterestPeriodType.ANNUAL.getCode(), "Annually");
             break;
+			case TENURE:
+				optionData = new EnumOptionData(SavingsPostingInterestPeriodType.TENURE.getValue().longValue(), codePrefix
+						+ SavingsPostingInterestPeriodType.TENURE.getCode(), "Per Tenure");
+				break;
         }
 
         return optionData;

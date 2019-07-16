@@ -238,6 +238,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         this.status = status;
     }
 
+	public void setChargePaid() {
+		this.paid = determineIfFullyPaid();
+	}
+
     public void resetPropertiesForRecurringFees() {
         if (isMonthlyFee() || isAnnualFee() || isWeeklyFee()) {
             // FIXME: AA: If charge is percentage of x amount then need to

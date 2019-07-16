@@ -26,10 +26,12 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccou
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -174,8 +176,40 @@ public class RecurringDepositAccount extends SavingsAccount {
         actualChanges.putAll(termAndPreClosureChanges);
         recurringDetail.update(command);
         validateDomainRules(baseDataValidator);
-        super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.MONTHLY,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY }));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.QUATERLY,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.BIANNUAL,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.ANNUAL,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+
+		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+				.fromInt(interestPostingPeriodType);
+		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+				.fromInt(interestCompoundingPeriodType);
+
+		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+
+		}
+		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     private void updateDepositAmount() {
@@ -956,8 +990,40 @@ public class RecurringDepositAccount extends SavingsAccount {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
-        super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.MONTHLY,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.QUATERLY,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.BIANNUAL,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.ANNUAL,
+				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+
+		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+				.fromInt(interestPostingPeriodType);
+		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+				.fromInt(interestCompoundingPeriodType);
+
+		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+
+		}
+		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     private void validateDomainRules(final DataValidatorBuilder baseDataValidator) {

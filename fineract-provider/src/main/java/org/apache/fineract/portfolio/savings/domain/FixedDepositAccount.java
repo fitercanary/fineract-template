@@ -28,6 +28,7 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -40,6 +41,7 @@ import javax.persistence.FetchType;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
+import edu.emory.mathcs.backport.java.util.Arrays;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
@@ -140,8 +142,45 @@ public class FixedDepositAccount extends SavingsAccount {
         final Map<String, Object> termAndPreClosureChanges = accountTermAndPreClosure.update(command, baseDataValidator);
         actualChanges.putAll(termAndPreClosureChanges);
         validateDomainRules(baseDataValidator);
-        super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.MONTHLY,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.QUATERLY,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.BIANNUAL,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.ANNUAL,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.TENURE,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
+
+		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+				.fromInt(interestPostingPeriodType);
+		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+				.fromInt(interestCompoundingPeriodType);
+
+		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+
+		}
+		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     @Override
@@ -156,33 +195,34 @@ public class FixedDepositAccount extends SavingsAccount {
         // default it to nominalAnnualInterst rate. interest chart overrrides
         // this value.
         BigDecimal applicableInterestRate = this.nominalAnnualInterestRate;
+		//Use the chart to calculate interest rate if 0 rate is passed
 		//Moving this logic to the frontend as VFD wants the user entered interest rate to take precedence
-//        if (this.chart != null) {
-//            boolean applyPreMaturePenalty = false;
-//            BigDecimal penalInterest = BigDecimal.ZERO;
-//            LocalDate depositCloseDate = calculateMaturityDate();
-//            if (isPreMatureClosure) {
-//                if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
-//                    applyPreMaturePenalty = true;
-//                    penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
-//                    final PreClosurePenalInterestOnType preClosurePenalInterestOnType = this.accountTermAndPreClosure
-//                            .depositPreClosureDetail().preClosurePenalInterestOnType();
-//                    if (preClosurePenalInterestOnType.isWholeTerm()) {
-//                        depositCloseDate = interestCalculatedUpto();
-//                    } else if (preClosurePenalInterestOnType.isTillPrematureWithdrawal()) {
-//                        depositCloseDate = interestPostingUpToDate;
-//                    }
-//                }
-//            }
-//
-//            final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-//            applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client);
-//
-//            if (applyPreMaturePenalty) {
-//                applicableInterestRate = applicableInterestRate.subtract(penalInterest);
-//                applicableInterestRate = applicableInterestRate.compareTo(BigDecimal.ZERO) == -1 ? BigDecimal.ZERO : applicableInterestRate;
-//            }
-//        }
+        if (this.chart != null && BigDecimal.ZERO.equals(this.nominalAnnualInterestRate)) {
+            boolean applyPreMaturePenalty = false;
+            BigDecimal penalInterest = BigDecimal.ZERO;
+            LocalDate depositCloseDate = calculateMaturityDate();
+            if (isPreMatureClosure) {
+                if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
+                    applyPreMaturePenalty = true;
+                    penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
+                    final PreClosurePenalInterestOnType preClosurePenalInterestOnType = this.accountTermAndPreClosure
+                            .depositPreClosureDetail().preClosurePenalInterestOnType();
+                    if (preClosurePenalInterestOnType.isWholeTerm()) {
+                        depositCloseDate = interestCalculatedUpto();
+                    } else if (preClosurePenalInterestOnType.isTillPrematureWithdrawal()) {
+                        depositCloseDate = interestPostingUpToDate;
+                    }
+                }
+            }
+
+            final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
+            applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client);
+
+            if (applyPreMaturePenalty) {
+                applicableInterestRate = applicableInterestRate.subtract(penalInterest);
+                applicableInterestRate = applicableInterestRate.compareTo(BigDecimal.ZERO) == -1 ? BigDecimal.ZERO : applicableInterestRate;
+            }
+        }
         this.nominalAnnualInterestRate = applicableInterestRate;
 
         return applicableInterestRate.divide(BigDecimal.valueOf(100l), mc);
@@ -299,10 +339,12 @@ public class FixedDepositAccount extends SavingsAccount {
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
         List<LocalDate> postedAsOnTransactionDates= getManualPostingDates();
-        
-        final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
-                accountSubmittedOrActivationDate(), maturityDate, postingPeriodType, financialYearBeginningMonth,
-                postedAsOnTransactionDates);
+
+		final List<LocalDateInterval> postingPeriodIntervals = postingPeriodType.equals(SavingsPostingInterestPeriodType.TENURE) ?
+				Arrays.asList(new Object[]{LocalDateInterval.create(accountSubmittedOrActivationDate(), maturityDate)}) :
+				this.savingsHelper.determineInterestPostingPeriods(
+						accountSubmittedOrActivationDate(), maturityDate, postingPeriodType, financialYearBeginningMonth,
+						postedAsOnTransactionDates);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -691,8 +733,45 @@ public class FixedDepositAccount extends SavingsAccount {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
-        super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.MONTHLY,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.QUATERLY,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.BIANNUAL,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL}));
+
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.ANNUAL,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
+		postingtoCompoundMap.put(
+				SavingsPostingInterestPeriodType.TENURE,
+				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
+						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
+
+		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+				.fromInt(interestPostingPeriodType);
+		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+				.fromInt(interestCompoundingPeriodType);
+
+		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+
+		}
+		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     private void validateDomainRules(final DataValidatorBuilder baseDataValidator) {

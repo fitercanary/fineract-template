@@ -197,7 +197,7 @@ public class FixedDepositAccount extends SavingsAccount {
         BigDecimal applicableInterestRate = this.nominalAnnualInterestRate;
 		//Use the chart to calculate interest rate if 0 rate is passed
 		//Moving this logic to the frontend as VFD wants the user entered interest rate to take precedence
-        if (this.chart != null && BigDecimal.ZERO.equals(this.nominalAnnualInterestRate)) {
+        if (this.chart != null && (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null)) {
             boolean applyPreMaturePenalty = false;
             BigDecimal penalInterest = BigDecimal.ZERO;
             LocalDate depositCloseDate = calculateMaturityDate();

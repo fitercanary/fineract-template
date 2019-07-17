@@ -60,9 +60,9 @@ public class ClientIdentifierCommand {
         return this.description;
     }
 
-    public LocalDate getIssueDate() { return issueDate; }
+    public LocalDate getIssueDate() { return this.issueDate; }
 
-    public LocalDate getExpiryDate() { return expiryDate; }
+    public LocalDate getExpiryDate() { return this.expiryDate; }
 
 
     public void validateForCreate() {

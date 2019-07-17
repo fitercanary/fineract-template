@@ -122,7 +122,8 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
                     TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_MONTHLY,
                     TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_QUARTERLY,
                     TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_BIANUALLY,
-                    TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_ANNUALLY });
+                    TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_ANNUALLY,
+					TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_TENURE});
             DataValidationConstraint interestCalculationConstraint = validationHelper.createExplicitListConstraint(new String[] {
                     TemplatePopulateImportConstants.INTEREST_CAL_DAILY_BALANCE,
                     TemplatePopulateImportConstants.INTEREST_CAL_AVG_BALANCE });

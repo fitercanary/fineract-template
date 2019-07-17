@@ -87,6 +87,7 @@ public class TemplatePopulateImportConstants {
 	public static final String INTEREST_POSTING_PERIOD_QUARTERLY = "Quarterly";
 	public static final String INTEREST_POSTING_PERIOD_BIANUALLY = "BiAnnual";
 	public static final String INTEREST_POSTING_PERIOD_ANNUALLY = "Annually";
+	public static final String INTEREST_POSTING_PERIOD_TENURE = "Per Tenure";
 
 	//InterestCalculation
 	public static final String INTEREST_CAL_DAILY_BALANCE = "Daily Balance";

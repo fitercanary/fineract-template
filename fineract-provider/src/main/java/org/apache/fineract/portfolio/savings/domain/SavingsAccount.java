@@ -493,7 +493,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final LocalDate interestPostingTransactionDate = interestPostingPeriod.dateOfPostingTransaction();
             final Money interestEarnedToBePostedForPeriod = interestPostingPeriod.getInterestEarned();
             
-            if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate)) {
+            if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) ||
+					(this instanceof FixedDepositAccount && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
+					&& interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
                 interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
                 final SavingsAccountTransaction postingTransaction = findInterestPostingTransactionFor(interestPostingTransactionDate);

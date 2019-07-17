@@ -149,8 +149,10 @@ public class FixedDepositImportHandler implements ImportHandler {
                 interestPostingPeriodTypeId = 4L;
             else if (interestPostingPeriodType.equalsIgnoreCase(TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_QUARTERLY))
                 interestPostingPeriodTypeId = 5L;
-            else if (interestPostingPeriodType.equalsIgnoreCase(TemplatePopulateImportConstants.INTEREST_COMPOUNDING_PERIOD_ANNUALLY))
+            else if (interestPostingPeriodType.equalsIgnoreCase(TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_ANNUALLY))
                 interestPostingPeriodTypeId = 7L;
+			else if (interestPostingPeriodType.equalsIgnoreCase(TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_TENURE))
+				interestPostingPeriodTypeId = 8L;
             else if (interestPostingPeriodType.equalsIgnoreCase(TemplatePopulateImportConstants.INTEREST_POSTING_PERIOD_BIANUALLY))
                 interestPostingPeriodTypeId = 6L;
                 interestPostingPeriodTypeEnum = new EnumOptionData(interestPostingPeriodTypeId, null, null);

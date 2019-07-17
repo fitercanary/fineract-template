@@ -143,8 +143,6 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
             DataValidation clientValidation = validationHelper.createValidation(clientNameConstraint, clientNameRange);
             DataValidation productNameValidation = validationHelper.createValidation(productNameConstraint, productNameRange);
             DataValidation fieldOfficerValidation = validationHelper.createValidation(fieldOfficerNameConstraint, fieldOfficerRange);
-            DataValidation nominalAnnualInterestRateValidation = validationHelper.createValidation(interestCompudingPeriodConstraint,
-                    nominalAnnualInterestRateRange);
             DataValidation interestCompudingPeriodValidation = validationHelper.createValidation(interestCompudingPeriodConstraint,
                     interestCompudingPeriodRange);
 
@@ -172,7 +170,6 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
             worksheet.addValidationData(submittedDateValidation);
             worksheet.addValidationData(approvalDateValidation);
             worksheet.addValidationData(activationDateValidation);
-            worksheet.addValidationData(nominalAnnualInterestRateValidation);
             worksheet.addValidationData(interestCompudingPeriodValidation);
             worksheet.addValidationData(interestPostingPeriodValidation);
             worksheet.addValidationData(interestCalculationValidation);

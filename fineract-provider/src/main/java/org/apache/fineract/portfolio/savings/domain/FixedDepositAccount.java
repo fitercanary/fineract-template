@@ -910,6 +910,6 @@ public class FixedDepositAccount extends SavingsAccount {
     @Override
     public void loadLazyCollections() {
     	super.loadLazyCollections();
-    	this.chart.getId() ;
+    	this.chart.getId();
     }
 }

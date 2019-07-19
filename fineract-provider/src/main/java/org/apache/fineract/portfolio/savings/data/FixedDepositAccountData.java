@@ -78,20 +78,20 @@ public class FixedDepositAccountData extends DepositAccountData {
     private Long depositPeriodFrequencyId;
 
     public static FixedDepositAccountData importInstance(Long clientId,Long productId,Long fieldOfficerId,LocalDate submittedOnDate,
-            EnumOptionData interestCompoundingPeriodTypeEnum,EnumOptionData interestPostingPeriodTypeEnum,
+            BigDecimal nominalAnnualInterestRate, EnumOptionData interestCompoundingPeriodTypeEnum,EnumOptionData interestPostingPeriodTypeEnum,
             EnumOptionData interestCalculationTypeEnum,EnumOptionData interestCalculationDaysInYearTypeEnum,
             Integer lockinPeriodFrequency,EnumOptionData lockinPeriodFrequencyTypeEnum,BigDecimal depositAmount,
             Integer depositPeriod,Long depositPeriodFrequencyId,String externalId,
             Collection<SavingsAccountChargeData> charges,Integer rowIndex,String locale,String dateFormat){
 
-        return new FixedDepositAccountData(clientId, productId, fieldOfficerId, submittedOnDate,
+        return new FixedDepositAccountData(clientId, productId, fieldOfficerId, submittedOnDate, nominalAnnualInterestRate,
                 interestCompoundingPeriodTypeEnum, interestPostingPeriodTypeEnum, interestCalculationTypeEnum,
                 interestCalculationDaysInYearTypeEnum, lockinPeriodFrequency, lockinPeriodFrequencyTypeEnum,
                 depositAmount, depositPeriod, depositPeriodFrequencyId, externalId, charges,rowIndex,locale,dateFormat);
     }
 
     private FixedDepositAccountData(Long clientId,Long productId,Long fieldofficerId,LocalDate submittedOnDate,
-            EnumOptionData interestCompoundingPeriodType,EnumOptionData interestPostingPeriodType,
+			BigDecimal nominalAnnualInterestRate, EnumOptionData interestCompoundingPeriodType,EnumOptionData interestPostingPeriodType,
             EnumOptionData interestCalculationType,EnumOptionData interestCalculationDaysInYearType,
             Integer lockinPeriodFrequency,EnumOptionData lockinPeriodFrequencyType,BigDecimal depositAmount,
             Integer depositPeriod,Long depositPeriodFrequencyId,String externalId,
@@ -127,6 +127,7 @@ public class FixedDepositAccountData extends DepositAccountData {
         this.locale= locale;
         this.submittedOnDate = submittedOnDate;
         this.depositPeriodFrequencyId = depositPeriodFrequencyId;
+		this.nominalAnnualInterestRate = nominalAnnualInterestRate;
     }
 
     public Integer getRowIndex() {

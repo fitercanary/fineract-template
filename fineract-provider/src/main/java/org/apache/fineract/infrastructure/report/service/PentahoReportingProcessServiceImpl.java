@@ -178,10 +178,10 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
              */
 			for (final ParameterDefinitionEntry paramDefEntry : paramsDefinition.getParameterDefinitions()) {
 				final String paramName = paramDefEntry.getName();
+				final String pValue = queryParams.get(paramName);
 				if (!((paramName.equals("tenantUrl")) || (paramName.equals("userhierarchy") || (paramName.equals("username")) || (paramName
-						.equals("password") || (paramName.equals("userid")))))) {
+						.equals("password") || (paramName.equals("userid")))) || (StringUtils.isBlank(pValue) && (paramName.equals("startDate") || paramName.equals("endDate"))))) {
 					logger.info("paramName:" + paramName);
-					final String pValue = queryParams.get(paramName);
 					if (StringUtils.isBlank(pValue)) {
 						throw new PlatformDataIntegrityException("error.msg.reporting.error",
 								"Pentaho Parameter: " + paramName + " - not Provided");
@@ -199,7 +199,6 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 						rptParamValues.put(paramName, pValue);
 					}
 				}
-
 			}
 
 			// tenant database name and current user's office hierarchy

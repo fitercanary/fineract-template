@@ -19,7 +19,7 @@
 package org.apache.fineract.portfolio.client.data;
 
 import java.util.Collection;
-
+import org.joda.time.LocalDate;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 
@@ -34,31 +34,34 @@ public class ClientIdentifierData {
     private final String documentKey;
     private final String description;
     private final String status;
+    private final LocalDate issueDate;
+    private final LocalDate expiryDate;
     @SuppressWarnings("unused")
     private final Collection<CodeValueData> allowedDocumentTypes;
 
     public static ClientIdentifierData singleItem(final Long id, final Long clientId, final CodeValueData documentType,
-            final String documentKey, final String status, final String description) {
-        return new ClientIdentifierData(id, clientId, documentType, documentKey, description, status, null);
+            final String documentKey, final String status, final String description, final LocalDate issueDate, final LocalDate expiryDate) {
+        return new ClientIdentifierData(id, clientId, documentType, documentKey, description, status, null, issueDate, expiryDate);
     }
 
     public static ClientIdentifierData template(final Collection<CodeValueData> codeValues) {
-        return new ClientIdentifierData(null, null, null, null, null, null, codeValues);
+        return new ClientIdentifierData(null, null, null, null, null, null, codeValues, null, null);
     }
 
     public static ClientIdentifierData template(final ClientIdentifierData data, final Collection<CodeValueData> codeValues) {
-        return new ClientIdentifierData(data.id, data.clientId, data.documentType, data.documentKey, data.description, data.status,  codeValues);
+        return new ClientIdentifierData(data.id, data.clientId, data.documentType, data.documentKey, data.description, data.status,  codeValues, data.issueDate, data.expiryDate);
     }
 
     public ClientIdentifierData(final Long id, final Long clientId, final CodeValueData documentType, final String documentKey,
-            final String description, final String status, final Collection<CodeValueData> allowedDocumentTypes) {
+            final String description, final String status, final Collection<CodeValueData> allowedDocumentTypes,final LocalDate issueDate, final LocalDate expiryDate) {
         this.id = id;
-
         this.clientId = clientId;
         this.documentType = documentType;
         this.documentKey = documentKey;
         this.description = description;
         this.allowedDocumentTypes = allowedDocumentTypes;
         this.status = status;
+        this.issueDate = issueDate;
+        this.expiryDate = expiryDate;
     }
 }

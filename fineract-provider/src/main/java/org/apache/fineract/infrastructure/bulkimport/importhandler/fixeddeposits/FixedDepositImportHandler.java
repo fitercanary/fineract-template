@@ -124,6 +124,8 @@ public class FixedDepositImportHandler implements ImportHandler {
         String fieldOfficerName = ImportHandlerUtils.readAsString(FixedDepositConstants.FIELD_OFFICER_NAME_COL, row);
         Long fieldOfficerId = ImportHandlerUtils.getIdByName(workbook.getSheet(TemplatePopulateImportConstants.STAFF_SHEET_NAME), fieldOfficerName);
         LocalDate submittedOnDate = ImportHandlerUtils.readAsDate(FixedDepositConstants.SUBMITTED_ON_DATE_COL, row);
+		Double nominalAnnualInterestRate = ImportHandlerUtils.readAsDouble(FixedDepositConstants.NOMINAL_ANNUAL_INTEREST_RATE_COL, row);
+		BigDecimal interestRate = nominalAnnualInterestRate != null ? BigDecimal.valueOf(nominalAnnualInterestRate) : BigDecimal.ZERO;
         String interestCompoundingPeriodType = ImportHandlerUtils.readAsString(FixedDepositConstants.INTEREST_COMPOUNDING_PERIOD_COL, row);
         Long interestCompoundingPeriodTypeId = null;
         EnumOptionData interestCompoundingPeriodTypeEnum=null;
@@ -244,7 +246,7 @@ public class FixedDepositImportHandler implements ImportHandler {
         String status = ImportHandlerUtils.readAsString(FixedDepositConstants.STATUS_COL, row);
         statuses.add(status);
         Long clientId = ImportHandlerUtils.getIdByName(workbook.getSheet(TemplatePopulateImportConstants.CLIENT_SHEET_NAME), clientName);
-        return FixedDepositAccountData.importInstance (clientId, productId, fieldOfficerId, submittedOnDate,
+        return FixedDepositAccountData.importInstance (clientId, productId, fieldOfficerId, submittedOnDate, interestRate,
                 interestCompoundingPeriodTypeEnum, interestPostingPeriodTypeEnum, interestCalculationTypeEnum,
                 interestCalculationDaysInYearTypeEnum, lockinPeriodFrequency, lockinPeriodFrequencyTypeEnum,
                 depositAmount, depositPeriod, depositPeriodFrequencyId, externalId, charges,row.getRowNum(),locale,dateFormat);

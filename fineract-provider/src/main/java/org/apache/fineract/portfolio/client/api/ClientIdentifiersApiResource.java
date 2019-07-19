@@ -60,7 +60,7 @@ import org.springframework.stereotype.Component;
 public class ClientIdentifiersApiResource {
 
     private static final Set<String> CLIENT_IDENTIFIER_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "clientId",
-            "documentType", "documentKey", "description", "allowedDocumentTypes"));
+            "documentType", "documentKey", "description", "allowedDocumentTypes", "issueDate", "expiryDate"));
 
     private final String resourceNameForPermissions = "CLIENTIDENTIFIER";
 

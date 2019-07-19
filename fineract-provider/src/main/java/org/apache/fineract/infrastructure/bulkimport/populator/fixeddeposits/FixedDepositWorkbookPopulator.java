@@ -77,6 +77,8 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
                     FixedDepositConstants.APPROVED_DATE_COL, FixedDepositConstants.APPROVED_DATE_COL);
             CellRangeAddressList activationDateRange = new CellRangeAddressList(1, SpreadsheetVersion.EXCEL97.getLastRowIndex(),
                     FixedDepositConstants.ACTIVATION_DATE_COL, FixedDepositConstants.ACTIVATION_DATE_COL);
+        CellRangeAddressList nominalAnnualInterestRateRange = new CellRangeAddressList(1, SpreadsheetVersion.EXCEL97.getLastRowIndex(),
+                FixedDepositConstants.NOMINAL_ANNUAL_INTEREST_RATE_COL, FixedDepositConstants.NOMINAL_ANNUAL_INTEREST_RATE_COL);
             CellRangeAddressList interestCompudingPeriodRange = new CellRangeAddressList(1, SpreadsheetVersion.EXCEL97.getLastRowIndex(),
                     FixedDepositConstants.INTEREST_COMPOUNDING_PERIOD_COL, FixedDepositConstants.INTEREST_COMPOUNDING_PERIOD_COL);
             CellRangeAddressList interestPostingPeriodRange = new CellRangeAddressList(1, SpreadsheetVersion.EXCEL97.getLastRowIndex(),
@@ -143,6 +145,8 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
             DataValidation fieldOfficerValidation = validationHelper.createValidation(fieldOfficerNameConstraint, fieldOfficerRange);
             DataValidation interestCompudingPeriodValidation = validationHelper.createValidation(interestCompudingPeriodConstraint,
                     interestCompudingPeriodRange);
+
+
             DataValidation interestPostingPeriodValidation = validationHelper.createValidation(interestPostingPeriodConstraint,
                     interestPostingPeriodRange);
             DataValidation interestCalculationValidation = validationHelper.createValidation(interestCalculationConstraint,
@@ -214,6 +218,8 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
         // Minimum Deposit, Lockin Period, Lockin Period Frequency
         // Names for each product
         for (Integer i = 0; i < products.size(); i++) {
+
+            Name nominalAnnualInterestRateName = savingsWorkbook.createName();
             Name interestCompoundingPeriodName = savingsWorkbook.createName();
             Name interestPostingPeriodName = savingsWorkbook.createName();
             Name interestCalculationName = savingsWorkbook.createName();
@@ -227,7 +233,7 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
 
             FixedDepositProductData product = products.get(i);
             String productName = product.getName().replaceAll("[ ]", "_");
-
+            nominalAnnualInterestRateName.setNameName("Nominal_Annual_Interest_Rate_" + productName);
             interestCompoundingPeriodName.setNameName("Interest_Compouding_" + productName);
             interestPostingPeriodName.setNameName("Interest_Posting_" + productName);
             interestCalculationName.setNameName("Interest_Calculation_" + productName);
@@ -235,6 +241,7 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
             minDepositName.setNameName("Min_Deposit_" + productName);
             maxDepositName.setNameName("Max_Deposit_" + productName);
             depositName.setNameName("Deposit_" + productName);
+            nominalAnnualInterestRateName.setRefersToFormula(TemplatePopulateImportConstants.PRODUCT_SHEET_NAME+"!$E$" + (i + 2));
             interestCompoundingPeriodName.setRefersToFormula(TemplatePopulateImportConstants.PRODUCT_SHEET_NAME+"!$E$" + (i + 2));
             interestPostingPeriodName.setRefersToFormula(TemplatePopulateImportConstants.PRODUCT_SHEET_NAME+"!$F$" + (i + 2));
             interestCalculationName.setRefersToFormula(TemplatePopulateImportConstants.PRODUCT_SHEET_NAME+"!$G$" + (i + 2));
@@ -266,6 +273,8 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
         try {
             for (Integer rowNo = 1; rowNo < 1000; rowNo++) {
                 Row row = worksheet.createRow(rowNo);
+                writeFormula(FixedDepositConstants.NOMINAL_ANNUAL_INTEREST_RATE_COL, row, "IF(ISERROR(INDIRECT(CONCATENATE(\"Interest_Rate_\",$D" + (rowNo + 1)
+                        + "))),\"\",INDIRECT(CONCATENATE(\"Interest_Rate_\",$D" + (rowNo + 1) + ")))");
                 writeFormula(FixedDepositConstants.INTEREST_COMPOUNDING_PERIOD_COL, row, "IF(ISERROR(INDIRECT(CONCATENATE(\"Interest_Compouding_\",$C"
                         + (rowNo + 1) + "))),\"\",INDIRECT(CONCATENATE(\"Interest_Compouding_\",$C" + (rowNo + 1) + ")))");
                 writeFormula(FixedDepositConstants.INTEREST_POSTING_PERIOD_COL, row, "IF(ISERROR(INDIRECT(CONCATENATE(\"Interest_Posting_\",$C" + (rowNo + 1)
@@ -297,6 +306,7 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
         worksheet.setColumnWidth(FixedDepositConstants.SUBMITTED_ON_DATE_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
         worksheet.setColumnWidth(FixedDepositConstants.APPROVED_DATE_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
         worksheet.setColumnWidth(FixedDepositConstants.ACTIVATION_DATE_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
+        worksheet.setColumnWidth(FixedDepositConstants.NOMINAL_ANNUAL_INTEREST_RATE_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
         worksheet.setColumnWidth(FixedDepositConstants.INTEREST_COMPOUNDING_PERIOD_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
         worksheet.setColumnWidth(FixedDepositConstants.INTEREST_POSTING_PERIOD_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
         worksheet.setColumnWidth(FixedDepositConstants.INTEREST_CALCULATION_COL, TemplatePopulateImportConstants.SMALL_COL_SIZE);
@@ -325,6 +335,7 @@ public class FixedDepositWorkbookPopulator extends AbstractWorkbookPopulator {
         writeString(FixedDepositConstants.SUBMITTED_ON_DATE_COL, rowHeader, "Submitted On*");
         writeString(FixedDepositConstants.APPROVED_DATE_COL, rowHeader, "Approved On*");
         writeString(FixedDepositConstants.ACTIVATION_DATE_COL, rowHeader, "Activation Date*");
+        writeString(FixedDepositConstants.NOMINAL_ANNUAL_INTEREST_RATE_COL, rowHeader, "Interest Rate %*");
         writeString(FixedDepositConstants.INTEREST_COMPOUNDING_PERIOD_COL, rowHeader, "Interest Compounding Period*");
         writeString(FixedDepositConstants.INTEREST_POSTING_PERIOD_COL, rowHeader, "Interest Posting Period*");
         writeString(FixedDepositConstants.INTEREST_CALCULATION_COL, rowHeader, "Interest Calculated*");

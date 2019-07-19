@@ -1,5 +1,5 @@
 *.class
-*.jar
+build/libs/*.jar
 *.war
 *.ear
 .gradle

@@ -50,7 +50,7 @@ public class DepositAccountData {
     protected final SavingsAccountStatusEnumData status;
     protected final SavingsAccountApplicationTimelineData timeline;
     protected final CurrencyData currency;
-    protected final BigDecimal nominalAnnualInterestRate;
+    protected BigDecimal nominalAnnualInterestRate;
     protected final EnumOptionData interestCompoundingPeriodType;
     protected final EnumOptionData interestPostingPeriodType;
     protected final EnumOptionData interestCalculationType;

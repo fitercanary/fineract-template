@@ -71,7 +71,7 @@ public final class ClientIdentifierCommandFromApiJsonDeserializer extends Abstra
         final String documentDescription = this.fromApiJsonHelper.extractStringNamed("documentDescription", element);
         final String statusString = this.fromApiJsonHelper.extractStringNamed("status", element);
         final LocalDate issueDate= this.fromApiJsonHelper.extractLocalDateNamed("issueDate", element);
-         final LocalDate expiryDate= this.fromApiJsonHelper.extractLocalDateNamed("expiryDate", element);
+        final LocalDate expiryDate= this.fromApiJsonHelper.extractLocalDateNamed("expiryDate", element);
         return new ClientIdentifierCommand(documentTypeId, documentKey, statusString, documentDescription, issueDate, expiryDate);
     }
 }

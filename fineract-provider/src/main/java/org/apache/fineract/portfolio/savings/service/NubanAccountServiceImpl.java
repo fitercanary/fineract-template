@@ -63,7 +63,7 @@ public class NubanAccountServiceImpl implements NubanAccountService {
 		}
 		//Step2 & 3
 		digit = 10 - (digit % 10);
-		if (digit == 0) digit = 0;
+		if (digit == 10) digit = 0;
 		return serialNumber + digit;
 	}
 }

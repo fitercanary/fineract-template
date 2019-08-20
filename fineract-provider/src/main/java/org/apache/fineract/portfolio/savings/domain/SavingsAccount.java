@@ -620,7 +620,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     protected boolean updateWithHoldTransaction(final BigDecimal amount, final SavingsAccountTransaction withholdTransaction) {
         boolean isTaxAdded = false;
-        if (this.taxGroup != null && amount.compareTo(BigDecimal.ZERO) == 1) {
+        if (this.taxGroup != null && withholdTransaction != null && amount.compareTo(BigDecimal.ZERO) == 1) {
             Map<TaxComponent, BigDecimal> taxSplit = TaxUtils.splitTax(amount, withholdTransaction.transactionLocalDate(),
                     this.taxGroup.getTaxGroupMappings(), amount.scale());
             BigDecimal totalTax = TaxUtils.totalTaxAmount(taxSplit);

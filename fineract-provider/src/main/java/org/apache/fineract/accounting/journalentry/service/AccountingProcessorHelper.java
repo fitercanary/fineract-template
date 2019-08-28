@@ -1180,6 +1180,10 @@ public class AccountingProcessorHelper {
                     accountMapping = paymentChannelSpecificAccountMapping;
                 }
             }
+			if (accountMappingTypeId == CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue()) {
+				accountMapping = this.accountMappingRepository.findProductFeeToFinAccountMapping(savingsProductId,
+						PortfolioProductType.SAVING.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue());
+			}
             glAccount = accountMapping.getGlAccount();
         }
         return glAccount;

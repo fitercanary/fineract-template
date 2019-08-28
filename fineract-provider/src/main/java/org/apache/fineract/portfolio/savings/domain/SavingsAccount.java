@@ -335,6 +335,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "total_savings_amount_on_hold", scale = 6, precision = 19, nullable = true)
     private BigDecimal savingsOnHoldAmount;
+
+	@Column(name = "original_interest_rate", scale = 6, precision = 19)
+	protected BigDecimal originalInterestRate;
+
     protected SavingsAccount() {
         //
     }
@@ -605,7 +609,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     protected boolean createWithHoldTransaction(final BigDecimal amount, final LocalDate date) {
         boolean isTaxAdded = false;
-        if (this.taxGroup != null && amount.compareTo(BigDecimal.ZERO) == 1) {
+        if (this.taxGroup != null && amount != null && amount.compareTo(BigDecimal.ZERO) == 1) {
             Map<TaxComponent, BigDecimal> taxSplit = TaxUtils.splitTax(amount, date, this.taxGroup.getTaxGroupMappings(), amount.scale());
             BigDecimal totalTax = TaxUtils.totalTaxAmount(taxSplit);
             if (totalTax.compareTo(BigDecimal.ZERO) == 1) {

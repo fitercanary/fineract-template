@@ -140,4 +140,7 @@ public final class SavingsAccountSummary {
         return this.totalInterestPosted;
     }
 
+	public BigDecimal getTotalInterestEarned() {
+		return totalInterestEarned;
+	}
 }

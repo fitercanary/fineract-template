@@ -1197,7 +1197,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 	}
 
 	@Transactional
-	private void payCharge(final SavingsAccountCharge savingsAccountCharge, final LocalDate transactionDate, final BigDecimal amountPaid,
+	@Override
+	public void payCharge(final SavingsAccountCharge savingsAccountCharge, final LocalDate transactionDate, final BigDecimal amountPaid,
 						   final DateTimeFormatter formatter, final AppUser user) {
 
 		final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService

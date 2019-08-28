@@ -95,6 +95,10 @@ public class ChargeEnumerations {
             	optionData = new EnumOptionData(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue().longValue(), ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getCode(), 
             			"Saving No Activity Fee");
             break;
+			case FDA_PRE_CLOSURE_FEE:
+				optionData = new EnumOptionData(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue().longValue(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getCode(),
+						"FDA Pre-closure Fee");
+				break;
             default:
                 optionData = new EnumOptionData(ChargeTimeType.INVALID.getValue().longValue(), ChargeTimeType.INVALID.getCode(), "Invalid");
             break;

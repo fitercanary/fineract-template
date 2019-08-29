@@ -17,8 +17,26 @@
 -- under the License.
 --
 
-ALTER TABLE m_transaction_request MODIFY COLUMN id bigint(20) NOT NULL AUTO_INCREMENT;
+-- ALTER TABLE m_transaction_request MODIFY COLUMN id bigint(20) NOT NULL AUTO_INCREMENT;
+--
+-- ALTER TABLE `m_transaction_request` CHANGE transaction_id transaction_id BIGINT(20) NOT NULL;
+--
+-- ALTER TABLE `m_transaction_request` ADD CONSTRAINT fk_savings_transaction FOREIGN KEY (transaction_id) REFERENCES m_savings_account_transaction (id);
 
-ALTER TABLE `m_transaction_request` CHANGE transaction_id transaction_id BIGINT(20) NOT NULL;
-
-ALTER TABLE `m_transaction_request` ADD CONSTRAINT fk_savings_transaction FOREIGN KEY (transaction_id) REFERENCES m_savings_account_transaction (id);
+CREATE TABLE `m_transaction_request` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `del_flag` varchar(255) DEFAULT NULL,
+  `deleted_on` datetime DEFAULT NULL,
+  `version` int(11) NOT NULL,
+  `category` varchar(255) DEFAULT NULL,
+  `image_tag` longtext,
+  `latitude` varchar(255) DEFAULT NULL,
+  `longitude` varchar(255) DEFAULT NULL,
+  `note_image` longtext,
+  `notes` varchar(255) DEFAULT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `transaction_brand_name` varchar(255) DEFAULT NULL,
+  `transaction_id` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_savings_transaction` (`transaction_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=349 DEFAULT CHARSET=latin1;

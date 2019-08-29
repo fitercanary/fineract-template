@@ -158,7 +158,9 @@ public class FixedDepositTransactionWorkbookPopulator extends AbstractWorkbookPo
         //Account Number Named  after Clients
         for(int j = 0; j < clientsWithActiveSavings.size(); j++) {
             Name name = savingsTransactionWorkbook.createName();
-            name.setNameName("Account_" + clientsWithActiveSavings.get(j).replaceAll(" ", "_") + "_" + clientIdsWithActiveSavings.get(j) + "_");
+			String theName = "Account_" + clientsWithActiveSavings.get(j).replaceAll(" ", "_") + "_" + clientIdsWithActiveSavings.get(j) + "_";
+			theName = theName.replaceAll("\\W", "_");
+			name.setNameName(theName);
             name.setRefersToFormula(TemplatePopulateImportConstants.FIXED_DEPOSIT_TRANSACTION_SHEET_NAME+"!$Q$" + clientNameToBeginEndIndexes.get(clientsWithActiveSavings.get(j))[0] + ":$Q$" + clientNameToBeginEndIndexes.get(clientsWithActiveSavings.get(j))[1]);
         }
 

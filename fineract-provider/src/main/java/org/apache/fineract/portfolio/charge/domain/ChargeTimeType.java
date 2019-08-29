@@ -37,7 +37,8 @@ public enum ChargeTimeType {
     SHARE_PURCHASE(14, "chargeTimeType.sharespurchase"), 
     SHARE_REDEEM(15, "chargeTimeType.sharesredeem"),
     
-    SAVINGS_NOACTIVITY_FEE(16,"chargeTimeType.savingsNoActivityFee");
+    SAVINGS_NOACTIVITY_FEE(16,"chargeTimeType.savingsNoActivityFee"),
+	FDA_PRE_CLOSURE_FEE(17, "chargeTimeType.fdaPreclosureFee"); // only for savings
 
     private final Integer value;
     private final String code;
@@ -70,7 +71,7 @@ public enum ChargeTimeType {
         return new Integer[] { ChargeTimeType.SPECIFIED_DUE_DATE.getValue(), ChargeTimeType.SAVINGS_ACTIVATION.getValue(),
                 ChargeTimeType.SAVINGS_CLOSURE.getValue(), ChargeTimeType.WITHDRAWAL_FEE.getValue(), ChargeTimeType.ANNUAL_FEE.getValue(),
                 ChargeTimeType.MONTHLY_FEE.getValue(), ChargeTimeType.OVERDRAFT_FEE.getValue(), ChargeTimeType.WEEKLY_FEE.getValue(),
-                ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue()};
+                ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue()};
     }
 
     public static Object[] validClientValues() {
@@ -133,6 +134,9 @@ public enum ChargeTimeType {
                 case 16:
                 	chargeTimeType = SAVINGS_NOACTIVITY_FEE;
                 break;
+				case 17:
+					chargeTimeType = FDA_PRE_CLOSURE_FEE;
+					break;
                 default:
                     chargeTimeType = INVALID;
                 break;
@@ -185,6 +189,10 @@ public enum ChargeTimeType {
         return this.value.equals(ChargeTimeType.OVERDUE_INSTALLMENT.getValue());
     }
 
+	public boolean isFdaPreclosureFee() {
+		return this.value.equals(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+	}
+
     public boolean isAllowedLoanChargeTime() {
         return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() || isOverdueInstallment() || isTrancheDisbursement();
     }
@@ -195,7 +203,7 @@ public enum ChargeTimeType {
 
     public boolean isAllowedSavingsChargeTime() {
         return isOnSpecifiedDueDate() || isSavingsActivation() || isSavingsClosure() || isWithdrawalFee() || isAnnualFee()
-                || isMonthlyFee() || isWeeklyFee() || isOverdraftFee() || isSavingsNoActivityFee();
+                || isMonthlyFee() || isWeeklyFee() || isOverdraftFee() || isSavingsNoActivityFee() || isFdaPreclosureFee();
     }
 
     public boolean isOverdraftFee() {

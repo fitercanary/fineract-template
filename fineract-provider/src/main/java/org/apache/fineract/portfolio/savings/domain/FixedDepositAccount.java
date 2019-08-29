@@ -192,16 +192,21 @@ public class FixedDepositAccount extends SavingsAccount {
     protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate,
             final boolean isPreMatureClosure) {
 
-        // default it to nominalAnnualInterst rate. interest chart overrrides
+        // default it to nominalAnnualInterest rate. interest chart overrides
         // this value.
         BigDecimal applicableInterestRate = this.nominalAnnualInterestRate;
 		//Use the chart to calculate interest rate if 0 rate is passed
 		//Moving this logic to the frontend as VFD wants the user entered interest rate to take precedence
-        if (this.chart != null && (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null)) {
+        if (this.chart != null && (isPreMatureClosure || (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null))) {
             boolean applyPreMaturePenalty = false;
             BigDecimal penalInterest = BigDecimal.ZERO;
             LocalDate depositCloseDate = calculateMaturityDate();
             if (isPreMatureClosure) {
+				if (this.originalInterestRate == null) {
+					this.originalInterestRate = this.nominalAnnualInterestRate;
+				} else {
+					this.nominalAnnualInterestRate = this.originalInterestRate;
+				}
                 if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
                     applyPreMaturePenalty = true;
                     penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
@@ -216,7 +221,8 @@ public class FixedDepositAccount extends SavingsAccount {
             }
 
             final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-            applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client);
+            applicableInterestRate = (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null) ?
+					this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client) : this.nominalAnnualInterestRate;
 
             if (applyPreMaturePenalty) {
                 applicableInterestRate = applicableInterestRate.subtract(penalInterest);

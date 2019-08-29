@@ -196,7 +196,7 @@ public class SavingsImportHandler implements ImportHandler {
 
 
         Boolean allowOverdraft = ImportHandlerUtils.readAsBoolean(SavingsConstants.ALLOW_OVER_DRAFT_COL, row);
-        BigDecimal overdraftLimit = BigDecimal.valueOf(ImportHandlerUtils.readAsDouble(SavingsConstants.OVER_DRAFT_LIMIT_COL, row));
+        BigDecimal overdraftLimit = allowOverdraft ? BigDecimal.valueOf(ImportHandlerUtils.readAsDouble(SavingsConstants.OVER_DRAFT_LIMIT_COL, row)) : BigDecimal.ZERO;
 
         String charge1 = ImportHandlerUtils.readAsString(SavingsConstants.CHARGE_ID_1, row);
         String charge2 = ImportHandlerUtils.readAsString(SavingsConstants.CHARGE_ID_2, row);

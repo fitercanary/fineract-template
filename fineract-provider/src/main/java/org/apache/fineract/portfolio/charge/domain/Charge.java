@@ -185,7 +185,7 @@ public class Charge extends AbstractPersistableCustom<Long> {
             }
 
             if (!(ChargeTimeType.fromInt(getChargeTimeType()).isWithdrawalFee() || ChargeTimeType.fromInt(getChargeTimeType()).isSavingsNoActivityFee()
-                    || ChargeTimeType.fromInt(getChargeTimeType()).isOverdraftFee())
+                    || ChargeTimeType.fromInt(getChargeTimeType()).isOverdraftFee() || ChargeTimeType.fromInt(getChargeTimeType()).isFdaPreclosureFee())
                     && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfAmount()) {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(this.chargeCalculation)
                         .failWithCodeNoParameterAddedToErrorCode("savings.charge.calculation.type.percentage.allowed.only.for.withdrawal.overdraft.or.NoActivity");

@@ -53,6 +53,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarInstance;
 import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.AccountNumberGenerator;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
@@ -62,6 +63,7 @@ import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.service.NubanAccountService;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -75,6 +77,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
     private final PlatformSecurityContext context;
     private final SavingsAccountRepositoryWrapper savingsAccountRepository;
+	private final SavingsAccountChargeRepository savingsAccountChargeRepository;
     private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
     private final AccountNumberGenerator accountNumberGenerator;
@@ -85,19 +88,21 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
 	private final NubanAccountService nubanAccountService;
+	private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
     public DepositAccountDomainServiceJpa(final PlatformSecurityContext context, final SavingsAccountRepositoryWrapper savingsAccountRepository,
-										  final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+										  SavingsAccountChargeRepository savingsAccountChargeRepository, final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
 										  final JournalEntryWritePlatformService journalEntryWritePlatformService, final AccountNumberGenerator accountNumberGenerator,
 										  final DepositAccountAssembler depositAccountAssembler, final SavingsAccountDomainService savingsAccountDomainService,
 										  final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
 										  final ConfigurationDomainService configurationDomainService,
 										  final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-										  final CalendarInstanceRepository calendarInstanceRepository, NubanAccountService nubanAccountService) {
+										  final CalendarInstanceRepository calendarInstanceRepository, NubanAccountService nubanAccountService, SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
-        this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
+		this.savingsAccountChargeRepository = savingsAccountChargeRepository;
+		this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
         this.accountNumberGenerator = accountNumberGenerator;
         this.depositAccountAssembler = depositAccountAssembler;
@@ -107,6 +112,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
 		this.nubanAccountService = nubanAccountService;
+		this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
 	}
 
     @Transactional
@@ -412,6 +418,15 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
 
+		//Apply pre-closure charge
+		List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+		for(SavingsAccountCharge charge : preclosureCharges) {
+			charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
+			charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
+			charge.setAmountOutstanding(charge.amount());
+			this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
+		}
+
         final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
         DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
 
@@ -433,12 +448,14 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             savingsTransactionId = withdrawal.getId();
         }
 
-      
         account.prematureClosure(user, command, tenantsTodayDate, changes);
 
         this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+
+
+
         return savingsTransactionId;
     }
 

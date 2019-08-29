@@ -33,4 +33,7 @@ public interface SavingsAccountChargeRepository extends JpaRepository<SavingsAcc
 
     @Query("select sac from SavingsAccountCharge sac where sac.dueDate <=:transactionDate and sac.waived = 0 and sac.paid=0 order by sac.dueDate")
     List<SavingsAccountCharge> findPendingCharges(@Param("transactionDate") Date transactionDate);
+
+	@Query("select sac from SavingsAccountCharge sac where sac.savingsAccount.id = :accountId and sac.charge.chargeTimeType = :chargeTimeType")
+	List<SavingsAccountCharge> findPreclosureFeeByAccountId(@Param("accountId") Long accountId, @Param("chargeTimeType") Integer chargeTimeType);
 }

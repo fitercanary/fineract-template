@@ -298,11 +298,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                 this.amountWrittenOff = null;
             break;
             case PERCENT_OF_INTEREST:
-                this.percentage = null;
-                this.amount = null;
-                this.amountPercentageAppliedTo = null;
+                this.percentage = chargeAmount;
+				this.amountPercentageAppliedTo = transactionAmount;
+				this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
                 this.amountPaid = null;
-                this.amountOutstanding = BigDecimal.ZERO;
+                this.amountOutstanding = calculateOutstanding();
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
@@ -501,7 +501,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                 break;
                 case PERCENT_OF_INTEREST:
                     this.percentage = newValue;
-                    this.amount = null;
+                    this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
                     this.amountPercentageAppliedTo = null;
                     this.amountOutstanding = null;
                 break;
@@ -549,7 +549,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return this.amount.subtract(totalAccountedFor);
     }
 
-    private BigDecimal percentageOf(final BigDecimal value, final BigDecimal percentage) {
+    public BigDecimal percentageOf(final BigDecimal value, final BigDecimal percentage) {
         logger.info("inside percentageOf ");
         BigDecimal percentageOf = BigDecimal.ZERO;
 
@@ -568,7 +568,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return this.amount;
     }
 
-    public BigDecimal amoutOutstanding() {
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
+	}
+
+	public BigDecimal amoutOutstanding() {
         return this.amountOutstanding;
     }
 
@@ -874,4 +878,16 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     public boolean canOverriteSavingAccountRules() {
         return !(this.isSavingsActivation() || this.isWithdrawalFee());
     }
+
+	public void setAmountPercentageAppliedTo(BigDecimal amountPercentageAppliedTo) {
+		this.amountPercentageAppliedTo = amountPercentageAppliedTo;
+	}
+
+	public BigDecimal getPercentage() {
+		return percentage;
+	}
+
+	public void setAmountOutstanding(BigDecimal amountOutstanding) {
+		this.amountOutstanding = amountOutstanding;
+	}
 }

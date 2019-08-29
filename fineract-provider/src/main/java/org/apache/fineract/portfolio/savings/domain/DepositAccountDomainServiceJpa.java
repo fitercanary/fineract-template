@@ -418,6 +418,15 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
 
+		//Apply pre-closure charge
+		List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+		for(SavingsAccountCharge charge : preclosureCharges) {
+			charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
+			charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
+			charge.setAmountOutstanding(charge.amount());
+			this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
+		}
+
         final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
         DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
 
@@ -439,14 +448,6 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             savingsTransactionId = withdrawal.getId();
         }
 
-		//Apply pre-closure charge
-		List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
-		for(SavingsAccountCharge charge : preclosureCharges) {
-			charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestEarned());
-			charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestEarned(), charge.getPercentage()));
-			charge.setAmountOutstanding(charge.amount());
-			this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
-		}
         account.prematureClosure(user, command, tenantsTodayDate, changes);
 
         this.savingsAccountRepository.save(account);

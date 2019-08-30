@@ -147,6 +147,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("sp.accounting_type as accountingType, ");
             sqlBuilder.append("sp.min_balance_for_interest_calculation as minBalanceForInterestCalculation, ");
             sqlBuilder.append("sp.withhold_tax as withHoldTax,");
+			sqlBuilder.append("sp.withdrawal_fee_for_transfer as withdrawalFeeForTransfers,");
             sqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName ");
             this.schemaSql = sqlBuilder.toString();
         }
@@ -201,6 +202,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final BigDecimal minBalanceForInterestCalculation = rs.getBigDecimal("minBalanceForInterestCalculation");
 
             final boolean withHoldTax = rs.getBoolean("withHoldTax");
+			final Boolean withdrawalFeeForTransfers = rs.getBoolean("withdrawalFeeForTransfers");
+
             final Long taxGroupId = JdbcSupport.getLong(rs, "taxGroupId");
             final String taxGroupName = rs.getString("taxGroupName");
             TaxGroupData taxGroupData = null;
@@ -208,10 +211,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
                 taxGroupData = TaxGroupData.lookup(taxGroupId, taxGroupName);
             }
 
-            return DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
+			DepositProductData depositProductData = DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation, withHoldTax,
                     taxGroupData);
+			depositProductData.setWithdrawalFeeForTransfers(withdrawalFeeForTransfers);
+			return depositProductData;
         }
     }
 

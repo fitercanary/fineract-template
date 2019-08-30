@@ -412,8 +412,10 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         Long savingsTransactionId = null;
-       
-        
+
+		final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
+		DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
+
         // post interest
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
@@ -421,14 +423,21 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 		//Apply pre-closure charge
 		List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
 		for(SavingsAccountCharge charge : preclosureCharges) {
+			charge.setPercentage(charge.getCharge().getAmount());
 			charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
 			charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
 			charge.setAmountOutstanding(charge.amount());
 			this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
 		}
-
-        final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
-        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
+		Boolean applyWithdrawalFeeForTransfer = account.withdrawalFeeApplicableForTransfer;
+		if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
+			//Apply withdrawal charges
+			List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFeeByAccountId(account.getId(), ChargeTimeType.WITHDRAWAL_FEE.getValue());
+			for (SavingsAccountCharge charge : withdrawalCharges) {
+				charge.setAmountOutstanding(charge.amount());
+				this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
+			}
+		}
 
         if (closureType.isTransferToSavings()) {
             final boolean isExceptionForBalanceCheck = false;
@@ -436,12 +445,14 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
             final SavingsAccount toSavingsAccount = this.depositAccountAssembler.assembleFrom(toSavingsId,
                     DepositAccountType.SAVINGS_DEPOSIT);
+			account.withdrawalFeeApplicableForTransfer = false;
             final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(closedDate, account.getAccountBalance(),
                     PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, locale, fmt, null, null,
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
                     isRegularTransaction, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
-            updateAlreadyPostedTransactions(existingTransactionIds, account);          
+            updateAlreadyPostedTransactions(existingTransactionIds, account);
+			account.withdrawalFeeApplicableForTransfer = applyWithdrawalFeeForTransfer;
         } else {
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
                     paymentDetail, false, isRegularTransaction);

@@ -201,7 +201,7 @@ public class FixedDepositAccountData extends DepositAccountData {
             template = account;
         }
 
-        return new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+		FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -218,6 +218,8 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.depositPeriod, account.depositPeriodFrequency, template.periodFrequencyTypeOptions, account.depositType,
                 account.onAccountClosure, account.onAccountClosureOptions, account.paymentTypeOptions, template.savingsAccounts,
                 linkedAccount, account.transferInterestToSavings, account.withHoldTax, account.taxGroup);
+		fixedDepositAccountData.withdrawalFeeForTransfers = account.withdrawalFeeForTransfers;
+		return fixedDepositAccountData;
     }
 
     public static FixedDepositAccountData withTemplateOptions(final FixedDepositAccountData account,

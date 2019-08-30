@@ -58,7 +58,7 @@ public class DepositAccountData {
     protected final BigDecimal minRequiredOpeningBalance;
     protected final Integer lockinPeriodFrequency;
     protected final EnumOptionData lockinPeriodFrequencyType;
-    protected final boolean withdrawalFeeForTransfers;
+    protected boolean withdrawalFeeForTransfers;
     protected final EnumOptionData depositType;
     protected final BigDecimal minBalanceForInterestCalculation;
     protected final boolean withHoldTax;

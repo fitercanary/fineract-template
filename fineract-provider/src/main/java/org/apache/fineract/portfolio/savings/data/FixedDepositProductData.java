@@ -113,7 +113,7 @@ public class FixedDepositProductData extends DepositProductData {
     }
 
     public static FixedDepositProductData withCharges(final FixedDepositProductData existingProduct, final Collection<ChargeData> charges) {
-        return new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
+		FixedDepositProductData fixedDepositProductData = new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
                 existingProduct.description, existingProduct.currency, existingProduct.nominalAnnualInterestRate,
                 existingProduct.interestCompoundingPeriodType, existingProduct.interestPostingPeriodType,
                 existingProduct.interestCalculationType, existingProduct.interestCalculationDaysInYearType,
@@ -133,6 +133,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions);
+		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
+		return fixedDepositProductData;
     }
 
     /**
@@ -155,7 +157,7 @@ public class FixedDepositProductData extends DepositProductData {
             final Collection<EnumOptionData> preClosurePenalInterestOnTypeOptions,
             final Collection<EnumOptionData> periodFrequencyTypeOptions, final Collection<TaxGroupData> taxGroupOptions) {
 
-        return new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
+		FixedDepositProductData fixedDepositProductData = new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
                 existingProduct.description, existingProduct.currency, existingProduct.nominalAnnualInterestRate,
                 existingProduct.interestCompoundingPeriodType, existingProduct.interestPostingPeriodType,
                 existingProduct.interestCalculationType, existingProduct.interestCalculationDaysInYearType,
@@ -173,6 +175,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.inMultiplesOfDepositTermType, existingProduct.minDepositAmount, existingProduct.depositAmount,
                 existingProduct.maxDepositAmount, periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 taxGroupOptions);
+		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
+		return fixedDepositProductData;
     }
 
     public static FixedDepositProductData withAccountingDetails(final FixedDepositProductData existingProduct,
@@ -194,7 +198,7 @@ public class FixedDepositProductData extends DepositProductData {
         final Collection<ChargeData> chargeOptions = null;
         final Collection<ChargeData> penaltyOptions = null;
 
-        return new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
+		FixedDepositProductData fixedDepositProductData = new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
                 existingProduct.description, existingProduct.currency, existingProduct.nominalAnnualInterestRate,
                 existingProduct.interestCompoundingPeriodType, existingProduct.interestPostingPeriodType,
                 existingProduct.interestCalculationType, existingProduct.interestCalculationDaysInYearType,
@@ -212,6 +216,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions);
+		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
+		return fixedDepositProductData;
     }
 
     public static FixedDepositProductData instance(final DepositProductData depositProductData, final boolean preClosurePenalApplicable,
@@ -244,7 +250,7 @@ public class FixedDepositProductData extends DepositProductData {
         final Collection<EnumOptionData> periodFrequencyTypeOptions = null;
         final Collection<TaxGroupData> taxGroupOptions = null;
 
-        return new FixedDepositProductData(depositProductData.id, depositProductData.name, depositProductData.shortName,
+		FixedDepositProductData fixedDepositProductData = new FixedDepositProductData(depositProductData.id, depositProductData.name, depositProductData.shortName,
                 depositProductData.description, depositProductData.currency, depositProductData.nominalAnnualInterestRate,
                 depositProductData.interestCompoundingPeriodType, depositProductData.interestPostingPeriodType,
                 depositProductData.interestCalculationType, depositProductData.interestCalculationDaysInYearType,
@@ -258,6 +264,8 @@ public class FixedDepositProductData extends DepositProductData {
                 preClosurePenalInterestOnType, preClosurePenalInterestOnTypeOptions, minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount,
                 maxDepositAmount, periodFrequencyTypeOptions, depositProductData.withHoldTax, depositProductData.taxGroup, taxGroupOptions);
+		fixedDepositProductData.setWithdrawalFeeForTransfers(depositProductData.withdrawalFeeForTransfers);
+		return fixedDepositProductData;
     }
 
     public static FixedDepositProductData lookup(final Long id, final String name) {
@@ -327,7 +335,7 @@ public class FixedDepositProductData extends DepositProductData {
 
     public static FixedDepositProductData withInterestChart(final FixedDepositProductData existingProduct,
             final Collection<InterestRateChartData> interestRateCharts) {
-        return new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
+		FixedDepositProductData fixedDepositProductData = new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName,
                 existingProduct.description, existingProduct.currency, existingProduct.nominalAnnualInterestRate,
                 existingProduct.interestCompoundingPeriodType, existingProduct.interestPostingPeriodType,
                 existingProduct.interestCalculationType, existingProduct.interestCalculationDaysInYearType,
@@ -347,6 +355,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions);
+		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
+		return fixedDepositProductData;
 
     }
 

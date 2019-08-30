@@ -216,7 +216,8 @@ public class DepositsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_REFERENCE.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEE_INCOME_ACCOUNT_MAPPING.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(), chartsParamName,
-            SavingsApiConstants.withHoldTaxParamName, SavingsApiConstants.taxGroupIdParamName));
+            SavingsApiConstants.withHoldTaxParamName, SavingsApiConstants.taxGroupIdParamName,
+			SavingsApiConstants.withdrawalFeeForTransfersParamName));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(preClosurePenalApplicableParamName,
             preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName));
@@ -299,7 +300,8 @@ public class DepositsApiConstants {
 					interestCalculationTypeParamName, interestCalculationDaysInYearTypeParamName,
 					lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName, chargesParamName,
 					chartsParamName, depositAmountParamName, depositPeriodParamName, depositPeriodFrequencyIdParamName,
-					savingsAccounts, expectedFirstDepositOnDateParamName, SavingsApiConstants.withHoldTaxParamName));
+					savingsAccounts, expectedFirstDepositOnDateParamName, SavingsApiConstants.withHoldTaxParamName,
+					SavingsApiConstants.withdrawalFeeForTransfersParamName));
 
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_REQUEST_DATA_PARAMETERS = fixedDepositAccountRequestData();
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS = fixedDepositAccountResponseData();

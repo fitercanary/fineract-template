@@ -52,7 +52,7 @@ public class DepositProductData {
     // protected final BigDecimal minRequiredOpeningBalance;
     protected final Integer lockinPeriodFrequency;
     protected final EnumOptionData lockinPeriodFrequencyType;
-    // protected final boolean withdrawalFeeForTransfers;
+   	protected Boolean withdrawalFeeForTransfers;
     protected final BigDecimal minBalanceForInterestCalculation;
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
@@ -455,5 +455,9 @@ public class DepositProductData {
     public EnumOptionData getInterestCompoundingPeriodType() {
         return interestCompoundingPeriodType;
     }
+
+	public void setWithdrawalFeeForTransfers(Boolean withdrawalFeeForTransfers) {
+		this.withdrawalFeeForTransfers = withdrawalFeeForTransfers;
+	}
 }
 

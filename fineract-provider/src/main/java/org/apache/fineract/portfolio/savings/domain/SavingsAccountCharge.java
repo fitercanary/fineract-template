@@ -887,6 +887,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 		return percentage;
 	}
 
+	public void setPercentage(BigDecimal percentage) {
+		this.percentage = percentage;
+	}
+
 	public void setAmountOutstanding(BigDecimal amountOutstanding) {
 		this.amountOutstanding = amountOutstanding;
 	}

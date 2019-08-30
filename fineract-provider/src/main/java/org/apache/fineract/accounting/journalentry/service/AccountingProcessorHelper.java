@@ -831,10 +831,16 @@ public class AccountingProcessorHelper {
             savingsAccountTransaction = this.savingsAccountTransactionRepository.findOne(id);
             modifiedTransactionId = SAVINGS_TRANSACTION_IDENTIFIER + transactionId;
         }
-        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
-                manualEntry, transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
-                null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
-        this.glJournalEntryRepository.saveAndFlush(journalEntry);
+		List<JournalEntry> journalEntries = new ArrayList<>();
+		if (StringUtils.isNumeric(transactionId)) {
+			journalEntries = this.glJournalEntryRepository.findJournalEntriesBySavingsTransactionId(Long.parseLong(transactionId), account.getId());
+		}
+		if (journalEntries.isEmpty()) {
+			final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
+					manualEntry, transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
+					null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
+			this.glJournalEntryRepository.saveAndFlush(journalEntry);
+		}
     }
 
     private void createCreditJournalEntryForLoan(final Office office, final String currencyCode, final GLAccount account,
@@ -921,10 +927,16 @@ public class AccountingProcessorHelper {
             savingsAccountTransaction = this.savingsAccountTransactionRepository.findOne(id);
             modifiedTransactionId = SAVINGS_TRANSACTION_IDENTIFIER + transactionId;
         }
-        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
-                manualEntry, transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
-                null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
-        this.glJournalEntryRepository.saveAndFlush(journalEntry);
+		List<JournalEntry> journalEntries = new ArrayList<>();
+		if (StringUtils.isNumeric(transactionId)) {
+			journalEntries = this.glJournalEntryRepository.findJournalEntriesBySavingsTransactionId(Long.parseLong(transactionId), account.getId());
+		}
+		if (journalEntries.isEmpty()) {
+			final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
+					manualEntry, transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
+					null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
+			this.glJournalEntryRepository.saveAndFlush(journalEntry);
+		}
     }
 
     private void createDebitJournalEntryForClientPayments(final Office office, final String currencyCode, final GLAccount account,
@@ -1184,6 +1196,7 @@ public class AccountingProcessorHelper {
 				accountMapping = this.accountMappingRepository.findProductFeeToFinAccountMapping(savingsProductId,
 						PortfolioProductType.SAVING.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue());
 			}
+			if (accountMapping != null)
             glAccount = accountMapping.getGlAccount();
         }
         return glAccount;

@@ -190,10 +190,12 @@ public class SavingsTransactionsWorkbookPopulator extends AbstractWorkbookPopula
             writeString(TransactionConstants.LOOKUP_PRODUCT_COL, row, savingsAccount.getSavingsProductName());
             if(savingsAccount.getMinRequiredOpeningBalance() != null)
                 writeBigDecimal(TransactionConstants.LOOKUP_OPENING_BALANCE_COL, row, savingsAccount.getMinRequiredOpeningBalance());
-            writeDate(TransactionConstants.LOOKUP_SAVINGS_ACTIVATION_DATE_COL, row,"" +
-                    savingsAccount.getTimeline().getActivatedOnDate().getDayOfMonth() + "/"
-                    + savingsAccount.getTimeline().getActivatedOnDate().getMonthOfYear() + "/"
-                    + savingsAccount.getTimeline().getActivatedOnDate().getYear() , dateCellStyle,dateFormat);
+			if (savingsAccount.getTimeline() != null && savingsAccount.getTimeline().getActivatedOnDate() != null) {
+				writeDate(TransactionConstants.LOOKUP_SAVINGS_ACTIVATION_DATE_COL, row, "" +
+						savingsAccount.getTimeline().getActivatedOnDate().getDayOfMonth() + "/"
+						+ savingsAccount.getTimeline().getActivatedOnDate().getMonthOfYear() + "/"
+						+ savingsAccount.getTimeline().getActivatedOnDate().getYear(), dateCellStyle, dateFormat);
+			}
         }
     }
 

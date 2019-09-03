@@ -1192,9 +1192,12 @@ public class AccountingProcessorHelper {
                     accountMapping = paymentChannelSpecificAccountMapping;
                 }
             }
-			if (accountMappingTypeId == CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue()) {
-				accountMapping = this.accountMappingRepository.findProductFeeToFinAccountMapping(savingsProductId,
+			if (accountMapping == null && accountMappingTypeId == CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue()) {
+				List<ProductToGLAccountMapping> accountMappings = this.accountMappingRepository.findProductFeeToFinAccountMapping(savingsProductId,
 						PortfolioProductType.SAVING.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue());
+				if (!accountMappings.isEmpty()) {
+					accountMapping = accountMappings.get(0);
+				}
 			}
 			if (accountMapping != null)
             glAccount = accountMapping.getGlAccount();

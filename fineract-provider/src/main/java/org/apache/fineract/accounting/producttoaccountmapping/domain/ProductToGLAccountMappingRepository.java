@@ -39,7 +39,7 @@ public interface ProductToGLAccountMappingRepository extends JpaRepository<Produ
             @Param("financialAccountType") int financialAccountType);
 
 	@Query("select mapping from ProductToGLAccountMapping mapping where mapping.productId =:productId and mapping.productType =:productType and mapping.financialAccountType=:financialAccountType and mapping.paymentType is NULL and mapping.charge is not NULL")
-	ProductToGLAccountMapping findProductFeeToFinAccountMapping(@Param("productId") Long productId, @Param("productType") int productType,
+	List<ProductToGLAccountMapping> findProductFeeToFinAccountMapping(@Param("productId") Long productId, @Param("productType") int productType,
 																 @Param("financialAccountType") int financialAccountType);
 
     /*** The financial Account Type for a fund source will always be an asset (1) ***/

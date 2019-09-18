@@ -759,7 +759,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 	public Collection<SavingsAccountTransactionData> retrieveAllTransactions(final Long savingsId, DepositAccountType depositAccountType) {
 
 		final String sql = "select " + this.transactionsMapper.schema()
-				+ " where sa.id = ? and sa.deposit_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
+				+ " where sa.id = ? and sa.deposit_type_enum = ? order by tr.transaction_date DESC, tr.id DESC";
 
 		return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[]{savingsId, depositAccountType.getValue()});
 	}

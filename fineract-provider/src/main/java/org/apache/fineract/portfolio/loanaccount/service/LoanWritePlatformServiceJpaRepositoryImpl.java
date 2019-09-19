@@ -459,7 +459,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
 
             if (accountAssociations != null) {
-
+				this.deleteStandingInstruction(loan);
                 SavingsAccount linkedSavingsAccount = accountAssociations.linkedSavingsAccount();
 
                 // name is auto-generated
@@ -487,6 +487,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             }
         }
     }
+
+	private void deleteStandingInstruction(Loan loan) {
+		AccountTransferDetails accountTransferDetails = this.accountTransferDetailRepository.findByLoanId(loan.getId());
+		if (accountTransferDetails != null) {
+			this.accountTransferDetailRepository.delete(accountTransferDetails);
+			this.accountTransferDetailRepository.flush();
+		}
+	}
 
     private void updateRecurringCalendarDatesForInterestRecalculation(final Loan loan) {
 

@@ -20,6 +20,12 @@ package org.apache.fineract.portfolio.account.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AccountTransferDetailRepository extends JpaRepository<AccountTransferDetails, Long>,
-        JpaSpecificationExecutor<AccountTransferDetails> {}
+        JpaSpecificationExecutor<AccountTransferDetails> {
+
+	@Query("SELECT details FROM AccountTransferDetails details WHERE details.toLoanAccount.id = :loanId")
+	AccountTransferDetails findByLoanId(@Param("loanId") Long loanId);
+}

@@ -489,7 +489,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     }
 
 	private void deleteStandingInstruction(Loan loan) {
-		AccountTransferDetails accountTransferDetails = this.accountTransferDetailRepository.findByLoanId(loan.getId());
+		List<AccountTransferDetails> accountTransferDetails = this.accountTransferDetailRepository.findByLoanId(loan.getId());
 		if (accountTransferDetails != null) {
 			this.accountTransferDetailRepository.delete(accountTransferDetails);
 			this.accountTransferDetailRepository.flush();

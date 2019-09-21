@@ -23,9 +23,11 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface AccountTransferDetailRepository extends JpaRepository<AccountTransferDetails, Long>,
         JpaSpecificationExecutor<AccountTransferDetails> {
 
 	@Query("SELECT details FROM AccountTransferDetails details WHERE details.toLoanAccount.id = :loanId")
-	AccountTransferDetails findByLoanId(@Param("loanId") Long loanId);
+	List<AccountTransferDetails> findByLoanId(@Param("loanId") Long loanId);
 }

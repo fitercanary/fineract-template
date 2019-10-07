@@ -835,13 +835,25 @@ public class AccountingProcessorHelper {
 		if (StringUtils.isNumeric(transactionId)) {
 			journalEntries = this.glJournalEntryRepository.findJournalEntriesBySavingsTransactionId(Long.parseLong(transactionId), account.getId());
 		}
-		if (journalEntries.isEmpty()) {
+		if (!this.amountAlreadyPosted(journalEntries, amount)) {
 			final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
 					manualEntry, transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
 					null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
 			this.glJournalEntryRepository.saveAndFlush(journalEntry);
 		}
     }
+
+	private boolean amountAlreadyPosted(List<JournalEntry> journalEntries, BigDecimal amount) {
+		if (journalEntries.isEmpty()) {
+			return false;
+		}
+		for (JournalEntry journalEntry : journalEntries) {
+			if (journalEntry.getAmount().compareTo(amount) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
 
     private void createCreditJournalEntryForLoan(final Office office, final String currencyCode, final GLAccount account,
             final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount) {
@@ -931,7 +943,7 @@ public class AccountingProcessorHelper {
 		if (StringUtils.isNumeric(transactionId)) {
 			journalEntries = this.glJournalEntryRepository.findJournalEntriesBySavingsTransactionId(Long.parseLong(transactionId), account.getId());
 		}
-		if (journalEntries.isEmpty()) {
+		if (!this.amountAlreadyPosted(journalEntries, amount)) {
 			final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
 					manualEntry, transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
 					null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);

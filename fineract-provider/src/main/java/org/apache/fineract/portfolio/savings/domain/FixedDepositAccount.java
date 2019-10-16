@@ -896,7 +896,7 @@ public class FixedDepositAccount extends SavingsAccount {
 
     @Override
     public boolean allowModify() {
-        return false;
+        return true; // temporarily turn this on for interest posting fix
     }
 
     @Override

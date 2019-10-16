@@ -221,7 +221,11 @@ public final class JsonCommand {
         return this.productId;
     }
 
-    private boolean differenceExistsTime(final LocalDateTime baseValue, final LocalDateTime workingCopyValue) {
+	public Long getSubresourceId() {
+		return subresourceId;
+	}
+
+	private boolean differenceExistsTime(final LocalDateTime baseValue, final LocalDateTime workingCopyValue) {
         boolean differenceExists = false;
 
         if (baseValue != null) {

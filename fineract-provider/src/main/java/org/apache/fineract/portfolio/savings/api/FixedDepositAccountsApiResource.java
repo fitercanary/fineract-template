@@ -197,6 +197,10 @@ public class FixedDepositAccountsApiResource {
         accountTemplate.setActivationCharge(getActivationCharge(accountId));
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
+
+		//Revert interest postings on active FDAs
+		this.depositAccountReadPlatformService.reverseInterestPostingOnActiveFDAs();
+
         return this.toApiJsonSerializer.serialize(settings, accountTemplate,
                 DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }

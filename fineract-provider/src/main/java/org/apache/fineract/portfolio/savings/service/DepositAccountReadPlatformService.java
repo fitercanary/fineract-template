@@ -54,4 +54,6 @@ public interface DepositAccountReadPlatformService {
     Collection<AccountTransferDTO> retrieveDataForInterestTransfer();
 
     Collection<Map<String, Object>> retriveDataForRDScheduleCreation();
+
+	void reverseInterestPostingOnActiveFDAs();
 }

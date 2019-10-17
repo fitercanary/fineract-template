@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -126,27 +125,25 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
     private final CalendarReadPlatformService calendarReadPlatformService;
     private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
-	private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     // allowed column names for sorting the query result
     private final static Set<String> supportedOrderByValues = new HashSet<>(Arrays.asList("id", "accountNumbr",
             "officeId", "officeName"));
 
     @Autowired
     public DepositAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-												 final DepositAccountInterestRateChartReadPlatformService chartReadPlatformService,
-												 final PaginationParametersDataValidator paginationParametersDataValidator,
-												 final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
-												 final DepositProductReadPlatformService depositProductReadPlatformService,
-												 final SavingsDropdownReadPlatformService savingsDropdownReadPlatformService,
-												 final ChargeReadPlatformService chargeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
-												 final DepositsDropdownReadPlatformService depositsDropdownReadPlatformService,
-												 final InterestRateChartReadPlatformService productChartReadPlatformService,
-												 final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-												 final DropdownReadPlatformService dropdownReadPlatformService, final CalendarReadPlatformService calendarReadPlatformService,
-												 PaymentTypeReadPlatformService paymentTypeReadPlatformService, SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
+            final DepositAccountInterestRateChartReadPlatformService chartReadPlatformService,
+            final PaginationParametersDataValidator paginationParametersDataValidator,
+            final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
+            final DepositProductReadPlatformService depositProductReadPlatformService,
+            final SavingsDropdownReadPlatformService savingsDropdownReadPlatformService,
+            final ChargeReadPlatformService chargeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+            final DepositsDropdownReadPlatformService depositsDropdownReadPlatformService,
+            final InterestRateChartReadPlatformService productChartReadPlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final DropdownReadPlatformService dropdownReadPlatformService, final CalendarReadPlatformService calendarReadPlatformService,
+            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
         this.context = context;
-		this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
-		this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.accountChartReadPlatformService = chartReadPlatformService;
         this.paginationParametersDataValidator = paginationParametersDataValidator;
         this.transactionsMapper = new SavingsAccountTransactionsMapper();
@@ -533,46 +530,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                 formatter.print(DateUtils.getLocalDateOfTenant()));
     }
 
-	@Override
-	public void reverseInterestPostingOnActiveFDAs() {
-
-		class TransactionToRevert {
-			Long savingsId;
-			Long transactionId;
-
-			TransactionToRevert(Long savingsId, Long transactionId) {
-				this.savingsId = savingsId;
-				this.transactionId = transactionId;
-			}
-		}
-
-		class TransactionToRevertMapper implements RowMapper<TransactionToRevert> {
-
-			private final String schema;
-
-			public TransactionToRevertMapper() {
-				this.schema = "SELECT * FROM m_savings_account_transaction WHERE transaction_type_enum = 3 AND is_reversed = 0 AND savings_account_id IN (SELECT id FROM m_savings_account WHERE product_id = 36 AND status_enum = 300)";
-			}
-
-			public String schema() {
-				return this.schema;
-			}
-
-			@Override
-			public TransactionToRevert mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
-				return new TransactionToRevert(JdbcSupport.getLong(rs, "savings_account_id"), JdbcSupport.getLong(rs, "id"));
-
-			}
-		}
-
-		TransactionToRevertMapper transactionToRevertMapper = new TransactionToRevertMapper();
-		List<TransactionToRevert> transactionsToRevert = this.jdbcTemplate.query(transactionToRevertMapper.schema(), transactionToRevertMapper);
-		transactionsToRevert.forEach(transaction -> {
-			this.savingsAccountWritePlatformService.undoTransaction(transaction.savingsId, transaction.transactionId, false);
-		});
-	}
-
-	private static abstract class DepositAccountMapper implements RowMapper<DepositAccountData> {
+    private static abstract class DepositAccountMapper implements RowMapper<DepositAccountData> {
 
         private final String selectFieldsSql;
         private final String selectTablesSql;

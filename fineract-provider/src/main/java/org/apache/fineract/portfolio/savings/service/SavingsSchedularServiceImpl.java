@@ -24,6 +24,7 @@ import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
@@ -57,8 +58,11 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
         final List<SavingsAccount> savingsAccounts = this.savingAccountRepositoryWrapper.findSavingAccountByStatus(SavingsAccountStatusType.ACTIVE
                 .getValue());
         StringBuffer sb = new StringBuffer();
-        for (final SavingsAccount savingsAccount : savingsAccounts) {
+        for (SavingsAccount savingsAccount : savingsAccounts) {
             try {
+				if (savingsAccount instanceof FixedDepositAccount) {
+					continue;
+				}
                 this.savingAccountAssembler.assignSavingAccountHelpers(savingsAccount);
                 boolean postInterestAsOn = false;
                 LocalDate transactionDate = null;

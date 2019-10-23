@@ -32,7 +32,7 @@ import org.joda.time.format.DateTimeFormatter;
 public class AccountTransferDTO {
 
     private final LocalDate transactionDate;
-    private final BigDecimal transactionAmount;
+    private BigDecimal transactionAmount;
     private final PortfolioAccountType fromAccountType;
     private final PortfolioAccountType toAccountType;
     private final Long fromAccountId;
@@ -223,4 +223,7 @@ public class AccountTransferDTO {
         return this.isExceptionForBalanceCheck;
     }
 
+	public void setTransactionAmount(BigDecimal transactionAmount) {
+		this.transactionAmount = transactionAmount;
+	}
 }

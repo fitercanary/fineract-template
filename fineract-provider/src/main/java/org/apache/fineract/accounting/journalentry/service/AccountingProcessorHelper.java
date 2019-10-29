@@ -835,7 +835,7 @@ public class AccountingProcessorHelper {
 		if (StringUtils.isNumeric(transactionId)) {
 			journalEntries = this.glJournalEntryRepository.findJournalEntriesBySavingsTransactionId(Long.parseLong(transactionId), account.getId());
 		}
-		if (!this.amountAlreadyPosted(journalEntries, amount)) {
+		if (!this.amountAlreadyPosted(journalEntries, amount, savingsAccountTransaction)) {
 			final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
 					manualEntry, transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
 					null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
@@ -843,7 +843,10 @@ public class AccountingProcessorHelper {
 		}
     }
 
-	private boolean amountAlreadyPosted(List<JournalEntry> journalEntries, BigDecimal amount) {
+	private boolean amountAlreadyPosted(List<JournalEntry> journalEntries, BigDecimal amount, SavingsAccountTransaction savingsAccountTransaction) {
+		if (savingsAccountTransaction != null && savingsAccountTransaction.isReversed()) {
+			return false;
+		}
 		if (journalEntries.isEmpty()) {
 			return false;
 		}
@@ -943,7 +946,7 @@ public class AccountingProcessorHelper {
 		if (StringUtils.isNumeric(transactionId)) {
 			journalEntries = this.glJournalEntryRepository.findJournalEntriesBySavingsTransactionId(Long.parseLong(transactionId), account.getId());
 		}
-		if (!this.amountAlreadyPosted(journalEntries, amount)) {
+		if (!this.amountAlreadyPosted(journalEntries, amount, savingsAccountTransaction)) {
 			final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
 					manualEntry, transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId,
 					null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);

@@ -56,7 +56,12 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.exception.Schedule
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGenerator {
+
+    private final static Logger logger = LoggerFactory.getLogger(AbstractLoanScheduleGenerator.class);
 
     private final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
     private final PaymentPeriodsInOneYearCalculator paymentPeriodsInOneYearCalculator = new DefaultPaymentPeriodsInOneYearCalculator();
@@ -125,6 +130,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         boolean isFirstRepayment = true;
         LocalDate firstRepaymentdate = this.scheduledDateGenerator.generateNextRepaymentDate(
                 loanApplicationTerms.getExpectedDisbursementDate(), loanApplicationTerms, isFirstRepayment);
+        logger.info("first repayment date " + firstRepaymentdate +
+                "Expected disbursement date" + loanApplicationTerms.getExpectedDisbursementDate());
         final LocalDate idealDisbursementDate = this.scheduledDateGenerator.idealDisbursementDateBasedOnFirstRepaymentDate(
                 loanApplicationTerms.getLoanTermPeriodFrequencyType(), loanApplicationTerms.getRepaymentEvery(), firstRepaymentdate,
                 loanApplicationTerms.getLoanCalendar(), loanApplicationTerms.getHolidayDetailDTO(), loanApplicationTerms);
@@ -286,10 +293,23 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             }
 
             // update cumulative fields for principal & interest
+            logger.info("Principal Interest and principal " + principalInterestForThisPeriod.interest()
+                    + principalInterestForThisPeriod.principal() + " " + scheduleParams.getPeriodNumber());
+
+
+            if(scheduleParams.getPeriodNumber() == 1){
+                LocalDate endOfMonth = loanApplicationTerms.getExpectedDisbursementDate().dayOfMonth().withMaximumValue();
+               BigDecimal perDayPrincipal =  principalInterestForThisPeriod.principal().getAmount().divide(BigDecimal.valueOf(endOfMonth.getDayOfMonth()), mc);
+               int periodDays = Days.daysBetween(loanApplicationTerms.getExpectedDisbursementDate(), firstRepaymentdate).getDays();
+               BigDecimal prorataprincipal = perDayPrincipal.multiply(BigDecimal.valueOf(periodDays), mc);
+               currentPeriodParams.setPrincipalForThisPeriod(Money.of(currency, prorataprincipal));
+               logger.info("inside if + "+ perDayPrincipal + " " + periodDays + " "+ prorataprincipal + " " + endOfMonth.getDayOfMonth());
+            }else{
+                currentPeriodParams.setPrincipalForThisPeriod(principalInterestForThisPeriod.principal());
+            }
             currentPeriodParams.setInterestForThisPeriod(principalInterestForThisPeriod.interest());
             Money lastTotalOutstandingInterestPaymentDueToGrace = scheduleParams.getTotalOutstandingInterestPaymentDueToGrace();
             scheduleParams.setTotalOutstandingInterestPaymentDueToGrace(principalInterestForThisPeriod.interestPaymentDueToGrace());
-            currentPeriodParams.setPrincipalForThisPeriod(principalInterestForThisPeriod.principal());
 
             // applies early payments on principal portion
             updatePrincipalPortionBasedOnPreviousEarlyPayments(currency, scheduleParams, currentPeriodParams);
@@ -394,6 +414,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                 scheduleParams.getTotalPenaltyChargesCharged().getAmount(), scheduleParams.getTotalRepaymentExpected().getAmount(),
                 totalOutstanding);
     }
+
+
 
     private void updateCompoundingDetails(final Collection<LoanScheduleModelPeriod> periods, final LoanScheduleParams params,
             final LoanApplicationTerms loanApplicationTerms) {

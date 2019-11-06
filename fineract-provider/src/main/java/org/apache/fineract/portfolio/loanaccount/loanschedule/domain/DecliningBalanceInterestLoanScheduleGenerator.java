@@ -158,10 +158,15 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
 
               LocalDate endOfMonth = loanApplicationTerms.getExpectedDisbursementDate().dayOfMonth().withMaximumValue();
               BigDecimal perDayPrincipal =  interestForThisInstallment.getAmount().divide(BigDecimal.valueOf(endOfMonth.getDayOfMonth()), mc);
-              int periodDays = Days.daysBetween(loanApplicationTerms.getExpectedDisbursementDate(), loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate()).getDays();
-              BigDecimal prorataprincipal = perDayPrincipal.multiply(BigDecimal.valueOf(periodDays), mc);
-              interestForThisInstallment = interestForDisbursemntdateToFirstInstallment.plus(prorataprincipal);
-
+              logger.info(loanApplicationTerms.getExpectedDisbursementDate() + " " +
+                      loanApplicationTerms.getRepaymentsStartingFromLocalDate());
+              if(loanApplicationTerms.getExpectedDisbursementDate() != null &&
+                      loanApplicationTerms.getRepaymentsStartingFromLocalDate() != null) {
+                  int periodDays = Days.daysBetween(loanApplicationTerms.getExpectedDisbursementDate(),
+                          loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate()).getDays();
+                  BigDecimal prorataprincipal = perDayPrincipal.multiply(BigDecimal.valueOf(periodDays), mc);
+                  interestForThisInstallment = interestForDisbursemntdateToFirstInstallment.plus(prorataprincipal);
+              }
             }
 
         return new PrincipalInterest(principalForThisInstallment, interestForThisInstallment, interestBroughtFowardDueToGrace);

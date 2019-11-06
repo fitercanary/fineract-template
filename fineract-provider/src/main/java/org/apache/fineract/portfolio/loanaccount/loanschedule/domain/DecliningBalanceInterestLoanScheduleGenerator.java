@@ -31,6 +31,9 @@ import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * <p>
  * Declining balance can be amortized (see {@link AmortizationMethod}) in two
@@ -58,6 +61,8 @@ import org.joda.time.LocalDate;
  */
 public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanScheduleGenerator {
 
+    private final static Logger logger = LoggerFactory.getLogger(DecliningBalanceInterestLoanScheduleGenerator.class);
+
     @Override
     public PrincipalInterest calculatePrincipalInterestComponentsForPeriod(final PaymentPeriodsInOneYearCalculator calculator,
             final double interestCalculationGraceOnRepaymentPeriodFraction, final Money totalCumulativePrincipal,
@@ -73,11 +78,13 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         Money balanceForInterestCalculation = outstandingBalance;
         Money cumulatingInterestDueToGrace = cumulatingInterestPaymentDueToGrace;
         Map<LocalDate, BigDecimal> interestRates = new HashMap<>(termVariations.size());
+        Money interestForDisbursemntdateToFirstInstallment = totalCumulativePrincipal.zero();
         
         for (LoanTermVariationsData loanTermVariation : termVariations) {
             if (loanTermVariation.getTermVariationType().isInterestRateVariation()
                     && loanTermVariation.isApplicable(periodStartDate, periodEndDate)) {
                 LocalDate fromDate = loanTermVariation.getTermApplicableFrom();
+
                 if (fromDate == null) {
                     fromDate = periodStartDate;
                 }
@@ -89,7 +96,6 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         }
 
         if (principalVariation != null) {
-
             for (Map.Entry<LocalDate, Money> principal : principalVariation.entrySet()) {
 
                 if (!principal.getKey().isAfter(periodEndDate)) {
@@ -128,7 +134,6 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         final PrincipalInterest result = loanApplicationTerms.calculateTotalInterestForPeriod(calculator,
                 interestCalculationGraceOnRepaymentPeriodFraction, periodNumber, mc, cumulatingInterestDueToGrace,
                 balanceForInterestCalculation, interestStartDate, periodEndDate);
-        
         interestForThisInstallment = interestForThisInstallment.plus(result.interest());
         cumulatingInterestDueToGrace = result.interestPaymentDueToGrace();
 
@@ -148,6 +153,21 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         // adjust if needed
         principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(principalForThisInstallment,
                 totalCumulativePrincipalToDate, periodNumber);
+
+          if(periodNumber == 1){
+
+              LocalDate endOfMonth = loanApplicationTerms.getExpectedDisbursementDate().dayOfMonth().withMaximumValue();
+              BigDecimal perDayPrincipal =  interestForThisInstallment.getAmount().divide(BigDecimal.valueOf(endOfMonth.getDayOfMonth()), mc);
+              logger.info(loanApplicationTerms.getExpectedDisbursementDate() + " " +
+                      loanApplicationTerms.getRepaymentsStartingFromLocalDate());
+              if(loanApplicationTerms.getExpectedDisbursementDate() != null &&
+                      loanApplicationTerms.getRepaymentsStartingFromLocalDate() != null) {
+                  int periodDays = Days.daysBetween(loanApplicationTerms.getExpectedDisbursementDate(),
+                          loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate()).getDays();
+                  BigDecimal prorataprincipal = perDayPrincipal.multiply(BigDecimal.valueOf(periodDays), mc);
+                  interestForThisInstallment = interestForDisbursemntdateToFirstInstallment.plus(prorataprincipal);
+              }
+            }
 
         return new PrincipalInterest(principalForThisInstallment, interestForThisInstallment, interestBroughtFowardDueToGrace);
     }

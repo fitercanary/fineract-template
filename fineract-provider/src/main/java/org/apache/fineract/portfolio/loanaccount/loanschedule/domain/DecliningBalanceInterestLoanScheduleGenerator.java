@@ -161,7 +161,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
               logger.info(loanApplicationTerms.getExpectedDisbursementDate() + " " +
                       loanApplicationTerms.getRepaymentsStartingFromLocalDate());
               if(loanApplicationTerms.getExpectedDisbursementDate() != null &&
-                      loanApplicationTerms.getRepaymentsStartingFromLocalDate() != null) {
+                      loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate() != null) {
                   int periodDays = Days.daysBetween(loanApplicationTerms.getExpectedDisbursementDate(),
                           loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate()).getDays();
                   BigDecimal prorataprincipal = perDayPrincipal.multiply(BigDecimal.valueOf(periodDays), mc);

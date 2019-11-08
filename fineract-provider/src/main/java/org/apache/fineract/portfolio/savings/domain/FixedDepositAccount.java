@@ -64,6 +64,8 @@ import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYea
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.domain.interest.AnnualCompoundingPeriod;
+import org.apache.fineract.portfolio.savings.domain.interest.CompoundingPeriod;
 import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -375,6 +377,17 @@ public class FixedDepositAccount extends SavingsAccount {
 
             allPostingPeriods.add(postingPeriod);
         }
+
+		if (allPostingPeriods.size() == 1 && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)) {
+			List<CompoundingPeriod> compoundingPeriods = allPostingPeriods.get(0).getCompoundingPeriods();
+			CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
+			compoundingPeriod.getPeriodInterval().setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
+			allPostingPeriods.get(0).getCompoundingPeriods().clear();
+			allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
+			if (compoundingPeriod instanceof AnnualCompoundingPeriod && !((AnnualCompoundingPeriod)compoundingPeriod).getEndOfDayBalances().isEmpty()) {
+				((AnnualCompoundingPeriod)compoundingPeriod).getEndOfDayBalances().get(0).setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
+			}
+		}
 
         this.summary.updateFromInterestPeriodSummaries(this.currency, allPostingPeriods);
         this.savingsHelper.calculateInterestForAllPostingPeriods(this.currency, allPostingPeriods, this.getLockedInUntilLocalDate(),

@@ -462,8 +462,11 @@ public class PostingPeriod {
         return this.isUserPosting;
     }
 
-    
-    public Integer getFinancialYearBeginningMonth() {
+	public List<CompoundingPeriod> getCompoundingPeriods() {
+		return compoundingPeriods;
+	}
+
+	public Integer getFinancialYearBeginningMonth() {
         return this.financialYearBeginningMonth;
     }
     

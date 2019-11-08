@@ -183,4 +183,8 @@ public class AnnualCompoundingPeriod implements CompoundingPeriod {
 	public LocalDateInterval getPeriodInterval() {
 		return this.periodInterval;
 	}
+
+	public List<EndOfDayBalance> getEndOfDayBalances() {
+		return endOfDayBalances;
+	}
 }

@@ -26,7 +26,7 @@ import org.joda.time.LocalDate;
 public class LocalDateInterval {
 
     private final LocalDate startDate;
-    private final LocalDate endDate;
+    private LocalDate endDate;
 
     public static LocalDateInterval create(final LocalDate startDate, final LocalDate endDate) {
         return new LocalDateInterval(startDate, endDate);
@@ -45,7 +45,11 @@ public class LocalDateInterval {
         return this.endDate;
     }
 
-    public Integer daysInPeriodInclusiveOfEndDate() {
+	public void setEndDate(LocalDate endDate) {
+		this.endDate = endDate;
+	}
+
+	public Integer daysInPeriodInclusiveOfEndDate() {
         return daysBetween() + 1;
     }
 

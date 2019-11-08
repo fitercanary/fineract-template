@@ -31,7 +31,7 @@ public class EndOfDayBalance {
     private final LocalDate date;
     private final Money openingBalance;
     private final Money endOfDayBalance;
-    private final int numberOfDays;
+    private int numberOfDays;
 
     public static EndOfDayBalance from(final LocalDate date, final Money openingBalance, final Money endOfDayBalance,
             final int numberOfDays) {
@@ -178,4 +178,8 @@ public class EndOfDayBalance {
     public Integer getNumberOfDays() {
         return Integer.valueOf(this.numberOfDays);
     }
+
+	public void setNumberOfDays(int numberOfDays) {
+		this.numberOfDays = numberOfDays;
+	}
 }

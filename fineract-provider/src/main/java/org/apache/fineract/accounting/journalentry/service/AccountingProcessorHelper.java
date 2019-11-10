@@ -29,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.closure.domain.GLClosure;
 import org.apache.fineract.accounting.closure.domain.GLClosureRepository;
 import org.apache.fineract.accounting.common.AccountingConstants.ACCRUAL_ACCOUNTS_FOR_LOAN;
+import org.apache.fineract.accounting.common.AccountingConstants.ACCRUAL_ACCOUNTS_FOR_SAVINGS;
 import org.apache.fineract.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_LOAN;
 import org.apache.fineract.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_SAVINGS;
 import org.apache.fineract.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_SHARES;
@@ -466,6 +467,21 @@ public class AccountingProcessorHelper {
         createJournalEntriesForSavings(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, paymentTypeId,
                 loanId, transactionId, transactionDate, amount);
     }
+    
+    public void createAccrualBasedJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,
+            final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
+            final Long paymentTypeId, final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount,
+            final Boolean isReversal) {
+        int accountTypeToDebitId = accountTypeToBeDebited;
+        int accountTypeToCreditId = accountTypeToBeCredited;
+        // reverse debits and credits for reversals
+        if (isReversal) {
+            accountTypeToDebitId = accountTypeToBeCredited;
+            accountTypeToCreditId = accountTypeToBeDebited;
+        }
+        createJournalEntriesForSavings(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, paymentTypeId,
+                loanId, transactionId, transactionDate, amount);
+    }
 
     /**
      * Convenience method that creates a pair of related Debits and Credits for
@@ -581,6 +597,27 @@ public class AccountingProcessorHelper {
      */
     public void createCashBasedJournalEntriesAndReversalsForSavingsTax(final Office office, final String currencyCode,
             final CASH_ACCOUNTS_FOR_SAVINGS accountTypeToBeDebited, final CASH_ACCOUNTS_FOR_SAVINGS accountTypeToBeCredited,
+            final Long savingsProductId, final Long paymentTypeId, final Long savingsId, final String transactionId,
+            final Date transactionDate, final BigDecimal amount, final Boolean isReversal, final List<TaxPaymentDTO> taxDetails) {
+
+        for (TaxPaymentDTO taxPaymentDTO : taxDetails) {
+            if (taxPaymentDTO.getAmount() != null) {
+                if (taxPaymentDTO.getCreditAccountId() == null) {
+                    createCashBasedCreditJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeCredited.getValue(),
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, taxPaymentDTO.getAmount(),
+                            isReversal);
+                } else {
+                    createCashBasedCreditJournalEntriesAndReversalsForSavings(office, currencyCode, taxPaymentDTO.getCreditAccountId(),
+                            savingsId, transactionId, transactionDate, taxPaymentDTO.getAmount(), isReversal);
+                }
+            }
+        }
+        createCashBasedDebitJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited.getValue(), savingsProductId,
+                paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+    }
+    
+    public void createAccrualBasedJournalEntriesAndReversalsForSavingsTax(final Office office, final String currencyCode,
+            final ACCRUAL_ACCOUNTS_FOR_SAVINGS accountTypeToBeDebited, final ACCRUAL_ACCOUNTS_FOR_SAVINGS accountTypeToBeCredited,
             final Long savingsProductId, final Long paymentTypeId, final Long savingsId, final String transactionId,
             final Date transactionDate, final BigDecimal amount, final Boolean isReversal, final List<TaxPaymentDTO> taxDetails) {
 
@@ -740,6 +777,41 @@ public class AccountingProcessorHelper {
      */
     public void createCashBasedJournalEntriesAndReversalsForSavingsCharges(final Office office, final String currencyCode,
             final CASH_ACCOUNTS_FOR_SAVINGS accountTypeToBeDebited, final CASH_ACCOUNTS_FOR_SAVINGS accountTypeToBeCredited,
+            final Long savingsProductId, final Long paymentTypeId, final Long loanId, final String transactionId,
+            final Date transactionDate, final BigDecimal totalAmount, final Boolean isReversal,
+            final List<ChargePaymentDTO> chargePaymentDTOs) {
+        // TODO Vishwas: Remove this validation, as and when appropriate Junit
+        // tests are written for accounting
+        /**
+         * Accounting module currently supports a single charge per transaction,
+         * throw an error if this is not the case here so any developers
+         * changing the expected portfolio behavior would also take care of
+         * modifying the accounting code appropriately
+         **/
+        if (chargePaymentDTOs.size() != 1) { throw new PlatformDataIntegrityException(
+                "Recent Portfolio changes w.r.t Charges for Savings have Broken the accounting code",
+                "Recent Portfolio changes w.r.t Charges for Savings have Broken the accounting code"); }
+        ChargePaymentDTO chargePaymentDTO = chargePaymentDTOs.get(0);
+
+        final GLAccount chargeSpecificAccount = getLinkedGLAccountForSavingsCharges(savingsProductId, accountTypeToBeCredited.getValue(),
+                chargePaymentDTO.getChargeId());
+        final GLAccount savingsControlAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToBeDebited.getValue(),
+                paymentTypeId);
+        if (isReversal) {
+            createDebitJournalEntryForSavings(office, currencyCode, chargeSpecificAccount, loanId, transactionId, transactionDate,
+                    totalAmount);
+            createCreditJournalEntryForSavings(office, currencyCode, savingsControlAccount, loanId, transactionId, transactionDate,
+                    totalAmount);
+        } else {
+            createDebitJournalEntryForSavings(office, currencyCode, savingsControlAccount, loanId, transactionId, transactionDate,
+                    totalAmount);
+            createCreditJournalEntryForSavings(office, currencyCode, chargeSpecificAccount, loanId, transactionId, transactionDate,
+                    totalAmount);
+        }
+    }
+    
+    public void createAccrualBasedJournalEntriesAndReversalsForSavingsCharges(final Office office, final String currencyCode,
+            final ACCRUAL_ACCOUNTS_FOR_SAVINGS accountTypeToBeDebited, final ACCRUAL_ACCOUNTS_FOR_SAVINGS accountTypeToBeCredited,
             final Long savingsProductId, final Long paymentTypeId, final Long loanId, final String transactionId,
             final Date transactionDate, final BigDecimal totalAmount, final Boolean isReversal,
             final List<ChargePaymentDTO> chargePaymentDTOs) {

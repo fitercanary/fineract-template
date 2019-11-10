@@ -96,6 +96,10 @@ public interface SavingsAccountWritePlatformService {
 	void escheat(Long savingsId);
 
     CommandProcessingResult postInterest(JsonCommand command);
+    
+    CommandProcessingResult postAccrualInterest(JsonCommand command);
+    
+    void postAccrualInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
 
     void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
     

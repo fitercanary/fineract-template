@@ -1295,6 +1295,15 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?command=postInterest";
         return this;
     }
+    
+    public CommandWrapperBuilder savingsAccountAccrualInterestPosting(final Long accountId) {
+        this.actionName = "POSTACCRUALINTEREST";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=postAccrualInterest";
+        return this;
+    }
 
     public CommandWrapperBuilder savingsAccountApplyAnnualFees(final Long accountId) {
         this.actionName = "APPLYANNUALFEE";

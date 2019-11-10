@@ -57,14 +57,13 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 
-
 @Path("/savingsaccounts/{savingsId}/transactions")
 @Component
 @Scope("singleton")
 public class SavingsAccountTransactionsApiResource {
 
     private final PlatformSecurityContext context;
-	private final DefaultToApiJsonSerializer<SavingsAccountData> toSavingsAccountApiJsonSerializer;
+    private final DefaultToApiJsonSerializer<SavingsAccountData> toSavingsAccountApiJsonSerializer;
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
@@ -73,15 +72,15 @@ public class SavingsAccountTransactionsApiResource {
 
     @Autowired
     public SavingsAccountTransactionsApiResource(final PlatformSecurityContext context,
-												 DefaultToApiJsonSerializer<SavingsAccountData> toSavingsAccountApiJsonSerializer,
-												 final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer,
-												 final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-												 final ApiRequestParameterHelper apiRequestParameterHelper,
-												 final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-												 PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+            DefaultToApiJsonSerializer<SavingsAccountData> toSavingsAccountApiJsonSerializer,
+            final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer,
+            final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+            final ApiRequestParameterHelper apiRequestParameterHelper,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
         this.context = context;
-		this.toSavingsAccountApiJsonSerializer = toSavingsAccountApiJsonSerializer;
-		this.toApiJsonSerializer = toApiJsonSerializer;
+        this.toSavingsAccountApiJsonSerializer = toSavingsAccountApiJsonSerializer;
+        this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
@@ -92,52 +91,54 @@ public class SavingsAccountTransactionsApiResource {
         return StringUtils.isNotBlank(commandParam) && commandParam.trim().equalsIgnoreCase(commandValue);
     }
 
-	@GET
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
-	public String retrieveAllSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
-												   @QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize) {
+    @GET
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
+            @QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize) {
 
-		this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
-		SearchParameters searchParameters = pageNumber != null && pageSize != null ? SearchParameters.forPagination(pageNumber, pageSize) : null;
-		final Page<SavingsAccountTransactionData> savingsAccountTransactionData =
-				this.savingsAccountReadPlatformService.retrieveAllSavingAccTransactions(savingsId, searchParameters);
-		final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        SearchParameters searchParameters = pageNumber != null && pageSize != null ? SearchParameters.forPagination(pageNumber, pageSize)
+                : null;
+        final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
+                .retrieveAllSavingAccTransactions(savingsId, searchParameters);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-		return this.toApiJsonSerializer.serialize(settings, savingsAccountTransactionData,
-				SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
-	}
+        return this.toApiJsonSerializer.serialize(settings, savingsAccountTransactionData,
+                SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
+    }
 
-	@GET
-	@Path("filter")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
-	public String retrieveAllFilteredSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
-												   @QueryParam("text") final String text, @QueryParam("filterCategories") final String filterCategories,
-												   @QueryParam("startDate") final String startDate, @QueryParam("endDate") final String endDate,
-												   @QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize) {
+    @GET
+    @Path("filter")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllFilteredSavingAccTransactions(@Context final UriInfo uriInfo, @PathParam("savingsId") final Long savingsId,
+            @QueryParam("text") final String text, @QueryParam("filterCategories") final String filterCategories,
+            @QueryParam("startDate") final String startDate, @QueryParam("endDate") final String endDate,
+            @QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize) {
 
-		this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
-		SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(savingsId);
-		SearchParameters searchParameters = pageNumber != null && pageSize != null ? SearchParameters.forPagination(pageNumber, pageSize) : null;
-		final Page<SavingsAccountTransactionData> savingsAccountTransactionData =
-				this.savingsAccountReadPlatformService.retrieveAllSavingAccTransactions(savingsId, searchParameters, text, filterCategories, startDate, endDate);
-		savingsAccount.setTransactions(savingsAccountTransactionData.getPageItems());
-		savingsAccount.setTransactionCount(savingsAccountTransactionData.getTotalFilteredRecords());
-		final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(savingsId);
+        SearchParameters searchParameters = pageNumber != null && pageSize != null ? SearchParameters.forPagination(pageNumber, pageSize)
+                : null;
+        final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
+                .retrieveAllSavingAccTransactions(savingsId, searchParameters, text, filterCategories, startDate, endDate);
+        savingsAccount.setTransactions(savingsAccountTransactionData.getPageItems());
+        savingsAccount.setTransactionCount(savingsAccountTransactionData.getTotalFilteredRecords());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-		return this.toSavingsAccountApiJsonSerializer.serialize(settings, savingsAccount,
-				SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
-	}
+        return this.toSavingsAccountApiJsonSerializer.serialize(settings, savingsAccount,
+                SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
+    }
 
     @GET
     @Path("template")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveTemplate(@PathParam("savingsId") final Long savingsId,
-    // @QueryParam("command") final String commandParam,
-            @Context final UriInfo uriInfo) {   
-        
+            // @QueryParam("command") final String commandParam,
+            @Context final UriInfo uriInfo) {
+
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
         // FIXME - KW - for now just send back generic default information for
@@ -197,7 +198,8 @@ public class SavingsAccountTransactionsApiResource {
 
             if (result == null) {
                 //
-                throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
+                throw new UnrecognizedQueryParamException("command", commandParam,
+                        new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
             }
 
             return this.toApiJsonSerializer.serialize(result);
@@ -232,9 +234,9 @@ public class SavingsAccountTransactionsApiResource {
             final CommandWrapper commandRequest = builder.adjustSavingsAccountTransaction(savingsId, transactionId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, SavingsApiConstants.COMMAND_ADJUST_TRANSACTION_REQUEST)) {
-			final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsId, transactionId).build();
-			result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-		} else if (is(commandParam,SavingsApiConstants.COMMAND_RELEASE_AMOUNT)) {
+            final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsId, transactionId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, SavingsApiConstants.COMMAND_RELEASE_AMOUNT)) {
             final CommandWrapper commandRequest = builder.releaseAmount(savingsId, transactionId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
@@ -242,7 +244,7 @@ public class SavingsAccountTransactionsApiResource {
         if (result == null) {
             //
             throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { SavingsApiConstants.COMMAND_UNDO_TRANSACTION,
-                    SavingsApiConstants.COMMAND_ADJUST_TRANSACTION, SavingsApiConstants.COMMAND_RELEASE_AMOUNT});
+                    SavingsApiConstants.COMMAND_ADJUST_TRANSACTION, SavingsApiConstants.COMMAND_RELEASE_AMOUNT });
         }
 
         return this.toApiJsonSerializer.serialize(result);

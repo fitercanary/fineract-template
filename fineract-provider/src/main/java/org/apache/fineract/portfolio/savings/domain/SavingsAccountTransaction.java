@@ -162,6 +162,13 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.INTEREST_POSTING.getValue(), date,
                 amount, isReversed, null, isManualTransaction);
     }
+    
+    public static SavingsAccountTransaction AccrualInterestPosting(final SavingsAccount savingsAccount, final Office office, final LocalDate date,
+            final Money amount,final boolean isManualTransaction) {
+        final boolean isReversed = false;
+        return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(), date,
+                amount, isReversed, null, isManualTransaction);
+    }
 
     public static SavingsAccountTransaction overdraftInterest(final SavingsAccount savingsAccount, final Office office,
             final LocalDate date, final Money amount,final boolean isManualTransaction) {
@@ -350,6 +357,14 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
 
     public boolean isInterestPostingAndNotReversed() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isInterestPosting() && isNotReversed();
+    }
+    
+    public boolean isAccrualInterestPostingAndNotReversed() {
+        return SavingsAccountTransactionType.fromInt(this.typeOf).isAccrualInterestPosting() && isNotReversed();
+    }
+    
+    public boolean isAccrualInterestPosting() {
+        return SavingsAccountTransactionType.fromInt(this.typeOf).isAccrualInterestPosting();
     }
 
 	public boolean isInterestPosting() {

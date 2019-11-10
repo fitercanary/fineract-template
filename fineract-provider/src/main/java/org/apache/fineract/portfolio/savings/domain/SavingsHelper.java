@@ -33,59 +33,58 @@ import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
 import org.joda.time.LocalDate;
 
 public final class SavingsHelper {
-    
+
     AccountTransfersReadPlatformService accountTransfersReadPlatformService = null;
-    
+
     public SavingsHelper(AccountTransfersReadPlatformService accountTransfersReadPlatformService) {
         this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
     }
 
     private final CompoundInterestHelper compoundInterestHelper = new CompoundInterestHelper();
 
-	public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
-																   final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
-																   final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn) {
+    public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
+            final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
+            final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn) {
 
-		final List<LocalDateInterval> postingPeriods = new ArrayList<>();
-		LocalDate periodStartDate = startInterestCalculationLocalDate;
-		LocalDate periodEndDate = periodStartDate;
-		LocalDate actualPeriodStartDate = periodStartDate;
+        final List<LocalDateInterval> postingPeriods = new ArrayList<>();
+        LocalDate periodStartDate = startInterestCalculationLocalDate;
+        LocalDate periodEndDate = periodStartDate;
+        LocalDate actualPeriodStartDate = periodStartDate;
 
-		while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
+        while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
 
-			final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
-					interestPostingUpToDate, financialYearBeginningMonth);
+            final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
+                    interestPostingUpToDate, financialYearBeginningMonth);
 
-			periodEndDate = interestPostingLocalDate.minusDays(1);
+            periodEndDate = interestPostingLocalDate.minusDays(1);
 
-			if (!postInterestAsOn.isEmpty()) {
-				for (LocalDate transactionDate : postInterestAsOn) {
-					if (periodStartDate.isBefore(transactionDate)
-							&& (periodEndDate.isAfter(transactionDate) || periodEndDate
-							.isEqual(transactionDate))) {
-						periodEndDate = transactionDate.minusDays(1);
-						actualPeriodStartDate = periodEndDate;
-						break;
-					}
-				}
-			}
+            if (!postInterestAsOn.isEmpty()) {
+                for (LocalDate transactionDate : postInterestAsOn) {
+                    if (periodStartDate.isBefore(transactionDate)
+                            && (periodEndDate.isAfter(transactionDate) || periodEndDate.isEqual(transactionDate))) {
+                        periodEndDate = transactionDate.minusDays(1);
+                        actualPeriodStartDate = periodEndDate;
+                        break;
+                    }
+                }
+            }
 
-			postingPeriods.add(LocalDateInterval.create(periodStartDate, periodEndDate));
+            postingPeriods.add(LocalDateInterval.create(periodStartDate, periodEndDate));
 
-			if (actualPeriodStartDate.isEqual(periodEndDate)) {
-				periodEndDate = actualPeriodStartDate.plusDays(1);
-				periodStartDate = actualPeriodStartDate.plusDays(1);
-			} else {
-				periodEndDate = interestPostingLocalDate;
-				periodStartDate = interestPostingLocalDate;
-			}
-		}
+            if (actualPeriodStartDate.isEqual(periodEndDate)) {
+                periodEndDate = actualPeriodStartDate.plusDays(1);
+                periodStartDate = actualPeriodStartDate.plusDays(1);
+            } else {
+                periodEndDate = interestPostingLocalDate;
+                periodStartDate = interestPostingLocalDate;
+            }
+        }
 
-		return postingPeriods;
-	}
+        return postingPeriods;
+    }
 
     private LocalDate determineInterestPostingPeriodEndDateFrom(final LocalDate periodStartDate,
-            final  SavingsPostingInterestPeriodType interestPostingPeriodType, final LocalDate interestPostingUpToDate,
+            final SavingsPostingInterestPeriodType interestPostingPeriodType, final LocalDate interestPostingUpToDate,
             Integer financialYearBeginningMonth) {
 
         LocalDate periodEndDate = interestPostingUpToDate;
@@ -148,9 +147,9 @@ public final class SavingsHelper {
                 }
                 periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
             break;
-        }   
+        }
         // interest posting always occurs on next day after the period end date.
-        periodEndDate = periodEndDate.plusDays(1);       
+        periodEndDate = periodEndDate.plusDays(1);
         return periodEndDate;
     }
 

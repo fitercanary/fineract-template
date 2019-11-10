@@ -102,8 +102,8 @@ public class SavingsAccountsApiResource {
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
-        this.bulkImportWorkbookService=bulkImportWorkbookService;
-        this.bulkImportWorkbookPopulatorService=bulkImportWorkbookPopulatorService;
+        this.bulkImportWorkbookService = bulkImportWorkbookService;
+        this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
     }
 
     @GET
@@ -121,8 +121,8 @@ public class SavingsAccountsApiResource {
                 staffInSelectedOfficeOnly);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-		return this.toApiJsonSerializer.serialize(settings, savingsAccount,
-				SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, savingsAccount,
+                SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
 
     @GET
@@ -141,8 +141,7 @@ public class SavingsAccountsApiResource {
         final Page<SavingsAccountData> products = this.savingsAccountReadPlatformService.retrieveAll(searchParameters);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-		return this.toApiJsonSerializer.serialize(settings, products,
-				SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, products, SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
 
     @POST
@@ -163,15 +162,16 @@ public class SavingsAccountsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("accountId") final Long accountId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
-            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus,
-			@QueryParam("pageNumber") final Integer pageNumber, @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
+            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @QueryParam("pageNumber") final Integer pageNumber,
+            @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-		if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber") || is(chargeStatus, "pageSize"))) {
-			throw new UnrecognizedQueryParamException(
-					"status", chargeStatus, new Object[]{"all", "active", "inactive", "pageNumber", "pageSize"});
-		}
+        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
+                || is(chargeStatus, "pageSize"))) {
+            throw new UnrecognizedQueryParamException("status", chargeStatus,
+                    new Object[] { "all", "active", "inactive", "pageNumber", "pageSize" });
+        }
 
         final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(accountId);
 
@@ -191,7 +191,7 @@ public class SavingsAccountsApiResource {
 
         Collection<SavingsAccountTransactionData> transactions = null;
         Collection<SavingsAccountChargeData> charges = null;
-		Integer transactionCount = null;
+        Integer transactionCount = null;
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
@@ -202,27 +202,27 @@ public class SavingsAccountsApiResource {
 
             if (associationParameters.contains(SavingsApiConstants.transactions)) {
                 mandatoryResponseParameters.add(SavingsApiConstants.transactions);
-				if (pageNumber != null && pageSize != null) {
-					SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
-					final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
-							.retrieveAllSavingAccTransactions(accountId, searchParameters);
-					Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
-					if (!CollectionUtils.isEmpty(currentTransactions)) {
-						transactions = currentTransactions;
-					} else {
-						transactions = new ArrayList<>();
-					}
-					transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
-				} else {
-					final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
-							.retrieveAllTransactions(accountId, DepositAccountType.SAVINGS_DEPOSIT);
-					if (!CollectionUtils.isEmpty(currentTransactions)) {
-						transactions = currentTransactions;
-					}
-					if (transactions != null) {
-						transactionCount = transactions.size();
-					}
-				}
+                if (pageNumber != null && pageSize != null) {
+                    SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
+                    final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
+                            .retrieveAllSavingAccTransactions(accountId, searchParameters);
+                    Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    } else {
+                        transactions = new ArrayList<>();
+                    }
+                    transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
+                } else {
+                    final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
+                            .retrieveAllTransactions(accountId, DepositAccountType.SAVINGS_DEPOSIT);
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    }
+                    if (transactions != null) {
+                        transactionCount = transactions.size();
+                    }
+                }
 
             }
 
@@ -243,9 +243,9 @@ public class SavingsAccountsApiResource {
                     savingsAccount.productId(), staffInSelectedOfficeOnly);
         }
 
-		SavingsAccountData savingsAccountData = SavingsAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
-		savingsAccountData.setTransactionCount(transactionCount);
-		return savingsAccountData;
+        SavingsAccountData savingsAccountData = SavingsAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
+        savingsAccountData.setTransactionCount(transactionCount);
+        return savingsAccountData;
     }
 
     @PUT
@@ -270,30 +270,32 @@ public class SavingsAccountsApiResource {
         return this.toApiJsonSerializer.serialize(result);
     }
 
-	@POST
-	@Path("modifytransactionrequest")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
-	public String adjustTransaction(final String apiRequestBodyAsJson) {
+    @POST
+    @Path("modifytransactionrequest")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String adjustTransaction(final String apiRequestBodyAsJson) {
 
-		String jsonApiRequest = apiRequestBodyAsJson;
-		if (StringUtils.isBlank(jsonApiRequest)) {
-			jsonApiRequest = "{}";
-		}
-		JSONObject jsonObject = new JSONObject(jsonApiRequest);
-		if (jsonObject.has("transactionId")) {
-			Long transactionId = jsonObject.getLong("transactionId");
-			SavingsAccountTransactionData savingsAccountTransaction = this.savingsAccountReadPlatformService.retrieveSavingsTransaction(transactionId);
-			final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
-			final CommandWrapper commandRequest = builder.modifySavingsTransactionRequest(savingsAccountTransaction.getSavingsAccountId(), transactionId).build();
-			CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-			return this.toApiJsonSerializer.serialize(result);
-		} else {
-			List<ApiParameterError> errors = new ArrayList<>();
-			errors.add(ApiParameterError.generalError("transactionId.missing.from.payload", "transactionId is required in the payload"));
-			throw new PlatformApiDataValidationException(errors);
-		}
-	}
+        String jsonApiRequest = apiRequestBodyAsJson;
+        if (StringUtils.isBlank(jsonApiRequest)) {
+            jsonApiRequest = "{}";
+        }
+        JSONObject jsonObject = new JSONObject(jsonApiRequest);
+        if (jsonObject.has("transactionId")) {
+            Long transactionId = jsonObject.getLong("transactionId");
+            SavingsAccountTransactionData savingsAccountTransaction = this.savingsAccountReadPlatformService
+                    .retrieveSavingsTransaction(transactionId);
+            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
+            final CommandWrapper commandRequest = builder
+                    .modifySavingsTransactionRequest(savingsAccountTransaction.getSavingsAccountId(), transactionId).build();
+            CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            return this.toApiJsonSerializer.serialize(result);
+        } else {
+            List<ApiParameterError> errors = new ArrayList<>();
+            errors.add(ApiParameterError.generalError("transactionId.missing.from.payload", "transactionId is required in the payload"));
+            throw new PlatformApiDataValidationException(errors);
+        }
+    }
 
     @POST
     @Path("{accountId}")
@@ -348,7 +350,7 @@ public class SavingsAccountsApiResource {
         } else if (is(commandParam, "applyOverdraft")) {
             final CommandWrapper commandRequest = builder.savingsAccountApplyOverdraft(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        }else if (is(commandParam, SavingsApiConstants.COMMAND_BLOCK_DEBIT)) {
+        } else if (is(commandParam, SavingsApiConstants.COMMAND_BLOCK_DEBIT)) {
             final CommandWrapper commandRequest = builder.blockDebitsFromSavingsAccount(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, SavingsApiConstants.COMMAND_UNBLOCK_DEBIT)) {
@@ -366,15 +368,19 @@ public class SavingsAccountsApiResource {
         } else if (is(commandParam, SavingsApiConstants.COMMAND_UNBLOCK_ACCOUNT)) {
             final CommandWrapper commandRequest = builder.withNoJsonBody().unblockSavingsAccount(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "postAccrualInterestAsOn")) {
+            final CommandWrapper commandRequest = builder.savingsAccountAccrualInterestPosting(accountId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
         if (result == null) {
             //
-            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "reject", "withdrawnByApplicant", "approve",
-                    "undoapproval", "activate", "calculateInterest", "postInterest", "close", "assignSavingsOfficer",
-                    "unassignSavingsOfficer", SavingsApiConstants.COMMAND_BLOCK_DEBIT, SavingsApiConstants.COMMAND_UNBLOCK_DEBIT,
-                    SavingsApiConstants.COMMAND_BLOCK_CREDIT, SavingsApiConstants.COMMAND_UNBLOCK_CREDIT,
-                    SavingsApiConstants.COMMAND_BLOCK_ACCOUNT, SavingsApiConstants.COMMAND_UNBLOCK_ACCOUNT });
+            throw new UnrecognizedQueryParamException("command", commandParam,
+                    new Object[] { "reject", "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest",
+                            "postInterest", "close", "assignSavingsOfficer", "unassignSavingsOfficer",
+                            SavingsApiConstants.COMMAND_BLOCK_DEBIT, SavingsApiConstants.COMMAND_UNBLOCK_DEBIT,
+                            SavingsApiConstants.COMMAND_BLOCK_CREDIT, SavingsApiConstants.COMMAND_UNBLOCK_CREDIT,
+                            SavingsApiConstants.COMMAND_BLOCK_ACCOUNT, SavingsApiConstants.COMMAND_UNBLOCK_ACCOUNT });
         }
 
         return this.toApiJsonSerializer.serialize(result);
@@ -400,38 +406,38 @@ public class SavingsAccountsApiResource {
     @GET
     @Path("downloadtemplate")
     @Produces("application/vnd.ms-excel")
-    public Response getSavingsTemplate(@QueryParam("officeId")final Long officeId,
-            @QueryParam("staffId")final Long staffId,@QueryParam("dateFormat") final String dateFormat) {
-        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.SAVINGS_ACCOUNT.toString(),officeId, staffId,dateFormat);
+    public Response getSavingsTemplate(@QueryParam("officeId") final Long officeId, @QueryParam("staffId") final Long staffId,
+            @QueryParam("dateFormat") final String dateFormat) {
+        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.SAVINGS_ACCOUNT.toString(), officeId, staffId, dateFormat);
     }
 
     @POST
     @Path("uploadtemplate")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String postSavingsTemplate(@FormDataParam("file") InputStream uploadedInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @FormDataParam("locale") final String locale,
-            @FormDataParam("dateFormat") final String dateFormat){
-        final Long importDocumentId = this. bulkImportWorkbookService.importWorkbook(GlobalEntityType.SAVINGS_ACCOUNT.toString(), uploadedInputStream,
-                fileDetail, locale, dateFormat);
+            @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
+            @FormDataParam("dateFormat") final String dateFormat) {
+        final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.SAVINGS_ACCOUNT.toString(),
+                uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
 
     @GET
     @Path("transactions/downloadtemplate")
     @Produces("application/vnd.ms-excel")
-    public Response getSavingsTransactionTemplate(@QueryParam("officeId")final Long officeId,@QueryParam("dateFormat") final String dateFormat) {
-        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.SAVINGS_TRANSACTIONS.toString(),officeId, null,dateFormat);
+    public Response getSavingsTransactionTemplate(@QueryParam("officeId") final Long officeId,
+            @QueryParam("dateFormat") final String dateFormat) {
+        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.SAVINGS_TRANSACTIONS.toString(), officeId, null, dateFormat);
     }
 
     @POST
     @Path("transactions/uploadtemplate")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String postSavingsTransactionTemplate(@FormDataParam("file") InputStream uploadedInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @FormDataParam("locale") final String locale, @FormDataParam("dateFormat") final String dateFormat){
-        final Long importDocumentId = this. bulkImportWorkbookService.importWorkbook(GlobalEntityType.SAVINGS_TRANSACTIONS.toString(), uploadedInputStream,
-                fileDetail,locale,dateFormat);
+            @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
+            @FormDataParam("dateFormat") final String dateFormat) {
+        final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.SAVINGS_TRANSACTIONS.toString(),
+                uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
 

@@ -266,16 +266,12 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.INCOME_FROM_INTEREST.getValue(), gLAccountData);
                 } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.ESCHEAT_LIABILITY)) {
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.ESCHEAT_LIABILITY.getValue(), gLAccountData);
-                } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_PAYABLE)) {
-                    accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.FEES_PAYABLE.getValue(), gLAccountData);
                 } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_RECEIVABLE)) {
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.RECIVABLE_FEES.getValue(), gLAccountData);
                 } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE)) {
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.INTEREST_PAYABLE.getValue(), gLAccountData);
                 } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE)) {
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.RECIVABLE_INTEREST.getValue(), gLAccountData);
-                } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_PAYABLE)) {
-                    accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.PENALTIES_PAYABLE.getValue(), gLAccountData);
                 } else if (glAccountForSavings.equals(ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_RECEIVABLE)) {
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.RECIVABLE_PENALTY.getValue(), gLAccountData);
                 }

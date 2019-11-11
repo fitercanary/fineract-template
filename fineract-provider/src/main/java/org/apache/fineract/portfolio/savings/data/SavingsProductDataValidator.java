@@ -110,8 +110,7 @@ public class SavingsProductDataValidator {
             SavingsApiConstants.minRequiredBalanceParamName, SavingsApiConstants.enforceMinRequiredBalanceParamName,
             minBalanceForInterestCalculationParamName, withHoldTaxParamName, taxGroupIdParamName,
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_RECIVABLE.getValue(),
-            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(),
-            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_PAYABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_PAYABLE.getValue()));
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue()));
 
     @Autowired
     public SavingsProductDataValidator(final FromJsonHelper fromApiJsonHelper) {

@@ -289,12 +289,6 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                 mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(),
                         savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue(),
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.toString(), changes);
-                mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_PAYABLE.getValue(),
-                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_PAYABLE.getValue(),
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_PAYABLE.toString(), changes);
-                mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_PAYABLE.getValue(),
-                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_PAYABLE.getValue(),
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_PAYABLE.toString(), changes);
             break;
             case ACCRUAL_UPFRONT:
             break;

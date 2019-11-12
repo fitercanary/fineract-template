@@ -462,8 +462,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
             List<SavingsAccountTransaction> savingTransactions = account.getTransactions();
             for (SavingsAccountTransaction savingTransaction : savingTransactions) {
-                if (!savingTransaction.isAccrualInterestPosting()
-                        && transactionDate.toDate().before(savingTransaction.getDateOf())) {
+                if (!savingTransaction.isAccrualInterestPosting() && transactionDate.toDate().before(savingTransaction.getDateOf())) {
                     throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.LAST_TRANSACTION_DATE);
                 }
             }
@@ -1717,6 +1716,41 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
+
+    }
+
+    @Override
+    public CommandProcessingResult postAccrualInterest(Long savingsId, LocalDate transactionDate) {
+
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+        checkClientOrGroupActive(account);
+
+        if (transactionDate == null) {
+
+            throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.VALID_DATE);
+        }
+        if (transactionDate.isBefore(account.accountSubmittedOrActivationDate())) {
+            throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.ACTIVATION_DATE);
+        }
+        List<SavingsAccountTransaction> savingTransactions = account.getTransactions();
+        for (SavingsAccountTransaction savingTransaction : savingTransactions) {
+            if (transactionDate.toDate().before(savingTransaction.getDateOf())) {
+                throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.LAST_TRANSACTION_DATE);
+            }
+        }
+
+        LocalDate today = DateUtils.getLocalDateOfTenant();
+        if (transactionDate.isAfter(today)) { throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.FUTURE_DATE); }
+
+        postAccrualInterest(account, true, transactionDate);
+
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(savingsId) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(savingsId) //
+                .build();
 
     }
 }

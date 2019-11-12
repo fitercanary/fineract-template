@@ -302,14 +302,6 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue());
 
-                this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
-                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_PAYABLE.getValue(), savingProductId,
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_PAYABLE.getValue());
-
-                this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
-                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_PAYABLE.getValue(), savingProductId,
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_PAYABLE.getValue());
-
                 if (null != this.fromApiJsonHelper.extractBooleanNamed(isDormancyTrackingActiveParamName, element)
                         && this.fromApiJsonHelper.extractBooleanNamed(isDormancyTrackingActiveParamName, element)) {
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,

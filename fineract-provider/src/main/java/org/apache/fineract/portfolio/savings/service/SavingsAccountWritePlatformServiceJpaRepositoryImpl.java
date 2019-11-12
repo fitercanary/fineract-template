@@ -1246,14 +1246,13 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .resource(SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME);
 
         /***
-         * Only recurring fees are allowed to inactivate
+         * Only recurring fees are allowed to inactivate (For VFD, allow deactivating non recurring charges)
          */
         if (!savingsAccountCharge.isRecurringFee()) {
-            baseDataValidator.reset().parameter(null).value(savingsAccountCharge.getId())
-                    .failWithCodeNoParameterAddedToErrorCode("charge.inactivation.allowed.only.for.recurring.charges");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-
+           
+            account.inactivateCharge(savingsAccountCharge, inactivationOnDate);
         } else {
+            // handle recurring charges here
             final LocalDate nextDueDate = savingsAccountCharge.getNextDueDateFrom(inactivationOnDate);
 
             if (savingsAccountCharge.isChargeIsDue(nextDueDate)) {

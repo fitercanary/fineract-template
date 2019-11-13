@@ -180,7 +180,43 @@ public class AccountingConstants {
             return type;
         }
     }
+    
+    /*** Accounting placeholders for accrual based accounting for savings products ***/
+    public static enum ACCRUAL_ACCOUNTS_FOR_SAVINGS {
 
+        SAVINGS_REFERENCE(1), SAVINGS_CONTROL(2), INTEREST_ON_SAVINGS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), TRANSFERS_SUSPENSE(
+                10), OVERDRAFT_PORTFOLIO_CONTROL(11), INCOME_FROM_INTEREST(12), LOSSES_WRITTEN_OFF(13), ESCHEAT_LIABILITY(
+                        14), INTEREST_RECEIVABLE(7), FEES_RECEIVABLE(
+                                8), PENALTIES_RECEIVABLE(9), INTEREST_PAYABLE(15);
+
+        private final Integer value;
+
+        private ACCRUAL_ACCOUNTS_FOR_SAVINGS(final Integer value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return name().toString().replaceAll("_", " ");
+        }
+
+        public Integer getValue() {
+            return this.value;
+        }
+
+        private static final Map<Integer, ACCRUAL_ACCOUNTS_FOR_SAVINGS> intToEnumMap = new HashMap<>();
+        static {
+            for (final ACCRUAL_ACCOUNTS_FOR_SAVINGS type : ACCRUAL_ACCOUNTS_FOR_SAVINGS.values()) {
+                intToEnumMap.put(type.value, type);
+            }
+        }
+
+        public static ACCRUAL_ACCOUNTS_FOR_SAVINGS fromInt(final int i) {
+            final ACCRUAL_ACCOUNTS_FOR_SAVINGS type = intToEnumMap.get(Integer.valueOf(i));
+            return type;
+        }
+    }
+    
     /***
      * Enum of all accounting related input parameter names used while
      * creating/updating a savings product
@@ -192,7 +228,8 @@ public class AccountingConstants {
                 "paymentTypeId"), FUND_SOURCE("fundSourceAccountId"), TRANSFERS_SUSPENSE("transfersInSuspenseAccountId"), FEE_INCOME_ACCOUNT_MAPPING(
                 "feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING("penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID(
                 "incomeAccountId"), OVERDRAFT_PORTFOLIO_CONTROL("overdraftPortfolioControlId"), INCOME_FROM_INTEREST("incomeFromInterestId"), LOSSES_WRITTEN_OFF(
-                "writeOffAccountId"), ESCHEAT_LIABILITY("escheatLiabilityId");
+                "writeOffAccountId"), ESCHEAT_LIABILITY("escheatLiabilityId"), INTEREST_RECIVABLE("receivableInterestAccountId"), FEES_RECIVABLE("receivableFeeAccountId"),
+                PENALTY_RECIVABLE("receivablePenaltyAccountId"), INTEREST_PAYABLE("interestPayableAccountId");
 
         private final String value;
 
@@ -216,7 +253,8 @@ public class AccountingConstants {
                 "fundSourceAccount"), TRANSFERS_SUSPENSE("transfersInSuspenseAccount"), PENALTY_INCOME_ACCOUNT_MAPPING(
                 "penaltyToIncomeAccountMappings"), CHARGE_ID("charge"), INCOME_ACCOUNT_ID("incomeAccount"), OVERDRAFT_PORTFOLIO_CONTROL(
                 "overdraftPortfolioControl"), INCOME_FROM_INTEREST("incomeFromInterest"), LOSSES_WRITTEN_OFF("writeOffAccount"),
-                ESCHEAT_LIABILITY("escheatLiabilityAccount");
+                ESCHEAT_LIABILITY("escheatLiabilityAccount"), RECIVABLE_INTEREST("receivableInterestAccountId"), RECIVABLE_FEES("receivableFeeAccountId"),
+                RECIVABLE_PENALTY("receivablePenaltyAccountId"), INTEREST_PAYABLE("interestPayableAccountId");
 
         private final String value;
 

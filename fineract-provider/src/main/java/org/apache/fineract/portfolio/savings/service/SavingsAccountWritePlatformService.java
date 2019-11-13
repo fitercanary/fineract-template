@@ -38,7 +38,7 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult deposit(Long savingsId, JsonCommand command);
 
-	void saveTransactionRequest(JsonCommand command, SavingsAccountTransaction transaction);
+    void saveTransactionRequest(JsonCommand command, SavingsAccountTransaction transaction);
 
     CommandProcessingResult withdrawal(Long savingsId, JsonCommand command);
 
@@ -50,7 +50,7 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult adjustSavingsTransaction(Long savingsId, Long transactionId, JsonCommand command);
 
-	CommandProcessingResult modifyTransactionRequest(final Long savingsId, final Long transactionId, final JsonCommand command);
+    CommandProcessingResult modifyTransactionRequest(final Long savingsId, final Long transactionId, final JsonCommand command);
 
     CommandProcessingResult close(Long savingsId, JsonCommand command);
 
@@ -80,25 +80,30 @@ public interface SavingsAccountWritePlatformService {
 
     void applyChargeDue(final Long savingsAccountChargeId, final Long accountId);
 
-	void payCharge(final SavingsAccountCharge savingsAccountCharge, final LocalDate transactionDate, final BigDecimal amountPaid,
-				   final DateTimeFormatter formatter, final AppUser user);
+    void payCharge(final SavingsAccountCharge savingsAccountCharge, final LocalDate transactionDate, final BigDecimal amountPaid,
+            final DateTimeFormatter formatter, final AppUser user);
 
     void processPostActiveActions(SavingsAccount account, DateTimeFormatter fmt, Set<Long> existingTransactionIds,
             Set<Long> existingReversedTransactionIds);
 
-
     CommandProcessingResult modifyWithHoldTax(Long savingsAccountId, JsonCommand command);
 
-	void setSubStatusInactive(Long savingsId);
+    void setSubStatusInactive(Long savingsId);
 
-	void setSubStatusDormant(Long savingsId);
+    void setSubStatusDormant(Long savingsId);
 
-	void escheat(Long savingsId);
+    void escheat(Long savingsId);
 
     CommandProcessingResult postInterest(JsonCommand command);
 
+    CommandProcessingResult postAccrualInterest(JsonCommand command);
+
+    CommandProcessingResult postAccrualInterest(Long savingAccountId, LocalDate postingDate);
+
+    void postAccrualInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
+
     void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
-    
+
     CommandProcessingResult blockAccount(Long savingsId);
 
     CommandProcessingResult unblockAccount(Long savingsId);
@@ -117,6 +122,6 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult applyOverdraft(Long savingsId, JsonCommand command);
 
-    void startOrCloseSavingsAccountOverdraft(List <SavingsAccount> savingsAccountList);
+    void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList);
 
 }

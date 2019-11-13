@@ -37,4 +37,6 @@ public interface ScheduledJobRunnerService {
     void generateRDSchedule();
 
     void postDividends() throws JobExecutionException;
+    
+    void postAccrualInterestForSavings();
 }

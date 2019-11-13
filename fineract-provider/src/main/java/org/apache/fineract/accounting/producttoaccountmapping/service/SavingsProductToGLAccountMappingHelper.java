@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.fineract.accounting.common.AccountingRuleType;
+import org.apache.fineract.accounting.common.AccountingConstants.ACCRUAL_ACCOUNTS_FOR_SAVINGS;
 import org.apache.fineract.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_SAVINGS;
 import org.apache.fineract.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
 import org.apache.fineract.accounting.glaccount.domain.GLAccountRepository;
@@ -233,6 +234,61 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                          changes);
             break;
             case ACCRUAL_PERIODIC:
+             // asset
+                mergeSavingsToAssetAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_REFERENCE.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.toString(), changes);
+
+                mergeSavingsToAssetAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.toString(), changes);
+                
+                mergeSavingsToAssetAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.toString(), changes);
+                
+                mergeSavingsToAssetAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_RECIVABLE.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_RECEIVABLE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_RECEIVABLE.toString(), changes);
+                
+                mergeSavingsToAssetAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_RECEIVABLE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_RECEIVABLE.toString(), changes);
+
+                // income
+                mergeSavingsToIncomeAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_FEES.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.toString(), changes);
+
+                mergeSavingsToIncomeAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.toString(), changes);
+
+                mergeSavingsToIncomeAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST.toString(), changes);
+
+                // expenses
+                mergeSavingsToExpenseAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.toString(), changes);
+                mergeSavingsToExpenseAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.LOSSES_WRITTEN_OFF.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.LOSSES_WRITTEN_OFF.toString(), changes);
+
+                // liability
+                mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_CONTROL.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.toString(), changes);
+                mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.toString(), changes);
+                createOrmergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.ESCHEAT_LIABILITY.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.ESCHEAT_LIABILITY.getValue(),
+                         changes);
+                mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(),
+                        savingsProductId, ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.toString(), changes);
             break;
             case ACCRUAL_UPFRONT:
             break;

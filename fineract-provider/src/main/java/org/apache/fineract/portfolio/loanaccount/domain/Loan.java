@@ -577,8 +577,11 @@ public class Loan extends AbstractPersistableCustom<Long> {
                     getId(), loanCharge.name());
         }
 
-        validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate(false));
-
+        if(loanCharge.isDisburseToSavings()) {
+              validateChargeHasValidDisburseToSavingsIfApplicable(loanCharge, getDisbursementDate());    
+              }else {
+             validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate(false));
+         }
         loanCharge.update(this);
 
         final BigDecimal amount = calculateAmountPercentageAppliedTo(loanCharge);
@@ -696,8 +699,9 @@ public class Loan extends AbstractPersistableCustom<Long> {
         List<LoanRepaymentScheduleInstallment> installments = getRepaymentScheduleInstallments();
         for (final LoanRepaymentScheduleInstallment installment : installments) {
             if (installmentNumber == null 
-                    && charge.isDueForCollectionFromAndUpToAndIncluding(startDate, installment.getDueDate())
-                   ) {
+                    && (charge.isDueForCollectionFromAndUpToAndIncluding(startDate, installment.getDueDate())
+                            || charge.isDueForCollectionForDisburseToSavingsAndIncluding(startDate)))
+                    {
                 chargePaymentInstallments.add(installment);
                 break;
             } else if (installmentNumber != null && installment.getInstallmentNumber().equals(installmentNumber)) {
@@ -737,6 +741,16 @@ public class Loan extends AbstractPersistableCustom<Long> {
                     getDisbursementDate(), lastRepaymentPeriodDueDate, loanCharge.name());
         }
     }
+    
+    private void validateChargeHasValidDisburseToSavingsIfApplicable(final LoanCharge loanCharge, final LocalDate disbursementDate) {
+      if ((loanCharge.isSpecifiedDueDate() || loanCharge.isDisburseToSavings())
+              && !loanCharge.isDueForCollectionForDisburseToSavingsAndIncluding(disbursementDate)) {
+          final String defaultUserMessage = "This charge with Disburse To Savings cannot be added as the it is not in schedule range.";
+          throw new LoanChargeCannotBeAddedException("loanCharge", "disbusre.to.savings.outside.range", defaultUserMessage,
+                  getDisbursementDate(), loanCharge.name());
+      }
+  }
+    
     private LocalDate getLastRepaymentPeriodDueDate(final boolean includeRecalculatedInterestComponent) {
         LocalDate lastRepaymentDate = getDisbursementDate();
         List<LoanRepaymentScheduleInstallment> installments = getRepaymentScheduleInstallments();
@@ -1631,8 +1645,11 @@ public class Loan extends AbstractPersistableCustom<Long> {
         }
         if (loanCharge.isActive()) {
             loanCharge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, fetchNumberOfInstallmensAfterExceptions(), totalChargeAmt);
-             validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate(false));
-        }
+            if(loanCharge.isDisburseToSavings()) {
+                  validateChargeHasValidDisburseToSavingsIfApplicable(loanCharge, getDisbursementDate());    
+                  }else {
+                 validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate(false));
+                  } }
 
     }
 
@@ -5274,7 +5291,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
         List<LoanCharge> loanCharges = new ArrayList<>();
         List<LoanInstallmentCharge> loanInstallmentCharges = new ArrayList<>();
         for (LoanCharge loanCharge : this.charges()) {
-            if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(fromDate, toDate) 
+            if ((loanCharge.isDueForCollectionFromAndUpToAndIncluding(fromDate, toDate) 
+                    || loanCharge.isDueForCollectionForDisburseToSavingsAndIncluding(fromDate))
                     ) {
                 if (loanCharge.isPenaltyCharge() && !loanCharge.isInstalmentFee()) {
                     penalties = penalties.add(loanCharge.amount());
@@ -6209,7 +6227,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
         interestAccountedForCurrentPeriod = installment.getInterestWaived(getCurrency()).plus(installment.getInterestPaid(getCurrency()));
         for (LoanCharge loanCharge : this.charges) {
             if (loanCharge.isActive() && !loanCharge.isDueAtDisbursement()) {
-                if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(installment.getFromDate(), paymentDate)) {
+                if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(installment.getFromDate(), paymentDate)
+                        || loanCharge.isDueForCollectionForDisburseToSavingsAndIncluding(installment.getFromDate())) {
                     if (loanCharge.isPenaltyCharge()) {
                         penaltyForCurrentPeriod = penaltyForCurrentPeriod.plus(loanCharge.getAmount(getCurrency()));
                         penaltyAccoutedForCurrentPeriod = penaltyAccoutedForCurrentPeriod

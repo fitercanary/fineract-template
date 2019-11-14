@@ -268,6 +268,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         if(loanProduct.syncExpectedWithDisbursementDate()){
         	syncExpectedDateWithActualDisbursementDate(loan, actualDisbursementDate);
         }
+        
+        for (final LoanCharge loanCharge : loan.charges()) {
+            if (loanCharge.isDisburseToSavings()){
+                loanCharge.setDueDate(actualDisbursementDate.toDate());
+            }
+        }
         checkClientOrGroupActive(loan);
 
         final LocalDate nextPossibleRepaymentDate = loan.getNextPossibleRepaymentDateForRescheduling();
@@ -689,6 +695,13 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final AppUser currentUser = getAppUserIfPresent();
 
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        
+        for (final LoanCharge loanCharge : loan.charges()) {
+            if (loanCharge.isDisburseToSavings()){
+                loanCharge.setDueDate(loan.getExpectedDisbursedOnLocalDate().toDate());
+            }
+        }
+        
         checkClientOrGroupActive(loan);
         this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BUSINESS_EVENTS.LOAN_UNDO_DISBURSAL,
                 constructEntityMap(BUSINESS_ENTITY.LOAN, loan));

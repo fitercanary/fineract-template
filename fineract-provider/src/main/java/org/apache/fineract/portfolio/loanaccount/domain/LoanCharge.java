@@ -75,6 +75,9 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
     @Column(name = "due_for_collection_as_of_date")
     private Date dueDate;
 
+    
+    
+
     @Column(name = "charge_calculation_enum")
     private Integer chargeCalculation;
 
@@ -186,7 +189,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
         // loan.
         // Then we need to get as of this loan charge due date how much amount
         // disbursed.
-        if ((chargeDefinition.getChargeTimeType().equals(ChargeTimeType.SPECIFIED_DUE_DATE.getValue()) 
+        if ((chargeDefinition.getChargeTimeType().equals(ChargeTimeType.SPECIFIED_DUE_DATE.getValue())
                 || chargeDefinition.getChargeTimeType().equals(ChargeTimeType.DISBURSE_TO_SAVINGS.getValue()))
                 && loan.isMultiDisburmentLoan()) {
             amountPercentageAppliedTo = BigDecimal.ZERO;
@@ -229,7 +232,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
             this.chargeTime = chargeTime.getValue();
         }
 
-        if (ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.SPECIFIED_DUE_DATE) 
+        if (ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.SPECIFIED_DUE_DATE)
                 || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.DISBURSE_TO_SAVINGS)
                 || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.OVERDUE_INSTALLMENT)) {
 
@@ -559,7 +562,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
     public boolean isDisburseToSavings() {
         return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.DISBURSE_TO_SAVINGS);
     }
-    
+
     public boolean isSpecifiedDueDate() {
         return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.SPECIFIED_DUE_DATE);
     }
@@ -590,6 +593,10 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
 
     public Date getDueDate() {
         return this.dueDate;
+    }
+    
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     private boolean determineIfFullyPaid() {
@@ -693,6 +700,15 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
     private boolean occursOnDayFromAndUpToAndIncluding(final LocalDate fromNotInclusive, final LocalDate upToAndInclusive,
             final LocalDate target) {
         return target != null && target.isAfter(fromNotInclusive) && !target.isAfter(upToAndInclusive);
+    }
+
+    public boolean isDueForCollectionForDisburseToSavingsAndIncluding(final LocalDate fromNotInclusive) {
+        final LocalDate dueDate = getDueLocalDate();
+        return occursOnDayFromAndUpToAndIncluding(fromNotInclusive, dueDate);
+    }
+
+    private boolean occursOnDayFromAndUpToAndIncluding(final LocalDate fromNotInclusive, final LocalDate target) {
+        return target != null && !target.isAfter(fromNotInclusive) && !target.isBefore(fromNotInclusive);
     }
 
     public boolean isFeeCharge() {

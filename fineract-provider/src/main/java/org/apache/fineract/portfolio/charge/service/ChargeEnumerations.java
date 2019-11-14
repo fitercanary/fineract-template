@@ -82,23 +82,30 @@ public class ChargeEnumerations {
                         ChargeTimeType.TRANCHE_DISBURSEMENT.getCode(), "Tranche Disbursement");
             break;
             case SHAREACCOUNT_ACTIVATION:
-                optionData = new EnumOptionData(ChargeTimeType.SHAREACCOUNT_ACTIVATION.getValue().longValue(), ChargeTimeType.SHAREACCOUNT_ACTIVATION.getCode(), "Share Account Activate") ;
-            break ;
-            
-            case SHARE_PURCHASE:
-            	optionData = new EnumOptionData(ChargeTimeType.SHARE_PURCHASE.getValue().longValue(), ChargeTimeType.SHARE_PURCHASE.getCode(), "Share Purchase") ;
-            break ;
-            case SHARE_REDEEM:
-            	optionData = new EnumOptionData(ChargeTimeType.SHARE_REDEEM.getValue().longValue(), ChargeTimeType.SHARE_REDEEM.getCode(), "Share Redeem") ;
-            break ;
-            case SAVINGS_NOACTIVITY_FEE:
-            	optionData = new EnumOptionData(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue().longValue(), ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getCode(), 
-            			"Saving No Activity Fee");
+                optionData = new EnumOptionData(ChargeTimeType.SHAREACCOUNT_ACTIVATION.getValue().longValue(),
+                        ChargeTimeType.SHAREACCOUNT_ACTIVATION.getCode(), "Share Account Activate");
             break;
-			case FDA_PRE_CLOSURE_FEE:
-				optionData = new EnumOptionData(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue().longValue(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getCode(),
-						"FDA Pre-closure Fee");
-				break;
+
+            case SHARE_PURCHASE:
+                optionData = new EnumOptionData(ChargeTimeType.SHARE_PURCHASE.getValue().longValue(),
+                        ChargeTimeType.SHARE_PURCHASE.getCode(), "Share Purchase");
+            break;
+            case SHARE_REDEEM:
+                optionData = new EnumOptionData(ChargeTimeType.SHARE_REDEEM.getValue().longValue(), ChargeTimeType.SHARE_REDEEM.getCode(),
+                        "Share Redeem");
+            break;
+            case SAVINGS_NOACTIVITY_FEE:
+                optionData = new EnumOptionData(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue().longValue(),
+                        ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getCode(), "Saving No Activity Fee");
+            break;
+            case FDA_PRE_CLOSURE_FEE:
+                optionData = new EnumOptionData(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue().longValue(),
+                        ChargeTimeType.FDA_PRE_CLOSURE_FEE.getCode(), "FDA Pre-closure Fee");
+            break;
+            case DISBURSE_TO_SAVINGS:
+                optionData = new EnumOptionData(ChargeTimeType.DISBURSE_TO_SAVINGS.getValue().longValue(), ChargeTimeType.DISBURSE_TO_SAVINGS.getCode(),
+                        " Disburse To Savings");
+                break;
             default:
                 optionData = new EnumOptionData(ChargeTimeType.INVALID.getValue().longValue(), ChargeTimeType.INVALID.getCode(), "Invalid");
             break;
@@ -124,8 +131,8 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeAppliesTo.CLIENT.getValue().longValue(), ChargeAppliesTo.CLIENT.getCode(), "Client");
             break;
             case SHARES:
-            	optionData = new EnumOptionData(ChargeAppliesTo.SHARES.getValue().longValue(), ChargeAppliesTo.SHARES.getCode(), "Shares") ;
-            break ;
+                optionData = new EnumOptionData(ChargeAppliesTo.SHARES.getValue().longValue(), ChargeAppliesTo.SHARES.getCode(), "Shares");
+            break;
             default:
                 optionData = new EnumOptionData(ChargeAppliesTo.INVALID.getValue().longValue(), ChargeAppliesTo.INVALID.getCode(),
                         "Invalid");
@@ -158,8 +165,8 @@ public class ChargeEnumerations {
                         ChargeCalculationType.PERCENT_OF_INTEREST.getCode(), "% Interest");
             break;
             case PERCENT_OF_DISBURSEMENT_AMOUNT:
-            	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().longValue(),
-            	        ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getCode(), "% Disbursement Amount");
+                optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().longValue(),
+                        ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getCode(), "% Disbursement Amount");
             break;
             default:
                 optionData = new EnumOptionData(ChargeCalculationType.INVALID.getValue().longValue(),
@@ -187,5 +194,5 @@ public class ChargeEnumerations {
         }
         return optionData;
     }
-    
+
 }

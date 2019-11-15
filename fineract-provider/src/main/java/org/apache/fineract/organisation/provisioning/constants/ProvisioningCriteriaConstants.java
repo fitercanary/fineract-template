@@ -27,8 +27,9 @@ public interface ProvisioningCriteriaConstants {
 	public final static String JSON_CRITERIAID_PARAM = "criteriaId";
 	public final static String JSON_CRITERIANAME_PARAM = "criteriaName";
 	public final static String JSON_LOANPRODUCTS_PARAM = "loanProducts";
-	public final static String JSON_LOAN_PRODUCT_ID_PARAM = "id";
-	public final static String JSON_LOAN_PRODUCTNAME_PARAM = "name";
+	public final static String JSON_SAVINGS_PRODUCTS_PARAM = "savingsProducts";
+	public final static String JSON_PRODUCT_ID_PARAM = "id";
+	public final static String JSON_PRODUCT_NAME_PARAM = "name";
 	public final static String JSON_LOAN_PRODUCT_BORROWERCYCLE_PARAM = "includeInBorrowerCycle";
 	public final static String JSON_PROVISIONING_DEFINITIONS_PARAM = "definitions";
 	public final static String JSON_CATEOGRYID_PARAM = "categoryId";

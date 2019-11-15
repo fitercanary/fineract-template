@@ -278,7 +278,21 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
 
     }
 
-    @Override
+	@Override
+	public Collection<SavingsProductData> retrieveAllSavingsProductsForLookup(String inClause) {
+		this.context.authenticatedUser();
+
+		final SavingProductLookupMapper rm = new SavingProductLookupMapper();
+
+		String sql = "select " + rm.schema();
+
+		if ((inClause != null) && (!(inClause.trim().isEmpty()))) {
+			sql += " where sp.id in (" + inClause + ") ";
+		}
+		return this.jdbcTemplate.query(sql, rm, new Object[]{});
+	}
+
+	@Override
     public Collection<SavingsProductData> retrieveAllForCurrency(String currencyCode) {
 
         this.context.authenticatedUser();

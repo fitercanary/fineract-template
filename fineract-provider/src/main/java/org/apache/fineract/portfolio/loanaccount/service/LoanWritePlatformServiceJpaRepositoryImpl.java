@@ -1295,7 +1295,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Long chargeDefinitionId = command.longValueOfParameterNamed("chargeId");
         final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeDefinitionId);
 
-        if (loan.isDisbursed() && chargeDefinition.isDisbursementCharge()) {
+        if (loan.isDisbursed() && (chargeDefinition.isDisbursementCharge() 
+                || chargeDefinition.isDisburseToSavingsCharge())) {
             validateAddingNewChargeAllowed(loanDisburseDetails); // validates
                                                                  // whether any
                                                                  // pending

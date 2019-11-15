@@ -746,7 +746,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
       if ((loanCharge.isSpecifiedDueDate() || loanCharge.isDisburseToSavings())
               && !loanCharge.isDueForCollectionForDisburseToSavingsAndIncluding(disbursementDate)) {
           final String defaultUserMessage = "This charge with Disburse To Savings cannot be added as the it is not in schedule range.";
-          throw new LoanChargeCannotBeAddedException("loanCharge", "disbusre.to.savings.outside.range", defaultUserMessage,
+          throw new LoanChargeCannotBeAddedException("loanCharge", "disbusre.to.savings.outside.range.not.more.than.and.less.than.expected.disbursement.date", 
+                  defaultUserMessage,
                   getDisbursementDate(), loanCharge.name());
       }
   }

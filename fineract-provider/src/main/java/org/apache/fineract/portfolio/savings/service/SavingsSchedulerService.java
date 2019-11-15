@@ -21,7 +21,7 @@ package org.apache.fineract.portfolio.savings.service;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 
 
-public interface SavingsSchedularService {
+public interface SavingsSchedulerService {
 
     void postInterestForAccounts() throws JobExecutionException;
     

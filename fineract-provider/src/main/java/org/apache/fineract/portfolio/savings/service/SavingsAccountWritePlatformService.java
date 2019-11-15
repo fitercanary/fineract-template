@@ -122,6 +122,6 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult applyOverdraft(Long savingsId, JsonCommand command);
 
-    void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList);
+	void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList, Boolean start);
 
 }

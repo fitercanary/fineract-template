@@ -53,6 +53,9 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
 	@Query("select sa from SavingsAccount sa where sa.accountNumber = :accountNumber")
 	SavingsAccount findByAccountNumber(@Param("accountNumber") String accountNumber);
 
-	@Query("select sa from SavingsAccount sa where sa.overdraftStartedOnDate = :date or sa.overdraftClosedOnDate = :date")
-    List<SavingsAccount>findByOverdraftStartDateOrClosedDate(@Param("date") Date date);
+	@Query("select sa from SavingsAccount sa where sa.allowOverdraft = false and sa.overdraftStartedOnDate >= :date and sa.overdraftClosedOnDate < :date")
+	List<SavingsAccount>findByAccountsDueForOverdraftStart(@Param("date") Date date);
+
+	@Query("select sa from SavingsAccount sa where sa.allowOverdraft = true and sa.overdraftClosedOnDate <= :date")
+    List<SavingsAccount>findByAccountsDueForOverdraftClose(@Param("date") Date date);
 }

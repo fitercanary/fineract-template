@@ -941,7 +941,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 || chargeTimeType.equals(ChargeTimeType.OVERDRAFT_FEE.getValue())) && dueAsOfDateParam != null) {
             baseDataValidator.reset().parameter(dueAsOfDateParamName).value(dueAsOfDateParam.toString(fmt))
                     .failWithCodeNoParameterAddedToErrorCode(
-                            "charge.due.date.is.invalid.for." + ChargeTimeType.fromInt(chargeTimeType).getCode());
+							"charge.due.date.is.invalid.for." + ChargeTimeType.fromInt(chargeTimeType).getCode());
         }
         // calculation is in this line
         final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewFromJson(savingsAccount, chargeDefinition, command);
@@ -1625,16 +1625,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
     @Transactional
     @Override
-    public void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList) {
-        LocalDate today = LocalDate.now();
-        for (SavingsAccount savingAccount : savingsAccountList) {
-            if ((today.toDate()).equals(savingAccount.getOverdraftStartedOnDate())) {
-                savingAccount.startOverdraft();
-            } else {
-                savingAccount.closeOverdraft();
-            }
-            this.savingAccountRepositoryWrapper.saveAndFlush(savingAccount);
-        }
+    public void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList, Boolean start) {
+		savingsAccountList.forEach(savingAccount -> {
+			if (start) {
+				savingAccount.startOverdraft();
+			} else {
+				savingAccount.closeOverdraft();
+			}
+			this.savingAccountRepositoryWrapper.saveAndFlush(savingAccount);
+		});
     }
 
     private void validateOverdraftInputDates(final JsonCommand command) {

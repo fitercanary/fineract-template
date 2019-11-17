@@ -71,7 +71,7 @@ public interface SavingsAccountReadPlatformService {
     Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters, String text,
             String filterCategories, String startDate, String endDate);
 
-    List<Long> retriveActiveSavingsAccrualAccounts();
+    List<Long> retriveActiveSavingsAccrualAccounts(Long accountType);
 
     BigDecimal getchargesDue(Long savingAccountId, LocalDate asOnDate, boolean isPenalties);
 

@@ -1437,12 +1437,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
      */
 
     @Override
-    public List<Long> retriveActiveSavingsAccrualAccounts() {
+    public List<Long> retriveActiveSavingsAccrualAccounts(Long accountType) {
         StringBuilder sql = new StringBuilder(" SELECT distinct msa.id ");
         sql.append(" FROM m_savings_account msa ");
         sql.append(" JOIN m_savings_product msp ON msp.id = msa.product_id ");
-        sql.append(" WHERE msa.status_enum = 300 AND msp.accounting_type = 3 ");
-        return this.jdbcTemplate.queryForList(sql.toString(), Long.class);
+        sql.append(" WHERE msa.status_enum = 300 AND msp.accounting_type = 3 AND msa.deposit_type_enum = ? ");
+        return this.jdbcTemplate.queryForList(sql.toString(), Long.class, new Object[] {accountType});
     }
 
     @Override

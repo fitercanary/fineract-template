@@ -419,9 +419,13 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.POSTACCRUALINTERESTFORSAVINGS)
     public void postAccrualInterestForSavings() {
         LocalDate currentDate = new LocalDate();
-        final List<Long> activeSavingsAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts();
+        final List<Long> activeSavingsAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(100l);
         for (Long savingAccount : activeSavingsAccounts) {
             this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate, false);
+        }
+        final List<Long> activeFixedDepositAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(200l);
+        for (Long activefixedDepositAccount: activeFixedDepositAccounts) {
+            this.depositAccountWritePlatformService.postAccrualInterest(activefixedDepositAccount, DepositAccountType.FIXED_DEPOSIT);
         }
     }
 

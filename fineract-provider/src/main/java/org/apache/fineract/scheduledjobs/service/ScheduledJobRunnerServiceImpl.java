@@ -421,7 +421,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         LocalDate currentDate = new LocalDate();
         final List<Long> activeSavingsAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts();
         for (Long savingAccount : activeSavingsAccounts) {
-            this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate);
+            this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate, false);
         }
     }
 

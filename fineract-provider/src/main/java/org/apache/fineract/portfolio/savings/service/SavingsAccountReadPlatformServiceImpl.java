@@ -18,6 +18,14 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -76,14 +84,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 @Service
 public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountReadPlatformService {
@@ -1443,5 +1443,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         sql.append(" JOIN m_savings_product msp ON msp.id = msa.product_id ");
         sql.append(" WHERE msa.status_enum = 300 AND msp.accounting_type = 3 ");
         return this.jdbcTemplate.queryForList(sql.toString(), Long.class);
+    }
+
+    @Override
+    public BigDecimal getchargesDue(Long savingAccountId, LocalDate asOnDate, boolean isPenalties) {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" SELECT SUM(msac.amount) as chargeDueAmount ");
+        sql.append(" FROM m_savings_account msa ");
+        sql.append(" JOIN m_savings_account_charge msac ON msac.savings_account_id = msa.id AND msac.is_active = 1 ");
+        sql.append(" WHERE msa.id = ? AND msac.charge_due_date = ? AND msac.is_penalty = ? ");
+        return this.jdbcTemplate.queryForObject(sql.toString(), BigDecimal.class,
+                new Object[] { savingAccountId, formatter.print(asOnDate), isPenalties });
     }
 }

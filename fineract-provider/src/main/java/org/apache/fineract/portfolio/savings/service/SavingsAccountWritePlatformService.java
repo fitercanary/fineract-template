@@ -98,11 +98,11 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult postAccrualInterest(JsonCommand command);
 
-    CommandProcessingResult postAccrualInterest(Long savingAccountId, LocalDate postingDate);
+    CommandProcessingResult postAccrualInterest(Long savingAccountId, LocalDate postingDate, boolean isUserPosting);
 
-    void postAccrualInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
+    void postAccrualInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate, boolean isUserPosting);
 
-    void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
+    void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate, boolean isUserPosting);
 
     CommandProcessingResult blockAccount(Long savingsId);
 
@@ -122,6 +122,6 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult applyOverdraft(Long savingsId, JsonCommand command);
 
-	void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList, Boolean start);
+    void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList, Boolean start);
 
 }

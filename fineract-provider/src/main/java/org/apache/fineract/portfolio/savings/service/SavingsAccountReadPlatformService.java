@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -71,5 +72,7 @@ public interface SavingsAccountReadPlatformService {
             String filterCategories, String startDate, String endDate);
 
     List<Long> retriveActiveSavingsAccrualAccounts();
+
+    BigDecimal getchargesDue(Long savingAccountId, LocalDate asOnDate, boolean isPenalties);
 
 }

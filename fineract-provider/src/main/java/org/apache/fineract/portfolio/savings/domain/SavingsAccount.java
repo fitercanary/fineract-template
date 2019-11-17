@@ -608,6 +608,30 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return postingTransation;
     }
 
+    protected SavingsAccountTransaction findAccrualFeesPostingTransactionFor(final LocalDate postingDate) {
+        SavingsAccountTransaction postingTransation = null;
+        List<SavingsAccountTransaction> trans = getTransactions();
+        for (final SavingsAccountTransaction transaction : trans) {
+            if ((transaction.isAccrualFeesPostingAndNotReversed()) && transaction.occursOn(postingDate)) {
+                postingTransation = transaction;
+                break;
+            }
+        }
+        return postingTransation;
+    }
+    
+    protected SavingsAccountTransaction findAccrualPenaltiesPostingTransactionFor(final LocalDate postingDate) {
+        SavingsAccountTransaction postingTransation = null;
+        List<SavingsAccountTransaction> trans = getTransactions();
+        for (final SavingsAccountTransaction transaction : trans) {
+            if ((transaction.isAccrualPenaltiesPostingAndNotReversed()) && transaction.occursOn(postingDate)) {
+                postingTransation = transaction;
+                break;
+            }
+        }
+        return postingTransation;
+    }
+
     protected SavingsAccountTransaction findTransactionFor(final LocalDate postingDate,
             final List<SavingsAccountTransaction> transactions) {
         SavingsAccountTransaction transaction = null;
@@ -3417,6 +3441,81 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
+    }
+
+    public void postFeesAccrualTransaction(LocalDate feesAccrualPostingDate, BigDecimal feesAmount, boolean isUserPosting) {
+
+        Money feesAmountMoney = Money.of(getCurrency(), feesAmount);
+
+        final SavingsAccountTransaction postingTransaction = findAccrualFeesPostingTransactionFor(feesAccrualPostingDate);
+        if (postingTransaction == null) {
+            SavingsAccountTransaction newPostingTransaction = null;
+            if (feesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
+
+                newPostingTransaction = SavingsAccountTransaction.AccrualFeesPosting(this, office(), feesAccrualPostingDate,
+                        feesAmountMoney, isUserPosting);
+            }
+            if (newPostingTransaction != null) {
+                addTransaction(newPostingTransaction);
+            }
+        } else {
+            boolean correctionRequired = false;
+            if (postingTransaction.isAccrualFeesPostingAndNotReversed()) {
+                correctionRequired = postingTransaction.hasNotAmount(feesAmountMoney);
+            } else {
+                correctionRequired = postingTransaction.hasNotAmount(feesAmountMoney.negated());
+            }
+            if (correctionRequired) {
+                postingTransaction.reverse();
+                SavingsAccountTransaction newPostingTransaction;
+                if (feesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
+                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), feesAccrualPostingDate,
+                            feesAmountMoney, isUserPosting);
+                } else {
+                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), feesAccrualPostingDate,
+                            feesAmountMoney.negated(), isUserPosting);
+                }
+                addTransaction(newPostingTransaction);
+            }
+        }
+
+    }
+
+    public void postPenaltiesAccrualTransaction(LocalDate penaltiesAccrualPostingDate, BigDecimal penaltiesAmount, boolean isUserPosting) {
+        Money penaltiesAmountMoney = Money.of(getCurrency(), penaltiesAmount);
+
+        final SavingsAccountTransaction postingTransaction = findAccrualPenaltiesPostingTransactionFor(penaltiesAccrualPostingDate);
+        if (postingTransaction == null) {
+            SavingsAccountTransaction newPostingTransaction = null;
+            if (penaltiesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
+
+                newPostingTransaction = SavingsAccountTransaction.AccrualPenaltiesPosting(this, office(), penaltiesAccrualPostingDate,
+                        penaltiesAmountMoney, isUserPosting);
+            }
+            if (newPostingTransaction != null) {
+                addTransaction(newPostingTransaction);
+            }
+        } else {
+            boolean correctionRequired = false;
+            if (postingTransaction.isAccrualFeesPostingAndNotReversed()) {
+                correctionRequired = postingTransaction.hasNotAmount(penaltiesAmountMoney);
+            } else {
+                correctionRequired = postingTransaction.hasNotAmount(penaltiesAmountMoney.negated());
+            }
+            if (correctionRequired) {
+                postingTransaction.reverse();
+                SavingsAccountTransaction newPostingTransaction;
+                if (penaltiesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
+                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), penaltiesAccrualPostingDate,
+                            penaltiesAmountMoney, isUserPosting);
+                } else {
+                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), penaltiesAccrualPostingDate,
+                            penaltiesAmountMoney.negated(), isUserPosting);
+                }
+                addTransaction(newPostingTransaction);
+            }
+        }
+
     }
 
 }

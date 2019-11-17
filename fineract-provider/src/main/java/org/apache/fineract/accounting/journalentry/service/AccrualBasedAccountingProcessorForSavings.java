@@ -186,6 +186,28 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
                 }
             }
 
+            else if (savingsTransactionDTO.getTransactionType().isAccrualFeesPosting()) {
+                // Post journal entry if earned interest amount is greater than
+                // zero
+                if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
+                    this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_RECEIVABLE.getValue(),
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue(), savingsProductId, paymentTypeId, savingsId,
+                            transactionId, transactionDate, amount, isReversal);
+                }
+            }
+
+            else if (savingsTransactionDTO.getTransactionType().isAccrualPenaltiesPosting()) {
+                // Post journal entry if earned interest amount is greater than
+                // zero
+                if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
+                    this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_RECEIVABLE.getValue(),
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.getValue(), savingsProductId, paymentTypeId, savingsId,
+                            transactionId, transactionDate, amount, isReversal);
+                }
+            }
+
             else if (savingsTransactionDTO.getTransactionType().isInterestPosting()) {
                 // Post journal entry if earned interest amount is greater than
                 // zero

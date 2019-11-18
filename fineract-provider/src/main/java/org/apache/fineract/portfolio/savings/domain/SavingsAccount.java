@@ -3406,7 +3406,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                     recalucateDailyBalanceDetails = true;
                 } else {
                     boolean correctionRequired = false;
-                    if (postingTransaction.isAccrualInterestPostingAndNotReversed()) {
+                    if (postingTransaction.isAccrualInterestPostingAndNotReversed() || postingTransaction.isOverdraftAccrualInterestAndNotReversed()) {
                         correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
                     } else {
                         correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod.negated());

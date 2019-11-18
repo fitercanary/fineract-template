@@ -600,7 +600,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         SavingsAccountTransaction postingTransation = null;
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
-            if ((transaction.isAccrualInterestPostingAndNotReversed()) && transaction.occursOn(postingDate)) {
+            if (transaction.isAccrualInterestPostingAndNotReversed() && transaction.isOverdraftAccrualInterestAndNotReversed()
+                    && transaction.occursOn(postingDate)) {
                 postingTransation = transaction;
                 break;
             }

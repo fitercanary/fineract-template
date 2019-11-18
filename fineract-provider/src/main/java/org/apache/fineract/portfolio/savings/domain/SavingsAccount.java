@@ -600,7 +600,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         SavingsAccountTransaction postingTransation = null;
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
-            if (transaction.isAccrualInterestPostingAndNotReversed() && transaction.isOverdraftAccrualInterestAndNotReversed()
+            if ((transaction.isAccrualInterestPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
                 postingTransation = transaction;
                 break;
@@ -712,7 +712,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public List<LocalDate> getManualAccrualPostingDates() {
         List<LocalDate> transactions = new ArrayList<>();
         for (SavingsAccountTransaction trans : this.transactions) {
-            if (trans.isAccrualInterestPostingAndNotReversed() && trans.isOverdraftAccrualInterestAndNotReversed()
+            if ((trans.isAccrualInterestPostingAndNotReversed() || trans.isOverdraftAccrualInterestAndNotReversed())
                     && trans.isManualTransaction()) {
                 transactions.add(trans.getTransactionLocalDate());
             }
@@ -1020,30 +1020,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         } else
             startInterestCalculationLocalDate = getActivationLocalDate();
         return startInterestCalculationLocalDate;
-    }
-
-    // recalculating interest from only the last accrual trasnaction date
-    public LocalDate getLastAccrualInterestDate(LocalDate interestPostingUpToDate) {
-        LocalDate lastAccrualInterestDate = null;
-        for (SavingsAccountTransaction transaction : this.transactions) {
-            if (transaction.isAccrualInterestPostingAndNotReversed()
-                    && transaction.getTransactionLocalDate().isBefore(interestPostingUpToDate)) {
-                lastAccrualInterestDate = transaction.getTransactionLocalDate();
-                break;
-            }
-        }
-        for (SavingsAccountTransaction transaction : this.transactions) {
-            if (transaction.isAccrualInterestPostingAndNotReversed()) {
-                if (lastAccrualInterestDate != null && lastAccrualInterestDate.isBefore(transaction.getTransactionLocalDate())
-                        && transaction.getTransactionLocalDate().isBefore(interestPostingUpToDate)) {
-                    lastAccrualInterestDate = transaction.getTransactionLocalDate();
-                }
-            }
-        }
-        if (lastAccrualInterestDate == null) {
-            lastAccrualInterestDate = getActivationLocalDate();
-        }
-        return lastAccrualInterestDate;
     }
 
     public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee,
@@ -3406,7 +3382,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                     recalucateDailyBalanceDetails = true;
                 } else {
                     boolean correctionRequired = false;
-                    if (postingTransaction.isAccrualInterestPostingAndNotReversed() || postingTransaction.isOverdraftAccrualInterestAndNotReversed()) {
+                    if (postingTransaction.isAccrualInterestPostingAndNotReversed()
+                            || postingTransaction.isOverdraftAccrualInterestAndNotReversed()) {
                         correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
                     } else {
                         correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod.negated());

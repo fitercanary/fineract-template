@@ -711,7 +711,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public List<LocalDate> getManualAccrualPostingDates() {
         List<LocalDate> transactions = new ArrayList<>();
         for (SavingsAccountTransaction trans : this.transactions) {
-            if (trans.isAccrualInterestPostingAndNotReversed() && trans.isManualTransaction()) {
+            if (trans.isAccrualInterestPostingAndNotReversed() && trans.isOverdraftAccrualInterestAndNotReversed()
+                    && trans.isManualTransaction()) {
                 transactions.add(trans.getTransactionLocalDate());
             }
         }

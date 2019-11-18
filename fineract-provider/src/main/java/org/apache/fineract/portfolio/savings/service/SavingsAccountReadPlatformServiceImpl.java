@@ -1448,7 +1448,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     @Override
     public BigDecimal getchargesDue(Long savingAccountId, LocalDate asOnDate, boolean isPenalties) {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT SUM(msac.amount) as chargeDueAmount ");
+        sql.append(" SELECT ifnull(SUM(ifnull(msac.amount,0)),0) as chargeDueAmount ");
         sql.append(" FROM m_savings_account msa ");
         sql.append(" JOIN m_savings_account_charge msac ON msac.savings_account_id = msa.id AND msac.is_active = 1 ");
         sql.append(" WHERE msa.id = ? AND msac.charge_due_date = ? AND msac.is_penalty = ? ");

@@ -190,6 +190,13 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue(), date,
                 amount, isReversed, null, isManualTransaction);
     }
+    
+    public static SavingsAccountTransaction overdraftAccrualInterest(final SavingsAccount savingsAccount, final Office office,
+            final LocalDate date, final Money amount, final boolean isManualTransaction) {
+        final boolean isReversed = false;
+        return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue(), date,
+                amount, isReversed, null, isManualTransaction);
+    }
 
     public static SavingsAccountTransaction withdrawalFee(final SavingsAccount savingsAccount, final Office office, final LocalDate date,
             final Money amount, final AppUser appUser) {
@@ -680,6 +687,10 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
 
     public boolean isOverdraftInterestAndNotReversed() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isIncomeFromInterest() && isNotReversed();
+    }
+    
+    public boolean isOverdraftAccrualInterestAndNotReversed() {
+        return SavingsAccountTransactionType.fromInt(this.typeOf).isOverdraftAccrualPosting() && isNotReversed();
     }
 
     public boolean isPayCharge() {

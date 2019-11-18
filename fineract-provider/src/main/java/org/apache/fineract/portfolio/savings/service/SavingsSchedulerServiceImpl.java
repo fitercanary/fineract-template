@@ -66,7 +66,7 @@ public class SavingsSchedulerServiceImpl implements SavingsSchedulerService {
 				this.savingAccountAssembler.assignSavingAccountHelpers(savingsAccount);
 				boolean postInterestAsOn = false;
 				LocalDate transactionDate = null;
-				this.savingsAccountWritePlatformService.postInterest(savingsAccount, postInterestAsOn, transactionDate, false);
+				this.savingsAccountWritePlatformService.postInterest(savingsAccount, postInterestAsOn, transactionDate);
 			} catch (Exception e) {
 				Throwable realCause = e;
 				if (e.getCause() != null) {

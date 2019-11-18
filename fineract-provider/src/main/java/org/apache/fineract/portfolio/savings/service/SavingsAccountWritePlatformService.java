@@ -102,7 +102,7 @@ public interface SavingsAccountWritePlatformService {
 
     void postAccrualInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate, boolean isUserPosting);
 
-    void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate, boolean isUserPosting);
+    void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
 
     CommandProcessingResult blockAccount(Long savingsId);
 

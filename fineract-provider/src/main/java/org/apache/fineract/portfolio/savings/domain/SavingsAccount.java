@@ -619,7 +619,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         return postingTransation;
     }
-    
+
     protected SavingsAccountTransaction findAccrualPenaltiesPostingTransactionFor(final LocalDate postingDate) {
         SavingsAccountTransaction postingTransation = null;
         List<SavingsAccountTransaction> trans = getTransactions();
@@ -3387,13 +3387,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
                         newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(),
                                 interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting());
-                    } /*
-                       * else { newPostingTransaction =
-                       * SavingsAccountTransaction.overdraftInterest(this,
-                       * office(), interestPostingTransactionDate,
-                       * interestEarnedToBePostedForPeriod.negated(),
-                       * interestPostingPeriod.isUserPosting()); }
-                       */
+                    } else {
+                        newPostingTransaction = SavingsAccountTransaction.overdraftAccrualInterest(this, office(),
+                                interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
+                                interestPostingPeriod.isUserPosting());
+                    }
+
                     if (newPostingTransaction != null) {
                         addTransaction(newPostingTransaction);
                     }

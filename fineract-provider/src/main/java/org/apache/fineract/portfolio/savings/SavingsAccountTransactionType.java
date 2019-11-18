@@ -38,16 +38,17 @@ public enum SavingsAccountTransactionType {
     INITIATE_TRANSFER(12, "savingsAccountTransactionType.initiateTransfer"), //
     APPROVE_TRANSFER(13, "savingsAccountTransactionType.approveTransfer"), //
     WITHDRAW_TRANSFER(14, "savingsAccountTransactionType.withdrawTransfer"), //
-    REJECT_TRANSFER(15, "savingsAccountTransactionType.rejectTransfer"), 
+    REJECT_TRANSFER(15, "savingsAccountTransactionType.rejectTransfer"), //
     WRITTEN_OFF(16, "savingsAccountTransactionType.writtenoff"), //
     OVERDRAFT_INTEREST(17, "savingsAccountTransactionType.overdraftInterest"), //
-    WITHHOLD_TAX(18, "savingsAccountTransactionType.withholdTax"), 
-    ESCHEAT(19, "savingsAccountTransactionType.escheat"), 
-    AMOUNT_HOLD(20, "savingsAccountTransactionType.onHold"), 
-    AMOUNT_RELEASE(21, "savingsAccountTransactionType.release"), 
-    ACCRUAL_INTEREST_POSTING(22, "savingsAccountTransactionType.accrualInterestPosting"),
-    ACCRUAL_FEES_POSTING(23, "savingsAccountTransactionType.accrualFeesPosting"),
-    ACCRUAL_PENALTIES_POSTING(24, "savingsAccountTransactionType.accrualPenaltiesPosting");
+    WITHHOLD_TAX(18, "savingsAccountTransactionType.withholdTax"), //
+    ESCHEAT(19, "savingsAccountTransactionType.escheat"), //
+    AMOUNT_HOLD(20, "savingsAccountTransactionType.onHold"), //
+    AMOUNT_RELEASE(21, "savingsAccountTransactionType.release"), //
+    ACCRUAL_INTEREST_POSTING(22, "savingsAccountTransactionType.accrualInterestPosting"), //
+    ACCRUAL_FEES_POSTING(23, "savingsAccountTransactionType.accrualFeesPosting"), //
+    ACCRUAL_PENALTIES_POSTING(24, "savingsAccountTransactionType.accrualPenaltiesPosting"), //
+    OVERDRAFT_ACCRUAL_INTEREST(25, "savingsAccountTransactionType.overdraftAccrualInterest"); //
 
     private final Integer value;
     private final String code;
@@ -133,6 +134,9 @@ public enum SavingsAccountTransactionType {
             break;
             case 24:
                 savingsAccountTransactionType = SavingsAccountTransactionType.ACCRUAL_PENALTIES_POSTING;
+            break;
+            case 25:
+                savingsAccountTransactionType = SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST;
             break;
         }
         return savingsAccountTransactionType;
@@ -230,12 +234,16 @@ public enum SavingsAccountTransactionType {
     public boolean isAccrualInterestPosting() {
         return this.value.equals(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
     }
-    
+
     public boolean isAccrualFeesPosting() {
         return this.value.equals(SavingsAccountTransactionType.ACCRUAL_FEES_POSTING.getValue());
     }
-    
+
     public boolean isAccrualPenaltiesPosting() {
         return this.value.equals(SavingsAccountTransactionType.ACCRUAL_PENALTIES_POSTING.getValue());
+    }
+
+    public boolean isOverdraftAccrualPosting() {
+        return this.value.equals(SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue());
     }
 }

@@ -46,6 +46,9 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
     
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entry", orphanRemoval = true, fetch=FetchType.EAGER)
     private Set<LoanProductProvisioningEntry> provisioningEntries = new HashSet<>();
+
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "entry", orphanRemoval = true, fetch=FetchType.EAGER)
+	private Set<SavingsProductProvisioningEntry> savingsProductProvisioningEntries = new HashSet<>();
     
     @OneToOne
     @JoinColumn(name = "createdby_id")
@@ -83,8 +86,12 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
     public Collection<LoanProductProvisioningEntry> getLoanProductProvisioningEntries() {
         return this.provisioningEntries ;
     }
-    
-    public void setJournalEntryCreated(Boolean bool) {
+
+	public Set<SavingsProductProvisioningEntry> getSavingsProductProvisioningEntries() {
+		return savingsProductProvisioningEntries;
+	}
+
+	public void setJournalEntryCreated(Boolean bool) {
         this.isJournalEntryCreated = bool ;
     }
     

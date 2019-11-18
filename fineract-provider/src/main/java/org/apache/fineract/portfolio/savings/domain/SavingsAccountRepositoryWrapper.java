@@ -125,7 +125,11 @@ public class SavingsAccountRepositoryWrapper {
         }
     }
 
-    public List<SavingsAccount> findByOverdraftStartDateOrClosedDate(@Param("date") Date date){
-        return this.repository.findByOverdraftStartDateOrClosedDate(date);
+    public List<SavingsAccount> findByAccountsDueForOverdraftStart(@Param("date") Date date){
+        return this.repository.findByAccountsDueForOverdraftStart(date);
     }
+
+	public List<SavingsAccount> findByAccountsDueForOverdraftClose(@Param("date") Date date){
+		return this.repository.findByAccountsDueForOverdraftClose(date);
+	}
 }

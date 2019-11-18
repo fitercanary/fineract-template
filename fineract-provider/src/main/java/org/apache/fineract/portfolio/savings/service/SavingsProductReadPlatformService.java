@@ -30,6 +30,8 @@ public interface SavingsProductReadPlatformService {
 
     Collection<SavingsProductData> retrieveAllForLookupByType(Boolean isOverdraftType);
 
+	Collection<SavingsProductData> retrieveAllSavingsProductsForLookup(String inClause);
+
     Collection<SavingsProductData> retrieveAllForCurrency(String currencyCode);
 
     SavingsProductData retrieveOne(Long productId);

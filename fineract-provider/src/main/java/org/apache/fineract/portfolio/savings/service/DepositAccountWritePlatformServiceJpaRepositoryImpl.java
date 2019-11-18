@@ -547,6 +547,22 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .withSavingsId(savingsId) //
                 .build();
     }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult postAccrualInterest(final Long savingsId, final DepositAccountType depositAccountType) {
+
+        final SavingsAccount account = this.depositAccountAssembler.assembleFrom(savingsId, depositAccountType);
+        checkClientOrGroupActive(account);
+        postAccrualInterest(account);
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(savingsId) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(savingsId) //
+                .build();
+    }
 
     @Transactional
     private void postInterest(final SavingsAccount account) {
@@ -564,6 +580,27 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         LocalDate postInterestOnDate = null;
         account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
         		postInterestOnDate);
+        this.savingAccountRepositoryWrapper.saveAndFlush(account);
+
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+    }
+    
+    @Transactional
+    private void postAccrualInterest(final SavingsAccount account) {
+
+        final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                .isSavingsInterestPostingAtCurrentPeriodEnd();
+        final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+
+        final Set<Long> existingTransactionIds = new HashSet<>();
+        final Set<Long> existingReversedTransactionIds = new HashSet<>();
+        updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+        final LocalDate today = DateUtils.getLocalDateOfTenant();
+        final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
+        boolean isInterestTransfer = false;
+        LocalDate postInterestOnDate = DateUtils.getLocalDateOfTenant();
+        account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
+                        postInterestOnDate);
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);

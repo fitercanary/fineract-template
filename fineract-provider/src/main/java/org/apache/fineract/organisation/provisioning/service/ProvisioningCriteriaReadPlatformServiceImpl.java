@@ -34,6 +34,8 @@ import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaDe
 import org.apache.fineract.organisation.provisioning.exception.ProvisioningCriteriaNotFoundException;
 import org.apache.fineract.portfolio.loanproduct.data.LoanProductData;
 import org.apache.fineract.portfolio.loanproduct.service.LoanProductReadPlatformService;
+import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -46,16 +48,18 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
     private final JdbcTemplate jdbcTemplate;
     private final ProvisioningCategoryReadPlatformService provisioningCategoryReadPlatformService;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
+	private final SavingsProductReadPlatformService savingsProductReadPlatformService;
     private final GLAccountReadPlatformService glAccountReadPlatformService;
     private final LoanProductReadPlatformService loanProductReaPlatformService;
 
     @Autowired
     public ProvisioningCriteriaReadPlatformServiceImpl(final RoutingDataSource dataSource,
-            final ProvisioningCategoryReadPlatformService provisioningCategoryReadPlatformService,
-            final LoanProductReadPlatformService loanProductReadPlatformService,
-            final GLAccountReadPlatformService glAccountReadPlatformService,
-            final LoanProductReadPlatformService loanProductReaPlatformService) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
+													   final ProvisioningCategoryReadPlatformService provisioningCategoryReadPlatformService,
+													   final LoanProductReadPlatformService loanProductReadPlatformService,
+													   SavingsProductReadPlatformService savingsProductReadPlatformService, final GLAccountReadPlatformService glAccountReadPlatformService,
+													   final LoanProductReadPlatformService loanProductReaPlatformService) {
+		this.savingsProductReadPlatformService = savingsProductReadPlatformService;
+		this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.provisioningCategoryReadPlatformService = provisioningCategoryReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
         this.glAccountReadPlatformService = glAccountReadPlatformService;
@@ -63,25 +67,27 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
     }
 
     @Override
-    public ProvisioningCriteriaData retrievePrivisiongCriteriaTemplate() {
+    public ProvisioningCriteriaData retrieveProvisioningCriteriaTemplate() {
         boolean onlyActive = true;
         final Collection<ProvisioningCategoryData> categories = this.provisioningCategoryReadPlatformService
                 .retrieveAllProvisionCategories();
         final Collection<LoanProductData> allLoanProducts = this.loanProductReadPlatformService
                 .retrieveAllLoanProductsForLookup(onlyActive);
+		final Collection<SavingsProductData> allSavingsProducts = this.savingsProductReadPlatformService.retrieveAllForLookup();
         final Collection<GLAccountData> glAccounts = this.glAccountReadPlatformService.retrieveAllEnabledDetailGLAccounts();
-        return ProvisioningCriteriaData.toTemplate(constructCriteriaTemplate(categories), allLoanProducts, glAccounts);
+        return ProvisioningCriteriaData.toTemplate(constructCriteriaTemplate(categories), allLoanProducts, allSavingsProducts, glAccounts);
     }
 
     @Override
-    public ProvisioningCriteriaData retrievePrivisiongCriteriaTemplate(ProvisioningCriteriaData data) {
+    public ProvisioningCriteriaData retrieveProvisioningCriteriaTemplate(ProvisioningCriteriaData data) {
         boolean onlyActive = true;
         final Collection<ProvisioningCategoryData> categories = this.provisioningCategoryReadPlatformService
                 .retrieveAllProvisionCategories();
         final Collection<LoanProductData> allLoanProducts = this.loanProductReadPlatformService
                 .retrieveAllLoanProductsForLookup(onlyActive);
+		final Collection<SavingsProductData> allSavingsProducts = this.savingsProductReadPlatformService.retrieveAllForLookup();
         final Collection<GLAccountData> glAccounts = this.glAccountReadPlatformService.retrieveAllEnabledDetailGLAccounts();
-        return ProvisioningCriteriaData.toTemplate(data, constructCriteriaTemplate(categories), allLoanProducts, glAccounts);
+        return ProvisioningCriteriaData.toTemplate(data, constructCriteriaTemplate(categories), allLoanProducts, allSavingsProducts, glAccounts);
     }
     
     private Collection<ProvisioningCriteriaDefinitionData> constructCriteriaTemplate(Collection<ProvisioningCategoryData> categories) {
@@ -119,8 +125,11 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
             Collection<LoanProductData> loanProducts = loanProductReaPlatformService
                     .retrieveAllLoanProductsForLookup("select product_id from m_loanproduct_provisioning_mapping where m_loanproduct_provisioning_mapping.criteria_id="
                             + criteriaId);
+			Collection<SavingsProductData> savingsProducts = savingsProductReadPlatformService
+					.retrieveAllSavingsProductsForLookup("select product_id from m_savings_product_provisioning_mapping spm where spm.criteria_id="
+							+ criteriaId);
             List<ProvisioningCriteriaDefinitionData> definitions = retrieveProvisioningDefinitions(criteriaId);
-            return ProvisioningCriteriaData.toLookup(criteriaId, criteriaName, loanProducts, definitions);
+            return ProvisioningCriteriaData.toLookup(criteriaId, criteriaName, loanProducts, savingsProducts, definitions);
         }catch(EmptyResultDataAccessException e) {
             throw new ProvisioningCriteriaNotFoundException(criteriaId) ;
         }

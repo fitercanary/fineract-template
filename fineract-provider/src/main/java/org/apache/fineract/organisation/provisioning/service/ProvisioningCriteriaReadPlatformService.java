@@ -25,11 +25,11 @@ import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaDa
 
 public interface ProvisioningCriteriaReadPlatformService {
 
-    public ProvisioningCriteriaData retrievePrivisiongCriteriaTemplate() ;
+    public ProvisioningCriteriaData retrieveProvisioningCriteriaTemplate() ;
     
     public ProvisioningCriteriaData retrieveProvisioningCriteria(Long criteriaId) ;
     
     public Collection<ProvisioningCriteriaData> retrieveAllProvisioningCriterias() ;
     
-    public ProvisioningCriteriaData retrievePrivisiongCriteriaTemplate(ProvisioningCriteriaData data) ;
+    public ProvisioningCriteriaData retrieveProvisioningCriteriaTemplate(ProvisioningCriteriaData data) ;
 }

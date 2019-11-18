@@ -298,9 +298,11 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.getValue());
 
-                this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
-                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(), savingProductId,
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue());
+                if (!accountType.equals(DepositAccountType.RECURRING_DEPOSIT) && !accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
+                    this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
+                            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(), savingProductId,
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue());
+                }
 
                 if (null != this.fromApiJsonHelper.extractBooleanNamed(isDormancyTrackingActiveParamName, element)
                         && this.fromApiJsonHelper.extractBooleanNamed(isDormancyTrackingActiveParamName, element)) {

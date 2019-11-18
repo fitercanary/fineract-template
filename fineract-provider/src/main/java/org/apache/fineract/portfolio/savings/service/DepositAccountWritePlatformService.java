@@ -90,4 +90,6 @@ public interface DepositAccountWritePlatformService {
     void transferInterestToSavings() throws JobExecutionException;
 
     SavingsAccountTransaction mandatorySavingsAccountDeposit(final SavingsAccountTransactionDTO accountTransactionDTO);
+
+    CommandProcessingResult postAccrualInterest(Long savingsId, DepositAccountType depositAccountType);
 }

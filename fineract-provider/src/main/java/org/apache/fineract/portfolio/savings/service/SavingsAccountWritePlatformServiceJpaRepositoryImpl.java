@@ -150,6 +150,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -172,7 +173,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
             final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
             final BusinessEventNotifierService businessEventNotifierService,
-            SavingsTransactionRequestRepository savingsTransactionRequestRepository) {
+            final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -199,6 +201,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
         this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     @Transactional
@@ -471,7 +474,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (transactionDate.isAfter(today)) { throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.FUTURE_DATE); }
 
         }
-        postInterest(account, postInterestAs, transactionDate);
+        postInterest(account, postInterestAs, transactionDate, true);
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_POST_INTEREST,
                 constructEntityMap(BUSINESS_ENTITY.SAVING, account));
@@ -486,7 +489,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
     @Transactional
     @Override
-    public void postInterest(final SavingsAccount account, final boolean postInterestAs, final LocalDate transactionDate) {
+    public void postInterest(final SavingsAccount account, final boolean postInterestAs, final LocalDate transactionDate,
+            final boolean isUserPosting) {
 
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
@@ -505,6 +509,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                     postInterestOnDate);
+            final BigDecimal feesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, false);
+            account.postFeesAccrualTransaction(postInterestOnDate, feesAmount, isUserPosting);
+            final BigDecimal penaltiesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate,
+                    true);
+            account.postPenaltiesAccrualTransaction(postInterestOnDate, penaltiesAmount, isUserPosting);
             // for generating transaction id's
             List<SavingsAccountTransaction> transactions = account.getTransactions();
             for (SavingsAccountTransaction accountTransaction : transactions) {
@@ -1245,10 +1254,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .resource(SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME);
 
         /***
-         * Only recurring fees are allowed to inactivate (For VFD, allow deactivating non recurring charges)
+         * Only recurring fees are allowed to inactivate (For VFD, allow
+         * deactivating non recurring charges)
          */
         if (!savingsAccountCharge.isRecurringFee()) {
-           
+
             account.inactivateCharge(savingsAccountCharge, inactivationOnDate);
         } else {
             // handle recurring charges here
@@ -1625,16 +1635,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
     @Transactional
     @Override
-    public void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList) {
-        LocalDate today = LocalDate.now();
-        for (SavingsAccount savingAccount : savingsAccountList) {
-            if ((today.toDate()).equals(savingAccount.getOverdraftStartedOnDate())) {
+    public void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList, Boolean start) {
+        savingsAccountList.forEach(savingAccount -> {
+            if (start) {
                 savingAccount.startOverdraft();
             } else {
                 savingAccount.closeOverdraft();
             }
             this.savingAccountRepositoryWrapper.saveAndFlush(savingAccount);
-        }
+        });
     }
 
     private void validateOverdraftInputDates(final JsonCommand command) {
@@ -1673,7 +1682,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (transactionDate.isAfter(today)) { throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.FUTURE_DATE); }
 
         }
-        postAccrualInterest(account, postInterestAs, transactionDate);
+
+        postAccrualInterest(account, postInterestAs, transactionDate, true);
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //
@@ -1685,8 +1695,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     }
 
     @Override
-    public void postAccrualInterest(final SavingsAccount account, final boolean postInterestAs, final LocalDate transactionDate) {
-
+    public void postAccrualInterest(final SavingsAccount account, final boolean postInterestAs, final LocalDate transactionDate,
+            boolean isUserPosting) {
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
@@ -1704,6 +1714,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
             account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
+            BigDecimal feesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, false);
+            account.postFeesAccrualTransaction(postInterestOnDate, feesAmount, isUserPosting);
+            BigDecimal penaltiesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, true);
+            account.postPenaltiesAccrualTransaction(postInterestOnDate, penaltiesAmount, isUserPosting);
+
             // for generating transaction id's
             List<SavingsAccountTransaction> transactions = account.getTransactions();
             for (SavingsAccountTransaction accountTransaction : transactions) {
@@ -1720,7 +1735,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     }
 
     @Override
-    public CommandProcessingResult postAccrualInterest(Long savingsId, LocalDate transactionDate) {
+    public CommandProcessingResult postAccrualInterest(Long savingsId, LocalDate transactionDate, boolean isUserPosting) {
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
@@ -1742,7 +1757,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         LocalDate today = DateUtils.getLocalDateOfTenant();
         if (transactionDate.isAfter(today)) { throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.FUTURE_DATE); }
 
-        postAccrualInterest(account, true, transactionDate);
+        postAccrualInterest(account, true, transactionDate, isUserPosting);
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //

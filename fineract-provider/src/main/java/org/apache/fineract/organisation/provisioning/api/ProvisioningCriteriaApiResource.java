@@ -63,11 +63,11 @@ public class ProvisioningCriteriaApiResource {
 
 	private static final Set<String> PROVISIONING_CRITERIA_TEMPLATE_PARAMETER = new HashSet<>(
 			Arrays.asList(ProvisioningCriteriaConstants.DEFINITIONS_PARAM,
-					ProvisioningCriteriaConstants.LOANPRODUCTS_PARAM, ProvisioningCriteriaConstants.GLACCOUNTS_PARAM));
+					ProvisioningCriteriaConstants.LOANPRODUCTS_PARAM, ProvisioningCriteriaConstants.JSON_SAVINGS_PRODUCTS_PARAM, ProvisioningCriteriaConstants.GLACCOUNTS_PARAM));
 
 	private static final Set<String> PROVISIONING_CRITERIA_PARAMETERS = new HashSet<>(
 			Arrays.asList(ProvisioningCriteriaConstants.CRITERIA_PARAM,
-					ProvisioningCriteriaConstants.LOANPRODUCTS_PARAM, ProvisioningCriteriaConstants.DEFINITIONS_PARAM));
+					ProvisioningCriteriaConstants.LOANPRODUCTS_PARAM, ProvisioningCriteriaConstants.JSON_SAVINGS_PRODUCTS_PARAM, ProvisioningCriteriaConstants.DEFINITIONS_PARAM));
 
 	private static final Set<String> ALL_PROVISIONING_CRITERIA_PARAMETERS = new HashSet<>(
 			Arrays.asList(ProvisioningCriteriaConstants.CRITERIA_ID_PARAM,
@@ -93,7 +93,7 @@ public class ProvisioningCriteriaApiResource {
     public String retrieveTemplate(@Context final UriInfo uriInfo) {
         this.platformSecurityContext.authenticatedUser();
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        ProvisioningCriteriaData data = this.provisioningCriteriaReadPlatformService.retrievePrivisiongCriteriaTemplate();
+        ProvisioningCriteriaData data = this.provisioningCriteriaReadPlatformService.retrieveProvisioningCriteriaTemplate();
         return this.toApiJsonSerializer.serialize(settings, data, PROVISIONING_CRITERIA_TEMPLATE_PARAMETER);
     }
     
@@ -106,7 +106,7 @@ public class ProvisioningCriteriaApiResource {
         ProvisioningCriteriaData criteria = this.provisioningCriteriaReadPlatformService.retrieveProvisioningCriteria(criteriaId) ;
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if(settings.isTemplate()) {
-            criteria = this.provisioningCriteriaReadPlatformService.retrievePrivisiongCriteriaTemplate(criteria);   
+            criteria = this.provisioningCriteriaReadPlatformService.retrieveProvisioningCriteriaTemplate(criteria);
         }
         return this.toApiJsonSerializer.serialize(settings, criteria, PROVISIONING_CRITERIA_PARAMETERS);
     }

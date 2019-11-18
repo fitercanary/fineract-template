@@ -1715,14 +1715,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 account.postPenaltiesAccrualTransaction(postInterestOnDate, penaltiesAmount, isUserPosting);
             }
 
-            // for generating transaction id's
-            List<SavingsAccountTransaction> transactions = account.getTransactions();
-            for (SavingsAccountTransaction accountTransaction : transactions) {
-                if (accountTransaction.getId() == null) {
-                    this.savingsAccountTransactionRepository.save(accountTransaction);
-                }
-            }
-
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);

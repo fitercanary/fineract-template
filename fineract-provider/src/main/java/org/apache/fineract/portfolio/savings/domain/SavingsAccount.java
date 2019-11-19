@@ -3270,6 +3270,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         // update existing transactions so derived balance fields are
         // correct.
         recalculateDailyBalances(openingAccountBalance, interestPostingUpToDate);
+        // 1. default to calculate interest based on entire history OR
+        // 2. determine latest 'posting period' and find interest credited to
+        // that period
+
+        // A generate list of EndOfDayBalances (not including interest postings)
+        final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
 
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
@@ -3281,7 +3287,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             postedAsOnDates.add(postInterestOnDate);
         }
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
-                getStartInterestCalculationDate(), interestPostingUpToDate, SavingsPostingInterestPeriodType.INVALID,
+                getStartInterestCalculationDate(), interestPostingUpToDate, postingPeriodType,
                 financialYearBeginningMonth, postedAsOnDates);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();

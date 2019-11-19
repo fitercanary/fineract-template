@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.charge.domain;
 
 public enum ChargeTimeType {
+
     INVALID(0, "chargeTimeType.invalid"), //
     DISBURSEMENT(1, "chargeTimeType.disbursement"), // only for loan charges
     SPECIFIED_DUE_DATE(2, "chargeTimeType.specifiedDueDate"), // for loan and
@@ -34,11 +35,13 @@ public enum ChargeTimeType {
     TRANCHE_DISBURSEMENT(12, "chargeTimeType.tranchedisbursement"), // only for
                                                                     // loan
     SHAREACCOUNT_ACTIVATION(13, "chargeTimeType.activation"), // only for loan
-    SHARE_PURCHASE(14, "chargeTimeType.sharespurchase"), 
-    SHARE_REDEEM(15, "chargeTimeType.sharesredeem"),
-    
-    SAVINGS_NOACTIVITY_FEE(16,"chargeTimeType.savingsNoActivityFee"),
-	FDA_PRE_CLOSURE_FEE(17, "chargeTimeType.fdaPreclosureFee"); // only for savings
+    SHARE_PURCHASE(14, "chargeTimeType.sharespurchase"), SHARE_REDEEM(15, "chargeTimeType.sharesredeem"),
+
+    SAVINGS_NOACTIVITY_FEE(16, "chargeTimeType.savingsNoActivityFee"), 
+    FDA_PRE_CLOSURE_FEE(17, "chargeTimeType.fdaPreclosureFee"), // only
+    DISBURSE_TO_SAVINGS(18, "chargeTimeType.disburseToSavings"); // only for loan charges
+                                                                                                                                   // for
+                                                                                                                                   // savings
 
     private final Integer value;
     private final String code;
@@ -59,19 +62,19 @@ public enum ChargeTimeType {
     public static Object[] validLoanValues() {
         return new Integer[] { ChargeTimeType.DISBURSEMENT.getValue(), ChargeTimeType.SPECIFIED_DUE_DATE.getValue(),
                 ChargeTimeType.INSTALMENT_FEE.getValue(), ChargeTimeType.OVERDUE_INSTALLMENT.getValue(),
-                ChargeTimeType.TRANCHE_DISBURSEMENT.getValue() };
+                ChargeTimeType.TRANCHE_DISBURSEMENT.getValue(), ChargeTimeType.DISBURSE_TO_SAVINGS.getValue()  };
     }
 
     public static Object[] validLoanChargeValues() {
         return new Integer[] { ChargeTimeType.DISBURSEMENT.getValue(), ChargeTimeType.SPECIFIED_DUE_DATE.getValue(),
-                ChargeTimeType.INSTALMENT_FEE.getValue() };
+                ChargeTimeType.INSTALMENT_FEE.getValue(), ChargeTimeType.DISBURSE_TO_SAVINGS.getValue() };
     }
 
     public static Object[] validSavingsValues() {
         return new Integer[] { ChargeTimeType.SPECIFIED_DUE_DATE.getValue(), ChargeTimeType.SAVINGS_ACTIVATION.getValue(),
                 ChargeTimeType.SAVINGS_CLOSURE.getValue(), ChargeTimeType.WITHDRAWAL_FEE.getValue(), ChargeTimeType.ANNUAL_FEE.getValue(),
                 ChargeTimeType.MONTHLY_FEE.getValue(), ChargeTimeType.OVERDRAFT_FEE.getValue(), ChargeTimeType.WEEKLY_FEE.getValue(),
-                ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue()};
+                ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue() };
     }
 
     public static Object[] validClientValues() {
@@ -79,7 +82,8 @@ public enum ChargeTimeType {
     }
 
     public static Object[] validShareValues() {
-        return new Integer[] { ChargeTimeType.SHAREACCOUNT_ACTIVATION.getValue(), ChargeTimeType.SHARE_PURCHASE.getValue(), ChargeTimeType.SHARE_REDEEM.getValue() };
+        return new Integer[] { ChargeTimeType.SHAREACCOUNT_ACTIVATION.getValue(), ChargeTimeType.SHARE_PURCHASE.getValue(),
+                ChargeTimeType.SHARE_REDEEM.getValue() };
     }
 
     public static ChargeTimeType fromInt(final Integer chargeTime) {
@@ -132,11 +136,14 @@ public enum ChargeTimeType {
                     chargeTimeType = SHARE_REDEEM;
                 break;
                 case 16:
-                	chargeTimeType = SAVINGS_NOACTIVITY_FEE;
+                    chargeTimeType = SAVINGS_NOACTIVITY_FEE;
                 break;
-				case 17:
-					chargeTimeType = FDA_PRE_CLOSURE_FEE;
-					break;
+                case 17:
+                    chargeTimeType = FDA_PRE_CLOSURE_FEE;
+                break;
+                case 18:
+                    chargeTimeType = DISBURSE_TO_SAVINGS;
+                    break;
                 default:
                     chargeTimeType = INVALID;
                 break;
@@ -164,9 +171,9 @@ public enum ChargeTimeType {
     public boolean isWithdrawalFee() {
         return this.value.equals(ChargeTimeType.WITHDRAWAL_FEE.getValue());
     }
-    
+
     public boolean isSavingsNoActivityFee() {
-    	return this.value.equals(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue());
+        return this.value.equals(ChargeTimeType.SAVINGS_NOACTIVITY_FEE.getValue());
     }
 
     public boolean isAnnualFee() {
@@ -189,12 +196,16 @@ public enum ChargeTimeType {
         return this.value.equals(ChargeTimeType.OVERDUE_INSTALLMENT.getValue());
     }
 
-	public boolean isFdaPreclosureFee() {
-		return this.value.equals(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
-	}
+    public boolean isFdaPreclosureFee() {
+        return this.value.equals(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+    }
+    public boolean isTimeOfDisburseToSavings() {
+        return ChargeTimeType.DISBURSE_TO_SAVINGS.getValue().equals(this.value);
+    }
 
     public boolean isAllowedLoanChargeTime() {
-        return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() || isOverdueInstallment() || isTrancheDisbursement();
+        return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() 
+                || isOverdueInstallment() || isTrancheDisbursement() || isTimeOfDisburseToSavings();
     }
 
     public boolean isAllowedClientChargeTime() {
@@ -202,8 +213,8 @@ public enum ChargeTimeType {
     }
 
     public boolean isAllowedSavingsChargeTime() {
-        return isOnSpecifiedDueDate() || isSavingsActivation() || isSavingsClosure() || isWithdrawalFee() || isAnnualFee()
-                || isMonthlyFee() || isWeeklyFee() || isOverdraftFee() || isSavingsNoActivityFee() || isFdaPreclosureFee();
+        return isOnSpecifiedDueDate() || isSavingsActivation() || isSavingsClosure() || isWithdrawalFee() || isAnnualFee() || isMonthlyFee()
+                || isWeeklyFee() || isOverdraftFee() || isSavingsNoActivityFee() || isFdaPreclosureFee();
     }
 
     public boolean isOverdraftFee() {

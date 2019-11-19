@@ -614,6 +614,11 @@ public class Charge extends AbstractPersistableCustom<Long> {
         return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSEMENT)
                 || ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.TRANCHE_DISBURSEMENT);
     }
+    
+    public boolean isDisburseToSavingsCharge() {
+        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSE_TO_SAVINGS)
+               ;
+    }
 
     public TaxGroup getTaxGroup() {
         return this.taxGroup;

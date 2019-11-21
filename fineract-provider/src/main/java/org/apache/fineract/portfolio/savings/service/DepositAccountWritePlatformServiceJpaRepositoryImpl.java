@@ -240,6 +240,10 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 if (activationChargeAmount.isGreaterThanZero()) {
                     payActivationCharge(account, user);
                 }
+                if (account.isBeforeLastAccrualPostingPeriod(account.getActivationLocalDate())) {
+                    account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                            isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                }
                 if (account.isBeforeLastPostingPeriod(account.getActivationLocalDate())) {
                     final LocalDate today = DateUtils.getLocalDateOfTenant();
                     account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -582,6 +586,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
+        account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
+                postInterestOnDate);
         account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                 postInterestOnDate);
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
@@ -1233,6 +1239,10 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;
+        if (account.isBeforeLastAccrualPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+        }
         if (account.isBeforeLastPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
@@ -1368,6 +1378,10 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;
+        if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
+        }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,

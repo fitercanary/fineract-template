@@ -510,6 +510,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (postInterestAs) {
                 postInterestOnDate = transactionDate;
             }
+            account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth, postInterestOnDate);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                     postInterestOnDate);
             // for generating transaction id's
@@ -575,6 +577,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         checkClientOrGroupActive(account);
+        if (savingsAccountTransaction.isPostInterestCalculationRequired()
+                && account.isBeforeLastAccrualPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+            account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth, postInterestOnDate);
+        }
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
@@ -670,6 +677,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
         final Long newtransactionId = saveTransactionToGenerateTransactionId(transaction);
         final LocalDate postInterestOnDate = null;
+        if (account.isBeforeLastAccrualPostingPeriod(transactionDate)
+                || account.isBeforeLastAccrualPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+            account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth, postInterestOnDate);
+        }
         if (account.isBeforeLastPostingPeriod(transactionDate)
                 || account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
@@ -1060,6 +1072,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;
+        if (account.isBeforeLastAccrualPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+        }
         if (account.isBeforeLastPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
@@ -1194,6 +1210,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;
+        if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+        }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,

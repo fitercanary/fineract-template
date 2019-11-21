@@ -1150,6 +1150,22 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         return transactionBeforeLastInterestPosting;
     }
+    
+    public boolean isBeforeLastAccrualPostingPeriod(final LocalDate transactionDate) {
+
+        boolean transactionBeforeLastInterestPosting = false;
+
+        for (final SavingsAccountTransaction transaction : retreiveListOfTransactions()) {
+            if ((transaction.isAccrualFeesPostingAndNotReversed() || transaction.isAccrualInterestPostingAndNotReversed()
+                    || transaction.isAccrualPenaltiesPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
+                    && transaction.isAfter(transactionDate)) {
+                transactionBeforeLastInterestPosting = true;
+                break;
+            }
+        }
+
+        return transactionBeforeLastInterestPosting;
+    }
 
     public void validateAccountBalanceDoesNotBecomeNegative(final BigDecimal transactionAmount, final boolean isException,
             final List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions) {
@@ -2288,6 +2304,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final MathContext mc = MathContext.DECIMAL64;
             boolean isInterestTransfer = false;
             LocalDate postInterestAsOnDate = null;
+            if (this.isBeforeLastAccrualPostingPeriod(getActivationLocalDate())) {
+                this.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                        isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestAsOnDate);
+            }
             if (this.isBeforeLastPostingPeriod(getActivationLocalDate())) {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
                 this.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
@@ -3402,7 +3422,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
                                     interestPostingPeriod.isUserPosting());
                         } else {
-                            newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(),
+                            newPostingTransaction = SavingsAccountTransaction.overdraftAccrualInterest(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
                                     interestPostingPeriod.isUserPosting());
                         }

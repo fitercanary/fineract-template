@@ -73,10 +73,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.domain.LocalDateInterval;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
-import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.security.service.RandomPasswordGenerator;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
@@ -519,7 +519,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
                                     interestPostingPeriod.isUserPosting());
                         }
+                        if (newPostingTransaction != null && newPostingTransaction.getAmount(currency).isGreaterThanZero()) {
                         addTransaction(newPostingTransaction);
+                        }
                         if (applyWithHoldTax) {
                             createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                         }
@@ -3400,7 +3402,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
                         SavingsAccountTransaction newPostingTransaction = null;
                         if (interestEarnedToBePostedForPeriod.isGreaterThanOrEqualTo(Money.zero(currency))) {
-
+                            
                             newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
                                     interestPostingPeriod.isUserPosting());
@@ -3410,7 +3412,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                                     interestPostingPeriod.isUserPosting());
                         }
 
-                        if (newPostingTransaction != null) {
+                        if (newPostingTransaction != null && newPostingTransaction.getAmount(currency).isGreaterThanZero()) {
                             addTransaction(newPostingTransaction);
                         }
                         /*

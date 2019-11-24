@@ -505,9 +505,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             Money negativeInterest = Money.of(currency, BigDecimal.ZERO);
             for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
                 if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
-                    PositiveInterest.plus(interestEarnedToBePostedForPeriod);
+                    PositiveInterest = PositiveInterest.plus(interestEarnedToBePostedForPeriod);
                 } else {
-                    negativeInterest.plus(interestEarnedToBePostedForPeriod);
+                    negativeInterest = negativeInterest.plus(interestEarnedToBePostedForPeriod);
                 }
             }
             interestPostingsInPeriod.clear();
@@ -3410,9 +3410,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             Money negativeInterest = Money.of(currency, BigDecimal.ZERO);
             for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
                 if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
-                    PositiveInterest.plus(interestEarnedToBePostedForPeriod);
+                    PositiveInterest = PositiveInterest.plus(interestEarnedToBePostedForPeriod);
                 } else {
-                    negativeInterest.plus(interestEarnedToBePostedForPeriod);
+                    negativeInterest = negativeInterest.plus(interestEarnedToBePostedForPeriod);
                 }
             }
             interestPostingsInPeriod.clear();

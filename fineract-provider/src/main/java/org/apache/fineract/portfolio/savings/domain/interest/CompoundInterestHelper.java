@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.domain.interest;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
@@ -39,11 +40,11 @@ public class CompoundInterestHelper {
      *            posting period as income while calculating interest
      * @return
      */
-    public Money calculateInterestForAllPostingPeriods(final MonetaryCurrency currency, final List<PostingPeriod> allPeriods,
+    public List<Money> calculateInterestForAllPostingPeriods(final MonetaryCurrency currency, final List<PostingPeriod> allPeriods,
             LocalDate lockUntil, Boolean interestTransferEnabled) {
 
         // sum up the 'rounded' values that are posted each posting period
-        Money interestEarned = Money.zero(currency);
+        List<Money> interestEarned = new ArrayList<Money>();
 
         // total interest earned in previous periods but not yet recognised
 		BigDecimal compoundedInterest = BigDecimal.ZERO;
@@ -52,11 +53,12 @@ public class CompoundInterestHelper {
 				unCompoundedInterest);
         for (final PostingPeriod postingPeriod : allPeriods) {
 
-            final BigDecimal interestEarnedThisPeriod = postingPeriod.calculateInterest(compoundInterestValues);
+            final List<BigDecimal> interestEarnedThisPeriod = postingPeriod.calculateInterest(compoundInterestValues);
+            
+            for(BigDecimal interest: interestEarnedThisPeriod) {
+                interestEarned.add(Money.of(currency, interest));
+            }
 
-            final Money moneyToBePostedForPeriod = Money.of(currency, interestEarnedThisPeriod);
-
-            interestEarned = interestEarned.plus(moneyToBePostedForPeriod);
             // these checks are for fixed deposit account for not include
             // interest for accounts which has post interest to linked savings
             // account and if already transfered then it includes in interest

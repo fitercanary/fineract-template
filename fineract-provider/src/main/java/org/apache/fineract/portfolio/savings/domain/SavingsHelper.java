@@ -153,7 +153,7 @@ public final class SavingsHelper {
         return periodEndDate;
     }
 
-    public Money calculateInterestForAllPostingPeriods(final MonetaryCurrency currency, final List<PostingPeriod> allPeriods,
+    public List<Money> calculateInterestForAllPostingPeriods(final MonetaryCurrency currency, final List<PostingPeriod> allPeriods,
             LocalDate accountLockedUntil, Boolean immediateWithdrawalOfInterest) {
         return this.compoundInterestHelper.calculateInterestForAllPostingPeriods(currency, allPeriods, accountLockedUntil,
                 immediateWithdrawalOfInterest);

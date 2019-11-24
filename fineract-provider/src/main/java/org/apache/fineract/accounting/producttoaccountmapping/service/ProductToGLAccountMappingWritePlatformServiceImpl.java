@@ -253,14 +253,13 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_RECEIVABLE.getValue());
 
-                this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
-                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(), savingProductId,
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue());
-
                 if (!accountType.equals(DepositAccountType.RECURRING_DEPOSIT) && !accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
                             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingProductId,
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue());
+                    this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
+                            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(), savingProductId,
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue());
                 }
 
                 // income

@@ -500,7 +500,20 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 postingTransaction.reverse();
             }
             postingTransactions.clear();
-            for (Money interestEarnedToBePostedForPeriod : interestPostingPeriod.getInterestEarned()) {
+            List<Money>  interestPostingsInPeriod= interestPostingPeriod.getInterestEarned();
+            Money PositiveInterest = Money.of(currency, BigDecimal.ZERO);
+            Money negativeInterest = Money.of(currency, BigDecimal.ZERO);
+            for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
+                if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
+                    PositiveInterest.plus(interestEarnedToBePostedForPeriod);
+                } else {
+                    negativeInterest.plus(interestEarnedToBePostedForPeriod);
+                }
+            }
+            interestPostingsInPeriod.clear();
+            interestPostingsInPeriod.add(PositiveInterest);
+            interestPostingsInPeriod.add(negativeInterest);
+            for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
                 if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
                         && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
@@ -520,7 +533,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                                     interestPostingPeriod.isUserPosting());
                         }
                         if (newPostingTransaction != null && newPostingTransaction.getAmount(currency).isGreaterThanZero()) {
-                        addTransaction(newPostingTransaction);
+                            addTransaction(newPostingTransaction);
                         }
                         if (applyWithHoldTax) {
                             createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
@@ -3392,8 +3405,21 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 postingTransaction.reverse();
             }
             postingTransactions.clear();
+            List<Money>  interestPostingsInPeriod= interestPostingPeriod.getInterestEarned();
+            Money PositiveInterest = Money.of(currency, BigDecimal.ZERO);
+            Money negativeInterest = Money.of(currency, BigDecimal.ZERO);
+            for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
+                if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
+                    PositiveInterest.plus(interestEarnedToBePostedForPeriod);
+                } else {
+                    negativeInterest.plus(interestEarnedToBePostedForPeriod);
+                }
+            }
+            interestPostingsInPeriod.clear();
+            interestPostingsInPeriod.add(PositiveInterest);
+            interestPostingsInPeriod.add(negativeInterest);
             if (postingTransactions.isEmpty()) {
-                for (Money interestEarnedToBePostedForPeriod : interestPostingPeriod.getInterestEarned()) {
+                for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
                     if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
                             && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)

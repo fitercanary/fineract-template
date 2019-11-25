@@ -55,10 +55,10 @@ public class ProvisioningCriteriaDefinitionJsonDeserializer implements Provision
 			JSON_LOCALE_PARAM, JSON_CRITERIANAME_PARAM, JSON_LOANPRODUCTS_PARAM, JSON_SAVINGS_PRODUCTS_PARAM, JSON_PROVISIONING_DEFINITIONS_PARAM));
 
 	private final static Set<String> loanProductSupportedParams = new HashSet<>(Arrays
-			.asList(JSON_PRODUCT_ID_PARAM, JSON_PRODUCT_NAME_PARAM, JSON_LOAN_PRODUCT_BORROWERCYCLE_PARAM));
+			.asList(JSON_PRODUCT_ID_PARAM, JSON_PRODUCT_NAME_PARAM, JSON_IS_LOAN, JSON_LOAN_PRODUCT_BORROWERCYCLE_PARAM));
 
 	private final static Set<String> savingsProductSupportedParams = new HashSet<>(Arrays
-			.asList(JSON_PRODUCT_ID_PARAM, JSON_PRODUCT_NAME_PARAM));
+			.asList(JSON_PRODUCT_ID_PARAM, JSON_PRODUCT_NAME_PARAM, JSON_IS_LOAN));
 
 	private final static Set<String> provisioningcriteriaSupportedParams = new HashSet<>(
 			Arrays.asList(JSON_CATEOGRYID_PARAM, JSON_CATEOGRYNAME_PARAM, JSON_MINIMUM_AGE_PARAM,

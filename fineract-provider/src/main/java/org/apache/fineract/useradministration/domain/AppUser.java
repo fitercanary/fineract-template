@@ -574,12 +574,14 @@ public class AppUser extends AbstractPersistableCustom<Long> implements Platform
         }
     }
 
-    public void validateHasPermissionTo(final String function) {
-        if (hasNotPermissionTo(function)) {
+    public boolean validateHasPermissionTo(final String function) {
+        boolean hasNotPermissionTo = hasNotPermissionTo(function);
+        if (hasNotPermissionTo) {
             final String authorizationMessage = "User has no authority to: " + function;
             logger.info("Unauthorized access: userId: " + getId() + " action: " + function + " allowed: " + getAuthorities());
             throw new NoAuthorizationException(authorizationMessage);
         }
+        return !hasNotPermissionTo;
     }
 
     public void validateHasReadPermission(final String function, final Long userId) {
@@ -597,6 +599,14 @@ public class AppUser extends AbstractPersistableCustom<Long> implements Platform
             final String authorizationMessage = "User has no authority to be a checker for: " + function;
             throw new NoAuthorizationException(authorizationMessage);
         }
+    }
+    
+    public boolean validateHasCheckerPermission(final String function) {
+        final String checkerPermissionName = function.toUpperCase() + "_CHECKER";
+        if (hasNotPermissionTo("CHECKER_SUPER_USER") && hasNotPermissionTo(checkerPermissionName)) {
+           return false;
+        }
+        return true;
     }
 
     public void validateHasDatatableReadPermission(final String datatable) {

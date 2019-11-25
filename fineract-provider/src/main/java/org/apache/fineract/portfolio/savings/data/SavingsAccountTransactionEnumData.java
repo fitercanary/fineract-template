@@ -49,6 +49,7 @@ public class SavingsAccountTransactionEnumData {
     private final boolean accrualInterestPosting;
     private final boolean accrualFeesPosting;
     private final boolean accrualPenaltiesPosting;
+    private final boolean overdraftAccrualInterest;
 
     public SavingsAccountTransactionEnumData(final Long id, final String code, final String value) {
         this.id = id;
@@ -74,6 +75,7 @@ public class SavingsAccountTransactionEnumData {
         this.accrualInterestPosting = Long.valueOf(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue()).equals(this.id);
         this.accrualFeesPosting = Long.valueOf(SavingsAccountTransactionType.ACCRUAL_FEES_POSTING.getValue()).equals(this.id);
         this.accrualPenaltiesPosting = Long.valueOf(SavingsAccountTransactionType.ACCRUAL_PENALTIES_POSTING.getValue()).equals(this.id);
+        this.overdraftAccrualInterest = Long.valueOf(SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue()).equals(this.id);
         // this.overdraftFee =
         // Long.valueOf(SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue()).equals(this.id);
     }
@@ -168,6 +170,10 @@ public class SavingsAccountTransactionEnumData {
 
     public boolean isAccrualPenaltiesPosting() {
         return this.accrualPenaltiesPosting;
+    }
+
+    public boolean isOverdraftAccrualInterest() {
+        return this.overdraftAccrualInterest;
     }
 
 }

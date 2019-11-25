@@ -40,4 +40,7 @@ public interface AccountTransferRepository extends JpaRepository<AccountTransfer
 
     @Query("select att from AccountTransferTransaction att where att.fromLoanTransaction.id IN :loanTransactions and att.reversed=false")
     List<AccountTransferTransaction> findByFromLoanTransactions(@Param("loanTransactions") Collection<Long> loanTransactions);
+    
+    @Query("select att from AccountTransferTransaction att where att.fromSavingsTransaction.id IN :savingTransactions and att.reversed=false")
+    List<AccountTransferTransaction> findByFromSavingsTransactions(@Param("savingTransactions") Collection<Long> savingTransactions);
 }

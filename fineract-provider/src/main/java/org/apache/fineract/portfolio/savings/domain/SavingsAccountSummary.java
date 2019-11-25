@@ -115,9 +115,10 @@ public final class SavingsAccountSummary {
         Money totalEarned = Money.zero(currency);
         LocalDate interestCalculationDate = DateUtils.getLocalDateOfTenant();
         for (final PostingPeriod period : allPostingPeriods) {
-            Money interestEarned = period.interest();
-            interestEarned = interestEarned == null ? Money.zero(currency) : interestEarned;
-            totalEarned = totalEarned.plus(interestEarned);
+            for (Money interestEarned : period.interest()) {
+                interestEarned = interestEarned == null ? Money.zero(currency) : interestEarned;
+                totalEarned = totalEarned.plus(interestEarned);
+            }
         }
         this.lastInterestCalculationDate = interestCalculationDate.toDate();
         this.totalInterestEarned = totalEarned.getAmount();

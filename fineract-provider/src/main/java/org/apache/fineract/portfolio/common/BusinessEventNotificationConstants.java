@@ -38,7 +38,8 @@ public class BusinessEventNotificationConstants {
                 SAVINGS_WITHDRAWAL("savings_withdrawal"), SAVINGS_APPROVE("savings_approve"), SAVINGS_CREATE("savings_create"), CLIENTS_ACTIVATE("clients_activate"), SHARE_ACCOUNT_CREATE("share_account_create"),
                 CLIENTS_REJECT("clients_reject"), CLIENTS_CREATE("clients_create"),CENTERS_CREATE("centers_create"), GROUPS_CREATE("groups_create"),
                 SHARE_PRODUCT_DIVIDENDS_CREATE("share_product_dividends_create"),FIXED_DEPOSIT_ACCOUNT_CREATE("fixed_deposit_account_create"),
-                SHARE_ACCOUNT_APPROVE("share_account_approve"), RECURRING_DEPOSIT_ACCOUNT_CREATE("recurring_deposit_account_create");
+                SHARE_ACCOUNT_APPROVE("share_account_approve"), RECURRING_DEPOSIT_ACCOUNT_CREATE("recurring_deposit_account_create")
+                ,SAVINGS_ADJUSTED_TRANSACTION("savings_adjusted_transaction");
 
         private final String value;
 
@@ -65,7 +66,8 @@ public class BusinessEventNotificationConstants {
     public static enum BUSINESS_ENTITY {
         LOAN("loan"), LOAN_TRANSACTION("loan_transaction"), LOAN_CHARGE("loan_charge"), LOAN_ADJUSTED_TRANSACTION(
         "loan_adjusted_transaction"), SAVING("saving"), CLIENT("client"), SAVINGS_TRANSACTION("Savings Transaction"), GROUP("group"),
-        SHARE_ACCOUNT("share_account"), SHARE_PRODUCT("share_product"), DEPOSIT_ACCOUNT("deposit_account"), LOAN_PRODUCT("loan_product");
+        SHARE_ACCOUNT("share_account"), SHARE_PRODUCT("share_product"), DEPOSIT_ACCOUNT("deposit_account"), LOAN_PRODUCT("loan_product")
+        ,SAVINGS_ADJUSTED_TRANSACTION("savings_adjusted_transaction");
 
         private final String value;
 

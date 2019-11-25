@@ -256,6 +256,19 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 		}
 
 	}
+	
+	@Override
+        @Transactional
+        public void reverseTransfersWithFromSavingsAccountTransactions(final Collection<Long> fromTransactionIds, final PortfolioAccountType accountTypeId) {
+                List<AccountTransferTransaction> acccountTransfers = null;
+                if (accountTypeId.isSavingsAccount()) {
+                        acccountTransfers = this.accountTransferRepository.findByFromSavingsTransactions(fromTransactionIds);
+                }
+                if (acccountTransfers != null && acccountTransfers.size() > 0) {
+                        undoTransactions(acccountTransfers);
+                }
+
+        }
 
 	@Override
 	@Transactional

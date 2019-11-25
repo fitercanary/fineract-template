@@ -105,6 +105,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         final SavingsAccountTransaction withdrawal = account.withdraw(transactionDTO, transactionBooleanValues.isApplyWithdrawFee(),transactionBooleanValues.isApplyOverdraftFee());
         final MathContext mc = MathContext.DECIMAL64;
+        if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), transactionBooleanValues.isInterestTransfer(),
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+        }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, transactionBooleanValues.isInterestTransfer(), isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -171,6 +175,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final SavingsAccountTransaction deposit = account.deposit(transactionDTO, savingsAccountTransactionType);
         final LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;
+        if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+        }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,

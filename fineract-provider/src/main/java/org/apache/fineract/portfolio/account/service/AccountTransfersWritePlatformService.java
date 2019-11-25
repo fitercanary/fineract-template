@@ -44,4 +44,6 @@ public interface AccountTransfersWritePlatformService {
     void reverseTransfersWithFromAccountTransactions(Collection<Long> fromTransactionIds, PortfolioAccountType accountTypeId);
 
     AccountTransferDetails repayLoanWithTopup(AccountTransferDTO accountTransferDTO);
+
+    void reverseTransfersWithFromSavingsAccountTransactions(Collection<Long> fromTransactionIds, PortfolioAccountType accountTypeId);
 }

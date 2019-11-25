@@ -90,15 +90,16 @@ public class FixedDepositAccount extends SavingsAccount {
         //
     }
 
-    public static FixedDepositAccount createNewApplicationForSubmittal(final Client client, final Group group,
-            final SavingsProduct product, final Staff fieldOfficer, final String accountNo, final String externalId,
-            final AccountType accountType, final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal interestRate,
+    public static FixedDepositAccount createNewApplicationForSubmittal(final Client client, final Group group, final SavingsProduct product,
+            final Staff fieldOfficer, final String accountNo, final String externalId, final AccountType accountType,
+            final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal interestRate,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
             final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
-            final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart, boolean withHoldTax) {
+            final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart,
+            boolean withHoldTax) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         final boolean allowOverdraft = false;
@@ -144,45 +145,40 @@ public class FixedDepositAccount extends SavingsAccount {
         final Map<String, Object> termAndPreClosureChanges = accountTermAndPreClosure.update(command, baseDataValidator);
         actualChanges.putAll(termAndPreClosureChanges);
         validateDomainRules(baseDataValidator);
-		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.MONTHLY,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY}));
+        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.MONTHLY,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY }));
 
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.QUATERLY,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY}));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.QUATERLY,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
 
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.BIANNUAL,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL}));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.BIANNUAL,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
 
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.ANNUAL,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.TENURE,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNUAL,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.TENURE,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
 
-		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
-				.fromInt(interestPostingPeriodType);
-		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
-				.fromInt(interestCompoundingPeriodType);
+        SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+                .fromInt(interestPostingPeriodType);
+        SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+                .fromInt(interestCompoundingPeriodType);
 
-		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
-			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
-					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+        if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+            baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+                    savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
 
-		}
-		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        }
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     @Override
@@ -197,18 +193,20 @@ public class FixedDepositAccount extends SavingsAccount {
         // default it to nominalAnnualInterest rate. interest chart overrides
         // this value.
         BigDecimal applicableInterestRate = this.nominalAnnualInterestRate;
-		//Use the chart to calculate interest rate if 0 rate is passed
-		//Moving this logic to the frontend as VFD wants the user entered interest rate to take precedence
-        if (this.chart != null && (isPreMatureClosure || (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null))) {
+        // Use the chart to calculate interest rate if 0 rate is passed
+        // Moving this logic to the frontend as VFD wants the user entered
+        // interest rate to take precedence
+        if (this.chart != null && (isPreMatureClosure
+                || (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null))) {
             boolean applyPreMaturePenalty = false;
             BigDecimal penalInterest = BigDecimal.ZERO;
             LocalDate depositCloseDate = calculateMaturityDate();
             if (isPreMatureClosure) {
-				if (this.originalInterestRate == null) {
-					this.originalInterestRate = this.nominalAnnualInterestRate;
-				} else {
-					this.nominalAnnualInterestRate = this.originalInterestRate;
-				}
+                if (this.originalInterestRate == null) {
+                    this.originalInterestRate = this.nominalAnnualInterestRate;
+                } else {
+                    this.nominalAnnualInterestRate = this.originalInterestRate;
+                }
                 if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
                     applyPreMaturePenalty = true;
                     penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
@@ -223,8 +221,10 @@ public class FixedDepositAccount extends SavingsAccount {
             }
 
             final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-            applicableInterestRate = (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0 || this.nominalAnnualInterestRate == null) ?
-					this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client) : this.nominalAnnualInterestRate;
+            applicableInterestRate = (BigDecimal.ZERO.compareTo(this.nominalAnnualInterestRate) == 0
+                    || this.nominalAnnualInterestRate == null)
+                            ? this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client)
+                            : this.nominalAnnualInterestRate;
 
             if (applyPreMaturePenalty) {
                 applicableInterestRate = applicableInterestRate.subtract(penalInterest);
@@ -346,13 +346,12 @@ public class FixedDepositAccount extends SavingsAccount {
 
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
-        List<LocalDate> postedAsOnTransactionDates= getManualPostingDates();
+        List<LocalDate> postedAsOnTransactionDates = getManualPostingDates();
 
-		final List<LocalDateInterval> postingPeriodIntervals = postingPeriodType.equals(SavingsPostingInterestPeriodType.TENURE) ?
-				Arrays.asList(new Object[]{LocalDateInterval.create(accountSubmittedOrActivationDate(), maturityDate)}) :
-				this.savingsHelper.determineInterestPostingPeriods(
-						accountSubmittedOrActivationDate(), maturityDate, postingPeriodType, financialYearBeginningMonth,
-						postedAsOnTransactionDates);
+        final List<LocalDateInterval> postingPeriodIntervals = postingPeriodType.equals(SavingsPostingInterestPeriodType.TENURE)
+                ? Arrays.asList(new Object[] { LocalDateInterval.create(accountSubmittedOrActivationDate(), maturityDate) })
+                : this.savingsHelper.determineInterestPostingPeriods(accountSubmittedOrActivationDate(), maturityDate, postingPeriodType,
+                        financialYearBeginningMonth, postedAsOnTransactionDates);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -368,9 +367,9 @@ public class FixedDepositAccount extends SavingsAccount {
             if (postedAsOnTransactionDates.contains(periodInterval.endDate())) {
                 isUserPosting = true;
             }
-            final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance, transactions,
-                    this.currency, compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
-                    maturityDate, interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
+            final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance, transactions, this.currency,
+                    compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(), maturityDate,
+                    interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, isUserPosting, financialYearBeginningMonth);
 
             periodStartingBalance = postingPeriod.closingBalance();
@@ -378,16 +377,19 @@ public class FixedDepositAccount extends SavingsAccount {
             allPostingPeriods.add(postingPeriod);
         }
 
-		if (allPostingPeriods.size() == 1 && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)) {
-			List<CompoundingPeriod> compoundingPeriods = allPostingPeriods.get(0).getCompoundingPeriods();
-			CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
-			compoundingPeriod.getPeriodInterval().setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
-			allPostingPeriods.get(0).getCompoundingPeriods().clear();
-			allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
-			if (compoundingPeriod instanceof AnnualCompoundingPeriod && !((AnnualCompoundingPeriod)compoundingPeriod).getEndOfDayBalances().isEmpty()) {
-				((AnnualCompoundingPeriod)compoundingPeriod).getEndOfDayBalances().get(0).setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
-			}
-		}
+        if (allPostingPeriods.size() == 1 && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)) {
+            List<CompoundingPeriod> compoundingPeriods = allPostingPeriods.get(0).getCompoundingPeriods();
+            CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
+            compoundingPeriod.getPeriodInterval()
+                    .setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
+            allPostingPeriods.get(0).getCompoundingPeriods().clear();
+            allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
+            if (compoundingPeriod instanceof AnnualCompoundingPeriod
+                    && !((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().isEmpty()) {
+                ((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().get(0)
+                        .setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
+            }
+        }
 
         this.summary.updateFromInterestPeriodSummaries(this.currency, allPostingPeriods);
         this.savingsHelper.calculateInterestForAllPostingPeriods(this.currency, allPostingPeriods, this.getLockedInUntilLocalDate(),
@@ -572,24 +574,29 @@ public class FixedDepositAccount extends SavingsAccount {
             interestPostingTransactionDate = interestPostingTransactionDate.isAfter(interestPostingUpToDate) ? interestPostingUpToDate
                     : interestPostingTransactionDate;
 
-            final Money interestEarnedToBePostedForPeriod = interestPostingPeriod.getInterestEarned();
+            for (Money interestEarnedToBePostedForPeriod : interestPostingPeriod.getInterestEarned()) {
 
-            interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
+                interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
-            final SavingsAccountTransaction postingTransaction = findInterestPostingTransactionFor(interestPostingTransactionDate);
-            if (postingTransaction == null) {
-                final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                        interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting());
-                this.transactions.add(newPostingTransaction);
-                recalucateDailyBalanceDetails = true;
-            } else {
-                final boolean correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
-                if (correctionRequired) {
-                    postingTransaction.reverse();
+                final List<SavingsAccountTransaction> postingTransactions = findInterestPostingTransactionFor(
+                        interestPostingTransactionDate);
+                if (postingTransactions.isEmpty()) {
                     final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                             interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting());
                     this.transactions.add(newPostingTransaction);
                     recalucateDailyBalanceDetails = true;
+                } else {
+                    for (SavingsAccountTransaction postingTransaction : postingTransactions) {
+                        final boolean correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
+                        if (correctionRequired) {
+                            postingTransaction.reverse();
+                            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
+                                    office(), interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
+                                    interestPostingPeriod.isUserPosting());
+                            this.transactions.add(newPostingTransaction);
+                            recalucateDailyBalanceDetails = true;
+                        }
+                    }
                 }
             }
         }
@@ -660,8 +667,9 @@ public class FixedDepositAccount extends SavingsAccount {
         Money interestOnMaturity = Money.zero(this.currency);
 
         for (final PostingPeriod interestPostingPeriod : postingPeriods) {
-            final Money interestEarnedForPeriod = interestPostingPeriod.getInterestEarned();
-            interestOnMaturity = interestOnMaturity.plus(interestEarnedForPeriod);
+            for (final Money interestEarnedForPeriod : interestPostingPeriod.getInterestEarned()) {
+                interestOnMaturity = interestOnMaturity.plus(interestEarnedForPeriod);
+            }
         }
 
         return interestOnMaturity;
@@ -675,20 +683,30 @@ public class FixedDepositAccount extends SavingsAccount {
         super.postInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate);
     }
-    
+
     @Override
     public void postAccrualInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate) {
-        final LocalDate interestPostingUpToDate = postingDate;
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);;
         super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate);
     }
 
     @Override
+    public void postFeesAccrualTransaction(LocalDate feesAccrualPostingDate, BigDecimal feesAmount, boolean isUserPosting) {
+        super.postFeesAccrualTransaction(feesAccrualPostingDate, feesAmount, isUserPosting);
+    }
+
+    @Override
+    public void postPenaltiesAccrualTransaction(LocalDate penaltiesAccrualPostingDate, BigDecimal penaltiesAmount, boolean isUserPosting) {
+        super.postPenaltiesAccrualTransaction(penaltiesAccrualPostingDate, penaltiesAmount, isUserPosting);
+    }
+
+    @Override
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate  postAsInterestOn) {
+            final LocalDate postAsInterestOn) {
         final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postAsInterestOn);
@@ -761,53 +779,48 @@ public class FixedDepositAccount extends SavingsAccount {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
-		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.MONTHLY,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY}));
+        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.MONTHLY,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY }));
 
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.QUATERLY,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY}));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.QUATERLY,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
 
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.BIANNUAL,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL}));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.BIANNUAL,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
 
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.ANNUAL,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
-		postingtoCompoundMap.put(
-				SavingsPostingInterestPeriodType.TENURE,
-				java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL}));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNUAL,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.TENURE,
+                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
 
-		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
-				.fromInt(interestPostingPeriodType);
-		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
-				.fromInt(interestCompoundingPeriodType);
+        SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+                .fromInt(interestPostingPeriodType);
+        SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+                .fromInt(interestCompoundingPeriodType);
 
-		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
-			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
-					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+        if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+            baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+                    savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
 
-		}
-		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        }
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     private void validateDomainRules(final DataValidatorBuilder baseDataValidator) {
 
         final boolean isMinTermGreaterThanMax = this.accountTermAndPreClosure.depositTermDetail()
                 .isMinDepositTermGreaterThanMaxDepositTerm();
-        final boolean isValidDepositPeriod = this.accountTermAndPreClosure.depositTermDetail().isDepositBetweenMinAndMax(
-                depositStartDate(), calculateMaturityDate());
+        final boolean isValidDepositPeriod = this.accountTermAndPreClosure.depositTermDetail().isDepositBetweenMinAndMax(depositStartDate(),
+                calculateMaturityDate());
         // deposit period should be within min and max deposit term
         if (isMinTermGreaterThanMax) {
             final Integer maxTerm = this.accountTermAndPreClosure.depositTermDetail().maxDepositTerm();
@@ -847,8 +860,8 @@ public class FixedDepositAccount extends SavingsAccount {
                     calculateMaturityDate(), this.client);
 
             if (applicableInterestRate.equals(BigDecimal.ZERO)) {
-                baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
-                        "no.applicable.interest.rate.is.found.based.on.amount.and.deposit.period");
+                baseDataValidator.reset()
+                        .failWithCodeNoParameterAddedToErrorCode("no.applicable.interest.rate.is.found.based.on.amount.and.deposit.period");
             }
 
         } else if (this.nominalAnnualInterestRate == null || this.nominalAnnualInterestRate.compareTo(BigDecimal.ZERO) == 0) {
@@ -891,8 +904,8 @@ public class FixedDepositAccount extends SavingsAccount {
         final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
                 savingsOfficer, accountNumber, externalId, accountType, getClosedOnDate(), closedBy, interestRate, compoundingPeriodType,
                 postingPeriodType, interestCalculationType, daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
-                lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure,
-                newChart, withHoldTax);
+                lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure, newChart,
+                withHoldTax);
 
         newAccountTermAndPreClosure.updateAccountReference(reInvestedAccount);
         newChart.updateDepositAccountReference(reInvestedAccount);
@@ -934,10 +947,10 @@ public class FixedDepositAccount extends SavingsAccount {
     public BigDecimal minBalanceForInterestCalculation() {
         return null;
     }
-    
+
     @Override
     public void loadLazyCollections() {
-    	super.loadLazyCollections();
-    	this.chart.getId();
+        super.loadLazyCollections();
+        this.chart.getId();
     }
 }

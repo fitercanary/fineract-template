@@ -246,10 +246,6 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue());
 
                 this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
-                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(), savingProductId,
-                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue());
-
-                this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_RECIVABLE.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.FEES_RECEIVABLE.getValue());
 
@@ -261,6 +257,9 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
                             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingProductId,
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue());
+                    this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
+                            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(), savingProductId,
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue());
                 }
 
                 // income

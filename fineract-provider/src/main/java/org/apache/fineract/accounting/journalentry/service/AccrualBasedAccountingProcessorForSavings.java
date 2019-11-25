@@ -159,7 +159,7 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
                 // zero
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
                     this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
-                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue(),
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue(),
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
                             transactionId, transactionDate, overdraftAmount, isReversal);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
@@ -181,7 +181,7 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
                     this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(),
-                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue(), savingsProductId, paymentTypeId, savingsId,
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue(), savingsProductId, paymentTypeId, savingsId,
                             transactionId, transactionDate, amount, isReversal);
                 }
             }
@@ -213,7 +213,7 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
                 // zero
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
                     this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
-                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue(),
+                            ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue(),
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
                             transactionId, transactionDate, amount, isReversal);
                 }
@@ -288,6 +288,11 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
                 this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(),
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_PAYABLE.getValue(), savingsProductId, paymentTypeId, savingsId, transactionId,
+                        transactionDate, amount, isReversal);
+            } else if (savingsTransactionDTO.getTransactionType().isOverdraftAccrualInterest()) {
+                this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST.getValue(), savingsProductId, paymentTypeId, savingsId, transactionId,
                         transactionDate, amount, isReversal);
             } else if (savingsTransactionDTO.getTransactionType().isWrittenoff()) {
                 this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,

@@ -45,8 +45,8 @@ public class PostingPeriod {
 
     // interest posting details
     private final LocalDate dateOfPostingTransaction;
-    private BigDecimal interestEarnedUnrounded;
-    private Money interestEarnedRounded;
+    private List<BigDecimal> interestEarnedUnrounded;
+    private List<Money> interestEarnedRounded;
 
     // opening/closing details
     private final Money openingBalance;
@@ -182,7 +182,7 @@ public class PostingPeriod {
         this.financialYearBeginningMonth = financialYearBeginningMonth;
     }
 
-    public Money interest() {
+    public List<Money> interest() {
         return this.interestEarnedRounded;
     }
 
@@ -198,42 +198,48 @@ public class PostingPeriod {
         return this.openingBalance;
     }
 
-    public BigDecimal calculateInterest(final CompoundInterestValues compoundInterestValues) {
-        BigDecimal interestEarned = BigDecimal.ZERO;
+    public List<BigDecimal> calculateInterest(final CompoundInterestValues compoundInterestValues) {
+        List<BigDecimal> interestEarned = new ArrayList<BigDecimal>();
 
         // for each compounding period accumulate the amount of interest
         // to be applied to the balanced for interest calculation
         for (final CompoundingPeriod compoundingPeriod : this.compoundingPeriods) {
 
-            final BigDecimal interestUnrounded = compoundingPeriod.calculateInterest(this.interestCompoundingType,
-                    this.interestCalculationType, compoundInterestValues.getcompoundedInterest(), this.interestRateAsFraction, this.daysInYear,
-                    this.minBalanceForInterestCalculation.getAmount(), 	this.overdraftInterestRateAsFraction,
+            final List<BigDecimal> interestUnrounded = compoundingPeriod.calculateInterest(this.interestCompoundingType,
+                    this.interestCalculationType, compoundInterestValues.getcompoundedInterest(), this.interestRateAsFraction,
+                    this.daysInYear, this.minBalanceForInterestCalculation.getAmount(), this.overdraftInterestRateAsFraction,
                     this.minOverdraftForInterestCalculation.getAmount());
-			BigDecimal unCompoundedInterest = compoundInterestValues.getuncompoundedInterest().add(interestUnrounded);
-			compoundInterestValues.setuncompoundedInterest(unCompoundedInterest);
-			LocalDate compoundingPeriodEndDate = compoundingPeriod.getPeriodInterval().endDate();
-			if (!SavingsCompoundingInterestPeriodType.DAILY.equals(this.interestCompoundingType)) {
-				compoundingPeriodEndDate = determineInterestPeriodEndDateFrom(
-						compoundingPeriod.getPeriodInterval().startDate(), this.interestCompoundingType,
-						compoundingPeriod.getPeriodInterval().endDate(), this.getFinancialYearBeginningMonth());
-			}
+            BigDecimal unCompoundedInterest = compoundInterestValues.getuncompoundedInterest();
+            for (BigDecimal interest : interestUnrounded) {
+                unCompoundedInterest.add(interest);
+            }
+            compoundInterestValues.setuncompoundedInterest(unCompoundedInterest);
+            LocalDate compoundingPeriodEndDate = compoundingPeriod.getPeriodInterval().endDate();
+            if (!SavingsCompoundingInterestPeriodType.DAILY.equals(this.interestCompoundingType)) {
+                compoundingPeriodEndDate = determineInterestPeriodEndDateFrom(compoundingPeriod.getPeriodInterval().startDate(),
+                        this.interestCompoundingType, compoundingPeriod.getPeriodInterval().endDate(),
+                        this.getFinancialYearBeginningMonth());
+            }
 
-			if (compoundingPeriodEndDate.equals(compoundingPeriod.getPeriodInterval().endDate())) {
-				BigDecimal interestCompounded = compoundInterestValues.getcompoundedInterest()
-						.add(unCompoundedInterest);
-				compoundInterestValues.setcompoundedInterest(interestCompounded);
-				compoundInterestValues.setZeroForInterestToBeUncompounded();
-			}
-            interestEarned = interestEarned.add(interestUnrounded);
+            if (compoundingPeriodEndDate.equals(compoundingPeriod.getPeriodInterval().endDate())) {
+                BigDecimal interestCompounded = compoundInterestValues.getcompoundedInterest().add(unCompoundedInterest);
+                compoundInterestValues.setcompoundedInterest(interestCompounded);
+                compoundInterestValues.setZeroForInterestToBeUncompounded();
+            }
+            interestEarned.addAll(interestUnrounded);
         }
 
         this.interestEarnedUnrounded = interestEarned;
-        this.interestEarnedRounded = Money.of(this.currency, this.interestEarnedUnrounded);
+        List<Money> interestRounded = new ArrayList<Money>();
+        for (BigDecimal interest : this.interestEarnedUnrounded) {
+            interestRounded.add(Money.of(this.currency, interest));
+        }
+        this.interestEarnedRounded = interestRounded;
 
         return interestEarned;
     }
 
-    public Money getInterestEarned() {
+    public List<Money> getInterestEarned() {
         return this.interestEarnedRounded;
     }
 

@@ -217,7 +217,7 @@ public class DepositsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEE_INCOME_ACCOUNT_MAPPING.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(), chartsParamName,
             SavingsApiConstants.withHoldTaxParamName, SavingsApiConstants.taxGroupIdParamName,
-            SavingsApiConstants.withdrawalFeeForTransfersParamName, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(),
+            SavingsApiConstants.withdrawalFeeForTransfersParamName, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_RECIVABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue()));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(

@@ -83,6 +83,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
         final CommandProcessingResult result = handler.processCommand(command);
 
         final AppUser maker = this.context.authenticatedUser(wrapper);
+        boolean isAutomaticallyApproveIfCheckerPermission = false;
 
         CommandSource commandSourceResult = null;
         if (command.commandId() != null) {
@@ -90,6 +91,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             commandSourceResult.markAsChecked(maker, DateTime.now());
         } else {
             commandSourceResult = CommandSource.fullEntryFrom(wrapper, command, maker);
+          
         }
         commandSourceResult.updateResourceId(result.resourceId());
         commandSourceResult.updateForAudit(result.getOfficeId(), result.getGroupId(), result.getClientId(), result.getLoanId(),
@@ -109,8 +111,20 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
         if (commandSourceResult.hasJson()) {
             this.commandSourceRepository.save(commandSourceResult);
         }
+        
+        if(rollbackTransaction) {
+            boolean hasCheckerPermission = this.context.authenticatedUser().validateHasCheckerPermission(commandSourceResult.getPermissionCode());
+            if(hasCheckerPermission) {
+                commandSourceResult = this.commandSourceRepository.findOne(commandSourceResult.getId());
+                commandSourceResult.markAsChecked(maker, DateTime.now());
+                isAutomaticallyApproveIfCheckerPermission = true;
+            }
+        }
 
-        if ((rollbackTransaction || result.isRollbackTransaction()) && !isApprovedByChecker) {
+        if ((rollbackTransaction || result.isRollbackTransaction()) 
+                && !isAutomaticallyApproveIfCheckerPermission) {
+        if ((rollbackTransaction || result.isRollbackTransaction()) 
+                && (!isApprovedByChecker || !isAutomaticallyApproveIfCheckerPermission)) {
             /*
              * JournalEntry will generate a new transactionId every time.
              * Updating the transactionId with old transactionId, because as
@@ -124,7 +138,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
              */
             commandSourceResult.updateJsonTo(command.json());
             throw new RollbackTransactionAsCommandIsNotApprovedByCheckerException(commandSourceResult);
-        }
+        }}
         result.setRollbackTransaction(null);
 
         publishEvent(wrapper.entityName(), wrapper.actionName(), result);

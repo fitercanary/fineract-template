@@ -417,16 +417,38 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
     @Override
     @CronTarget(jobName = JobName.POSTACCRUALINTERESTFORSAVINGS)
-    public void postAccrualInterestForSavings() {
+    public void postAccrualInterestForSavings() throws JobExecutionException {
+        StringBuilder errorMsg = new StringBuilder();
         LocalDate currentDate = new LocalDate();
         final List<Long> activeSavingsAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(100l);
         for (Long savingAccount : activeSavingsAccounts) {
-            this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate, false);
+            try {
+                this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate, false);
+            } catch (PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Post Accruals to savings failed for savings Id: " + savingAccount + " with message "
+                            + error.getDeveloperMessage());
+                    errorMsg.append("Post Accruals to savings failed for savings Id: ").append(savingAccount).append(" with message ")
+                            .append(error.getDeveloperMessage());
+                }
+            }
         }
         final List<Long> activeFixedDepositAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(200l);
-        for (Long activefixedDepositAccount: activeFixedDepositAccounts) {
-            this.depositAccountWritePlatformService.postAccrualInterest(activefixedDepositAccount, DepositAccountType.FIXED_DEPOSIT);
+        for (Long activefixedDepositAccount : activeFixedDepositAccounts) {
+            try {
+                this.depositAccountWritePlatformService.postAccrualInterest(activefixedDepositAccount, DepositAccountType.FIXED_DEPOSIT);
+            } catch (PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Post Accruals to fixed deposit failed for savings Id: " + activefixedDepositAccount + " with message "
+                            + error.getDeveloperMessage());
+                    errorMsg.append("Post Accruals to savings failed for fixed deposit Id: ").append(activefixedDepositAccount)
+                            .append(" with message ").append(error.getDeveloperMessage());
+                }
+            }
         }
+        if (errorMsg.length() > 0) { throw new JobExecutionException(errorMsg.toString()); }
     }
 
 }

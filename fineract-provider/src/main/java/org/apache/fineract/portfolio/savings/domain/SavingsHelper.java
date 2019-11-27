@@ -53,6 +53,11 @@ public final class SavingsHelper {
 
         while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
 
+            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue()
+                    && !periodEndDate.isBefore(interestPostingUpToDate)) {
+                break;
+            }
+
             final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
                     interestPostingUpToDate, financialYearBeginningMonth);
 

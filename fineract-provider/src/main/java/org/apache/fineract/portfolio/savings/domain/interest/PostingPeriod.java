@@ -183,7 +183,7 @@ public class PostingPeriod {
     }
 
     public List<Money> interest() {
-        return this.interestEarnedRounded;
+        return this.interestEarnedRounded != null ? this.interestEarnedRounded : new ArrayList<>();
     }
 
     public LocalDate dateOfPostingTransaction() {

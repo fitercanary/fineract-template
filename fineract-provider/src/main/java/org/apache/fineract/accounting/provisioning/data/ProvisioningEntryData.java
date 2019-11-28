@@ -41,9 +41,9 @@ public class ProvisioningEntryData {
 
     private BigDecimal reservedAmount ;
     
-    private Collection<LoanProductProvisioningEntryData> provisioningEntries ;
+    private Collection<ProductProvisioningEntryData> provisioningEntries ;
     
-    public ProvisioningEntryData(final Long id, final Collection<LoanProductProvisioningEntryData> provisioningEntries) {
+    public ProvisioningEntryData(final Long id, final Collection<ProductProvisioningEntryData> provisioningEntries) {
         this.provisioningEntries = provisioningEntries ;
         this.id = id ;
     }
@@ -60,7 +60,7 @@ public class ProvisioningEntryData {
         this.reservedAmount = totalReservedAmount ;
     }
     
-    public void setEntries(Collection<LoanProductProvisioningEntryData> provisioningEntries) {
+    public void setEntries(Collection<ProductProvisioningEntryData> provisioningEntries) {
         this.provisioningEntries = provisioningEntries ;
     }
 

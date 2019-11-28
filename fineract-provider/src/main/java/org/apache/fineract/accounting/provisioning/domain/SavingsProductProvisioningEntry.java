@@ -32,7 +32,7 @@ import javax.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "m_savingsproduct_provisioning_entry")
+@Table(name = "m_savings_product_provisioning_entry")
 public class SavingsProductProvisioningEntry extends AbstractPersistableCustom<Long> {
 
 	@ManyToOne(optional = false)

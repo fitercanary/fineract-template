@@ -58,6 +58,7 @@ import org.apache.fineract.accounting.journalentry.serialization.JournalEntryCom
 import org.apache.fineract.accounting.producttoaccountmapping.domain.PortfolioProductType;
 import org.apache.fineract.accounting.provisioning.domain.LoanProductProvisioningEntry;
 import org.apache.fineract.accounting.provisioning.domain.ProvisioningEntry;
+import org.apache.fineract.accounting.provisioning.domain.SavingsProductProvisioningEntry;
 import org.apache.fineract.accounting.rule.domain.AccountingRule;
 import org.apache.fineract.accounting.rule.domain.AccountingRuleRepository;
 import org.apache.fineract.accounting.rule.exception.AccountingRuleNotFoundException;
@@ -457,6 +458,56 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         }
         return "P" + provisioningEntry.getId();
     }
+
+	@Override
+	public String createSavingsProductProvisioningJournalEntries(ProvisioningEntry provisioningEntry) {
+		Collection<SavingsProductProvisioningEntry> provisioningEntries = provisioningEntry.getSavingsProductProvisioningEntries();
+		Map<OfficeCurrencyKey, List<SavingsProductProvisioningEntry>> officeMap = new HashMap<>();
+
+		for (SavingsProductProvisioningEntry entry : provisioningEntries) {
+			OfficeCurrencyKey key = new OfficeCurrencyKey(entry.getOffice(), entry.getCurrencyCode());
+			if (officeMap.containsKey(key)) {
+				List<SavingsProductProvisioningEntry> list = officeMap.get(key);
+				list.add(entry);
+			} else {
+				List<SavingsProductProvisioningEntry> list = new ArrayList<>();
+				list.add(entry);
+				officeMap.put(key, list);
+			}
+		}
+
+		Set<OfficeCurrencyKey> officeSet = officeMap.keySet();
+		Map<GLAccount, BigDecimal> liabilityMap = new HashMap<>();
+		Map<GLAccount, BigDecimal> expenseMap = new HashMap<>();
+
+		for (OfficeCurrencyKey key : officeSet) {
+			liabilityMap.clear();
+			expenseMap.clear();
+			List<SavingsProductProvisioningEntry> entries = officeMap.get(key);
+			for (SavingsProductProvisioningEntry entry : entries) {
+				if (liabilityMap.containsKey(entry.getLiabilityAccount())) {
+					BigDecimal amount = liabilityMap.get(entry.getLiabilityAccount());
+					amount = amount.add(entry.getReservedAmount());
+					liabilityMap.put(entry.getLiabilityAccount(), amount);
+				} else {
+					BigDecimal amount = BigDecimal.ZERO.add(entry.getReservedAmount());
+					liabilityMap.put(entry.getLiabilityAccount(), amount);
+				}
+
+				if (expenseMap.containsKey(entry.getExpenseAccount())) {
+					BigDecimal amount = expenseMap.get(entry.getExpenseAccount());
+					amount = amount.add(entry.getReservedAmount());
+					expenseMap.put(entry.getExpenseAccount(), amount);
+				} else {
+					BigDecimal amount = BigDecimal.ZERO.add(entry.getReservedAmount());
+					expenseMap.put(entry.getExpenseAccount(), amount);
+				}
+			}
+			createJournalEnry(provisioningEntry.getCreatedDate(), provisioningEntry.getId(), key.office, key.currency, liabilityMap,
+					expenseMap);
+		}
+		return "P" + provisioningEntry.getId();
+	}
 
     private void createJournalEnry(Date transactionDate, Long entryId, Office office, String currencyCode,
             Map<GLAccount, BigDecimal> liabilityMap, Map<GLAccount, BigDecimal> expenseMap) {

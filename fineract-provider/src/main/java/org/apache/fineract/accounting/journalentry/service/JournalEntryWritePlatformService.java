@@ -18,33 +18,35 @@
  */
 package org.apache.fineract.accounting.journalentry.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map;
-
 import org.apache.fineract.accounting.provisioning.domain.ProvisioningEntry;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+
 public interface JournalEntryWritePlatformService {
 
-    CommandProcessingResult createJournalEntry(JsonCommand command);
+	CommandProcessingResult createJournalEntry(JsonCommand command);
 
-    CommandProcessingResult revertJournalEntry(JsonCommand command);
+	CommandProcessingResult revertJournalEntry(JsonCommand command);
 
-    void createJournalEntriesForLoan(Map<String, Object> accountingBridgeData);
+	void createJournalEntriesForLoan(Map<String, Object> accountingBridgeData);
 
-    void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData);
+	void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData);
 
-    void createJournalEntriesForClientTransactions(Map<String, Object> accountingBridgeData);
+	void createJournalEntriesForClientTransactions(Map<String, Object> accountingBridgeData);
 
-    CommandProcessingResult defineOpeningBalance(JsonCommand command);
-    
-    public String revertProvisioningJournalEntries(final Date reversalTransactionDate, final Long entityId, final Integer entityType) ;
+	CommandProcessingResult defineOpeningBalance(JsonCommand command);
 
-    public String createProvisioningJournalEntries(ProvisioningEntry entry) ;
+	String revertProvisioningJournalEntries(final Date reversalTransactionDate, final Long entityId, final Integer entityType);
 
-    void createJournalEntriesForShares(Map<String, Object> accountingBridgeData);
-    
-    void revertShareAccountJournalEntries(final ArrayList<Long> transactionId, final Date transactionDate);
+	String createProvisioningJournalEntries(ProvisioningEntry entry);
+
+	String createSavingsProductProvisioningJournalEntries(ProvisioningEntry provisioningEntry);
+
+	void createJournalEntriesForShares(Map<String, Object> accountingBridgeData);
+
+	void revertShareAccountJournalEntries(final ArrayList<Long> transactionId, final Date transactionDate);
 }

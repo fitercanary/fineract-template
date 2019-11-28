@@ -30,7 +30,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.fineract.accounting.provisioning.constant.ProvisioningEntriesApiConstants;
-import org.apache.fineract.accounting.provisioning.data.LoanProductProvisioningEntryData;
+import org.apache.fineract.accounting.provisioning.data.ProductProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.data.ProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.service.ProvisioningEntriesReadPlatformService;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -129,12 +129,12 @@ public class ProvisioningEntriesApiResource {
     @Path("entries")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveProviioningEntries(@QueryParam("entryId") final Long entryId, @QueryParam("offset") final Integer offset,
+    public String retrieveProvisioningEntries(@QueryParam("entryId") final Long entryId, @QueryParam("offset") final Integer offset,
             @QueryParam("limit") final Integer limit, @QueryParam("officeId") final Long officeId,
             @QueryParam("productId") final Long productId, @QueryParam("categoryId") final Long categoryId, @Context final UriInfo uriInfo) {
         this.platformSecurityContext.authenticatedUser();
         SearchParameters params = SearchParameters.forProvisioningEntries(entryId, officeId, productId, categoryId, offset, limit);
-        Page<LoanProductProvisioningEntryData> entries = this.provisioningEntriesReadPlatformService.retrieveProvisioningEntries(params);
+        Page<ProductProvisioningEntryData> entries = this.provisioningEntriesReadPlatformService.retrieveProvisioningEntries(params);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.entriesApiJsonSerializer.serialize(settings, entries, PROVISIONING_ENTRY_PARAMETERS);
     }

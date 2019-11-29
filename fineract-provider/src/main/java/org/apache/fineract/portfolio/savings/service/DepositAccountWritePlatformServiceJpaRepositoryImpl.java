@@ -611,14 +611,6 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         LocalDate postInterestOnDate = DateUtils.getLocalDateOfTenant();
         account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                 postInterestOnDate);
-        BigDecimal feesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, false);
-        if (feesAmount.compareTo(BigDecimal.ZERO) == 1) {
-            account.postFeesAccrualTransaction(postInterestOnDate, feesAmount, true);
-        }
-        BigDecimal penaltiesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, true);
-        if (penaltiesAmount.compareTo(BigDecimal.ZERO) == 1) {
-            account.postPenaltiesAccrualTransaction(postInterestOnDate, penaltiesAmount, true);
-        }
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);

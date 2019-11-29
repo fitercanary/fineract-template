@@ -730,11 +730,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return transactions;
     }
 
-    public List<LocalDate> getManualAccrualPostingDates() {
+    public List<LocalDate> getAccrualPostingDates() {
         List<LocalDate> transactions = new ArrayList<>();
         for (SavingsAccountTransaction trans : this.transactions) {
-            if ((trans.isAccrualInterestPostingAndNotReversed() || trans.isOverdraftAccrualInterestAndNotReversed())
-                    && trans.isManualTransaction()) {
+            if ((trans.isAccrualInterestPostingAndNotReversed() || trans.isOverdraftAccrualInterestAndNotReversed())) {
                 transactions.add(trans.getTransactionLocalDate());
             }
         }
@@ -3323,7 +3322,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
-        List<LocalDate> postedAsOnDates = getManualAccrualPostingDates();
+        List<LocalDate> postedAsOnDates = getAccrualPostingDates();
         if (postInterestOnDate != null) {
             postedAsOnDates.add(postInterestOnDate);
         }

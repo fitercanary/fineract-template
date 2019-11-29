@@ -1726,14 +1726,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
             account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
-            BigDecimal feesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, false);
-            if (feesAmount.compareTo(BigDecimal.ZERO) == 1) {
-                account.postFeesAccrualTransaction(postInterestOnDate, feesAmount, isUserPosting);
-            }
-            BigDecimal penaltiesAmount = this.savingsAccountReadPlatformService.getchargesDue(account.getId(), postInterestOnDate, true);
-            if (penaltiesAmount.compareTo(BigDecimal.ZERO) == 1) {
-                account.postPenaltiesAccrualTransaction(postInterestOnDate, penaltiesAmount, isUserPosting);
-            }
             
             // for generating transaction id's
             List<SavingsAccountTransaction> transactions = account.getTransactions();

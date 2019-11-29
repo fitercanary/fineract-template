@@ -694,16 +694,6 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     @Override
-    public void postFeesAccrualTransaction(LocalDate feesAccrualPostingDate, BigDecimal feesAmount, boolean isUserPosting) {
-        super.postFeesAccrualTransaction(feesAccrualPostingDate, feesAmount, isUserPosting);
-    }
-
-    @Override
-    public void postPenaltiesAccrualTransaction(LocalDate penaltiesAccrualPostingDate, BigDecimal penaltiesAmount, boolean isUserPosting) {
-        super.postPenaltiesAccrualTransaction(penaltiesAccrualPostingDate, penaltiesAmount, isUserPosting);
-    }
-
-    @Override
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postAsInterestOn) {

@@ -465,9 +465,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
             List<SavingsAccountTransaction> savingTransactions = account.getTransactions();
             for (SavingsAccountTransaction savingTransaction : savingTransactions) {
-                if (!savingTransaction.isReversed() && !savingTransaction.isAccrualPenaltiesPostingAndNotReversed()
-                        && !savingTransaction.isAccrualFeesPostingAndNotReversed()
-                        && !savingTransaction.isAccrualInterestPostingAndNotReversed()
+                if (!savingTransaction.isReversed() && !savingTransaction.isAccrualInterestPostingAndNotReversed()
                         && !savingTransaction.isOverdraftAccrualInterestAndNotReversed()
                         && transactionDate.toDate().before(savingTransaction.getDateOf())) {
                     throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.LAST_TRANSACTION_DATE);

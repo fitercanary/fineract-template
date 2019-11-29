@@ -22,6 +22,7 @@ import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.provisioning.domain.ProvisioningCategory;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 
 import javax.persistence.Column;
@@ -71,13 +72,17 @@ public class SavingsProductProvisioningEntry extends AbstractPersistableCustom<L
 	@JoinColumn(name = "expense_account", nullable = false)
 	private GLAccount expenseAccount;
 
+	@ManyToOne
+	@JoinColumn(name = "savings_account_id", nullable = false)
+	private SavingsAccount savingsAccount;
+
 	protected SavingsProductProvisioningEntry() {
 
 	}
 
 	public SavingsProductProvisioningEntry(final SavingsProduct savingsProduct, final Office office, final String currencyCode,
 										   final ProvisioningCategory provisioningCategory, final Long overdueInDays, final BigDecimal reservedAmount,
-										   final GLAccount liabilityAccount, final GLAccount expenseAccount, Long criteriaId) {
+										   final GLAccount liabilityAccount, final GLAccount expenseAccount, Long criteriaId, SavingsAccount savingsAccount) {
 		this.savingsProduct = savingsProduct;
 		this.office = office;
 		this.currencyCode = currencyCode;
@@ -87,6 +92,7 @@ public class SavingsProductProvisioningEntry extends AbstractPersistableCustom<L
 		this.liabilityAccount = liabilityAccount;
 		this.expenseAccount = expenseAccount;
 		this.criteriaId = criteriaId;
+		this.savingsAccount = savingsAccount;
 	}
 
 	public void setProvisioningEntry(ProvisioningEntry provisioningEntry) {

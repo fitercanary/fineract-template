@@ -131,7 +131,7 @@ public class ProvisioningEntriesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveProvisioningEntries(@QueryParam("entryId") final Long entryId, @QueryParam("offset") final Integer offset,
             @QueryParam("limit") final Integer limit, @QueryParam("officeId") final Long officeId,
-            @QueryParam("productId") final Long productId, @QueryParam("categoryId") final Long categoryId, @Context final UriInfo uriInfo) {
+            @QueryParam("productId") final String productId, @QueryParam("categoryId") final Long categoryId, @Context final UriInfo uriInfo) {
         this.platformSecurityContext.authenticatedUser();
         SearchParameters params = SearchParameters.forProvisioningEntries(entryId, officeId, productId, categoryId, offset, limit);
         Page<ProductProvisioningEntryData> entries = this.provisioningEntriesReadPlatformService.retrieveProvisioningEntries(params);

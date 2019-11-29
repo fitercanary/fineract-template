@@ -51,8 +51,12 @@ import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaDa
 import org.apache.fineract.organisation.provisioning.domain.ProvisioningCategory;
 import org.apache.fineract.organisation.provisioning.domain.ProvisioningCategoryRepository;
 import org.apache.fineract.organisation.provisioning.service.ProvisioningCriteriaReadPlatformService;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -73,6 +77,8 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 	private final ProvisioningEntriesReadPlatformService provisioningEntriesReadPlatformService;
 	private final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService;
 	private final LoanProductRepository loanProductRepository;
+	private final LoanRepository loanRepository;
+	private final SavingsAccountRepository savingsAccountRepository;
 	private final SavingsProductRepository savingsProductRepository;
 	private final GLAccountRepository glAccountRepository;
 	private final OfficeRepositoryWrapper officeRepositoryWrapper;
@@ -87,7 +93,7 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 	public ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl(
 			final ProvisioningEntriesReadPlatformService provisioningEntriesReadPlatformService,
 			final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService,
-			final LoanProductRepository loanProductRepository, SavingsProductRepository savingsProductRepository, final GLAccountRepository glAccountRepository,
+			final LoanProductRepository loanProductRepository, LoanRepository loanRepository, SavingsAccountRepository savingsAccountRepository, SavingsProductRepository savingsProductRepository, final GLAccountRepository glAccountRepository,
 			final OfficeRepositoryWrapper officeRepositoryWrapper, final ProvisioningCategoryRepository provisioningCategoryRepository,
 			final PlatformSecurityContext platformSecurityContext, final ProvisioningEntryRepository provisioningEntryRepository,
 			final JournalEntryWritePlatformService journalEntryWritePlatformService,
@@ -95,6 +101,8 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 		this.provisioningEntriesReadPlatformService = provisioningEntriesReadPlatformService;
 		this.provisioningCriteriaReadPlatformService = provisioningCriteriaReadPlatformService;
 		this.loanProductRepository = loanProductRepository;
+		this.loanRepository = loanRepository;
+		this.savingsAccountRepository = savingsAccountRepository;
 		this.savingsProductRepository = savingsProductRepository;
 		this.glAccountRepository = glAccountRepository;
 		this.officeRepositoryWrapper = officeRepositoryWrapper;
@@ -255,6 +263,7 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 		Map<LoanProductProvisioningEntry, LoanProductProvisioningEntry> provisioningEntries = new HashMap<>();
 		for (ProductProvisioningEntryData data : entries) {
 			LoanProduct loanProduct = this.loanProductRepository.findOne(data.getProductId());
+			Loan loan = this.loanRepository.findLoanByAccountNumber(data.getAccountNumber());
 			Office office = this.officeRepositoryWrapper.findOneWithNotFoundDetection(data.getOfficeId());
 			ProvisioningCategory provisioningCategory = provisioningCategoryRepository.findOne(data.getCategoryId());
 			GLAccount liabilityAccount = glAccountRepository.findOne(data.getLiabilityAccount());
@@ -264,7 +273,7 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 			Money amountToReserve = money.percentageOf(data.getPercentage(), MoneyHelper.getRoundingMode());
 			Long criteriaId = data.getCriteriaId();
 			LoanProductProvisioningEntry entry = new LoanProductProvisioningEntry(loanProduct, office, data.getCurrencyCode(),
-					provisioningCategory, data.getOverdueInDays(), amountToReserve.getAmount(), liabilityAccount, expenseAccount, criteriaId);
+					provisioningCategory, data.getOverdueInDays(), amountToReserve.getAmount(), liabilityAccount, expenseAccount, criteriaId, loan);
 			entry.setProvisioningEntry(parent);
 			if (!provisioningEntries.containsKey(entry)) {
 				provisioningEntries.put(entry, entry);
@@ -282,6 +291,7 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 		Map<SavingsProductProvisioningEntry, SavingsProductProvisioningEntry> provisioningEntries = new HashMap<>();
 		for (ProductProvisioningEntryData data : entries) {
 			SavingsProduct savingsProduct = this.savingsProductRepository.findOne(data.getProductId());
+			SavingsAccount savingsAccount = this.savingsAccountRepository.findByAccountNumber(data.getAccountNumber());
 			Office office = this.officeRepositoryWrapper.findOneWithNotFoundDetection(data.getOfficeId());
 			ProvisioningCategory provisioningCategory = provisioningCategoryRepository.findOne(data.getCategoryId());
 			GLAccount liabilityAccount = glAccountRepository.findOne(data.getLiabilityAccount());
@@ -291,7 +301,7 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
 			Money amountToReserve = money.percentageOf(data.getPercentage(), MoneyHelper.getRoundingMode());
 			Long criteriaId = data.getCriteriaId();
 			SavingsProductProvisioningEntry entry = new SavingsProductProvisioningEntry(savingsProduct, office, data.getCurrencyCode(),
-					provisioningCategory, data.getOverdueInDays(), amountToReserve.getAmount(), liabilityAccount, expenseAccount, criteriaId);
+					provisioningCategory, data.getOverdueInDays(), amountToReserve.getAmount(), liabilityAccount, expenseAccount, criteriaId, savingsAccount);
 			entry.setProvisioningEntry(parent);
 			if (!provisioningEntries.containsKey(entry)) {
 				provisioningEntries.put(entry, entry);

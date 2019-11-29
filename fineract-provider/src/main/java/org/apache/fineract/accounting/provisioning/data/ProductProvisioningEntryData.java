@@ -62,9 +62,11 @@ public class ProductProvisioningEntryData {
 
 	private final Boolean isLoan;
 
+	private final String accountNumber;
+
 	public ProductProvisioningEntryData(final Long historyId, final Long officeId, final String currencyCode, final Long productId,
 										final Long categoryId, final Long overdueInDays, final BigDecimal percentage, final BigDecimal balance, Long liablityAccount,
-										Long expenseAccount, final Long criteriaId, final Boolean isLoan) {
+										Long expenseAccount, final Long criteriaId, final String accountNumber, final Boolean isLoan) {
 		this.historyId = historyId;
 		this.officeId = officeId;
 		this.currencyCode = currencyCode;
@@ -84,12 +86,14 @@ public class ProductProvisioningEntryData {
 		this.expenseAccountCode = null;
 		this.expenseAccountName = null;
 		this.criteriaId = criteriaId;
+		this.accountNumber = accountNumber;
 		this.isLoan = isLoan;
 	}
 
 	public ProductProvisioningEntryData(final Long historyId, final Long officeId, final String officeName, final String currencyCode, final Long productId,
 										final String productName, final Long categoryId, final String categoryName, final Long overdueInDays, final BigDecimal amountReserved,
-										Long liabilityAccount, String liabilityAccountGlCode, String liabilityAccountName, Long expenseAccount, String expenseAccountGlCode, String expenseAccountName, final Long criteriaId, final Boolean isLoan) {
+										Long liabilityAccount, String liabilityAccountGlCode, String liabilityAccountName, Long expenseAccount, String expenseAccountGlCode,
+										String expenseAccountName, final Long criteriaId, final String accountNumber, final Boolean isLoan) {
 		this.historyId = historyId;
 		this.officeId = officeId;
 		this.currencyCode = currencyCode;
@@ -109,6 +113,7 @@ public class ProductProvisioningEntryData {
 		this.expenseAccountCode = expenseAccountGlCode;
 		this.expenseAccountName = expenseAccountName;
 		this.criteriaId = criteriaId;
+		this.accountNumber = accountNumber;
 		this.isLoan = isLoan;
 	}
 
@@ -154,6 +159,10 @@ public class ProductProvisioningEntryData {
 
 	public Long getCriteriaId() {
 		return this.criteriaId;
+	}
+
+	public String getAccountNumber() {
+		return accountNumber;
 	}
 
 	public Boolean isLoan() {

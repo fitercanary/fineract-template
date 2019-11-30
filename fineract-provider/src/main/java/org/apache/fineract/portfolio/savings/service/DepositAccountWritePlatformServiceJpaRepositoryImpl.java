@@ -107,8 +107,10 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.TransactionUpdateNotAllowedException;
+import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -558,19 +560,53 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
     @Transactional
     @Override
-    public CommandProcessingResult postAccrualInterest(final Long savingsId, final DepositAccountType depositAccountType) {
+    public CommandProcessingResult postAccrualInterest(JsonCommand command, final DepositAccountType depositAccountType) {
 
-        final SavingsAccount account = this.depositAccountAssembler.assembleFrom(savingsId, depositAccountType);
+        final SavingsAccount account = this.depositAccountAssembler.assembleFrom(command.entityId(), depositAccountType);
+        final boolean postInterestAs = command.booleanPrimitiveValueOfParameterNamed("isPostInterestAsOn");
+        LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         checkClientOrGroupActive(account);
-        postAccrualInterest(account);
+        if (postInterestAs == true) {
+
+            if (transactionDate == null) {
+
+                transactionDate = DateUtils.getLocalDateOfTenant();
+            }
+            if (transactionDate.isBefore(account.accountSubmittedOrActivationDate())) {
+                throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.ACTIVATION_DATE);
+            }
+
+            LocalDate today = DateUtils.getLocalDateOfTenant();
+            if (transactionDate.isAfter(today)) { throw new PostInterestAsOnDateException(PostInterestAsOnException_TYPE.FUTURE_DATE); }
+
+        }
+        checkClientOrGroupActive(account);
+        postAccrualInterest(account, transactionDate);
         return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
+                .withEntityId(command.entityId()) //
                 .withOfficeId(account.officeId()) //
                 .withClientId(account.clientId()) //
                 .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
+                .withSavingsId(command.entityId()) //
                 .build();
     }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult postAccrualInterest(Long fixedDepositAccountId, final DepositAccountType depositAccountType) {
+
+        final SavingsAccount account = this.depositAccountAssembler.assembleFrom(fixedDepositAccountId, depositAccountType);
+        checkClientOrGroupActive(account);
+        postAccrualInterest(account, DateUtils.getLocalDateOfTenant());
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(fixedDepositAccountId) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(fixedDepositAccountId) //
+                .build();
+    }
+
 
     @Transactional
     private void postInterest(final SavingsAccount account) {
@@ -596,7 +632,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     }
 
     @Transactional
-    private void postAccrualInterest(final SavingsAccount account) {
+    private void postAccrualInterest(final SavingsAccount account, final LocalDate transactionDate) {
 
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
@@ -605,12 +641,10 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final Set<Long> existingTransactionIds = new HashSet<>();
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
-        final LocalDate today = DateUtils.getLocalDateOfTenant();
         final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
         boolean isInterestTransfer = false;
-        LocalDate postInterestOnDate = DateUtils.getLocalDateOfTenant();
-        account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                postInterestOnDate);
+        account.postAccrualInterest(mc, transactionDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
+                transactionDate);
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);

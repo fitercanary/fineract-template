@@ -91,5 +91,7 @@ public interface DepositAccountWritePlatformService {
 
     SavingsAccountTransaction mandatorySavingsAccountDeposit(final SavingsAccountTransactionDTO accountTransactionDTO);
 
-    CommandProcessingResult postAccrualInterest(Long savingsId, DepositAccountType depositAccountType);
+    CommandProcessingResult postAccrualInterest(JsonCommand command, DepositAccountType depositAccountType);
+
+    CommandProcessingResult postAccrualInterest(Long fixedDepositAccountId, DepositAccountType depositAccountType);
 }

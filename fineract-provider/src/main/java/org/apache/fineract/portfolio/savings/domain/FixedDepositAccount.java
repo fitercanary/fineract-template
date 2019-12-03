@@ -379,15 +379,17 @@ public class FixedDepositAccount extends SavingsAccount {
 
         if (allPostingPeriods.size() == 1 && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)) {
             List<CompoundingPeriod> compoundingPeriods = allPostingPeriods.get(0).getCompoundingPeriods();
-            CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
-            compoundingPeriod.getPeriodInterval()
-                    .setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
-            allPostingPeriods.get(0).getCompoundingPeriods().clear();
-            allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
-            if (compoundingPeriod instanceof AnnualCompoundingPeriod
-                    && !((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().isEmpty()) {
-                ((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().get(0)
-                        .setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
+            if (!compoundingPeriods.isEmpty()) {
+                CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
+                compoundingPeriod.getPeriodInterval()
+                        .setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
+                allPostingPeriods.get(0).getCompoundingPeriods().clear();
+                allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
+                if (compoundingPeriod instanceof AnnualCompoundingPeriod
+                        && !((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().isEmpty()) {
+                    ((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().get(0)
+                            .setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
+                }
             }
         }
 

@@ -751,4 +751,7 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 		return this.daysToEscheat;
 	}
 
+	public MonetaryCurrency getCurrency() {
+		return currency;
+	}
 }

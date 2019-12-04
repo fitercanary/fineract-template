@@ -144,14 +144,6 @@ public class SavingsEnumerations {
                 optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue().longValue(),
                         SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getCode(), "Accrual Interest posting");
             break;
-            case ACCRUAL_FEES_POSTING:
-                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.ACCRUAL_FEES_POSTING.getValue().longValue(),
-                        SavingsAccountTransactionType.ACCRUAL_FEES_POSTING.getCode(), "Accrual fees posting");
-            break;
-            case ACCRUAL_PENALTIES_POSTING:
-                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.ACCRUAL_PENALTIES_POSTING.getValue().longValue(),
-                        SavingsAccountTransactionType.ACCRUAL_PENALTIES_POSTING.getCode(), "Accrual penalties posting");
-            break;
             case OVERDRAFT_ACCRUAL_INTEREST:
                 optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue().longValue(),
                         SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getCode(), "Overdraft Accrual posting");

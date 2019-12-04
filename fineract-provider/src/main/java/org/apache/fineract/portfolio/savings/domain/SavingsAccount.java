@@ -630,30 +630,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return postingTransation;
     }
 
-    protected SavingsAccountTransaction findAccrualFeesPostingTransactionFor(final LocalDate postingDate) {
-        SavingsAccountTransaction postingTransation = null;
-        List<SavingsAccountTransaction> trans = getTransactions();
-        for (final SavingsAccountTransaction transaction : trans) {
-            if ((transaction.isAccrualFeesPostingAndNotReversed()) && transaction.occursOn(postingDate)) {
-                postingTransation = transaction;
-                break;
-            }
-        }
-        return postingTransation;
-    }
-
-    protected SavingsAccountTransaction findAccrualPenaltiesPostingTransactionFor(final LocalDate postingDate) {
-        SavingsAccountTransaction postingTransation = null;
-        List<SavingsAccountTransaction> trans = getTransactions();
-        for (final SavingsAccountTransaction transaction : trans) {
-            if ((transaction.isAccrualPenaltiesPostingAndNotReversed()) && transaction.occursOn(postingDate)) {
-                postingTransation = transaction;
-                break;
-            }
-        }
-        return postingTransation;
-    }
-
     protected SavingsAccountTransaction findTransactionFor(final LocalDate postingDate,
             final List<SavingsAccountTransaction> transactions) {
         SavingsAccountTransaction transaction = null;
@@ -730,11 +706,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return transactions;
     }
 
-    public List<LocalDate> getManualAccrualPostingDates() {
+    public List<LocalDate> getAccrualPostingDates() {
         List<LocalDate> transactions = new ArrayList<>();
         for (SavingsAccountTransaction trans : this.transactions) {
-            if ((trans.isAccrualInterestPostingAndNotReversed() || trans.isOverdraftAccrualInterestAndNotReversed())
-                    && trans.isManualTransaction()) {
+            if ((trans.isAccrualInterestPostingAndNotReversed() || trans.isOverdraftAccrualInterestAndNotReversed())) {
                 transactions.add(trans.getTransactionLocalDate());
             }
         }
@@ -869,7 +844,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final List<SavingsAccountTransaction> orderedNonInterestPostingTransactions = new ArrayList<>();
 
         for (final SavingsAccountTransaction transaction : listOfTransactionsSorted) {
-            if (!(transaction.isInterestPostingAndNotReversed() || transaction.isOverdraftInterestAndNotReversed())
+            if (!(transaction.isInterestPostingAndNotReversed() || transaction.isOverdraftInterestAndNotReversed()
+                    || transaction.isAccrualInterestPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
                     && transaction.isNotReversed()) {
                 orderedNonInterestPostingTransactions.add(transaction);
             }
@@ -886,7 +862,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         Collections.sort(listOfTransactionsSorted, transactionComparator);
         return listOfTransactionsSorted;
     }
-
+    
     protected void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
 
         Money runningBalance = openingAccountBalance.copy();
@@ -949,8 +925,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         LocalDate endOfBalanceDate = interestPostingUpToDate;
         for (int i = accountTransactionsSorted.size() - 1; i >= 0; i--) {
             final SavingsAccountTransaction transaction = accountTransactionsSorted.get(i);
-            if (transaction.isNotReversed()
-                    && !(transaction.isInterestPostingAndNotReversed() || transaction.isOverdraftInterestAndNotReversed())) {
+            if (transaction.isNotReversed() && !(transaction.isInterestPostingAndNotReversed()
+                    || transaction.isOverdraftInterestAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed()
+                    || transaction.isAccrualInterestPostingAndNotReversed())) {
                 transaction.updateCumulativeBalanceAndDates(this.currency, endOfBalanceDate);
                 // this transactions transaction date is end of balance date for
                 // previous transaction.
@@ -1177,8 +1154,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         boolean transactionBeforeLastInterestPosting = false;
 
         for (final SavingsAccountTransaction transaction : retreiveListOfTransactions()) {
-            if ((transaction.isAccrualFeesPostingAndNotReversed() || transaction.isAccrualInterestPostingAndNotReversed()
-                    || transaction.isAccrualPenaltiesPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
+            if ((transaction.isAccrualInterestPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
                     && transaction.isAfter(transactionDate)) {
                 transactionBeforeLastInterestPosting = true;
                 break;
@@ -3323,7 +3299,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
-        List<LocalDate> postedAsOnDates = getManualAccrualPostingDates();
+        List<LocalDate> postedAsOnDates = getAccrualPostingDates();
         if (postInterestOnDate != null) {
             postedAsOnDates.add(postInterestOnDate);
         }
@@ -3488,80 +3464,4 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
-
-    public void postFeesAccrualTransaction(LocalDate feesAccrualPostingDate, BigDecimal feesAmount, boolean isUserPosting) {
-
-        Money feesAmountMoney = Money.of(getCurrency(), feesAmount);
-
-        final SavingsAccountTransaction postingTransaction = findAccrualFeesPostingTransactionFor(feesAccrualPostingDate);
-        if (postingTransaction == null) {
-            SavingsAccountTransaction newPostingTransaction = null;
-            if (feesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
-
-                newPostingTransaction = SavingsAccountTransaction.AccrualFeesPosting(this, office(), feesAccrualPostingDate,
-                        feesAmountMoney, isUserPosting);
-            }
-            if (newPostingTransaction != null) {
-                addTransaction(newPostingTransaction);
-            }
-        } else {
-            boolean correctionRequired = false;
-            if (postingTransaction.isAccrualFeesPostingAndNotReversed()) {
-                correctionRequired = postingTransaction.hasNotAmount(feesAmountMoney);
-            } else {
-                correctionRequired = postingTransaction.hasNotAmount(feesAmountMoney.negated());
-            }
-            if (correctionRequired) {
-                postingTransaction.reverse();
-                SavingsAccountTransaction newPostingTransaction;
-                if (feesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
-                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), feesAccrualPostingDate,
-                            feesAmountMoney, isUserPosting);
-                } else {
-                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), feesAccrualPostingDate,
-                            feesAmountMoney.negated(), isUserPosting);
-                }
-                addTransaction(newPostingTransaction);
-            }
-        }
-
-    }
-
-    public void postPenaltiesAccrualTransaction(LocalDate penaltiesAccrualPostingDate, BigDecimal penaltiesAmount, boolean isUserPosting) {
-        Money penaltiesAmountMoney = Money.of(getCurrency(), penaltiesAmount);
-
-        final SavingsAccountTransaction postingTransaction = findAccrualPenaltiesPostingTransactionFor(penaltiesAccrualPostingDate);
-        if (postingTransaction == null) {
-            SavingsAccountTransaction newPostingTransaction = null;
-            if (penaltiesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
-
-                newPostingTransaction = SavingsAccountTransaction.AccrualPenaltiesPosting(this, office(), penaltiesAccrualPostingDate,
-                        penaltiesAmountMoney, isUserPosting);
-            }
-            if (newPostingTransaction != null) {
-                addTransaction(newPostingTransaction);
-            }
-        } else {
-            boolean correctionRequired = false;
-            if (postingTransaction.isAccrualFeesPostingAndNotReversed()) {
-                correctionRequired = postingTransaction.hasNotAmount(penaltiesAmountMoney);
-            } else {
-                correctionRequired = postingTransaction.hasNotAmount(penaltiesAmountMoney.negated());
-            }
-            if (correctionRequired) {
-                postingTransaction.reverse();
-                SavingsAccountTransaction newPostingTransaction;
-                if (penaltiesAmountMoney.isGreaterThanOrEqualTo(Money.zero(currency))) {
-                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), penaltiesAccrualPostingDate,
-                            penaltiesAmountMoney, isUserPosting);
-                } else {
-                    newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(), penaltiesAccrualPostingDate,
-                            penaltiesAmountMoney.negated(), isUserPosting);
-                }
-                addTransaction(newPostingTransaction);
-            }
-        }
-
-    }
-
 }

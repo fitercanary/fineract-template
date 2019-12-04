@@ -91,6 +91,11 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
 		return savingsProductProvisioningEntries;
 	}
 
+	public void setSavingsProductProvisioningEntries(Collection<SavingsProductProvisioningEntry> provisioningEntries) {
+		if(this.savingsProductProvisioningEntries == null) this.savingsProductProvisioningEntries = new HashSet<>();
+		this.savingsProductProvisioningEntries.addAll(provisioningEntries) ;
+	}
+
 	public void setJournalEntryCreated(Boolean bool) {
         this.isJournalEntryCreated = bool ;
     }

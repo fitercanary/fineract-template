@@ -18,19 +18,19 @@
  */
 package org.apache.fineract.accounting.provisioning.domain;
 
-import java.math.BigDecimal;
+import org.apache.fineract.accounting.glaccount.domain.GLAccount;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.organisation.office.domain.Office;
+import org.apache.fineract.organisation.provisioning.domain.ProvisioningCategory;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import org.apache.fineract.accounting.glaccount.domain.GLAccount;
-import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
-import org.apache.fineract.organisation.office.domain.Office;
-import org.apache.fineract.organisation.provisioning.domain.ProvisioningCategory;
-import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "m_loanproduct_provisioning_entry")
@@ -72,24 +72,29 @@ public class LoanProductProvisioningEntry extends AbstractPersistableCustom<Long
     @JoinColumn(name = "expense_account", nullable = false)
     private GLAccount expenseAccount;
 
-    protected LoanProductProvisioningEntry() {
-        
-    }
+	@ManyToOne
+	@JoinColumn(name = "loan_id")
+	private Loan loan;
+
+	protected LoanProductProvisioningEntry() {
+
+	}
     public LoanProductProvisioningEntry(final LoanProduct loanProduct, final Office office, final String currencyCode,
             final ProvisioningCategory provisioningCategory, final Long overdueInDays, final BigDecimal reservedAmount,
-            final GLAccount liabilityAccount, final GLAccount expenseAccount, Long criteriaId) {
-        this.loanProduct = loanProduct;
-        this.office = office;
+			final GLAccount liabilityAccount, final GLAccount expenseAccount, Long criteriaId, Loan loan) {
+		this.loanProduct = loanProduct;
+		this.office = office;
         this.currencyCode = currencyCode;
         this.provisioningCategory = provisioningCategory;
         this.overdueInDays = overdueInDays;
         this.reservedAmount = reservedAmount;
         this.liabilityAccount = liabilityAccount;
         this.expenseAccount = expenseAccount;
-        this.criteriaId = criteriaId ;
-    }
+        this.criteriaId = criteriaId;
+		this.loan = loan;
+	}
 
-    public void setProvisioningEntry(ProvisioningEntry provisioningEntry) {
+	public void setProvisioningEntry(ProvisioningEntry provisioningEntry) {
         this.entry = provisioningEntry;
     }
 

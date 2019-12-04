@@ -16,5 +16,8 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
+ALTER TABLE `m_loanproduct_provisioning_entry` ADD COLUMN `loan_id` BIGINT(20);
+ALTER TABLE `m_loanproduct_provisioning_entry` ADD CONSTRAINT `FK_m_loanproduct_provisioning_entry_m_loann` FOREIGN KEY (`loan_id`) REFERENCES `m_loan` (`id`) ON DELETE CASCADE;
 
-INSERT INTO `job` (`name`, `display_name`, `cron_expression`, `create_time`, `task_priority`, `group_name`, `previous_run_start_time`, `next_run_time`, `job_key`, `initializing_errorlog`, `is_active`, `currently_running`, `updates_allowed`, `scheduler_group`, `is_misfired`) VALUES ('Post Accrual Interest for Savings', 'Post Accrual Interest for Savings', '0 0 22 1/1 * ? *', now(), 5, NULL, NULL, NULL, NULL, NULL, 1, 0, 1, 0, 0);
+ALTER TABLE `m_savings_product_provisioning_entry` ADD COLUMN `savings_account_id` BIGINT(20);
+ALTER TABLE `m_savings_product_provisioning_entry` ADD CONSTRAINT `FK_m_savings_product_provisioning_entry_m_savings_account` FOREIGN KEY (`savings_account_id`) REFERENCES `m_savings_account` (`id`) ON DELETE CASCADE;

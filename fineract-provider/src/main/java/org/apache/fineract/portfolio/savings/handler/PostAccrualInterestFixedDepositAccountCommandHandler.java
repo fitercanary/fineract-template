@@ -43,6 +43,6 @@ public class PostAccrualInterestFixedDepositAccountCommandHandler implements New
     @Transactional
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-        return this.depositAccountWritePlatformService.postAccrualInterest(command.entityId(), DepositAccountType.FIXED_DEPOSIT);
+        return this.depositAccountWritePlatformService.postAccrualInterest(command, DepositAccountType.FIXED_DEPOSIT);
     }
 }

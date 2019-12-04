@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalidException;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -417,16 +418,58 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
     @Override
     @CronTarget(jobName = JobName.POSTACCRUALINTERESTFORSAVINGS)
-    public void postAccrualInterestForSavings() {
+    public void postAccrualInterestForSavings() throws JobExecutionException {
+        StringBuilder errorMsg = new StringBuilder();
         LocalDate currentDate = new LocalDate();
         final List<Long> activeSavingsAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(100l);
         for (Long savingAccount : activeSavingsAccounts) {
-            this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate, false);
+            try {
+                this.savingsAccountWritePlatformService.postAccrualInterest(savingAccount, currentDate, false);
+            } catch (PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Post Accruals to savings failed for savings Id: " + savingAccount + " with message "
+                            + error.getDeveloperMessage());
+                    errorMsg.append("Post Accruals to savings failed for savings Id: ").append(savingAccount).append(" with message ")
+                            .append(error.getDeveloperMessage());
+                }
+            } catch (JournalEntryInvalidException e) {
+                logger.error(
+                        "Post Accruals to savings failed for savings Id: " + savingAccount + " with message " + e.getDefaultUserMessage());
+                errorMsg.append("Post Accruals to savings failed for savings Id: ").append(savingAccount).append(" with message ")
+                        .append(e.getDefaultUserMessage());
+            } catch (final Exception e) {
+                logger.error(
+                        "Post Accruals to savings failed for savings Id: " + savingAccount + " with message " + e.getLocalizedMessage());
+                errorMsg.append("Post Accruals to savings failed for savings Id: ").append(savingAccount).append(" with message ")
+                        .append(e.getLocalizedMessage());
+            }
         }
         final List<Long> activeFixedDepositAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(200l);
-        for (Long activefixedDepositAccount: activeFixedDepositAccounts) {
-            this.depositAccountWritePlatformService.postAccrualInterest(activefixedDepositAccount, DepositAccountType.FIXED_DEPOSIT);
+        for (Long activefixedDepositAccount : activeFixedDepositAccounts) {
+            try {
+                this.depositAccountWritePlatformService.postAccrualInterest(activefixedDepositAccount, DepositAccountType.FIXED_DEPOSIT);
+            } catch (PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Post Accruals to fixed deposit failed for savings Id: " + activefixedDepositAccount + " with message "
+                            + error.getDeveloperMessage());
+                    errorMsg.append("Post Accruals to savings failed for fixed deposit Id: ").append(activefixedDepositAccount)
+                            .append(" with message ").append(error.getDeveloperMessage());
+                }
+            } catch (JournalEntryInvalidException e) {
+                logger.error("Post Accruals to savings failed for savings Id: " + activefixedDepositAccount + " with message "
+                        + e.getDefaultUserMessage());
+                errorMsg.append("Post Accruals to savings failed for savings Id: ").append(activefixedDepositAccount)
+                        .append(" with message ").append(e.getDefaultUserMessage());
+            } catch (final Exception e) {
+                logger.error("Post Accruals to savings failed for savings Id: " + activefixedDepositAccount + " with message "
+                        + e.getLocalizedMessage());
+                errorMsg.append("Post Accruals to savings failed for savings Id: ").append(activefixedDepositAccount)
+                        .append(" with message ").append(e.getLocalizedMessage());
+            }
         }
+        if (errorMsg.length() > 0) { throw new JobExecutionException(errorMsg.toString()); }
     }
 
 }

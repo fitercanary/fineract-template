@@ -21,7 +21,7 @@ package org.apache.fineract.accounting.provisioning.service;
 import java.util.Collection;
 import java.util.Date;
 
-import org.apache.fineract.accounting.provisioning.data.LoanProductProvisioningEntryData;
+import org.apache.fineract.accounting.provisioning.data.ProductProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.data.ProvisioningEntryData;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
@@ -29,9 +29,11 @@ import org.apache.fineract.infrastructure.core.service.SearchParameters;
 
 public interface ProvisioningEntriesReadPlatformService {
 
-    public Collection<LoanProductProvisioningEntryData> retrieveLoanProductsProvisioningData(Date date) ;
-    
-    public ProvisioningEntryData retrieveProvisioningEntryData(Long entryId) ;
+	public Collection<ProductProvisioningEntryData> retrieveLoanProductsProvisioningData(Date date);
+
+	public Collection<ProductProvisioningEntryData> retrieveSavingsProductsProvisioningData(Date date);
+
+	public ProvisioningEntryData retrieveProvisioningEntryData(Long entryId) ;
     
     public Page<ProvisioningEntryData> retrieveAllProvisioningEntries(Integer offset, Integer limit) ;
     
@@ -41,5 +43,5 @@ public interface ProvisioningEntriesReadPlatformService {
     
     public ProvisioningEntryData retrieveExistingProvisioningIdDateWithJournals() ;
     
-    public Page<LoanProductProvisioningEntryData> retrieveProvisioningEntries(SearchParameters searchParams) ;
+    public Page<ProductProvisioningEntryData> retrieveProvisioningEntries(SearchParameters searchParams) ;
 }

@@ -170,20 +170,6 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
                 date, amount, isReversed, null, isManualTransaction);
     }
 
-    public static SavingsAccountTransaction AccrualFeesPosting(final SavingsAccount savingsAccount, final Office office,
-            final LocalDate date, final Money amount, final boolean isManualTransaction) {
-        final boolean isReversed = false;
-        return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.ACCRUAL_FEES_POSTING.getValue(), date,
-                amount, isReversed, null, isManualTransaction);
-    }
-
-    public static SavingsAccountTransaction AccrualPenaltiesPosting(final SavingsAccount savingsAccount, final Office office,
-            final LocalDate date, final Money amount, final boolean isManualTransaction) {
-        final boolean isReversed = false;
-        return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.ACCRUAL_PENALTIES_POSTING.getValue(),
-                date, amount, isReversed, null, isManualTransaction);
-    }
-
     public static SavingsAccountTransaction overdraftInterest(final SavingsAccount savingsAccount, final Office office,
             final LocalDate date, final Money amount, final boolean isManualTransaction) {
         final boolean isReversed = false;
@@ -372,7 +358,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public boolean isWithdrawal() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isWithdrawal();
     }
-
+    
     public boolean isPostInterestCalculationRequired() {
         return this.isDeposit() || this.isWithdrawal() || this.isChargeTransaction() || this.isDividendPayout() || this.isInterestPosting();
     }
@@ -383,14 +369,6 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
 
     public boolean isAccrualInterestPostingAndNotReversed() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isAccrualInterestPosting() && isNotReversed();
-    }
-
-    public boolean isAccrualFeesPostingAndNotReversed() {
-        return SavingsAccountTransactionType.fromInt(this.typeOf).isAccrualFeesPosting() && isNotReversed();
-    }
-    
-    public boolean isAccrualPenaltiesPostingAndNotReversed() {
-        return SavingsAccountTransactionType.fromInt(this.typeOf).isAccrualPenaltiesPosting() && isNotReversed();
     }
 
     public boolean isAccrualInterestPosting() {

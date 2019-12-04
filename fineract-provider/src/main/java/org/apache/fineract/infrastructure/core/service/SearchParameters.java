@@ -45,7 +45,7 @@ public final class SearchParameters {
 
     // Provisning Entries Search Params
     private final Long provisioningEntryId;
-    private final Long productId;
+    private final String productId;
     private final Long categoryId;
     private final boolean isSelfUser;
 
@@ -174,7 +174,7 @@ public final class SearchParameters {
                 loanId, savingsId, orphansOnly, isSelfUser);
     }
 
-    public final static SearchParameters forProvisioningEntries(final Long provisioningEntryId, final Long officeId, final Long productId,
+    public final static SearchParameters forProvisioningEntries(final Long provisioningEntryId, final Long officeId, final String productId,
             final Long categoryId, final Integer offset, final Integer limit) {
         return new SearchParameters(provisioningEntryId, officeId, productId, categoryId, offset, limit);
     }
@@ -268,7 +268,7 @@ public final class SearchParameters {
 
     }
 
-    private SearchParameters(final Long provisioningEntryId, final Long officeId, final Long productId, final Long categoryId,
+    private SearchParameters(final Long provisioningEntryId, final Long officeId, final String productId, final Long categoryId,
             final Integer offset, final Integer limit) {
         this.sqlSearch = null;
         this.externalId = null;
@@ -454,12 +454,12 @@ public final class SearchParameters {
         return this.provisioningEntryId != null && this.provisioningEntryId != 0;
     }
 
-    public Long getProductId() {
+    public String getProductId() {
         return this.productId;
     }
 
     public boolean isProductIdPassed() {
-        return this.productId != null && this.productId != 0;
+        return StringUtils.isNotBlank(this.productId);
     }
 
     public Long getCategoryId() {

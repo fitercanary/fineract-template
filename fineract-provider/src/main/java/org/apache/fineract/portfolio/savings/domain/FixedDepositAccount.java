@@ -379,15 +379,17 @@ public class FixedDepositAccount extends SavingsAccount {
 
         if (allPostingPeriods.size() == 1 && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)) {
             List<CompoundingPeriod> compoundingPeriods = allPostingPeriods.get(0).getCompoundingPeriods();
-            CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
-            compoundingPeriod.getPeriodInterval()
-                    .setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
-            allPostingPeriods.get(0).getCompoundingPeriods().clear();
-            allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
-            if (compoundingPeriod instanceof AnnualCompoundingPeriod
-                    && !((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().isEmpty()) {
-                ((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().get(0)
-                        .setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
+            if (!compoundingPeriods.isEmpty()) {
+                CompoundingPeriod compoundingPeriod = compoundingPeriods.get(0);
+                compoundingPeriod.getPeriodInterval()
+                        .setEndDate(compoundingPeriods.get(compoundingPeriods.size() - 1).getPeriodInterval().endDate());
+                allPostingPeriods.get(0).getCompoundingPeriods().clear();
+                allPostingPeriods.get(0).getCompoundingPeriods().add(compoundingPeriod);
+                if (compoundingPeriod instanceof AnnualCompoundingPeriod
+                        && !((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().isEmpty()) {
+                    ((AnnualCompoundingPeriod) compoundingPeriod).getEndOfDayBalances().get(0)
+                            .setNumberOfDays(compoundingPeriod.getPeriodInterval().daysInPeriodInclusiveOfEndDate());
+                }
             }
         }
 
@@ -688,19 +690,9 @@ public class FixedDepositAccount extends SavingsAccount {
     public void postAccrualInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);;
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate);
-    }
-
-    @Override
-    public void postFeesAccrualTransaction(LocalDate feesAccrualPostingDate, BigDecimal feesAmount, boolean isUserPosting) {
-        super.postFeesAccrualTransaction(feesAccrualPostingDate, feesAmount, isUserPosting);
-    }
-
-    @Override
-    public void postPenaltiesAccrualTransaction(LocalDate penaltiesAccrualPostingDate, BigDecimal penaltiesAmount, boolean isUserPosting) {
-        super.postPenaltiesAccrualTransaction(penaltiesAccrualPostingDate, penaltiesAmount, isUserPosting);
     }
 
     @Override

@@ -35,12 +35,13 @@ public class LoanRepaymentConstants {
     public static final int ROUTING_CODE_COL = 12;//L
     public static final int RECEIPT_NO_COL = 13;//M
     public static final int BANK_NO_COL = 14;//N
-    public static final int STATUS_COL = 15;//O
-    public static final int LOOKUP_CLIENT_NAME_COL = 16;//P
-    public static final int LOOKUP_CLIENT_EXTERNAL_ID = 17;//Q
-    public static final int LOOKUP_ACCOUNT_NO_COL = 18;//R
-    public static final int LOOKUP_PRODUCT_COL = 19;//S
-    public static final int LOOKUP_PRINCIPAL_COL = 20;//T
-    public static final int LOOKUP_LOAN_DISBURSEMENT_DATE_COL = 21;//U
-    public static final int LOOKUP_LOAN_ACCOUNT_EXTERNAL_ID = 22;//Q
+    public static final int NOTE_COL = 15;//O
+    public static final int STATUS_COL = 16;//P
+    public static final int LOOKUP_CLIENT_NAME_COL = 17;//Q
+    public static final int LOOKUP_CLIENT_EXTERNAL_ID = 18;//R
+    public static final int LOOKUP_ACCOUNT_NO_COL = 19;//S
+    public static final int LOOKUP_PRODUCT_COL = 20;//T
+    public static final int LOOKUP_PRINCIPAL_COL = 21;//U
+    public static final int LOOKUP_LOAN_DISBURSEMENT_DATE_COL = 22;//V
+    public static final int LOOKUP_LOAN_ACCOUNT_EXTERNAL_ID = 23;//W
 }

@@ -67,8 +67,8 @@ public class FixedDepositTransactionWorkbookPopulator extends AbstractWorkbookPo
             Row row = worksheet.getRow(rowNo);
             if(row == null)
                 row = worksheet.createRow(rowNo);
-            writeFormula(TransactionConstants.PRODUCT_COL, row, "IF(ISERROR(VLOOKUP($C"+ (rowNo+1) +",$Q$2:$S$" + (savingsAccounts.size() + 1) + ",2,FALSE)),\"\",VLOOKUP($C"+ (rowNo+1) +",$Q$2:$S$" + (savingsAccounts.size() + 1) + ",2,FALSE))");
-            writeFormula(TransactionConstants.OPENING_BALANCE_COL, row, "IF(ISERROR(VLOOKUP($C"+ (rowNo+1) +",$Q$2:$S$" + (savingsAccounts.size() + 1) + ",3,FALSE)),\"\",VLOOKUP($C"+ (rowNo+1) +",$Q$2:$S$" + (savingsAccounts.size() + 1) + ",3,FALSE))");
+            writeFormula(TransactionConstants.PRODUCT_COL, row, "IF(ISERROR(VLOOKUP($C"+ (rowNo+1) +",$R$2:$T$" + (savingsAccounts.size() + 1) + ",2,FALSE)),\"\",VLOOKUP($C"+ (rowNo+1) +",$R$2:$T$" + (savingsAccounts.size() + 1) + ",2,FALSE))");
+            writeFormula(TransactionConstants.OPENING_BALANCE_COL, row, "IF(ISERROR(VLOOKUP($C"+ (rowNo+1) +",$R$2:$T$" + (savingsAccounts.size() + 1) + ",3,FALSE)),\"\",VLOOKUP($C"+ (rowNo+1) +",$R$2:$T$" + (savingsAccounts.size() + 1) + ",3,FALSE))");
         }
     }
 
@@ -96,7 +96,7 @@ public class FixedDepositTransactionWorkbookPopulator extends AbstractWorkbookPo
         DataValidationConstraint accountNumberConstraint = validationHelper.createFormulaListConstraint("INDIRECT(CONCATENATE(\"Account_\",SUBSTITUTE(SUBSTITUTE(SUBSTITUTE($B1,\" \",\"_\"),\"(\",\"_\"),\")\",\"_\")))");
         DataValidationConstraint transactionTypeConstraint = validationHelper.createExplicitListConstraint(new String[] {"Withdrawal","Deposit"});
         DataValidationConstraint paymentTypeConstraint = validationHelper.createFormulaListConstraint("PaymentTypes");
-        DataValidationConstraint transactionDateConstraint = validationHelper.createDateConstraint(DataValidationConstraint.OperatorType.BETWEEN, "=VLOOKUP($C1,$Q$2:$T$" + (savingsAccounts.size() + 1) + ",4,FALSE)", "=TODAY()", dateFormat);
+        DataValidationConstraint transactionDateConstraint = validationHelper.createDateConstraint(DataValidationConstraint.OperatorType.BETWEEN, "=VLOOKUP($C1,$R$2:$U$" + (savingsAccounts.size() + 1) + ",4,FALSE)", "=TODAY()", dateFormat);
 
         DataValidation officeValidation = validationHelper.createValidation(officeNameConstraint, officeNameRange);
         DataValidation clientValidation = validationHelper.createValidation(clientNameConstraint, clientNameRange);
@@ -161,7 +161,7 @@ public class FixedDepositTransactionWorkbookPopulator extends AbstractWorkbookPo
 			String theName = "Account_" + clientsWithActiveSavings.get(j).replaceAll(" ", "_") + "_" + clientIdsWithActiveSavings.get(j) + "_";
 			theName = theName.replaceAll("\\W", "_");
 			name.setNameName(theName);
-            name.setRefersToFormula(TemplatePopulateImportConstants.FIXED_DEPOSIT_TRANSACTION_SHEET_NAME+"!$Q$" + clientNameToBeginEndIndexes.get(clientsWithActiveSavings.get(j))[0] + ":$Q$" + clientNameToBeginEndIndexes.get(clientsWithActiveSavings.get(j))[1]);
+            name.setRefersToFormula(TemplatePopulateImportConstants.FIXED_DEPOSIT_TRANSACTION_SHEET_NAME+"!$R$" + clientNameToBeginEndIndexes.get(clientsWithActiveSavings.get(j))[0] + ":$R$" + clientNameToBeginEndIndexes.get(clientsWithActiveSavings.get(j))[1]);
         }
 
         //Payment Type Name
@@ -211,6 +211,7 @@ public class FixedDepositTransactionWorkbookPopulator extends AbstractWorkbookPo
         worksheet.setColumnWidth(TransactionConstants.RECEIPT_NO_COL, 3000);
         worksheet.setColumnWidth(TransactionConstants.ROUTING_CODE_COL, 3000);
         worksheet.setColumnWidth(TransactionConstants.BANK_NO_COL, 3000);
+        worksheet.setColumnWidth(TransactionConstants.NOTE_COL, 5000);
         worksheet.setColumnWidth(TransactionConstants.LOOKUP_CLIENT_NAME_COL, 5000);
         worksheet.setColumnWidth(TransactionConstants.LOOKUP_ACCOUNT_NO_COL, 3000);
         worksheet.setColumnWidth(TransactionConstants.LOOKUP_PRODUCT_COL, 3000);
@@ -230,6 +231,7 @@ public class FixedDepositTransactionWorkbookPopulator extends AbstractWorkbookPo
         writeString(TransactionConstants.RECEIPT_NO_COL, rowHeader, "Receipt No");
         writeString(TransactionConstants.ROUTING_CODE_COL, rowHeader, "Routing Code");
         writeString(TransactionConstants.BANK_NO_COL, rowHeader, "Bank No");
+        writeString(TransactionConstants.NOTE_COL, rowHeader, "Narration");
         writeString(TransactionConstants.LOOKUP_CLIENT_NAME_COL, rowHeader, "Lookup Client");
         writeString(TransactionConstants.LOOKUP_ACCOUNT_NO_COL, rowHeader, "Lookup Account");
         writeString(TransactionConstants.LOOKUP_PRODUCT_COL, rowHeader, "Lookup Product");

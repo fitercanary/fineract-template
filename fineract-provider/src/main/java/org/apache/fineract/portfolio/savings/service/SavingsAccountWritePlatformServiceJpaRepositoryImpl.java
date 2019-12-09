@@ -594,6 +594,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     .findBySavingsAccountAndReversedFalseOrderByCreatedDateAsc(account);
         }
         account.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.undoTransactionAction, depositAccountOnHoldTransactions);
+        
+     //   account.validateAccountBalanceDoesNotBecomeNegativeForSelectedTransaction(SavingsApiConstants.undoTransactionAction, 
+      //          depositAccountOnHoldTransactions, transactionId);
         account.activateAccountBasedOnBalance();
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);

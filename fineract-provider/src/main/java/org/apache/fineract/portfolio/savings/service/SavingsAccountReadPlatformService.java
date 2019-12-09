@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.joda.time.LocalDate;
@@ -74,5 +75,10 @@ public interface SavingsAccountReadPlatformService {
     List<Long> retriveActiveSavingsAccrualAccounts(Long accountType);
 
     BigDecimal getchargesDue(Long savingAccountId, LocalDate asOnDate, boolean isPenalties);
+
+    Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters);
+
+    Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(Long savingsId, DepositAccountType depositAccountType,
+            SavingsAccountTransactionType savingsAccountTransactionType);
 
 }

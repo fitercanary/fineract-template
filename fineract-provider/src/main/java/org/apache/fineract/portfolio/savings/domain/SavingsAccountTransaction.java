@@ -176,12 +176,12 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue(), date,
                 amount, isReversed, null, isManualTransaction);
     }
-    
+
     public static SavingsAccountTransaction overdraftAccrualInterest(final SavingsAccount savingsAccount, final Office office,
             final LocalDate date, final Money amount, final boolean isManualTransaction) {
         final boolean isReversed = false;
-        return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue(), date,
-                amount, isReversed, null, isManualTransaction);
+        return new SavingsAccountTransaction(savingsAccount, office, SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue(),
+                date, amount, isReversed, null, isManualTransaction);
     }
 
     public static SavingsAccountTransaction withdrawalFee(final SavingsAccount savingsAccount, final Office office, final LocalDate date,
@@ -358,7 +358,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public boolean isWithdrawal() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isWithdrawal();
     }
-    
+
     public boolean isPostInterestCalculationRequired() {
         return this.isDeposit() || this.isWithdrawal() || this.isChargeTransaction() || this.isDividendPayout() || this.isInterestPosting();
     }
@@ -666,7 +666,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public boolean isOverdraftInterestAndNotReversed() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isIncomeFromInterest() && isNotReversed();
     }
-    
+
     public boolean isOverdraftAccrualInterestAndNotReversed() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isOverdraftAccrualPosting() && isNotReversed();
     }
@@ -695,7 +695,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         return SavingsAccountTransactionType.fromInt(this.typeOf).isAmountRelease();
     }
 
-    private boolean canOverriteSavingAccountRules() {
+    boolean canOverriteSavingAccountRules() {
         final SavingsAccountChargePaidBy chargePaidBy = getSavingsAccountChargePaidBy();
         return (isChargeTransaction() && chargePaidBy != null) ? chargePaidBy.canOverriteSavingAccountRules() : false;
     }
@@ -819,4 +819,5 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public boolean isAmountOnHoldNotReleased() {
         return (isAmountOnHold() && getReleaseIdOfHoldAmountTransaction() == null);
     }
+
 }

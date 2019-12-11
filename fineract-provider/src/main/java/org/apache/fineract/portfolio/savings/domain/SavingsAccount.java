@@ -105,6 +105,7 @@ import org.apache.fineract.portfolio.savings.exception.SavingsAccountCreditsBloc
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountDebitsBlockedException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsActivityPriorToClientTransferException;
+import org.apache.fineract.portfolio.savings.exception.SavingsMiddleTransactionsCannotBeUndoneException;
 import org.apache.fineract.portfolio.savings.exception.SavingsOfficerAssignmentDateException;
 import org.apache.fineract.portfolio.savings.exception.SavingsOfficerUnassignmentDateException;
 import org.apache.fineract.portfolio.savings.exception.SavingsTransferTransactionsCannotBeUndoneException;
@@ -1235,6 +1236,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         Money runningBalance = Money.zero(this.currency);
         Money minRequiredBalance = minRequiredBalanceDerived(getCurrency());
         LocalDate lastSavingsDate = null;
+        BigDecimal overrideRuleBalance = BigDecimal.ZERO;
         for (final SavingsAccountTransaction transaction : transactionsSortedByDate) {
             if (transaction.isNotReversed() && transaction.isCredit()) {
                 runningBalance = runningBalance.plus(transaction.getAmount(this.currency));
@@ -1261,24 +1263,25 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                     }
                 }
             }
-
-            // enforceMinRequiredBalance
-            if (transaction.canProcessBalanceCheck()) {
-                if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
-                    final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-                    final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                            .resource(depositAccountType().resourceName() + transactionAction);
-                    if (!this.allowOverdraft) {
-                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative");
-                    }
-                    if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-                }
-
+            if (transaction.canOverriteSavingAccountRules()) {
+                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
             }
             lastSavingsDate = transaction.transactionLocalDate();
 
         }
+        // enforceMinRequiredBalance
+        if (!transactionsSortedByDate.isEmpty()) {
+            if (runningBalance.minus(minRequiredBalance).plus(overrideRuleBalance).isLessThanZero()) {
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                        .resource(depositAccountType().resourceName() + transactionAction);
+                if (!this.allowOverdraft) {
+                    baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative");
+                }
+                if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            }
 
+        }
         BigDecimal withdrawalFee = null;
         BigDecimal transactionAmount = null;
         if (isOverdraft()) {
@@ -2013,12 +2016,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 transactionToUndo = transaction;
             }
         }
-
         if (transactionToUndo == null) { throw new SavingsAccountTransactionNotFoundException(this.getId(), transactionId); }
-
+       
+        validateIsLastTransactionOrNot(transactionToUndo);
         validateAttemptToUndoTransferRelatedTransactions(transactionToUndo);
         validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_UNDO_TRANSACTION, transactionToUndo.transactionLocalDate());
         transactionToUndo.reverse();
+      //  transactionToUndo.setLastTransaction(true);
         if (transactionToUndo.isChargeTransaction() || transactionToUndo.isWaiveCharge()) {
             // undo charge
             final Set<SavingsAccountChargePaidBy> chargesPaidBy = transactionToUndo.getSavingsAccountChargesPaid();
@@ -2387,6 +2391,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     private void validateAttemptToUndoTransferRelatedTransactions(final SavingsAccountTransaction savingsAccountTransaction) {
         if (savingsAccountTransaction.isTransferRelatedTransaction()) {
             throw new SavingsTransferTransactionsCannotBeUndoneException(savingsAccountTransaction.getId());
+        }
+    }
+    
+    private void validateIsLastTransactionOrNot(final SavingsAccountTransaction savingsAccountTransaction) {
+        for (final SavingsAccountTransaction transaction : this.transactions) {
+            if (transaction.getId() > savingsAccountTransaction.getId() && transaction.isNotReversed()) {
+                throw new SavingsMiddleTransactionsCannotBeUndoneException(savingsAccountTransaction.getId());
+            }
         }
     }
 

@@ -62,6 +62,7 @@ import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
@@ -184,6 +185,36 @@ public class SavingsAccountsApiResource {
         return this.toApiJsonSerializer.serialize(settings, savingsAccountTemplate,
                 SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
+    
+    @GET
+    @Path("transaction/{accountId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveOneWithoutAccuralTransaction(@PathParam("accountId") final Long accountId,
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
+            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @QueryParam("pageNumber") final Integer pageNumber,
+            @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
+                || is(chargeStatus, "pageSize"))) {
+            throw new UnrecognizedQueryParamException("status", chargeStatus,
+                    new Object[] { "all", "active", "inactive", "pageNumber", "pageSize" });
+        }
+
+        final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(accountId);
+
+        final Set<String> mandatoryResponseParameters = new HashSet<>();
+        final SavingsAccountData savingsAccountTemplate = populateTemplateAndAssociationsWithoutAccuralTransactions(accountId, savingsAccount,
+                staffInSelectedOfficeOnly, chargeStatus, uriInfo, mandatoryResponseParameters, pageNumber, pageSize);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
+                mandatoryResponseParameters);
+        return this.toApiJsonSerializer.serialize(settings, savingsAccountTemplate,
+                SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+    }
+
 
     private SavingsAccountData populateTemplateAndAssociations(final Long accountId, final SavingsAccountData savingsAccount,
             final boolean staffInSelectedOfficeOnly, final String chargeStatus, final UriInfo uriInfo,
@@ -247,6 +278,72 @@ public class SavingsAccountsApiResource {
         savingsAccountData.setTransactionCount(transactionCount);
         return savingsAccountData;
     }
+    
+    
+    private SavingsAccountData populateTemplateAndAssociationsWithoutAccuralTransactions(final Long accountId, final SavingsAccountData savingsAccount,
+            final boolean staffInSelectedOfficeOnly, final String chargeStatus, final UriInfo uriInfo,
+            final Set<String> mandatoryResponseParameters, Integer pageNumber, Integer pageSize) {
+
+        Collection<SavingsAccountTransactionData> transactions = null;
+        Collection<SavingsAccountChargeData> charges = null;
+        Integer transactionCount = null;
+
+        final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
+        if (!associationParameters.isEmpty()) {
+
+            if (associationParameters.contains("all")) {
+                associationParameters.addAll(Arrays.asList(SavingsApiConstants.transactions, SavingsApiConstants.charges));
+            }
+
+            if (associationParameters.contains(SavingsApiConstants.transactions)) {
+                mandatoryResponseParameters.add(SavingsApiConstants.transactions);
+                if (pageNumber != null && pageSize != null) {
+                    SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
+                    final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
+                            .retrieveAllSavingAccTransactionsWithoutAccural(accountId, searchParameters);
+                    Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    } else {
+                        transactions = new ArrayList<>();
+                    }
+                    transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
+                } else {
+                    final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
+                            .retrieveAllTransactionsWithoutAccural(accountId, DepositAccountType.SAVINGS_DEPOSIT,
+                                    SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING);
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    }
+                    if (transactions != null) {
+                        transactionCount = transactions.size();
+                    }
+                }
+
+            }
+
+            if (associationParameters.contains(SavingsApiConstants.charges)) {
+                mandatoryResponseParameters.add(SavingsApiConstants.charges);
+                final Collection<SavingsAccountChargeData> currentCharges = this.savingsAccountChargeReadPlatformService
+                        .retrieveSavingsAccountCharges(accountId, chargeStatus);
+                if (!CollectionUtils.isEmpty(currentCharges)) {
+                    charges = currentCharges;
+                }
+            }
+        }
+
+        SavingsAccountData templateData = null;
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        if (settings.isTemplate()) {
+            templateData = this.savingsAccountReadPlatformService.retrieveTemplate(savingsAccount.clientId(), savingsAccount.groupId(),
+                    savingsAccount.productId(), staffInSelectedOfficeOnly);
+        }
+
+        SavingsAccountData savingsAccountData = SavingsAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
+        savingsAccountData.setTransactionCount(transactionCount);
+        return savingsAccountData;
+    }
+
 
     @PUT
     @Path("{accountId}")

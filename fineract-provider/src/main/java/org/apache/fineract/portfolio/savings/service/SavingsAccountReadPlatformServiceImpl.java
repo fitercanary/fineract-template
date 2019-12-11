@@ -53,6 +53,7 @@ import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -767,6 +768,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
         return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue() });
     }
+    
+    @Override
+    public Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(final Long savingsId, DepositAccountType depositAccountType,
+            SavingsAccountTransactionType savingsAccountTransactionType) {
+
+        final String sql = "select " + this.transactionsMapper.schema()
+                + " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
+
+        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue() });
+    }
 
     @Override
     public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters) {
@@ -778,6 +789,31 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         sqlBuilder.append(this.transactionsMapper.schema());
         sqlBuilder.append(
                 " where sa.id = ? and sa.deposit_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+        if (searchParameters != null) {
+            int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
+            if (searchParameters.isLimited()) {
+                sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+                if (searchParameters.isOffset()) {
+                    sqlBuilder.append(" offset ").append(offset);
+                }
+            }
+        }
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(),
+                this.transactionsMapper);
+    }
+    
+    @Override
+    public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters) {
+        List<Object> paramList = new ArrayList<>();
+        paramList.add(accountId);
+        paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
+        paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(this.transactionsMapper.schema());
+        sqlBuilder.append(
+                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
             if (searchParameters.isLimited()) {

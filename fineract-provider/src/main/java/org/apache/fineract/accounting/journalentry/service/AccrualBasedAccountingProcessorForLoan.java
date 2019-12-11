@@ -35,6 +35,8 @@ import org.apache.fineract.accounting.journalentry.data.ChargePaymentDTO;
 import org.apache.fineract.accounting.journalentry.data.LoanDTO;
 import org.apache.fineract.accounting.journalentry.data.LoanTransactionDTO;
 import org.apache.fineract.organisation.office.domain.Office;
+import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,10 +44,13 @@ import org.springframework.stereotype.Component;
 public class AccrualBasedAccountingProcessorForLoan implements AccountingProcessorForLoan {
 
     private final AccountingProcessorHelper helper;
+    private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
 
     @Autowired
-    public AccrualBasedAccountingProcessorForLoan(final AccountingProcessorHelper accountingProcessorHelper) {
+    public AccrualBasedAccountingProcessorForLoan(final AccountingProcessorHelper accountingProcessorHelper,
+            final AccountTransfersReadPlatformService accountTransfersReadPlatformService) {
         this.helper = accountingProcessorHelper;
+        this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
     }
 
     @Override
@@ -76,6 +81,8 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
                 if (loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement()) {
                     loanTransactionDTO.setAccountTransfer(false);
                 }
+                loanTransactionDTO.setAccountTransfer(this.accountTransfersReadPlatformService.isAccountTransfer(Long.parseLong(loanTransactionDTO.getTransactionId()),
+                        PortfolioAccountType.LOAN));
                 createJournalEntriesForRepaymentsAndWriteOffs(loanDTO, loanTransactionDTO, office, false,
                         loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement());
             }

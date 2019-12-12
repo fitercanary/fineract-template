@@ -970,6 +970,18 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
+        
+        if (isDateBeforeLastTransaction(transactionDTO.getTransactionDate())) {
+            final String defaultUserMessage = "Transaction date cannot be in the past from last transaction date.";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg." 
+            + resourceTypeName + ".transaction.date.in.the.past.from.last.transaction.date",
+                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            dataValidationErrors.add(error);
+
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
 
         if (transactionDTO.getTransactionDate().isBefore(getActivationLocalDate())) {
             final Object[] defaultUserArgs = Arrays.asList(transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
@@ -1065,6 +1077,17 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         if (isDateInTheFuture(transactionDTO.getTransactionDate())) {
             final String defaultUserMessage = "Transaction date cannot be in the future.";
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.in.the.future",
+                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            dataValidationErrors.add(error);
+
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
+        
+        if (isDateBeforeLastTransaction(transactionDTO.getTransactionDate())) {
+            final String defaultUserMessage = "Transaction date cannot be in the past from last transaction date.";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.date.in.the.past.from.last.transaction.date",
                     defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
@@ -1172,6 +1195,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         Money minRequiredBalance = minRequiredBalanceDerived(getCurrency());
         LocalDate lastSavingsDate = null;
         final BigDecimal withdrawalFee = null;
+        BigDecimal overrideRuleBalance = BigDecimal.ZERO;
         for (final SavingsAccountTransaction transaction : transactionsSortedByDate) {
             if (transaction.isNotReversed() && transaction.isCredit()) {
                 runningBalance = runningBalance.plus(transaction.getAmount(this.currency));
@@ -1203,16 +1227,20 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             // deal with potential minRequiredBalance and
             // enforceMinRequiredBalance
-            if (!isException && transaction.canProcessBalanceCheck() && !isOverdraft()) {
-                if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
-                    throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
-                            transactionAmount);
-                }
+            if (transaction.canOverriteSavingAccountRules()) {
+                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
             }
             lastSavingsDate = transaction.transactionLocalDate();
 
         }
-
+        // deal with potential minRequiredBalance and
+        // enforceMinRequiredBalance
+        if (!isException && !isOverdraft()) {
+            if (runningBalance.minus(minRequiredBalance).plus(overrideRuleBalance).isLessThanZero()) {
+                throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
+                        transactionAmount);
+            }
+        }
         // In overdraft cases, minRequiredBalance can be in violation after
         // interest posting
         // and should be checked after processing all transactions
@@ -1290,6 +1318,27 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
     }
+    
+    public void validateAccountBalanceDoesNotBecomeNegativeAtTheTimeOfDisableOverdraft(final BigDecimal transactionAmount, 
+            final String transactionAction) {
+        final List<SavingsAccountTransaction> transactionsSortedByDate = retreiveListOfTransactions();
+        Money runningBalance = Money.zero(this.currency);
+        for (final SavingsAccountTransaction transaction : transactionsSortedByDate) {
+            if (transaction.isNotReversed() && transaction.isCredit()) {
+                runningBalance = runningBalance.plus(transaction.getAmount(this.currency));
+            } else if (transaction.isNotReversed() && transaction.isDebit()) {
+                runningBalance = runningBalance.minus(transaction.getAmount(this.currency));
+            }
+           }
+        if(runningBalance.minus(transactionAmount).isLessThanZero()){
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                    .resource(depositAccountType().resourceName() + transactionAction);
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative.overdraft.can.not.disable");
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        }
+
+    }
 
     protected boolean isAccountLocked(final LocalDate transactionDate) {
         boolean isLocked = false;
@@ -1312,6 +1361,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return transactionDate.isAfter(DateUtils.getLocalDateOfTenant());
     }
 
+    private boolean isDateBeforeLastTransaction(final LocalDate transactionDate) {
+        return transactionDate.isBefore(retrieveLastTransactionDate());
+    }
+    
     protected BigDecimal getAccountBalance() {
         return this.summary.getAccountBalance(this.currency).getAmount();
     }

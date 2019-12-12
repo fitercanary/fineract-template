@@ -82,6 +82,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrap
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsEvent;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
@@ -287,7 +288,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
-
+        
         final Map<String, Object> changes = new LinkedHashMap<>();
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
@@ -1628,13 +1629,17 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.fromApiJsonDeserializer.validateApplyOverdraftParams(command.json());
         validateOverdraftInputDates(command);
         final SavingsAccount savingsForUpdate = this.savingAccountRepositoryWrapper.findOneWithNotFoundDetection(savingsAccountId);
-
+        
         final Boolean allowOverdraft = command.booleanObjectValueOfParameterNamed("allowOverdraft");
         final BigDecimal overdraftLimit = command.bigDecimalValueOfParameterNamed("overdraftLimit");
         final BigDecimal nominalAnnualInterestRateOverdraft = command.bigDecimalValueOfParameterNamed("nominalAnnualInterestRateOverdraft");
         final BigDecimal minOverdraftForInterestCalculation = command.bigDecimalValueOfParameterNamed("minOverdraftForInterestCalculation");
         final LocalDate overdraftStartedOnDate = command.localDateValueOfParameterNamed("overdraftStartedOnDate");
         final LocalDate overdraftClosedOnDate = command.localDateValueOfParameterNamed("overdraftClosedOnDate");
+        if(!allowOverdraft) {
+            savingsForUpdate.validateAccountBalanceDoesNotBecomeNegativeAtTheTimeOfDisableOverdraft(BigDecimal.ZERO,
+                    SavingsApiConstants.allowOverdraftParamName);
+        }
         final Map<String, Object> actualChanges = savingsForUpdate.applyOverdraft(allowOverdraft, overdraftLimit,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate, overdraftClosedOnDate);
 

@@ -81,8 +81,6 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
                 if (loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement()) {
                     loanTransactionDTO.setAccountTransfer(false);
                 }
-                loanTransactionDTO.setAccountTransfer(this.accountTransfersReadPlatformService.isAccountTransfer(Long.parseLong(loanTransactionDTO.getTransactionId()),
-                        PortfolioAccountType.LOAN));
                 createJournalEntriesForRepaymentsAndWriteOffs(loanDTO, loanTransactionDTO, office, false,
                         loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement());
             }

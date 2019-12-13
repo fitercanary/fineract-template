@@ -2723,9 +2723,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
 
-        if (DateUtils.isDateInTheFuture(transactionDate)) {
+        if (isDateBeforeLastTransaction(transactionDate)) {
             baseDataValidator.reset().parameter(dueAsOfDateParamName).value(transactionDate.toString(formatter))
-                    .failWithCodeNoParameterAddedToErrorCode("transaction.is.futureDate");
+                    .failWithCodeNoParameterAddedToErrorCode("transaction.is.past.from.last.transaction.date");
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
 
@@ -2754,6 +2754,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
                 throw new PlatformApiDataValidationException(dataValidationErrors);
             }
+        }
+        if (DateUtils.isDateInTheFuture(transactionDate)) {
+            baseDataValidator.reset().parameter(dueAsOfDateParamName).value(transactionDate.toString(formatter))
+                    .failWithCodeNoParameterAddedToErrorCode("transaction.is.futureDate");
+            throw new PlatformApiDataValidationException(dataValidationErrors);
         }
         savingsAccountCharge.setChargePaid();
         // validate charge is not already paid or waived

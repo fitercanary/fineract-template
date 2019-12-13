@@ -1358,7 +1358,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return transactionDate.isAfter(DateUtils.getLocalDateOfTenant());
     }
 
-    boolean isDateBeforeLastTransaction(final LocalDate transactionDate) {
+    private boolean isDateBeforeLastTransaction(final LocalDate transactionDate) {
         return transactionDate.isBefore(retrieveLastActiveTransactionDate());
     }
     

@@ -49,7 +49,7 @@ public class LoanTransactionDTO {
     private final List<ChargePaymentDTO> penaltyPayments;
     private final List<ChargePaymentDTO> feePayments;
 
-    private boolean isAccountTransfer;
+    private final boolean isAccountTransfer;
 
     private boolean isLoanToLoanTransfer;
 
@@ -140,10 +140,6 @@ public class LoanTransactionDTO {
 
     public boolean isLoanToLoanTransfer() {
         return this.isLoanToLoanTransfer;
-    }
-
-    public void setAccountTransfer(boolean isAccountTransfer) {
-        this.isAccountTransfer = isAccountTransfer;
     }
 
 }

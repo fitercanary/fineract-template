@@ -171,6 +171,7 @@ public class AccountingProcessorHelper {
             final LoanTransactionDTO transaction = new LoanTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
                     transactionDate, transactionType, amount, principal, interest, fees, penalties, overPayments, reversed,
                     feePaymentDetails, penaltyPaymentDetails, isAccountTransfer);
+            isAccountTransfer = false;
             Boolean isLoanToLoanTransfer = (Boolean) accountingBridgeData.get("isLoanToLoanTransfer");
             if(isLoanToLoanTransfer != null && isLoanToLoanTransfer){
                 transaction.setIsLoanToLoanTransfer(true);
@@ -246,6 +247,7 @@ public class AccountingProcessorHelper {
             final SavingsTransactionDTO transaction = new SavingsTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
                     transactionDate, transactionType, amount, reversed, feePayments, penaltyPayments, overdraftAmount, isAccountTransfer,
                     taxPayments);
+            isAccountTransfer = false;
 
             newSavingsTransactions.add(transaction);
 

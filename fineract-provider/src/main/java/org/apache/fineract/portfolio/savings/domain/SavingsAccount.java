@@ -1227,9 +1227,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             // deal with potential minRequiredBalance and
             // enforceMinRequiredBalance
-            if (transaction.canOverriteSavingAccountRules()) {
-                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
-            }
+//            if (transaction.canOverriteSavingAccountRules() && transaction.isNotReversed()) {
+//                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
+//            }
             lastSavingsDate = transaction.transactionLocalDate();
 
         }
@@ -1291,12 +1291,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                     }
                 }
             }
-            if (transaction.canOverriteSavingAccountRules()) {
-                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
-            }
+//            if (transaction.canOverriteSavingAccountRules() && transaction.isNotReversed()) {
+//                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
+//            }
             lastSavingsDate = transaction.transactionLocalDate();
 
         }
+        BigDecimal withdrawalFee = null;
+        BigDecimal transactionAmount = null;
         // enforceMinRequiredBalance
         if (!transactionsSortedByDate.isEmpty()) {
             if (runningBalance.minus(minRequiredBalance).plus(overrideRuleBalance).isLessThanZero()) {
@@ -1305,17 +1307,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                         .resource(depositAccountType().resourceName() + transactionAction);
                 if (!this.allowOverdraft) {
                     baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative");
+                }else {
+                    throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount); 
                 }
                 if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
             }
 
-        }
-        BigDecimal withdrawalFee = null;
-        BigDecimal transactionAmount = null;
-        if (isOverdraft()) {
-            if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
-                throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount);
-            }
         }
     }
     
@@ -1362,7 +1359,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     private boolean isDateBeforeLastTransaction(final LocalDate transactionDate) {
-        return transactionDate.isBefore(retrieveLastTransactionDate());
+        return transactionDate.isBefore(retrieveLastActiveTransactionDate());
     }
     
     protected BigDecimal getAccountBalance() {
@@ -3297,6 +3294,26 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         LocalDate lastransactionDate = null;
         if (lastTransaction != null) {
             lastransactionDate = lastTransaction.transactionLocalDate();
+        }
+        return lastransactionDate;
+    }
+
+    public LocalDate retrieveLastActiveTransactionDate() {
+        final List<SavingsAccountTransaction> transactionsSortedByDate = retreiveListOfTransactions();
+        SavingsAccountTransaction lastTransaction = null;
+        if (transactionsSortedByDate.size() > 0) {
+            for(SavingsAccountTransaction transaction : transactionsSortedByDate) {
+                if(transaction.isNotReversed()) {
+                    lastTransaction = transaction;
+                }
+            }
+            
+        }
+        LocalDate lastransactionDate = null;
+        if (lastTransaction != null) {
+            lastransactionDate = lastTransaction.transactionLocalDate();
+        }else {
+            lastransactionDate = new LocalDate();
         }
         return lastransactionDate;
     }

@@ -36,9 +36,11 @@ public class SavingsAccountTransactionDTO {
     private final Long savingsAccountId;
     private final AppUser appUser;
     private final Integer depositAccountType;
+    private final Boolean isAccountTransfer;
 
     public SavingsAccountTransactionDTO(final DateTimeFormatter formatter, final LocalDate transactionDate,
-            final BigDecimal transactionAmount, final PaymentDetail paymentDetail, final Date createdDate, final AppUser appUser, final Integer depositAccountType) {
+            final BigDecimal transactionAmount, final PaymentDetail paymentDetail, final Date createdDate, final AppUser appUser,
+            final Integer depositAccountType, final Boolean isAccountTransfer) {
         this.formatter = formatter;
         this.transactionDate = transactionDate;
         this.transactionAmount = transactionAmount;
@@ -47,6 +49,7 @@ public class SavingsAccountTransactionDTO {
         this.savingsAccountId = null;
         this.appUser = appUser;
         this.depositAccountType = depositAccountType;
+        this.isAccountTransfer = isAccountTransfer;
     }
 
     /**
@@ -60,7 +63,8 @@ public class SavingsAccountTransactionDTO {
      * @param savingsAccountId
      */
     public SavingsAccountTransactionDTO(DateTimeFormatter formatter, LocalDate transactionDate, BigDecimal transactionAmount,
-            PaymentDetail paymentDetail, Date createdDate, Long savingsAccountId, AppUser appUser, final Integer depositAccountType) {
+            PaymentDetail paymentDetail, Date createdDate, Long savingsAccountId, AppUser appUser, final Integer depositAccountType,
+            final Boolean isAccountTransfer) {
         this.formatter = formatter;
         this.transactionDate = transactionDate;
         this.transactionAmount = transactionAmount;
@@ -69,6 +73,7 @@ public class SavingsAccountTransactionDTO {
         this.savingsAccountId = savingsAccountId;
         this.appUser = appUser;
         this.depositAccountType = depositAccountType;
+        this.isAccountTransfer = isAccountTransfer;
     }
 
     public DateTimeFormatter getFormatter() {
@@ -99,9 +104,16 @@ public class SavingsAccountTransactionDTO {
         return this.appUser;
     }
 
-	public Integer getAccountType() {
-		return this.depositAccountType;
-	}
-    
-    
+    public Integer getAccountType() {
+        return this.depositAccountType;
+    }
+
+    public Integer getDepositAccountType() {
+        return this.depositAccountType;
+    }
+
+    public Boolean getIsAccountTransfer() {
+        return this.isAccountTransfer;
+    }
+
 }

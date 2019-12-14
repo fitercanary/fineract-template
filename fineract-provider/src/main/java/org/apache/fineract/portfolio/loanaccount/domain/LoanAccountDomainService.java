@@ -31,24 +31,29 @@ public interface LoanAccountDomainService {
 
     LoanTransaction makeRepayment(Loan loan, CommandProcessingResultBuilder builderResult, LocalDate transactionDate,
             BigDecimal transactionAmount, PaymentDetail paymentDetail, String noteText, String txnExternalId,
-            final boolean isRecoveryRepayment, boolean isAccountTransfer, HolidayDetailDTO holidatDetailDto, Boolean isHolidayValidationDone);
+            final boolean isRecoveryRepayment, boolean isAccountTransfer, HolidayDetailDTO holidatDetailDto,
+            Boolean isHolidayValidationDone);
 
     LoanTransaction makeRefund(Long accountId, CommandProcessingResultBuilder builderResult, LocalDate transactionDate,
-            BigDecimal transactionAmount, PaymentDetail paymentDetail, String noteText, String txnExternalId);
+            BigDecimal transactionAmount, PaymentDetail paymentDetail, String noteText, String txnExternalId,
+            final Boolean isAccountTransfer);
 
     LoanTransaction makeDisburseTransaction(Long loanId, LocalDate transactionDate, BigDecimal transactionAmount,
-            PaymentDetail paymentDetail, String noteText, String txnExternalId, boolean isLoanToLoanTransfer);
+            PaymentDetail paymentDetail, String noteText, String txnExternalId, boolean isLoanToLoanTransfer,
+            final Boolean isAccountTransfer);
 
     void reverseTransfer(LoanTransaction loanTransaction);
 
     LoanTransaction makeChargePayment(Loan loan, Long chargeId, LocalDate transactionDate, BigDecimal transactionAmount,
-            PaymentDetail paymentDetail, String noteText, String txnExternalId, Integer transactionType, Integer installmentNumber);
+            PaymentDetail paymentDetail, String noteText, String txnExternalId, Integer transactionType, Integer installmentNumber,
+            final Boolean isAccountTransfer);
 
     LoanTransaction makeDisburseTransaction(Long loanId, LocalDate transactionDate, BigDecimal transactionAmount,
-            PaymentDetail paymentDetail, String noteText, String txnExternalId);
+            PaymentDetail paymentDetail, String noteText, String txnExternalId, final Boolean isAccountTransfer);
 
     LoanTransaction makeRefundForActiveLoan(Long accountId, CommandProcessingResultBuilder builderResult, LocalDate transactionDate,
-            BigDecimal transactionAmount, PaymentDetail paymentDetail, String noteText, String txnExternalId);
+            BigDecimal transactionAmount, PaymentDetail paymentDetail, String noteText, String txnExternalId,
+            final Boolean isAccountTransfer);
 
     /**
      * This method is to recalculate and accrue the income till the last accrued
@@ -65,12 +70,13 @@ public interface LoanAccountDomainService {
 
     void saveLoanWithDataIntegrityViolationChecks(Loan loan);
 
-    Map<String, Object> foreCloseLoan(final Loan loan, final LocalDate foreClourseDate, String noteText);
-    
+    Map<String, Object> foreCloseLoan(final Loan loan, final LocalDate foreClourseDate, String noteText, final Boolean isAccountTransfer);
+
     /**
      * Disables all standing instructions linked to a closed loan
      * 
-     * @param loan {@link Loan} object
+     * @param loan
+     *            {@link Loan} object
      */
     void disableStandingInstructionsLinkedToClosedLoan(Loan loan);
 

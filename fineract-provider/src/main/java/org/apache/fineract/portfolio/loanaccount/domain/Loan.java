@@ -2315,7 +2315,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
     }
 
     public ChangedTransactionDetail disburse(final AppUser currentUser, final JsonCommand command, final Map<String, Object> actualChanges,
-            final ScheduleGeneratorDTO scheduleGeneratorDTO, final PaymentDetail paymentDetail) {
+            final ScheduleGeneratorDTO scheduleGeneratorDTO, final PaymentDetail paymentDetail, final Boolean isAccountTransfer) {
 
         final LoanStatus statusEnum = this.loanLifecycleStateMachine.transition(LoanEvent.LOAN_DISBURSED,
                 LoanStatus.fromInt(this.loanStatus));
@@ -2346,7 +2346,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
         updateLoanRepaymentPeriodsDerivedFields(actualDisbursementDate);
         LocalDateTime createdDate = DateUtils.getLocalDateTimeOfTenant();
-        handleDisbursementTransaction(actualDisbursementDate, createdDate, currentUser, paymentDetail);
+        handleDisbursementTransaction(actualDisbursementDate, createdDate, currentUser, paymentDetail, isAccountTransfer);
         updateLoanSummaryDerivedFields();
         final Money interestApplied = Money.of(getCurrency(), this.summary.getTotalInterestCharged());
 
@@ -2686,7 +2686,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
     }
 
     private void handleDisbursementTransaction(final LocalDate disbursedOn, final LocalDateTime createdDate, final AppUser currentUser,
-            final PaymentDetail paymentDetail) {
+            final PaymentDetail paymentDetail, final Boolean isAccountTransfer) {
 
         // add repayment transaction to track incoming money from client to mfi
         // for (charges due at time of disbursement)
@@ -2705,7 +2705,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
         Money disbursentMoney = Money.zero(getCurrency());
         final LoanTransaction chargesPayment = LoanTransaction.repaymentAtDisbursement(getOffice(), disbursentMoney, paymentDetail,
-                disbursedOn, null, createdDate, currentUser);
+                disbursedOn, null, createdDate, currentUser, isAccountTransfer);
         final Integer installmentNumber = null;
         for (final LoanCharge charge : charges()) {
             Date actualDisbursementDate = getActualDisbursementDate(charge);
@@ -2722,6 +2722,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
                             installmentNumber);
                     chargesPayment.getLoanChargesPaid().add(loanChargePaidBy);
                     disbursentMoney = disbursentMoney.plus(charge.amount());
+                    chargesPayment.setIsAccountTransfer(false);
                 }
             } else if (disbursedOn.equals(new LocalDate(this.actualDisbursementDate))) {
                 /**
@@ -4268,7 +4269,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
     }
 
     public Map<String, Object> deriveAccountingBridgeData(final CurrencyData currencyData, final List<Long> existingTransactionIds,
-            final List<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
+            final List<Long> existingReversedTransactionIds) {
 
         final Map<String, Object> accountingBridgeData = new LinkedHashMap<>();
         accountingBridgeData.put("loanId", getId());
@@ -4279,7 +4280,6 @@ public class Loan extends AbstractPersistableCustom<Long> {
         accountingBridgeData.put("cashBasedAccountingEnabled", isCashBasedAccountingEnabledOnLoanProduct());
         accountingBridgeData.put("upfrontAccrualBasedAccountingEnabled", isUpfrontAccrualAccountingEnabledOnLoanProduct());
         accountingBridgeData.put("periodicAccrualBasedAccountingEnabled", isPeriodicAccrualAccountingEnabledOnLoanProduct());
-        accountingBridgeData.put("isAccountTransfer", isAccountTransfer);
 
         final List<Map<String, Object>> newLoanTransactions = new ArrayList<>();
         for (final LoanTransaction transaction : this.loanTransactions) {

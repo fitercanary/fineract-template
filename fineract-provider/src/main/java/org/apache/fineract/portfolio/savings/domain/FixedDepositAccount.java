@@ -241,17 +241,17 @@ public class FixedDepositAccount extends SavingsAccount {
         List<SavingsAccountTransaction> allTransactions = new ArrayList<>();
         final Money transactionAmountMoney = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
-                this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null); // TODO:
-                                                                                                    // verify
-                                                                                                    // if
-                                                                                                    // it
-                                                                                                    // is
-                                                                                                    // ok
-                                                                                                    // to
-                                                                                                    // pass
-                                                                                                    // null
-                                                                                                    // for
-                                                                                                    // AppUser
+                this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null, false); // TODO:
+        // verify
+        // if
+        // it
+        // is
+        // ok
+        // to
+        // pass
+        // null
+        // for
+        // AppUser
         transaction.updateRunningBalance(transactionAmountMoney);
         transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto());
         allTransactions.add(transaction);
@@ -584,7 +584,7 @@ public class FixedDepositAccount extends SavingsAccount {
                         interestPostingTransactionDate);
                 if (postingTransactions.isEmpty()) {
                     final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                            interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting());
+                            interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting(), false);
                     this.transactions.add(newPostingTransaction);
                     recalucateDailyBalanceDetails = true;
                 } else {
@@ -594,7 +594,7 @@ public class FixedDepositAccount extends SavingsAccount {
                             postingTransaction.reverse();
                             final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
                                     office(), interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                    interestPostingPeriod.isUserPosting());
+                                    interestPostingPeriod.isUserPosting(), false);
                             this.transactions.add(newPostingTransaction);
                             recalucateDailyBalanceDetails = true;
                         }
@@ -628,7 +628,7 @@ public class FixedDepositAccount extends SavingsAccount {
         if (!remainigInterestToBePosted.isZero()) {
             final boolean postInterestAsOn = false;
             final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                    accountCloseDate, remainigInterestToBePosted, postInterestAsOn);
+                    accountCloseDate, remainigInterestToBePosted, postInterestAsOn, false);
             this.transactions.add(newPostingTransaction);
             recalucateDailyBalance = true;
         }

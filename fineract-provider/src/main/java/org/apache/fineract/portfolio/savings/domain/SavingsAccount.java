@@ -523,11 +523,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
                             newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                    interestPostingPeriod.isUserPosting());
+                                    interestPostingPeriod.isUserPosting(), false);
                         } else {
                             newPostingTransaction = SavingsAccountTransaction.overdraftInterest(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
-                                    interestPostingPeriod.isUserPosting());
+                                    interestPostingPeriod.isUserPosting(), false);
                         }
                         if (newPostingTransaction != null && newPostingTransaction.getAmount(currency).isGreaterThanZero()) {
                             addTransaction(newPostingTransaction);
@@ -561,11 +561,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                             if (interestEarnedToBePostedForPeriod.isGreaterThanOrEqualTo(Money.zero(currency))) {
                                 newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                         interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                        interestPostingPeriod.isUserPosting());
+                                        interestPostingPeriod.isUserPosting(), false);
                             } else {
                                 newPostingTransaction = SavingsAccountTransaction.overdraftInterest(this, office(),
                                         interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
-                                        interestPostingPeriod.isUserPosting());
+                                        interestPostingPeriod.isUserPosting(), false);
                             }
                             addTransaction(newPostingTransaction);
                             if (applyWithHoldTaxForOldTransaction) {
@@ -650,7 +650,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             BigDecimal totalTax = TaxUtils.totalTaxAmount(taxSplit);
             if (totalTax.compareTo(BigDecimal.ZERO) == 1) {
                 SavingsAccountTransaction withholdTransaction = SavingsAccountTransaction.withHoldTax(this, office(), date,
-                        Money.of(currency, totalTax), taxSplit);
+                        Money.of(currency, totalTax), taxSplit, false);
                 addTransaction(withholdTransaction);
                 isTaxAdded = true;
             }
@@ -673,7 +673,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 } else if (totalTax.compareTo(withholdTransaction.getAmount()) != 0) {
                     withholdTransaction.reverse();
                     SavingsAccountTransaction newWithholdTransaction = SavingsAccountTransaction.withHoldTax(this, office(),
-                            withholdTransaction.transactionLocalDate(), Money.of(currency, totalTax), taxSplit);
+                            withholdTransaction.transactionLocalDate(), Money.of(currency, totalTax), taxSplit, false);
                     addTransaction(newWithholdTransaction);
                     isTaxAdded = true;
                 }
@@ -863,7 +863,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         Collections.sort(listOfTransactionsSorted, transactionComparator);
         return listOfTransactionsSorted;
     }
-    
+
     protected void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
 
         Money runningBalance = openingAccountBalance.copy();
@@ -970,12 +970,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
-        
+
         if (isDateBeforeLastTransaction(transactionDTO.getTransactionDate())) {
             final String defaultUserMessage = "Transaction date cannot be in the past from last transaction date.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg." 
-            + resourceTypeName + ".transaction.date.in.the.past.from.last.transaction.date",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "error.msg." + resourceTypeName + ".transaction.date.in.the.past.from.last.transaction.date", defaultUserMessage,
+                    "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
@@ -1002,7 +1002,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(this, office(), transactionDTO.getPaymentDetail(),
                 transactionDTO.getTransactionDate(), amount, transactionDTO.getCreatedDate(), transactionDTO.getAppUser(),
-                savingsAccountTransactionType);
+                savingsAccountTransactionType, transactionDTO.getIsAccountTransfer());
         addTransaction(transaction);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
 
@@ -1084,11 +1084,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
-        
+
         if (isDateBeforeLastTransaction(transactionDTO.getTransactionDate())) {
             final String defaultUserMessage = "Transaction date cannot be in the past from last transaction date.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.date.in.the.past.from.last.transaction.date",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "error.msg.savingsaccount.transaction.date.in.the.past.from.last.transaction.date", defaultUserMessage,
+                    "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
@@ -1127,7 +1128,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final Money transactionAmountMoney = Money.of(this.currency, transactionDTO.getTransactionAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.withdrawal(this, office(),
                 transactionDTO.getPaymentDetail(), transactionDTO.getTransactionDate(), transactionAmountMoney,
-                transactionDTO.getCreatedDate(), transactionDTO.getAppUser());
+                transactionDTO.getCreatedDate(), transactionDTO.getAppUser(), transactionDTO.getIsAccountTransfer());
         addTransaction(transaction);
         if (applyWithdrawFee) {
             // auto pay withdrawal fee
@@ -1227,9 +1228,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             // deal with potential minRequiredBalance and
             // enforceMinRequiredBalance
-//            if (transaction.canOverriteSavingAccountRules() && transaction.isNotReversed()) {
-//                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
-//            }
+            // if (transaction.canOverriteSavingAccountRules() &&
+            // transaction.isNotReversed()) {
+            // overrideRuleBalance =
+            // overrideRuleBalance.add(transaction.getAmount());
+            // }
             lastSavingsDate = transaction.transactionLocalDate();
 
         }
@@ -1237,8 +1240,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         // enforceMinRequiredBalance
         if (!isException && !isOverdraft()) {
             if (runningBalance.minus(minRequiredBalance).plus(overrideRuleBalance).isLessThanZero()) {
-                throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
-                        transactionAmount);
+                throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount);
             }
         }
         // In overdraft cases, minRequiredBalance can be in violation after
@@ -1291,9 +1293,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                     }
                 }
             }
-//            if (transaction.canOverriteSavingAccountRules() && transaction.isNotReversed()) {
-//                overrideRuleBalance = overrideRuleBalance.add(transaction.getAmount());
-//            }
+            // if (transaction.canOverriteSavingAccountRules() &&
+            // transaction.isNotReversed()) {
+            // overrideRuleBalance =
+            // overrideRuleBalance.add(transaction.getAmount());
+            // }
             lastSavingsDate = transaction.transactionLocalDate();
 
         }
@@ -1307,16 +1311,17 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                         .resource(depositAccountType().resourceName() + transactionAction);
                 if (!this.allowOverdraft) {
                     baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative");
-                }else {
-                    throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount); 
+                } else {
+                    throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
+                            transactionAmount);
                 }
                 if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
             }
 
         }
     }
-    
-    public void validateAccountBalanceDoesNotBecomeNegativeAtTheTimeOfDisableOverdraft(final BigDecimal transactionAmount, 
+
+    public void validateAccountBalanceDoesNotBecomeNegativeAtTheTimeOfDisableOverdraft(final BigDecimal transactionAmount,
             final String transactionAction) {
         final List<SavingsAccountTransaction> transactionsSortedByDate = retreiveListOfTransactions();
         Money runningBalance = Money.zero(this.currency);
@@ -1326,12 +1331,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             } else if (transaction.isNotReversed() && transaction.isDebit()) {
                 runningBalance = runningBalance.minus(transaction.getAmount(this.currency));
             }
-           }
-        if(runningBalance.minus(transactionAmount).isLessThanZero()){
+        }
+        if (runningBalance.minus(transactionAmount).isLessThanZero()) {
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                     .resource(depositAccountType().resourceName() + transactionAction);
-            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative.overdraft.can.not.disable");
+            baseDataValidator.reset()
+                    .failWithCodeNoParameterAddedToErrorCode("results.in.balance.going.negative.overdraft.can.not.disable");
             if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
         }
 
@@ -1361,7 +1367,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     boolean isDateBeforeLastTransaction(final LocalDate transactionDate) {
         return transactionDate.isBefore(retrieveLastActiveTransactionDate());
     }
-    
+
     protected BigDecimal getAccountBalance() {
         return this.summary.getAccountBalance(this.currency).getAmount();
     }
@@ -1613,7 +1619,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public Map<String, Object> deriveAccountingBridgeData(final CurrencyData currencyData, final Set<Long> existingTransactionIds,
-            final Set<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
+            final Set<Long> existingReversedTransactionIds) {
 
         final Map<String, Object> accountingBridgeData = new LinkedHashMap<>();
         accountingBridgeData.put("savingsId", getId());
@@ -1622,7 +1628,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         accountingBridgeData.put("officeId", officeId());
         accountingBridgeData.put("cashBasedAccountingEnabled", isCashBasedAccountingEnabledOnSavingsProduct());
         accountingBridgeData.put("accrualBasedAccountingEnabled", isAccrualBasedAccountingEnabledOnSavingsProduct());
-        accountingBridgeData.put("isAccountTransfer", isAccountTransfer);
 
         final List<Map<String, Object>> newSavingsTransactions = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
@@ -2067,12 +2072,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
         if (transactionToUndo == null) { throw new SavingsAccountTransactionNotFoundException(this.getId(), transactionId); }
-       
+
         validateIsLastTransactionOrNot(transactionToUndo);
         validateAttemptToUndoTransferRelatedTransactions(transactionToUndo);
         validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_UNDO_TRANSACTION, transactionToUndo.transactionLocalDate());
         transactionToUndo.reverse();
-      //  transactionToUndo.setLastTransaction(true);
+        // transactionToUndo.setLastTransaction(true);
         if (transactionToUndo.isChargeTransaction() || transactionToUndo.isWaiveCharge()) {
             // undo charge
             final Set<SavingsAccountChargePaidBy> chargesPaidBy = transactionToUndo.getSavingsAccountChargesPaid();
@@ -2443,7 +2448,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             throw new SavingsTransferTransactionsCannotBeUndoneException(savingsAccountTransaction.getId());
         }
     }
-    
+
     private void validateIsLastTransactionOrNot(final SavingsAccountTransaction savingsAccountTransaction) {
         for (final SavingsAccountTransaction transaction : this.transactions) {
             if (transaction.getId() > savingsAccountTransaction.getId() && transaction.isNotReversed()) {
@@ -2790,11 +2795,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         SavingsAccountTransaction chargeTransaction = null;
 
         if (savingsAccountCharge.isWithdrawalFee()) {
-            chargeTransaction = SavingsAccountTransaction.withdrawalFee(this, office(), transactionDate, transactionAmount, user);
+            chargeTransaction = SavingsAccountTransaction.withdrawalFee(this, office(), transactionDate, transactionAmount, user, false);
         } else if (savingsAccountCharge.isAnnualFee()) {
-            chargeTransaction = SavingsAccountTransaction.annualFee(this, office(), transactionDate, transactionAmount, user);
+            chargeTransaction = SavingsAccountTransaction.annualFee(this, office(), transactionDate, transactionAmount, user, false);
         } else {
-            chargeTransaction = SavingsAccountTransaction.charge(this, office(), transactionDate, transactionAmount, user);
+            chargeTransaction = SavingsAccountTransaction.charge(this, office(), transactionDate, transactionAmount, user, false);
         }
 
         handleChargeTransactions(savingsAccountCharge, chargeTransaction);
@@ -2802,7 +2807,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     private void handleWaiverChargeTransactions(SavingsAccountCharge savingsAccountCharge, Money transactionAmount, AppUser user) {
         final SavingsAccountTransaction chargeTransaction = SavingsAccountTransaction.waiver(this, office(),
-                DateUtils.getLocalDateOfTenant(), transactionAmount, user);
+                DateUtils.getLocalDateOfTenant(), transactionAmount, user, false);
         handleChargeTransactions(savingsAccountCharge, chargeTransaction);
     }
 
@@ -3035,7 +3040,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         boolean postInterestAsOnDate = false;
         LocalDate transactionDate = DateUtils.getLocalDateOfTenant();
         if (this.getSummary().getAccountBalance(this.getCurrency()).isGreaterThanZero()) {
-            SavingsAccountTransaction transaction = SavingsAccountTransaction.escheat(this, transactionDate, appUser, postInterestAsOnDate);
+            SavingsAccountTransaction transaction = SavingsAccountTransaction.escheat(this, transactionDate, appUser, postInterestAsOnDate,
+                    false);
             this.transactions.add(transaction);
         }
         recalculateDailyBalances(Money.zero(this.currency), transactionDate);
@@ -3307,12 +3313,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final List<SavingsAccountTransaction> transactionsSortedByDate = retreiveListOfTransactions();
         SavingsAccountTransaction lastTransaction = null;
         if (transactionsSortedByDate.size() > 0) {
-            for(SavingsAccountTransaction transaction : transactionsSortedByDate) {
-                if(transaction.isNotReversed()) {
+            for (SavingsAccountTransaction transaction : transactionsSortedByDate) {
+                if (transaction.isNotReversed()) {
                     lastTransaction = transaction;
                 }
             }
-            
+
         }
         LocalDate lastransactionDate = null;
         if (lastTransaction != null) {
@@ -3488,11 +3494,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
                             newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                    interestPostingPeriod.isUserPosting());
+                                    interestPostingPeriod.isUserPosting(), false);
                         } else {
                             newPostingTransaction = SavingsAccountTransaction.overdraftAccrualInterest(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
-                                    interestPostingPeriod.isUserPosting());
+                                    interestPostingPeriod.isUserPosting(), false);
                         }
 
                         if (newPostingTransaction != null && newPostingTransaction.getAmount(currency).isGreaterThanZero()) {
@@ -3523,11 +3529,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                             if (interestEarnedToBePostedForPeriod.isGreaterThanOrEqualTo(Money.zero(currency))) {
                                 newPostingTransaction = SavingsAccountTransaction.AccrualInterestPosting(this, office(),
                                         interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                        interestPostingPeriod.isUserPosting());
+                                        interestPostingPeriod.isUserPosting(), false);
                             } else {
                                 newPostingTransaction = SavingsAccountTransaction.overdraftAccrualInterest(this, office(),
                                         interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated(),
-                                        interestPostingPeriod.isUserPosting());
+                                        interestPostingPeriod.isUserPosting(), false);
                             }
                             addTransaction(newPostingTransaction);
                             recalucateDailyBalanceDetails = true;

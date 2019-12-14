@@ -215,7 +215,7 @@ public class SavingsAccountTransactionDataValidator {
         Date createdDate = new Date();
         
         SavingsAccountTransaction transaction = SavingsAccountTransaction.holdAmount(account, account.office(), paymentDetails,
-                transactionDate, Money.of(account.getCurrency(), amount), createdDate, createdUser);
+                transactionDate, Money.of(account.getCurrency(), amount), createdDate, createdUser, false);
         return transaction;
     }
 
@@ -244,7 +244,7 @@ public class SavingsAccountTransactionDataValidator {
         Date createdDate = new Date();
         LocalDate transactionDate = DateUtils.getLocalDateOfTenant();
         SavingsAccountTransaction transaction = SavingsAccountTransaction.releaseAmount(holdTransaction, transactionDate, createdDate,
-                createdUser);
+                createdUser, false);
         return transaction;
     }
 

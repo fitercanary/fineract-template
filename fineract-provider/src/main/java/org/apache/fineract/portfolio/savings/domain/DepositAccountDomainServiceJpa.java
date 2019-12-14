@@ -77,7 +77,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
     private final PlatformSecurityContext context;
     private final SavingsAccountRepositoryWrapper savingsAccountRepository;
-	private final SavingsAccountChargeRepository savingsAccountChargeRepository;
+    private final SavingsAccountChargeRepository savingsAccountChargeRepository;
     private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
     private final AccountNumberGenerator accountNumberGenerator;
@@ -87,22 +87,24 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
-	private final NubanAccountService nubanAccountService;
-	private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+    private final NubanAccountService nubanAccountService;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
-    public DepositAccountDomainServiceJpa(final PlatformSecurityContext context, final SavingsAccountRepositoryWrapper savingsAccountRepository,
-										  SavingsAccountChargeRepository savingsAccountChargeRepository, final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
-										  final JournalEntryWritePlatformService journalEntryWritePlatformService, final AccountNumberGenerator accountNumberGenerator,
-										  final DepositAccountAssembler depositAccountAssembler, final SavingsAccountDomainService savingsAccountDomainService,
-										  final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
-										  final ConfigurationDomainService configurationDomainService,
-										  final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-										  final CalendarInstanceRepository calendarInstanceRepository, NubanAccountService nubanAccountService, SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
+    public DepositAccountDomainServiceJpa(final PlatformSecurityContext context,
+            final SavingsAccountRepositoryWrapper savingsAccountRepository, SavingsAccountChargeRepository savingsAccountChargeRepository,
+            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+            final JournalEntryWritePlatformService journalEntryWritePlatformService, final AccountNumberGenerator accountNumberGenerator,
+            final DepositAccountAssembler depositAccountAssembler, final SavingsAccountDomainService savingsAccountDomainService,
+            final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+            final ConfigurationDomainService configurationDomainService,
+            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+            final CalendarInstanceRepository calendarInstanceRepository, NubanAccountService nubanAccountService,
+            SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
-		this.savingsAccountChargeRepository = savingsAccountChargeRepository;
-		this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
+        this.savingsAccountChargeRepository = savingsAccountChargeRepository;
+        this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
         this.accountNumberGenerator = accountNumberGenerator;
         this.depositAccountAssembler = depositAccountAssembler;
@@ -111,9 +113,9 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
-		this.nubanAccountService = nubanAccountService;
-		this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
-	}
+        this.nubanAccountService = nubanAccountService;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
+    }
 
     @Transactional
     @Override
@@ -159,20 +161,21 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final Set<Long> existingTransactionIds = new HashSet<>();
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         final boolean isAnyActivationChargesDue = isAnyActivationChargesDue(account);
-        if(isAnyActivationChargesDue){
+        if (isAnyActivationChargesDue) {
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
             account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);
             this.savingsAccountRepository.saveAndFlush(account);
         }
         account.handleScheduleInstallments(deposit);
-        account.updateMaturityDateAndAmount(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+        account.updateMaturityDateAndAmount(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
+                financialYearBeginningMonth);
         account.updateOverduePayments(DateUtils.getLocalDateOfTenant());
-        if(isAnyActivationChargesDue){
+        if (isAnyActivationChargesDue) {
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         }
         return deposit;
     }
-    
+
     @Transactional
     @Override
     public SavingsAccountTransaction handleSavingDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
@@ -191,7 +194,9 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private boolean isAnyActivationChargesDue(final RecurringDepositAccount account) {
         for (final SavingsAccountCharge savingsAccountCharge : account.charges()) {
             if (savingsAccountCharge.isSavingsActivation() && savingsAccountCharge.amoutOutstanding() != null
-                    && savingsAccountCharge.amoutOutstanding().compareTo(BigDecimal.ZERO) > 0) { return true; }
+                    && savingsAccountCharge.amoutOutstanding().compareTo(BigDecimal.ZERO) > 0) {
+                return true;
+            }
         }
         return false;
     }
@@ -215,7 +220,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
          */
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         /*
-         *  final SavingsAccountTransactionDTO transactionDTO = new
+         * final SavingsAccountTransactionDTO transactionDTO = new
          * SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
          * paymentDetail, new Date()); final SavingsAccountTransaction deposit =
          * account.deposit(transactionDTO); boolean isInterestTransfer = false;
@@ -256,7 +261,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
                     isAccountTransfer, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
-            updateAlreadyPostedTransactions(existingTransactionIds, account);  
+            updateAlreadyPostedTransactions(existingTransactionIds, account);
         } else {
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
                     paymentDetail, false, isRegularTransaction);
@@ -331,7 +336,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
                     isRegularTransaction, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
-            updateAlreadyPostedTransactions(existingTransactionIds, account);  
+            updateAlreadyPostedTransactions(existingTransactionIds, account);
         } else {
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
                     paymentDetail, false, isRegularTransaction);
@@ -375,16 +380,16 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private void autoGenerateAccountNumber(final SavingsAccount account) {
         if (account.isAccountNumberRequiresAutoGeneration()) {
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
-			account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
-			String serialNumber = account.getAccountNumber();
-			String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
-			SavingsAccount existingAccount = this.savingsAccountRepository.findByAccountNumber(nubanAccountNumber);
-			while(existingAccount != null) {
-				serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
-				nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
-				existingAccount = this.savingsAccountRepository.findByAccountNumber(nubanAccountNumber);
-			}
-			account.updateAccountNo(nubanAccountNumber);
+            account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+            String serialNumber = account.getAccountNumber();
+            String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+            SavingsAccount existingAccount = this.savingsAccountRepository.findByAccountNumber(nubanAccountNumber);
+            while (existingAccount != null) {
+                serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+                nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+                existingAccount = this.savingsAccountRepository.findByAccountNumber(nubanAccountNumber);
+            }
+            account.updateAccountNo(nubanAccountNumber);
             this.savingsAccountRepository.save(account);
         }
     }
@@ -413,31 +418,35 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         Long savingsTransactionId = null;
 
-		final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
-		DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
+        final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
+        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
 
         // post interest
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
 
-		//Apply pre-closure charge
-		List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
-		for(SavingsAccountCharge charge : preclosureCharges) {
-			charge.setPercentage(charge.getCharge().getAmount());
-			charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
-			charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
-			charge.setAmountOutstanding(charge.amount());
-			this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
-		}
-		Boolean applyWithdrawalFeeForTransfer = account.withdrawalFeeApplicableForTransfer;
-		if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
-			//Apply withdrawal charges
-			List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFeeByAccountId(account.getId(), ChargeTimeType.WITHDRAWAL_FEE.getValue());
-			for (SavingsAccountCharge charge : withdrawalCharges) {
-				charge.setAmountOutstanding(charge.amount());
-				this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"), user);
-			}
-		}
+        // Apply pre-closure charge
+        List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(),
+                ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+        for (SavingsAccountCharge charge : preclosureCharges) {
+            charge.setPercentage(charge.getCharge().getAmount());
+            charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
+            charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
+            charge.setAmountOutstanding(charge.amount());
+            this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"),
+                    user);
+        }
+        Boolean applyWithdrawalFeeForTransfer = account.withdrawalFeeApplicableForTransfer;
+        if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
+            // Apply withdrawal charges
+            List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFeeByAccountId(account.getId(),
+                    ChargeTimeType.WITHDRAWAL_FEE.getValue());
+            for (SavingsAccountCharge charge : withdrawalCharges) {
+                charge.setAmountOutstanding(charge.amount());
+                this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(),
+                        DateTimeFormat.forPattern("dd MM yyyy"), user);
+            }
+        }
 
         if (closureType.isTransferToSavings()) {
             final boolean isExceptionForBalanceCheck = false;
@@ -445,14 +454,14 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
             final SavingsAccount toSavingsAccount = this.depositAccountAssembler.assembleFrom(toSavingsId,
                     DepositAccountType.SAVINGS_DEPOSIT);
-			account.withdrawalFeeApplicableForTransfer = false;
+            account.withdrawalFeeApplicableForTransfer = false;
             final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(closedDate, account.getAccountBalance(),
                     PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, locale, fmt, null, null,
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
                     isRegularTransaction, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
             updateAlreadyPostedTransactions(existingTransactionIds, account);
-			account.withdrawalFeeApplicableForTransfer = applyWithdrawalFeeForTransfer;
+            account.withdrawalFeeApplicableForTransfer = applyWithdrawalFeeForTransfer;
         } else {
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
                     paymentDetail, false, isRegularTransaction);
@@ -464,8 +473,6 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
-
-
 
         return savingsTransactionId;
     }
@@ -511,7 +518,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
                     isRegularTransaction, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
-            updateAlreadyPostedTransactions(existingTransactionIds, account);  
+            updateAlreadyPostedTransactions(existingTransactionIds, account);
         } else {
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
                     paymentDetail, false, isRegularTransaction);
@@ -537,12 +544,12 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
 
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
-                existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+                existingTransactionIds, existingReversedTransactionIds);
         this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
     }
 
     private void updateAlreadyPostedTransactions(final Set<Long> existingTransactionIds, final SavingsAccount savingsAccount) {
-        List<SavingsAccountTransaction> transactions = savingsAccount.getTransactions() ;
+        List<SavingsAccountTransaction> transactions = savingsAccount.getTransactions();
         int size = transactions.size();
         for (int i = size - 1;; i--) {
             SavingsAccountTransaction transaction = transactions.get(i);
@@ -553,7 +560,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             }
         }
     }
-    
+
     private AppUser getAppUserIfPresent() {
         AppUser user = null;
         if (this.context != null) {

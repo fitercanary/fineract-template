@@ -419,7 +419,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                     }
                     final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
                             dueDate, installment.getDepositAmountOutstanding(getCurrency()), installment.dueDate().toDate(),
-                            null);
+                            null, false);
                     allTransactions.add(transaction);
                 }
             }
@@ -557,7 +557,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         final Money minRequiredOpeningBalance = Money.of(this.currency, this.minRequiredOpeningBalance);
         if (minRequiredOpeningBalance.isGreaterThanZero()) {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
-                    minRequiredOpeningBalance.getAmount(), null, new Date(), user, accountType);
+                    minRequiredOpeningBalance.getAmount(), null, new Date(), user, accountType, false);
             deposit(transactionDTO);
 
             // update existing transactions so derived balance fields are
@@ -668,7 +668,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                         interestPostingTransactionDate);
                 if (postingTransactions.isEmpty()) {
                     final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                            interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting());
+                            interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting(), false);
                     addTransaction(newPostingTransaction);
                     recalucateDailyBalanceDetails = true;
                 } else {
@@ -678,7 +678,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                             postingTransaction.reverse();
                             final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
                                     office(), interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                    interestPostingPeriod.isUserPosting());
+                                    interestPostingPeriod.isUserPosting(), false);
                             addTransaction(newPostingTransaction);
                             recalucateDailyBalanceDetails = true;
                         }
@@ -712,7 +712,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         if (!remainigInterestToBePosted.isZero()) {
             final boolean postInterestAsOn = false;
             final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                    accountCloseDate, remainigInterestToBePosted, postInterestAsOn);
+                    accountCloseDate, remainigInterestToBePosted, postInterestAsOn, false);
             addTransaction(newPostingTransaction);
             recalucateDailyBalance = true;
         }

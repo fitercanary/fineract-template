@@ -53,6 +53,7 @@ import java.util.Set;
 
 @Service
 public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainService {
+
     private final static Logger logger = LoggerFactory.getLogger(SavingsAccountDomainServiceJpa.class);
     private final PlatformSecurityContext context;
     private final SavingsAccountRepositoryWrapper savingsAccountRepository;
@@ -69,7 +70,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
             final JournalEntryWritePlatformService journalEntryWritePlatformService,
             final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
-            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, 
+            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
             final BusinessEventNotifierService businessEventNotifierService) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -93,17 +94,19 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
-        if (transactionBooleanValues.isRegularTransaction() && !account.allowWithdrawal()) { throw new DepositAccountTransactionNotAllowedException(
-                account.getId(), "withdraw", account.depositAccountType()); }
+        if (transactionBooleanValues.isRegularTransaction() && !account.allowWithdrawal()) {
+            throw new DepositAccountTransactionNotAllowedException(account.getId(), "withdraw", account.depositAccountType());
+        }
         final Set<Long> existingTransactionIds = new HashSet<>();
         final LocalDate postInterestOnDate = null;
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         Integer accountType = null;
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                paymentDetail, new Date(), user, accountType);
+                paymentDetail, new Date(), user, accountType, transactionBooleanValues.isAccountTransfer());
 
-        final SavingsAccountTransaction withdrawal = account.withdraw(transactionDTO, transactionBooleanValues.isApplyWithdrawFee(),transactionBooleanValues.isApplyOverdraftFee());
+        final SavingsAccountTransaction withdrawal = account.withdraw(transactionDTO, transactionBooleanValues.isApplyWithdrawFee(),
+                transactionBooleanValues.isApplyOverdraftFee());
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), transactionBooleanValues.isInterestTransfer(),
@@ -128,7 +131,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, transactionBooleanValues.isAccountTransfer());
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,
                 constructEntityMap(BUSINESS_ENTITY.SAVINGS_TRANSACTION, withdrawal));
         return withdrawal;
@@ -163,15 +166,16 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
 
-        if (isRegularTransaction && !account.allowDeposit()) { throw new DepositAccountTransactionNotAllowedException(account.getId(),
-                "deposit", account.depositAccountType()); }
+        if (isRegularTransaction && !account.allowDeposit()) {
+            throw new DepositAccountTransactionNotAllowedException(account.getId(), "deposit", account.depositAccountType());
+        }
         boolean isInterestTransfer = false;
         final Set<Long> existingTransactionIds = new HashSet<>();
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         Integer accountType = null;
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                paymentDetail, new Date(), user, accountType);
+                paymentDetail, new Date(), user, accountType, isAccountTransfer);
         final SavingsAccountTransaction deposit = account.deposit(transactionDTO, savingsAccountTransactionType);
         final LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;
@@ -182,7 +186,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-            		postInterestOnDate);
+                    postInterestOnDate);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -193,7 +197,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         this.savingsAccountRepository.saveAndFlush(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT,
                 constructEntityMap(BUSINESS_ENTITY.SAVINGS_TRANSACTION, deposit));
         return deposit;
@@ -222,24 +226,17 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         existingReversedTransactionIds.addAll(account.findExistingReversedTransactionIds());
     }
 
-    private void postJournalEntries(final SavingsAccount savingsAccount, final Set<Long> existingTransactionIds,
-            final Set<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
-
-        final MonetaryCurrency currency = savingsAccount.getCurrency();
-        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
-
-        final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
-                existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
-    }
-
     @Transactional
     @Override
     public void postJournalEntries(final SavingsAccount account, final Set<Long> existingTransactionIds,
             final Set<Long> existingReversedTransactionIds) {
 
-        final boolean isAccountTransfer = false;
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        final MonetaryCurrency currency = account.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+
+        final Map<String, Object> accountingBridgeData = account.deriveAccountingBridgeData(applicationCurrency.toData(),
+                existingTransactionIds, existingReversedTransactionIds);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
     }
 
     private Map<BUSINESS_ENTITY, Object> constructEntityMap(final BUSINESS_ENTITY entityEvent, Object entity) {

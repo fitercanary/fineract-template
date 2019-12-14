@@ -3318,7 +3318,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         if (lastTransaction != null) {
             lastransactionDate = lastTransaction.transactionLocalDate();
         }else {
-            lastransactionDate = new LocalDate();
+            lastransactionDate = new LocalDate(this.activatedOnDate);
         }
         return lastransactionDate;
     }

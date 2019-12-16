@@ -597,7 +597,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         account.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.undoTransactionAction, depositAccountOnHoldTransactions);
         account.activateAccountBasedOnBalance();
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        if(!savingsAccountTransaction.isWaiveCharge()) {
+            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        }
+        
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //
                 .withOfficeId(account.officeId()) //
@@ -1094,8 +1097,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 depositAccountOnHoldTransactions);
 
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
-
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+       // postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsAccountChargeId) //
                 .withOfficeId(account.officeId()) //

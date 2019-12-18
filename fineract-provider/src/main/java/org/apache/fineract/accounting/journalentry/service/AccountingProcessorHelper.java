@@ -142,7 +142,10 @@ public class AccountingProcessorHelper {
             final BigDecimal overPayments = (BigDecimal) map.get("overPaymentPortion");
             final boolean reversed = (Boolean) map.get("reversed");
             final Long paymentTypeId = (Long) map.get("paymentTypeId");
-            final Boolean isAccountTransfer = (Boolean) map.get("isAccountTransfer");
+            Boolean isAccountTransfer = false;
+            if(map.get("isAccountTransfer") != null) {
+            isAccountTransfer = (Boolean) map.get("isAccountTransfer");
+            }
 
             final List<ChargePaymentDTO> feePaymentDetails = new ArrayList<>();
             final List<ChargePaymentDTO> penaltyPaymentDetails = new ArrayList<>();

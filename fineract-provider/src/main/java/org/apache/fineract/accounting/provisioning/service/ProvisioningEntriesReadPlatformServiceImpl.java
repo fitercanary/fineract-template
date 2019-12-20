@@ -78,11 +78,14 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
 
         protected LoanProductProvisioningEntryMapper(String formattedDate) {
             sqlQuery = new StringBuilder()
-                    .append("select if(loan.loan_type_enum=1, mclient.office_id, mgroup.office_id) as office_id, loan.loan_type_enum, pcd.criteria_id as criteriaid, loan.product_id,loan.currency_code,")
+                    .append("select if(loan.loan_type_enum=1, mclient.office_id, mgroup.office_id) as office_id, "
+                            + "loan.loan_type_enum, loan.id, pcd.criteria_id as criteriaid, loan.product_id,loan.currency_code,")
                     .append("GREATEST(datediff(")
                     .append(formattedDate)
-                    .append(",sch.duedate),0) as numberofdaysoverdue,sch.duedate, pcd.category_id, pcd.provision_percentage, loan.account_no, ")
-                    .append("loan.total_outstanding_derived as outstandingbalance, pcd.liability_account, pcd.expense_account from m_loan_repayment_schedule sch")
+                    .append(",sch.duedate),0) as numberofdaysoverdue,sch.duedate, pcd.category_id, pcd.provision_percentage, "
+                            + "loan.account_no, ")
+                    .append("loan.principal_outstanding_derived as outstandingbalance, pcd.liability_account, "
+                            + "pcd.expense_account from m_loan_repayment_schedule sch")
                     .append(" LEFT JOIN m_loan loan on sch.loan_id = loan.id")
                     .append(" JOIN m_loanproduct_provisioning_mapping lpm on lpm.product_id = loan.product_id")
                     .append(" JOIN m_provisioning_criteria_definition pcd on pcd.criteria_id = lpm.criteria_id and ")
@@ -109,9 +112,10 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
             Long expenseAccountCode = rs.getLong("expense_account");
             Long criteriaId = rs.getLong("criteriaid");
             Long historyId = null;
+            Long loanId = rs.getLong("id");
 
             return new ProductProvisioningEntryData(historyId, officeId, currentcyCode, productId, categoryId, overdueDays, percentage,
-                    outstandingBalance, liabilityAccountCode, expenseAccountCode, criteriaId, accountNumber, true);
+                    outstandingBalance, liabilityAccountCode, expenseAccountCode, criteriaId, accountNumber, true, loanId);
         }
 
         public String schema() {
@@ -155,7 +159,7 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
 			Long historyId = null;
 
 			return new ProductProvisioningEntryData(historyId, officeId, currentcyCode, productId, categoryId, overdueDays, percentage,
-					outstandingBalance, liabilityAccountCode, expenseAccountCode, criteriaId, accountNumber, false);
+					outstandingBalance, liabilityAccountCode, expenseAccountCode, criteriaId, accountNumber, false, null);
 		}
 
 		public String schema() {

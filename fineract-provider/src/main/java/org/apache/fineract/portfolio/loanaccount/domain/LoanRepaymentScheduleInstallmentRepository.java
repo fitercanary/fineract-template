@@ -18,10 +18,18 @@
  */
 package org.apache.fineract.portfolio.loanaccount.domain;
 
+import java.util.Date;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface LoanRepaymentScheduleInstallmentRepository extends JpaRepository<LoanRepaymentScheduleInstallment, Long>,
         JpaSpecificationExecutor<LoanRepaymentScheduleInstallment> {
+    
+    @Query("select ls from LoanRepaymentScheduleInstallment ls where ls.loan.id = :id and ls.dueDate <= :dueDate" )
+    List<LoanRepaymentScheduleInstallment> findByIdAndDueDate(@Param("id") Long id, @Param("dueDate") Date dueDate);
 
 }

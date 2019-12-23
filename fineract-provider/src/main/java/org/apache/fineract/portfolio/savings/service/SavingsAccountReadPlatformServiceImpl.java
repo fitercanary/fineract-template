@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
@@ -70,7 +71,10 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumD
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
+import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -78,6 +82,7 @@ import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -112,6 +117,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
     private final ColumnValidator columnValidator;
+    
+    private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
+    private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
 
     @Autowired
     public SavingsAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -119,7 +127,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsProductReadPlatformService savingProductReadPlatformService,
             final StaffReadPlatformService staffReadPlatformService, final SavingsDropdownReadPlatformService dropdownReadPlatformService,
             final ChargeReadPlatformService chargeReadPlatformService,
-            final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator) {
+            final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator,
+            final SavingsAccountTransactionRepository savingsAccountTransactionRepository, final SavingsTransactionRequestRepository savingsTransactionRequestRepository) {
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.clientReadPlatformService = clientReadPlatformService;
@@ -135,6 +144,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
         this.columnValidator = columnValidator;
+        this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
+        this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
+         
     }
 
     @Override
@@ -957,7 +969,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper,
                 new Object[] { savingsId, depositAccountType.getValue(), transactionId });
     }
-
+    
+   
     @Override
     public SavingsAccountTransactionData retrieveSavingsTransaction(final Long transactionId) {
 
@@ -1491,4 +1504,36 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         return this.jdbcTemplate.queryForObject(sql.toString(), BigDecimal.class,
                 new Object[] { savingAccountId, formatter.print(asOnDate), isPenalties });
     }
+    
+    @Override
+    public String retrieveSavingsTransactionForReversal(final Long savingsId, 
+            final Long transactionId, final String apiRequestBodyAsJson) {
+        final SavingsAccountTransaction savingsAccountTransaction = this.savingsAccountTransactionRepository
+                .findOneByIdAndSavingsAccountId(transactionId, savingsId);
+        final SavingsTransactionRequest savingsTransactionRequest =  this.savingsTransactionRequestRepository.findByTransactionId(transactionId);
+        JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
+        String locale = jsonObject.getString("locale");
+        String dateFormat = jsonObject.getString("dateFormat");
+        String transactionDate = jsonObject.getString("transactionDate");
+        
+        JSONObject json = new JSONObject();
+        json.put("locale", locale);
+        json.put("transactionAmount",savingsAccountTransaction.getAmount());
+        json.put("dateFormat", dateFormat);
+        json.put("transactionDate", transactionDate);
+        json.put("paymentTypeId", savingsAccountTransaction.getPaymentDetail().getPaymentType().getId());
+        json.put("accountNumber", savingsAccountTransaction.getPaymentDetail().getAccountNumber());
+        json.put("bankNumber", savingsAccountTransaction.getPaymentDetail().getBankNumber());
+        json.put("remarks", "Reversal Of transactionId " +transactionId);
+        json.put("transactionBrandName", savingsTransactionRequest.getTransactionBrandName());
+        json.put("imageTag", savingsTransactionRequest.getImageTag());
+        json.put("latitude", savingsTransactionRequest.getLatitude());
+        json.put("longitude", savingsTransactionRequest.getLongitude());
+        json.put("category", savingsTransactionRequest.getCategory());
+        json.put("notes", "Reversal Of transactionId " +transactionId);
+        json.put("noteImage", savingsTransactionRequest.getNoteImage());
+        json.put("note", "");
+        return json.toString();
+    }
+
 }

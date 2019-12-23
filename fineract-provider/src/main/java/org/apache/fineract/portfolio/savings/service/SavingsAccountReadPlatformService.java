@@ -28,6 +28,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.joda.time.LocalDate;
 
 public interface SavingsAccountReadPlatformService {
@@ -80,5 +81,7 @@ public interface SavingsAccountReadPlatformService {
 
     Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(Long savingsId, DepositAccountType depositAccountType,
             SavingsAccountTransactionType savingsAccountTransactionType);
+
+    String retrieveSavingsTransactionForReversal(Long savingsId, Long transactionId, String apiRequestBodyAsJson);
 
 }

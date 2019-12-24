@@ -77,7 +77,7 @@ public interface SavingsAccountReadPlatformService {
 
     BigDecimal getchargesDue(Long savingAccountId, LocalDate asOnDate, boolean isPenalties);
 
-    Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters);
+    Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters, String trnsactionIds);
 
     Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(Long savingsId, DepositAccountType depositAccountType,
             SavingsAccountTransactionType savingsAccountTransactionType, String transactionIds);

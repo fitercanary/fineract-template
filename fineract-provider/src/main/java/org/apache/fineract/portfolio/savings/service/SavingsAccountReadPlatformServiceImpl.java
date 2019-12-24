@@ -820,7 +820,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
     
     @Override
-    public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters) {
+    public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters, String transactionIds) {
         List<Object> paramList = new ArrayList<>();
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
@@ -829,7 +829,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.transactionsMapper.schema());
         sqlBuilder.append(
-                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? and tr.id not in ("+ transactionIds +") order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
             if (searchParameters.isLimited()) {

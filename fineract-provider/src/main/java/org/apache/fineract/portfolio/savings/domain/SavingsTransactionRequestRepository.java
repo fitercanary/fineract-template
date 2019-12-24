@@ -19,6 +19,9 @@
 
 package org.apache.fineract.portfolio.savings.domain;
 
+import java.util.Collection;
+
+import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -28,4 +31,7 @@ public interface SavingsTransactionRequestRepository extends JpaRepository<Savin
 
 	@Query("select request from SavingsTransactionRequest request where request.transaction.id = :transactionId")
 	SavingsTransactionRequest findByTransactionId(@Param("transactionId") Long transactionId);
+	
+	@Query("select request from SavingsTransactionRequest request where request.remarks like :remarks")
+	Collection<SavingsTransactionRequest> findByRemarks(@Param("remarks") String remarks);
 }

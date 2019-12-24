@@ -309,9 +309,11 @@ public class SavingsAccountsApiResource {
                     }
                     transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
                 } else {
+                    String ids = this.savingsAccountReadPlatformService.fetchReversalTransactionRequest();
+                  
                     final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
                             .retrieveAllTransactionsWithoutAccural(accountId, DepositAccountType.SAVINGS_DEPOSIT,
-                                    SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING);
+                                    SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING, ids);
                     if (!CollectionUtils.isEmpty(currentTransactions)) {
                         transactions = currentTransactions;
                     }

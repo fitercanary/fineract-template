@@ -55,6 +55,7 @@ import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -783,12 +784,15 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     
     @Override
     public Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(final Long savingsId, DepositAccountType depositAccountType,
-            SavingsAccountTransactionType savingsAccountTransactionType) {
+            SavingsAccountTransactionType savingsAccountTransactionType, String ids) {
 
         final String sql = "select " + this.transactionsMapper.schema()
-                + " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
+                + " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ?"
+                + " and tr.id not in ("+ ids +")"
+                + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
 
-        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue() });
+        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue()
+                });
     }
 
     @Override
@@ -1524,16 +1528,33 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         json.put("paymentTypeId", savingsAccountTransaction.getPaymentDetail().getPaymentType().getId());
         json.put("accountNumber", savingsAccountTransaction.getPaymentDetail().getAccountNumber());
         json.put("bankNumber", savingsAccountTransaction.getPaymentDetail().getBankNumber());
-        json.put("remarks", "Reversal Of transactionId " +transactionId);
+        json.put("remarks", SavingsApiConstants.SAVINGS_ACCOUNT_TRANSACTION_REMARKS +transactionId);
         json.put("transactionBrandName", savingsTransactionRequest.getTransactionBrandName());
         json.put("imageTag", savingsTransactionRequest.getImageTag());
         json.put("latitude", savingsTransactionRequest.getLatitude());
         json.put("longitude", savingsTransactionRequest.getLongitude());
         json.put("category", savingsTransactionRequest.getCategory());
-        json.put("notes", "Reversal Of transactionId " +transactionId);
+        json.put("notes", SavingsApiConstants.SAVINGS_ACCOUNT_TRANSACTION_REMARKS +transactionId);
         json.put("noteImage", savingsTransactionRequest.getNoteImage());
         json.put("note", "");
         return json.toString();
     }
 
+    @Override
+    public String fetchReversalTransactionRequest() {
+        String reversalIds = "";
+        Collection<SavingsTransactionRequest> request = this.savingsTransactionRequestRepository.findByRemarks("%Reversal Of transactionId%");
+        for(SavingsTransactionRequest req : request) {
+            if(req.getRemarks().contains("Reversal Of")) {
+                String value[]; 
+                value = req.getRemarks().split(" ");
+                reversalIds = reversalIds.concat(value[3] + ",");
+                reversalIds = reversalIds.concat(String.valueOf(req.getTransaction().getId())  + ",");
+                
+            }
+        }
+        if( reversalIds.length() > 0 )
+            reversalIds = reversalIds.substring(0, reversalIds.length() - 1);
+        return reversalIds;
+    }
 }

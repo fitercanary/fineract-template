@@ -220,15 +220,27 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         BigDecimal amount = BigDecimal.ZERO;
         BigDecimal interestportion = null;
         BigDecimal totalAccInterest = null;
+        LocalDate accuredTill = null;
         if (scheduleAccrualData.getAccruableIncome() != null) {
+            LocalDate interestStartDate = scheduleAccrualData.getFromDateAsLocaldate();
             interestportion = scheduleAccrualData.getAccruableIncome();
-            totalAccInterest = interestportion;
-            if (scheduleAccrualData.getAccruedInterestIncome() != null) {
-                interestportion = interestportion.subtract(scheduleAccrualData.getAccruedInterestIncome());
-            }
-            amount = amount.add(interestportion);
-            if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
-                interestportion = null;
+             totalAccInterest = scheduleAccrualData.getAccruedInterestIncome();
+            
+            int totalNumberOfDays = Days.daysBetween(interestStartDate, scheduleAccrualData.getDueDateAsLocaldate()).getDays();
+            double interestPerDay = scheduleAccrualData.getAccruableIncome().doubleValue() / totalNumberOfDays;
+            interestportion = BigDecimal.valueOf(interestPerDay);
+            interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(), MoneyHelper.getRoundingMode());
+            
+            if (interestportion != null) {
+                if (totalAccInterest == null) {
+                    totalAccInterest = BigDecimal.ZERO;
+                }
+                
+                amount = amount.add(interestportion);
+                totalAccInterest = totalAccInterest.add(interestportion);
+                if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
+                    interestportion = null;
+                }
             }
         }
 
@@ -259,9 +271,14 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                 penaltyportion = null;
             }
         }
+        if(scheduleAccrualData.getAccruedTill() != null) {
+            accuredTill = scheduleAccrualData.getAccruedTill().plusDays(1);
+        }else {
+            accuredTill = scheduleAccrualData.getFromDateAsLocaldate().plusDays(1);
+        }
         if (amount.compareTo(BigDecimal.ZERO) == 1) {
             addAccrualAccounting(scheduleAccrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee, penaltyportion,
-                    totalAccPenalty, scheduleAccrualData.getDueDateAsLocaldate());
+                    totalAccPenalty, accuredTill);
         }
     }
 
@@ -504,9 +521,8 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             final List<Long> existingReversedTransactionIds) {
         final MonetaryCurrency currency = loan.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
-        boolean isAccountTransfer = false;
         final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
-                existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+                existingTransactionIds, existingReversedTransactionIds);
         this.journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
 }

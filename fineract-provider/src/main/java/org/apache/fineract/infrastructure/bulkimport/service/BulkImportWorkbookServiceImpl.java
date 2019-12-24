@@ -33,15 +33,17 @@ import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRu
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.infrastructure.documentmanagement.contentrepository.ContentRepository;
+import org.apache.fineract.infrastructure.documentmanagement.contentrepository.ContentRepositoryFactory;
 import org.apache.fineract.infrastructure.documentmanagement.data.DocumentData;
 import org.apache.fineract.infrastructure.documentmanagement.domain.Document;
 import org.apache.fineract.infrastructure.documentmanagement.domain.DocumentRepository;
+import org.apache.fineract.infrastructure.documentmanagement.domain.StorageType;
 import org.apache.fineract.infrastructure.documentmanagement.service.DocumentWritePlatformService;
 import org.apache.fineract.infrastructure.documentmanagement.service.DocumentWritePlatformServiceJpaRepositoryImpl;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.tika.Tika;
 import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TikaInputStream;
@@ -72,19 +74,21 @@ public class BulkImportWorkbookServiceImpl implements BulkImportWorkbookService 
 	private final DocumentRepository documentRepository;
 	private final ImportDocumentRepository importDocumentRepository;
 	private final JdbcTemplate jdbcTemplate;
+	private final ContentRepositoryFactory contentRepositoryFactory;
 
 	@Autowired
 	public BulkImportWorkbookServiceImpl(final ApplicationContext applicationContext,
 										 final PlatformSecurityContext securityContext,
 										 final DocumentWritePlatformService documentWritePlatformService,
 										 final DocumentRepository documentRepository,
-										 final ImportDocumentRepository importDocumentRepository, final RoutingDataSource dataSource) {
+										 final ImportDocumentRepository importDocumentRepository, final RoutingDataSource dataSource, ContentRepositoryFactory contentRepositoryFactory) {
 		this.applicationContext = applicationContext;
 		this.securityContext = securityContext;
 		this.documentWritePlatformService = documentWritePlatformService;
 		this.documentRepository = documentRepository;
 		this.importDocumentRepository = importDocumentRepository;
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
+		this.contentRepositoryFactory = contentRepositoryFactory;
 	}
 
 	@Override
@@ -275,17 +279,18 @@ public class BulkImportWorkbookServiceImpl implements BulkImportWorkbookService 
 	private Response buildResponse(DocumentData documentData) {
 		String fileName = "Output" + documentData.fileName();
 		String fileLocation = documentData.fileLocation();
-		File file = new File(fileLocation);
-		final Response.ResponseBuilder response = Response.ok((Object) file);
+		ContentRepository contentRepository = this.contentRepositoryFactory.getRepository(documentData.storageType());
+		Object file = documentData.storageType().equals(StorageType.FILE_SYSTEM) ? new File(fileLocation) : contentRepository.fetchFile(documentData).file();
+		final Response.ResponseBuilder response = Response.ok(file);
 		response.header("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-		response.header("Content-Type", "application/vnd.ms-excel");
+		response.header("Content-Type", documentData.contentType());
 		return response.build();
 	}
 
 	private static final class ImportTemplateLocationMapper implements RowMapper<DocumentData> {
 		public String schema() {
 			final StringBuilder sql = new StringBuilder();
-			sql.append("d.location,d.file_name ")
+			sql.append("d.* ")
 					.append("from m_import_document i inner join m_document d on i.document_id=d.id ")
 					.append("where i.id= ? ");
 			return sql.toString();
@@ -293,10 +298,15 @@ public class BulkImportWorkbookServiceImpl implements BulkImportWorkbookService 
 
 		@Override
 		public DocumentData mapRow(ResultSet rs, int rowNum) throws SQLException {
+			final Long id = rs.getLong("id");
+			final String name = rs.getString("name");
 			final String location = rs.getString("location");
 			final String fileName = rs.getString("file_name");
-			return new DocumentData(null, null, null, null, fileName,
-					null, null, null, location, null);
+			final Integer storageType = rs.getInt("storage_type_enum");
+			final String parentEntityType = rs.getString("parent_entity_type");
+			final Long parentEntityId = rs.getLong("parent_entity_id");
+			return new DocumentData(id, parentEntityType, parentEntityId, name, fileName,
+					null, "application/vnd.ms-excel", null, location, storageType);
 		}
 	}
 }

@@ -213,6 +213,38 @@ public class SavingsAccountTransactionsApiResource {
     }
 
     @POST
+    @Path("/makeReversal/{transactionId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String makeReversal(@PathParam("savingsId") final Long savingsId, @PathParam("transactionId") final Long transactionId,
+            @QueryParam("command") final String commandParam, final String apiRequestBodyAsJson) {
+
+        try {
+            String modifiedApiRequestBodyAsJson = this.savingsAccountReadPlatformService.retrieveSavingsTransactionForReversal(savingsId,
+                    transactionId, apiRequestBodyAsJson);
+            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(modifiedApiRequestBodyAsJson);
+
+            CommandProcessingResult result = null;
+            if (is(commandParam, "makeReversal")) {
+                final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            }
+            if (result == null) {
+                //
+                throw new UnrecognizedQueryParamException("command", commandParam,
+                        new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
+            }
+            return this.toApiJsonSerializer.serialize(result);
+        } catch (ObjectOptimisticLockingFailureException lockingFailureException) {
+            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations",
+                    "Concurrent Transactions being made on this savings account: " + lockingFailureException.getMessage());
+        } catch (CannotAcquireLockException cannotAcquireLockException) {
+            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations.unable.to.acquire.lock",
+                    "Unable to acquire lock for this transaction: " + cannotAcquireLockException.getMessage());
+        }
+    }
+
+    @POST
     @Path("{transactionId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })

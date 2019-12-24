@@ -16,20 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.domain;
+package org.apache.fineract.portfolio.charge.exception;
 
-import java.util.Date;
-import java.util.List;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+/**
+ * {@link AbstractPlatformDomainRuleException} thrown when currency mismatch
+ * occurs
+ */
+public class SavingsAccountChargeCanNotBeBeforeLastTransactionDate extends AbstractPlatformDomainRuleException {
 
-public interface LoanRepaymentScheduleInstallmentRepository extends JpaRepository<LoanRepaymentScheduleInstallment, Long>,
-        JpaSpecificationExecutor<LoanRepaymentScheduleInstallment> {
-    
-    @Query("select ls from LoanRepaymentScheduleInstallment ls where ls.loan.id = :id and ls.dueDate <= :dueDate" )
-    List<LoanRepaymentScheduleInstallment> findByIdAndDueDate(@Param("id") Long id, @Param("dueDate") Date dueDate);
+    public SavingsAccountChargeCanNotBeBeforeLastTransactionDate(final String entity, final String postFix, final String defaultUserMessage,
+            final Object... defaultUserMessageArgs) {
+        super("error.msg." + entity + "." + postFix + ".cannot.be.in.the.past", defaultUserMessage, defaultUserMessageArgs);
+    }
 
 }

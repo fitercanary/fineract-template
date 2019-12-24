@@ -49,6 +49,7 @@ import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
+import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeCanNotBeBeforeLastTransactionDate;
 import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeWithoutMandatoryFieldException;
 import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
@@ -179,6 +180,14 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                         defaultUserMessage, chargeDefinition.getId(), chargeDefinition.getName());
             }
 
+        }
+        
+        if (isOnSpecifiedDueDate()) {
+            if (savingsAccount.isDateBeforeLastTransaction(dueDate)) {
+                final String defaultUserMessage = "Savings Account charge due date can not be in past from last transaction date.";
+                throw new SavingsAccountChargeCanNotBeBeforeLastTransactionDate("savingsaccount.charge", dueAsOfDateParamName,
+                        defaultUserMessage, chargeDefinition.getId(), chargeDefinition.getName());
+            }
         }
 
         if (isAnnualFee() || isMonthlyFee()) {

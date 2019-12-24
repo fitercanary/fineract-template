@@ -452,7 +452,7 @@ public class DepositAccountAssembler {
                         detail = this.paymentDetailAssembler.fetchPaymentDetail(savingsTransactionElement);
                     }
                     final SavingsAccountTransactionDTO savingsAccountTransactionDTO = new SavingsAccountTransactionDTO(formatter,
-                            transactionDate, dueAmount, detail, new Date(), savingsId, user, depositAccountType);
+                            transactionDate, dueAmount, detail, new Date(), savingsId, user, depositAccountType, false);
                     savingsAccountTransactions.add(savingsAccountTransactionDTO);
                 }
             }

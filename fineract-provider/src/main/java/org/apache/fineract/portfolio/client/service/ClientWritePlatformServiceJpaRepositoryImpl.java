@@ -961,6 +961,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 				.build();
 	}
 
+    @Override
+    public void saveDynamicLink(Long clientId, String dynamicLink) {
+        Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+        client.setReferralDynamicLink(dynamicLink);
+        this.clientRepository.save(client);
+    }
+
     private Map<BUSINESS_ENTITY, Object> constructEntityMap(final BUSINESS_ENTITY entityEvent, Object entity) {
         Map<BUSINESS_ENTITY, Object> map = new HashMap<>(1);
         map.put(entityEvent, entity);

@@ -18,15 +18,15 @@
  */
 package org.apache.fineract.portfolio.client.domain;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.client.exception.ClientNotActiveException;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>
@@ -85,12 +85,16 @@ public class ClientRepositoryWrapper {
         this.context.validateAccessRights(client.getOffice().getHierarchy());
         return client;
     }
-    
-    public Client getClientByAccountNumber(String accountNumber){
+
+    public Client getClientByAccountNumber(String accountNumber) {
         Client client = this.repository.getClientByAccountNumber(accountNumber);
-        if(client==null){
-            throw  new ClientNotFoundException(accountNumber);
+        if (client == null) {
+            throw new ClientNotFoundException(accountNumber);
         }
         return client;
+    }
+
+    public Client getClientByReferralId(String referralId) {
+        return this.repository.getClientByReferralId(referralId);
     }
 }

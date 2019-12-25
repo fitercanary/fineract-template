@@ -59,6 +59,7 @@ import org.apache.fineract.portfolio.accountdetails.data.AccountSummaryCollectio
 import org.apache.fineract.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
 import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
+import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,7 @@ public class ClientsApiResource {
     private final PlatformSecurityContext context;
     private final ClientReadPlatformService clientReadPlatformService;
     private final ToApiJsonSerializer<ClientData> toApiJsonSerializer;
+    private final ClientWritePlatformService clientWritePlatformService;
     private final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
@@ -83,17 +85,18 @@ public class ClientsApiResource {
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
-            final ToApiJsonSerializer<ClientData> toApiJsonSerializer,
-            final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer,
-            final ApiRequestParameterHelper apiRequestParameterHelper,
-            final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-            final BulkImportWorkbookService bulkImportWorkbookService) {
+                              final ToApiJsonSerializer<ClientData> toApiJsonSerializer,
+                              ClientWritePlatformService clientWritePlatformService, final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer,
+                              final ApiRequestParameterHelper apiRequestParameterHelper,
+                              final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+                              final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
+                              final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+                              final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
+                              final BulkImportWorkbookService bulkImportWorkbookService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
+        this.clientWritePlatformService = clientWritePlatformService;
         this.clientAccountSummaryToApiJsonSerializer = clientAccountSummaryToApiJsonSerializer;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
@@ -188,6 +191,34 @@ public class ClientsApiResource {
         }
 
         return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+    }
+
+    @GET
+    @Path("generate-referral-id/{clientId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String generateReferralId(@PathParam("clientId") final Long clientId) {
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        return this.clientReadPlatformService.getReferralId(clientId);
+    }
+
+    @GET
+    @Path("get-dynamic-link/{clientId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String getDynamicLink(@PathParam("clientId") final Long clientId) {
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        return this.clientReadPlatformService.getDynamicLink(clientId);
+    }
+
+    @POST
+    @Path("save-dynamic-link/{clientId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String saveDynamicLink(@PathParam("clientId") final Long clientId, @QueryParam("dynamicLink") final String dynamicLink) {
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        this.clientWritePlatformService.saveDynamicLink(clientId, dynamicLink);
+        return dynamicLink;
     }
 
     @POST

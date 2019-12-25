@@ -18,15 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -91,6 +82,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountReadPlatformService {
@@ -818,18 +817,19 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(),
                 this.transactionsMapper);
     }
-    
+
     @Override
     public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters, String transactionIds) {
         List<Object> paramList = new ArrayList<>();
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
+        String transactionIdsWhere = StringUtils.isNotBlank(transactionIds) ? " and tr.id not in (" + transactionIds + ") " : "";
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.transactionsMapper.schema());
         sqlBuilder.append(
-                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? and tr.id not in ("+ transactionIds +") order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? " + transactionIdsWhere + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
             if (searchParameters.isLimited()) {

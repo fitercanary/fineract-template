@@ -824,12 +824,14 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
-        String transactionIdsWhere = StringUtils.isNotBlank(transactionIds) ? " and tr.id not in (" + transactionIds + ") " : "";
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.transactionsMapper.schema());
-        sqlBuilder.append(
-                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? " + transactionIdsWhere + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+        sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? ");
+        if (StringUtils.isNotBlank(transactionIds)) {
+            sqlBuilder.append(" and tr.id not in (" + transactionIds + ") ");
+        }
+        sqlBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
             if (searchParameters.isLimited()) {

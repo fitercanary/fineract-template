@@ -90,7 +90,7 @@ public class ClientApiConstants {
     public static final String lastnameParamName = "lastname";
     public static final String fullnameParamName = "fullname";
     public static final String mothersMaidenNameParamName="mothersMaidenName";
-    public static final String referralIdParamName = "referralId"
+    public static final String referralIdParamName = "referralId";
     public static final String displaynameParamName = "displayname";
     public static final String officeIdParamName = "officeId";
     public static final String transferOfficeIdParamName = "transferOfficeIdParamName";

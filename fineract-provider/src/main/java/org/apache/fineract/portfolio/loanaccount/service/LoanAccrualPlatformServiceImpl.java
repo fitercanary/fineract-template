@@ -52,7 +52,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
         Map<Long, Collection<LoanScheduleAccrualData>> loanDataMap = new HashMap<>();
         for (final LoanScheduleAccrualData accrualData : loanScheduleAccrualDatas) {
             if (loanDataMap.containsKey(accrualData.getLoanId())) {
-                loanDataMap.get(accrualData.getLoanId()).add(accrualData);
+                //loanDataMap.get(accrualData.getLoanId()).add(accrualData);
             } else {
                 Collection<LoanScheduleAccrualData> accrualDatas = new ArrayList<>();
                 accrualDatas.add(accrualData);

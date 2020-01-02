@@ -384,6 +384,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             BigDecimal chargeAmount = BigDecimal.ZERO;
             if (loanCharge.getDueDate() == null) {
                 if (loanCharge.isInstallmentFee() && accrualData.getDueDateAsLocaldate().isEqual(endDate)) {
+                    if(accrualData.getDueDateAsLocaldate().isEqual(LocalDate.now())) {
                     Collection<LoanInstallmentChargeData> installmentData = loanCharge.getInstallmentChargeData();
                     for (LoanInstallmentChargeData installmentChargeData : installmentData) {
 
@@ -410,20 +411,22 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                             }
                             break;
                         }
-                    }
+                    }}
                 }
-            } else if (loanCharge.getDueDate().isAfter(startDate) && !loanCharge.getDueDate().isAfter(endDate)) {
-                chargeAmount = loanCharge.getAmount();
-                if (loanCharge.getAmountUnrecognized() != null) {
-                    chargeAmount = chargeAmount.subtract(loanCharge.getAmountUnrecognized());
-                }
-                boolean canAddCharge = chargeAmount.compareTo(BigDecimal.ZERO) == 1;
-                if (canAddCharge && (loanCharge.getAmountAccrued() == null || chargeAmount.compareTo(loanCharge.getAmountAccrued()) != 0)) {
-                    BigDecimal amountForAccrual = chargeAmount;
-                    if (loanCharge.getAmountAccrued() != null) {
-                        amountForAccrual = chargeAmount.subtract(loanCharge.getAmountAccrued());
+            } else if (loanCharge.getDueDate().isEqual(startDate) && !loanCharge.getDueDate().isAfter(endDate)) {
+                if(accrualData.getDueDateAsLocaldate().isEqual(LocalDate.now())) {
+                    chargeAmount = loanCharge.getAmount();
+                    if (loanCharge.getAmountUnrecognized() != null) {
+                        chargeAmount = chargeAmount.subtract(loanCharge.getAmountUnrecognized());
                     }
-                    applicableCharges.put(loanCharge, amountForAccrual);
+                    boolean canAddCharge = chargeAmount.compareTo(BigDecimal.ZERO) == 1;
+                    if (canAddCharge && (loanCharge.getAmountAccrued() == null || chargeAmount.compareTo(loanCharge.getAmountAccrued()) != 0)) {
+                        BigDecimal amountForAccrual = chargeAmount;
+                        if (loanCharge.getAmountAccrued() != null) {
+                            amountForAccrual = chargeAmount.subtract(loanCharge.getAmountAccrued());
+                        }
+                        applicableCharges.put(loanCharge, amountForAccrual);
+                    }
                 }
             }
 

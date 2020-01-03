@@ -1609,7 +1609,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" and (((ls.fee_charges_amount <> if(ls.accrual_fee_charges_derived is null,0, ls.accrual_fee_charges_derived))")
                 .append(" or ( ls.penalty_charges_amount <> if(ls.accrual_penalty_charges_derived is null,0,ls.accrual_penalty_charges_derived))")
                 .append(" or ( ls.interest_amount <> if(ls.accrual_interest_derived is null,0,ls.accrual_interest_derived)))")
-                .append(" and loan.loan_status_id=:active and mpl.accounting_type=:type and loan.is_npa=0 and ls.fromdate <= CURDATE() and ls.duedate >= CURDATE()) ");
+                .append(" and loan.loan_status_id=:active and mpl.accounting_type=:type and loan.is_npa=0 and ls.duedate <= CURDATE()) ");
         if(organisationStartDate != null){
             sqlBuilder.append(" and ls.duedate > :organisationstartdate ");
         }
@@ -1720,7 +1720,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         public String schema() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
             sqlBuilder
-                    .append("loan.id as loanId ,if(loan.client_id is null,mg.office_id,mc.office_id) as officeId, loan.accrued_till as accruedTill,")
+                    .append("loan.id as loanId ,if(loan.client_id is null,mg.office_id,mc.office_id) as officeId,")
                     .append("ls.duedate as duedate,ls.fromdate as fromdate,ls.id as scheduleId,loan.product_id as productId,")
                     .append("ls.installment as installmentNumber, ")
                     .append("ls.interest_amount as interest, ls.interest_waived_derived as interestWaived,")
@@ -1763,7 +1763,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Integer inMultiplesOf = JdbcSupport.getInteger(rs, "inMultiplesOf");
             final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDigits, inMultiplesOf,
                     currencyDisplaySymbol, currencyNameCode);
-            final LocalDate accruedTill = JdbcSupport.getLocalDate(rs, "accruedTill");
+            final LocalDate accruedTill = null;
             final PeriodFrequencyType frequency = null;
             final Integer repayEvery = null;
             final LocalDate interestCalculatedFrom = null;

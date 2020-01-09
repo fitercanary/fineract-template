@@ -235,6 +235,16 @@ public final class Client extends AbstractPersistableCustom<Long> {
     @JoinColumn(name = "reopened_by_userid", nullable = true)
     private AppUser reopenedBy;
 
+    @Column(name = "referral_id")
+    private String referralId;
+
+    @Column(name = "referral_dynamic_link")
+    private String referralDynamicLink;
+
+    @OneToOne
+    @JoinColumn(name = "referred_by_id")
+    private Client referredBy;
+
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
             final Integer legalForm, final JsonCommand command) {
@@ -1079,4 +1089,27 @@ public final class Client extends AbstractPersistableCustom<Long> {
         this.mothersMaidenName = mothersMaidenName;
     }
 
+    public String getReferralId() {
+        return referralId;
+    }
+
+    public void setReferralId(String referralId) {
+        this.referralId = referralId;
+    }
+
+    public String getReferralDynamicLink() {
+        return referralDynamicLink;
+    }
+
+    public void setReferralDynamicLink(String referralDynamicLink) {
+        this.referralDynamicLink = referralDynamicLink;
+    }
+
+    public Client getReferredBy() {
+        return referredBy;
+    }
+
+    public void setReferredBy(Client referredBy) {
+        this.referredBy = referredBy;
+    }
 }

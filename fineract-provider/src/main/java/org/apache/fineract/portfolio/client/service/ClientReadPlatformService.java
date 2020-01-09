@@ -45,4 +45,8 @@ public interface ClientReadPlatformService {
     Collection<ClientData> retrieveActiveClientMembersOfCenter(final Long centerId);
 
     ClientData retrieveAllNarrations(String clientNarrations);
+
+	String getReferralId(Long clientId);
+
+    String getDynamicLink(Long clientId);
 }

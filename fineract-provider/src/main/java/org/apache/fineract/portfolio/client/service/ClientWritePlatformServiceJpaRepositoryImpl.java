@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.persistence.PersistenceException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandProcessingService;
@@ -294,6 +295,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             
             final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProductId, gender,
                     clientType, clientClassification, legalFormValue, command);
+            final String referralId = command.stringValueOfParameterNamed(ClientApiConstants.referralIdParamName);
+            if (StringUtils.isNotBlank(referralId)) {
+                Client referredBy = this.clientRepository.getClientByReferralId(referralId);
+                if (referredBy != null) {
+                    newClient.setReferredBy(referredBy);
+                }
+            }
             this.clientRepository.save(newClient);
             boolean rollbackTransaction = false;
             if (newClient.isActive()) {
@@ -960,6 +968,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 				.withEntityId(entityId) //
 				.build();
 	}
+
+    @Override
+    public void saveDynamicLink(Long clientId, String dynamicLink) {
+        Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+        client.setReferralDynamicLink(dynamicLink);
+        this.clientRepository.save(client);
+    }
 
     private Map<BUSINESS_ENTITY, Object> constructEntityMap(final BUSINESS_ENTITY entityEvent, Object entity) {
         Map<BUSINESS_ENTITY, Object> map = new HashMap<>(1);

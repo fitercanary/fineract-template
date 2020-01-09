@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
@@ -54,7 +55,9 @@ import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.data.ClientFamilyMembersData;
 import org.apache.fineract.portfolio.client.data.ClientNonPersonData;
 import org.apache.fineract.portfolio.client.data.ClientTimelineData;
+import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
+import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
 import org.apache.fineract.portfolio.client.domain.LegalForm;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
@@ -91,16 +94,17 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ConfigurationReadPlatformService configurationReadPlatformService;
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
     private final ColumnValidator columnValidator;
+    private final ClientRepositoryWrapper clientRepositoryWrapper;
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-            final OfficeReadPlatformService officeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
-            final CodeValueReadPlatformService codeValueReadPlatformService,
-            final SavingsProductReadPlatformService savingsProductReadPlatformService,
-            final AddressReadPlatformService addressReadPlatformService,final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
-            final ConfigurationReadPlatformService configurationReadPlatformService,
-            final EntityDatatableChecksReadService entityDatatableChecksReadService,
-            final ColumnValidator columnValidator) {
+                                         final OfficeReadPlatformService officeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+                                         final CodeValueReadPlatformService codeValueReadPlatformService,
+                                         final SavingsProductReadPlatformService savingsProductReadPlatformService,
+                                         final AddressReadPlatformService addressReadPlatformService, final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
+                                         final ConfigurationReadPlatformService configurationReadPlatformService,
+                                         final EntityDatatableChecksReadService entityDatatableChecksReadService,
+                                         final ColumnValidator columnValidator, ClientRepositoryWrapper clientRepositoryWrapper) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -112,6 +116,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.configurationReadPlatformService=configurationReadPlatformService;
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
         this.columnValidator = columnValidator;
+        this.clientRepositoryWrapper = clientRepositoryWrapper;
     }
 
     @Override
@@ -820,4 +825,29 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         		clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientLegalFormOptions,null,null,null, null);
     }
 
+    @Override
+    public String getReferralId(Long clientId) {
+        Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+        if (StringUtils.isNotBlank(client.getReferralId())) {
+            return client.getReferralId();
+        }
+        while (true) {
+            UUID uuid = UUID.randomUUID();
+            Client existingClient = this.clientRepositoryWrapper.getClientByReferralId(uuid.toString());
+            if (existingClient == null) {
+                client.setReferralId(uuid.toString());
+                this.clientRepositoryWrapper.save(client);
+                return client.getReferralId();
+            }
+        }
+    }
+
+    @Override
+    public String getDynamicLink(Long clientId) {
+        Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+        if (StringUtils.isNotBlank(client.getReferralId())) {
+            return client.getReferralDynamicLink();
+        }
+        return "";
+    }
 }

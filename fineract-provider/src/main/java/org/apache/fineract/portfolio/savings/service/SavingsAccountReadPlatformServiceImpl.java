@@ -18,15 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -55,6 +46,7 @@ import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -90,6 +82,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountReadPlatformService {
@@ -783,12 +783,15 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     
     @Override
     public Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(final Long savingsId, DepositAccountType depositAccountType,
-            SavingsAccountTransactionType savingsAccountTransactionType) {
+            SavingsAccountTransactionType savingsAccountTransactionType, String ids) {
 
         final String sql = "select " + this.transactionsMapper.schema()
-                + " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
+                + " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ?"
+                + " and tr.id not in ("+ ids +")"
+                + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
 
-        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue() });
+        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue()
+                });
     }
 
     @Override
@@ -814,9 +817,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         return this.paginationHelperForTransaction.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(),
                 this.transactionsMapper);
     }
-    
+
     @Override
-    public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters) {
+    public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters, String transactionIds) {
         List<Object> paramList = new ArrayList<>();
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
@@ -824,8 +827,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.transactionsMapper.schema());
-        sqlBuilder.append(
-                " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+        sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? ");
+        if (StringUtils.isNotBlank(transactionIds)) {
+            sqlBuilder.append(" and tr.id not in (" + transactionIds + ") ");
+        }
+        sqlBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
             if (searchParameters.isLimited()) {
@@ -1524,16 +1530,33 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         json.put("paymentTypeId", savingsAccountTransaction.getPaymentDetail().getPaymentType().getId());
         json.put("accountNumber", savingsAccountTransaction.getPaymentDetail().getAccountNumber());
         json.put("bankNumber", savingsAccountTransaction.getPaymentDetail().getBankNumber());
-        json.put("remarks", "Reversal Of transactionId " +transactionId);
+        json.put("remarks", SavingsApiConstants.SAVINGS_ACCOUNT_TRANSACTION_REMARKS +transactionId);
         json.put("transactionBrandName", savingsTransactionRequest.getTransactionBrandName());
         json.put("imageTag", savingsTransactionRequest.getImageTag());
         json.put("latitude", savingsTransactionRequest.getLatitude());
         json.put("longitude", savingsTransactionRequest.getLongitude());
         json.put("category", savingsTransactionRequest.getCategory());
-        json.put("notes", "Reversal Of transactionId " +transactionId);
+        json.put("notes", SavingsApiConstants.SAVINGS_ACCOUNT_TRANSACTION_REMARKS +transactionId);
         json.put("noteImage", savingsTransactionRequest.getNoteImage());
         json.put("note", "");
         return json.toString();
     }
 
+    @Override
+    public String fetchReversalTransactionRequest() {
+        String reversalIds = "";
+        Collection<SavingsTransactionRequest> request = this.savingsTransactionRequestRepository.findByRemarks("%Reversal Of transactionId%");
+        for(SavingsTransactionRequest req : request) {
+            if(req.getRemarks().contains("Reversal Of")) {
+                String value[]; 
+                value = req.getRemarks().split(" ");
+                reversalIds = reversalIds.concat(value[3] + ",");
+                reversalIds = reversalIds.concat(String.valueOf(req.getTransaction().getId())  + ",");
+                
+            }
+        }
+        if( reversalIds.length() > 0 )
+            reversalIds = reversalIds.substring(0, reversalIds.length() - 1);
+        return reversalIds;
+    }
 }

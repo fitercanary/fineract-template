@@ -290,7 +290,7 @@ public class SavingsAccountsApiResource {
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
-
+            String ids = this.savingsAccountReadPlatformService.fetchReversalTransactionRequest();
             if (associationParameters.contains("all")) {
                 associationParameters.addAll(Arrays.asList(SavingsApiConstants.transactions, SavingsApiConstants.charges));
             }
@@ -300,7 +300,7 @@ public class SavingsAccountsApiResource {
                 if (pageNumber != null && pageSize != null) {
                     SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
                     final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.savingsAccountReadPlatformService
-                            .retrieveAllSavingAccTransactionsWithoutAccural(accountId, searchParameters);
+                            .retrieveAllSavingAccTransactionsWithoutAccural(accountId, searchParameters, ids);
                     Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
                     if (!CollectionUtils.isEmpty(currentTransactions)) {
                         transactions = currentTransactions;
@@ -309,9 +309,11 @@ public class SavingsAccountsApiResource {
                     }
                     transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
                 } else {
+                    
+                  
                     final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
                             .retrieveAllTransactionsWithoutAccural(accountId, DepositAccountType.SAVINGS_DEPOSIT,
-                                    SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING);
+                                    SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING, ids);
                     if (!CollectionUtils.isEmpty(currentTransactions)) {
                         transactions = currentTransactions;
                     }

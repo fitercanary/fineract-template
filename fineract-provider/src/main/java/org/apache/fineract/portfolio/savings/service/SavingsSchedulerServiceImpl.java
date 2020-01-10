@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalidException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
@@ -72,8 +73,12 @@ public class SavingsSchedulerServiceImpl implements SavingsSchedulerService {
 				if (e.getCause() != null) {
 					realCause = e.getCause();
 				}
-				sb.append("failed to post interest for Savings with id " + savingsAccount.getId() + " with message "
-						+ realCause.getMessage());
+				String message = realCause.getMessage();
+				if (message == null && realCause instanceof JournalEntryInvalidException) {
+					message = ((JournalEntryInvalidException) realCause).getDefaultUserMessage();
+				}
+				sb.append(" Failed to post interest for Savings with id " + savingsAccount.getAccountNumber() + " with message "
+						+ message);
 			}
 		}
 

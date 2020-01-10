@@ -795,7 +795,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final boolean isInterestTransfer = false;
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
-
+            account.setMinRequiredBalance(BigDecimal.ZERO);
             this.savingsAccountDomainService.handleWithdrawal(account, fmt, closedDate, transactionAmount, paymentDetail,
                     transactionBooleanValues);
 

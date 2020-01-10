@@ -2406,12 +2406,21 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         final List<SavingsAccountTransaction> savingsAccountTransactions = retreiveListOfTransactions();
         if (savingsAccountTransactions.size() > 0) {
-            final SavingsAccountTransaction accountTransaction = savingsAccountTransactions.get(savingsAccountTransactions.size() - 1);
-            if (accountTransaction.isAfter(closedDate)) {
-                baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
-                        .failWithCode("must.be.after.last.transaction.date");
-                if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            // final SavingsAccountTransaction accountTransaction =
+            // savingsAccountTransactions.get(savingsAccountTransactions.size()
+            // - 1);
+            for (SavingsAccountTransaction accountTransaction : savingsAccountTransactions) {
+                if (accountTransaction.isNotReversed()) {
+                    if (accountTransaction.isAfter(closedDate)) {
+                        baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
+                                .failWithCode("must.be.after.last.transaction.date");
+                        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+                    }
+
+                }
+                break;
             }
+
         }
         if (getAccountBalance().doubleValue() != 0) {
             baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("results.in.balance.not.zero");
@@ -3323,7 +3332,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         LocalDate lastransactionDate = null;
         if (lastTransaction != null) {
             lastransactionDate = lastTransaction.transactionLocalDate();
-        }else {
+        } else {
             lastransactionDate = new LocalDate(this.activatedOnDate);
         }
         return lastransactionDate;
@@ -3556,5 +3565,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
+    }
+
+    public BigDecimal getMinRequiredBalance() {
+        return this.minRequiredBalance;
+    }
+
+    public void setMinRequiredBalance(BigDecimal minRequiredBalance) {
+        this.minRequiredBalance = minRequiredBalance;
     }
 }

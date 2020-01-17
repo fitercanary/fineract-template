@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
@@ -55,11 +56,14 @@ import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.data.ClientFamilyMembersData;
 import org.apache.fineract.portfolio.client.data.ClientNonPersonData;
 import org.apache.fineract.portfolio.client.data.ClientTimelineData;
+import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
 import org.apache.fineract.portfolio.client.domain.LegalForm;
+import org.apache.fineract.portfolio.client.domain.ReferralStatus;
+import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
@@ -95,6 +99,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
     private final ColumnValidator columnValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
+    private final ReferralStatusRepository referralStatusRepository;
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -104,7 +109,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                                          final AddressReadPlatformService addressReadPlatformService, final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
                                          final ConfigurationReadPlatformService configurationReadPlatformService,
                                          final EntityDatatableChecksReadService entityDatatableChecksReadService,
-                                         final ColumnValidator columnValidator, ClientRepositoryWrapper clientRepositoryWrapper) {
+                                         final ColumnValidator columnValidator, ClientRepositoryWrapper clientRepositoryWrapper, ReferralStatusRepository referralStatusRepository) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -117,6 +122,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
         this.columnValidator = columnValidator;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
+        this.referralStatusRepository = referralStatusRepository;
     }
 
     @Override
@@ -849,5 +855,15 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return client.getReferralDynamicLink();
         }
         return "";
+    }
+
+    @Override
+    public List<ReferralStatusData> getPendingReferrals() {
+        final String status = "pending";
+        List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByStatus(status);
+        if (referralStatuses.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
     }
 }

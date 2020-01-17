@@ -301,13 +301,35 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProductId, gender,
                     clientType, clientClassification, legalFormValue, command);
             final String referralId = command.stringValueOfParameterNamed(ClientApiConstants.referralIdParamName);
+            ReferralStatus referralStatus = null;
             if (StringUtils.isNotBlank(referralId)) {
                 Client referredBy = this.clientRepository.getClientByReferralId(referralId);
                 if (referredBy != null) {
                     newClient.setReferredBy(referredBy);
+                    String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
+                    String email = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+                    if (StringUtils.isNotEmpty(mobileNo)) {
+                        referralStatus = this.referralStatusRepository.findReferralStatusByClientAndPhoneNo(referredBy, mobileNo);
+                        if (referralStatus != null) {
+                            referralStatus.setStatus("registered");
+                            referralStatus.setLastSaved(LocalDate.now().toDate());
+                            this.referralStatusRepository.save(referralStatus);
+                        }
+                    } else if (StringUtils.isNotEmpty(email)) {
+                        referralStatus = this.referralStatusRepository.findReferralStatusByClientAndEmail(referredBy, email);
+                        if (referralStatus != null) {
+                            referralStatus.setStatus("registered");
+                            referralStatus.setLastSaved(LocalDate.now().toDate());
+                            this.referralStatusRepository.save(referralStatus);
+                        }
+                    }
                 }
             }
             this.clientRepository.save(newClient);
+            if (referralStatus != null && newClient.getId() != null) {
+                referralStatus.setReferredClient(newClient);
+                this.referralStatusRepository.save(referralStatus);
+            }
             boolean rollbackTransaction = false;
             if (newClient.isActive()) {
                 validateParentGroupRulesBeforeClientActivation(newClient);

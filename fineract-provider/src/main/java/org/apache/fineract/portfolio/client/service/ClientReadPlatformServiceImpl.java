@@ -299,7 +299,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final String sql = "select " + this.clientMapper.schema()
                     + " where ( o.hierarchy like ? or transferToOffice.hierarchy like ?) and c.id = ?";
-            final ClientData clientData = this.jdbcTemplate.queryForObject(sql, this.clientMapper, new Object[] { hierarchySearchString,
+            ClientData clientData = this.jdbcTemplate.queryForObject(sql, this.clientMapper, new Object[] { hierarchySearchString,
                     hierarchySearchString, clientId });
 
             final String clientGroupsSql = "select " + this.clientGroupsMapper.parentGroupsSchema();
@@ -307,7 +307,17 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Collection<GroupGeneralData> parentGroups = this.jdbcTemplate.query(clientGroupsSql, this.clientGroupsMapper,
                     new Object[] { clientId });
 
-            return ClientData.setParentGroups(clientData, parentGroups);
+            clientData = ClientData.setParentGroups(clientData, parentGroups);
+            Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+            if (client.getReferredBy() != null) {
+                clientData.setReferredById(client.getReferredBy().getId());
+                clientData.setReferredBy(client.getReferredBy().getDisplayName());
+            }
+            if (client.getReferralId() != null) {
+                List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByClient(client);
+                clientData.setReferrals(referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList()));
+            }
+            return clientData;
 
         } catch (final EmptyResultDataAccessException e) {
             throw new ClientNotFoundException(clientId);

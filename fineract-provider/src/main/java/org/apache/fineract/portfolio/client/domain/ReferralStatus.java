@@ -49,6 +49,10 @@ public class ReferralStatus extends AbstractPersistableCustom<Long> {
 	@Column(name = "device_id")
 	private String deviceId;
 
+	@ManyToOne
+	@JoinColumn(name = "referred_client_id")
+	private Client referredClient;
+
 	@Column(name = "last_saved", nullable = false)
 	@Temporal(TemporalType.DATE)
 	private Date lastSaved;
@@ -91,6 +95,14 @@ public class ReferralStatus extends AbstractPersistableCustom<Long> {
 
 	public void setDeviceId(String deviceId) {
 		this.deviceId = deviceId;
+	}
+
+	public Client getReferredClient() {
+		return referredClient;
+	}
+
+	public void setReferredClient(Client referredClient) {
+		this.referredClient = referredClient;
 	}
 
 	public Date getLastSaved() {

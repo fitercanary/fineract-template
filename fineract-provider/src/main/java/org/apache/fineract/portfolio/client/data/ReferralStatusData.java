@@ -31,6 +31,8 @@ public class ReferralStatusData {
 	private LocalDate lastSaved;
 	private String referralId;
 	private String dynamicLink;
+	private Long referredClientId;
+	private String referredClient;
 
 	public ReferralStatusData(ReferralStatus referralStatus) {
 		this.email = referralStatus.getEmail();
@@ -40,5 +42,9 @@ public class ReferralStatusData {
 		this.referralId = referralStatus.getClient().getReferralId();
 		this.dynamicLink = referralStatus.getClient().getReferralDynamicLink();
 		this.lastSaved = LocalDate.fromDateFields(referralStatus.getLastSaved());
+		if (referralStatus.getReferredClient() != null) {
+			this.referredClientId = referralStatus.getReferredClient().getId();
+			this.referredClient = referralStatus.getReferredClient().getDisplayName();
+		}
 	}
 }

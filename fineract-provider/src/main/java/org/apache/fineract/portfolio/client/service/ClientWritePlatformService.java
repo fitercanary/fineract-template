@@ -51,5 +51,5 @@ public interface ClientWritePlatformService {
 
     void saveDynamicLink(Long clientId, String dynamicLink);
 
-	void setReferralStatus(Long clientId, String status, String phoneNo, String email, String deviceId);
+	void setReferralStatus(Long clientId, String referralId, String status, String phoneNo, String email, String deviceId);
 }

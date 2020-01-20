@@ -1001,8 +1001,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     }
 
     @Override
-    public void setReferralStatus(Long clientId, String status, String phoneNo, String email, String deviceId) {
-        Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+    public void setReferralStatus(Long clientId, String referralId, String status, String phoneNo, String email, String deviceId) {
+        Client client = clientId != null ? this.clientRepository.findOneWithNotFoundDetection(clientId) :
+                this.clientRepository.getClientByReferralId(referralId);
         ReferralStatus referralStatus = null;
         if (StringUtils.isNotEmpty(phoneNo) || StringUtils.isNotEmpty(email)){
             if (StringUtils.isNotEmpty(phoneNo)) {

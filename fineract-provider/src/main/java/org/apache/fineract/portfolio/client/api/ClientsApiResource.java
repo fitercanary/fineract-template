@@ -224,14 +224,14 @@ public class ClientsApiResource {
     }
 
     @POST
-    @Path("set-referral-status/{clientId}")
+    @Path("set-referral-status")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String setReferralStatus(@PathParam("clientId") final Long clientId, @QueryParam("status") final String status,
-                                    @QueryParam("phoneNo") final String phoneNo, @QueryParam("email") final String email,
-                                    @QueryParam("deviceId") final String deviceId) {
+    public String setReferralStatus(@QueryParam("clientId") final Long clientId, @QueryParam("status") final String status,
+                                    @QueryParam("referralId") final String referralId, @QueryParam("phoneNo") final String phoneNo,
+                                    @QueryParam("email") final String email, @QueryParam("deviceId") final String deviceId) {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
-        this.clientWritePlatformService.setReferralStatus(clientId, status, phoneNo, email, deviceId);
+        this.clientWritePlatformService.setReferralStatus(clientId, referralId, status, phoneNo, email, deviceId);
         return status;
     }
 

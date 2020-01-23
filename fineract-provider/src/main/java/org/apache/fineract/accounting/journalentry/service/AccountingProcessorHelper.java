@@ -143,8 +143,12 @@ public class AccountingProcessorHelper {
             final boolean reversed = (Boolean) map.get("reversed");
             final Long paymentTypeId = (Long) map.get("paymentTypeId");
             Boolean isAccountTransfer = false;
+            Boolean isBeforeDueDate = false;
             if(map.get("isAccountTransfer") != null) {
             isAccountTransfer = (Boolean) map.get("isAccountTransfer");
+            }
+            if(map.get("isBeforeDueDate") != null) {
+                isBeforeDueDate = (Boolean) map.get("isBeforeDueDate");
             }
 
             final List<ChargePaymentDTO> feePaymentDetails = new ArrayList<>();
@@ -169,7 +173,7 @@ public class AccountingProcessorHelper {
 
             final LoanTransactionDTO transaction = new LoanTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
                     transactionDate, transactionType, amount, principal, interest, fees, penalties, overPayments, reversed,
-                    feePaymentDetails, penaltyPaymentDetails, isAccountTransfer);
+                    feePaymentDetails, penaltyPaymentDetails, isAccountTransfer, isBeforeDueDate);
             Boolean isLoanToLoanTransfer = (Boolean) accountingBridgeData.get("isLoanToLoanTransfer");
             if (isLoanToLoanTransfer != null && isLoanToLoanTransfer) {
                 transaction.setIsLoanToLoanTransfer(true);

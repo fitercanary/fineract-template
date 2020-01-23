@@ -305,6 +305,7 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
             StringBuilder sb = new StringBuilder(50);
             sb.append("lc.id as id, lc.charge_id as chargeId, ");
             sb.append("lc.amount as amountDue, ");
+            sb.append("lc.amount_outstanding_derived as amountOutstanding, ");
             sb.append("lc.amount_waived_derived as amountWaived, ");
             sb.append("lc.charge_time_enum as chargeTime, ");
             sb.append(" sum(cp.amount) as amountAccrued, ");
@@ -331,6 +332,7 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
             final Long id = rs.getLong("id");
             final Long chargeId = rs.getLong("chargeId");
             final BigDecimal amount = rs.getBigDecimal("amountDue");
+            final BigDecimal amountOutstanding = rs.getBigDecimal("amountOutstanding");
             final BigDecimal amountAccrued = rs.getBigDecimal("amountAccrued");
             final BigDecimal amountWaived = rs.getBigDecimal("amountWaived");
 
@@ -340,7 +342,7 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
             final LocalDate dueAsOfDate = JdbcSupport.getLocalDate(rs, "dueAsOfDate");
             final boolean penalty = rs.getBoolean("penalty");
 
-            return new LoanChargeData(id, chargeId, dueAsOfDate, chargeTimeType, amount, amountAccrued, amountWaived, penalty);
+            return new LoanChargeData(id, chargeId, dueAsOfDate, chargeTimeType, amount, amountOutstanding, amountAccrued, amountWaived, penalty);
         }
     }
 

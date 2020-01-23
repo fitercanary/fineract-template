@@ -38,6 +38,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
@@ -137,6 +138,9 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
 
     @Column(name = "is_account_transfer", nullable = false)
     private Boolean isAccountTransfer = false;
+
+    @Transient
+    private boolean isBeforeDueDate;
 
     protected LoanTransaction() {
         /*
@@ -647,6 +651,7 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
         thisTransactionData.put("isAccountTransfer", this.isAccountTransfer);
+        thisTransactionData.put("isBeforeDueDate", this.isBeforeDueDate);
 
         if (this.paymentDetail != null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
@@ -820,6 +825,14 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
 
     public void setIsAccountTransfer(Boolean isAccountTransfer) {
         this.isAccountTransfer = isAccountTransfer;
+    }
+
+    public boolean isBeforeDueDate() {
+        return this.isBeforeDueDate;
+    }
+
+    public void setBeforeDueDate(boolean isBeforeDueDate) {
+        this.isBeforeDueDate = isBeforeDueDate;
     }
 
 }

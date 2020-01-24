@@ -84,6 +84,9 @@ final public class ClientData implements Comparable<ClientData> {
 
     private final Long savingsAccountId;
     private final EnumOptionData legalForm;
+    private Long referredById;
+    private String referredBy;
+    private List<ReferralStatusData> referrals;
 
     // associations
     private final Collection<GroupGeneralData> groups;
@@ -616,4 +619,16 @@ final public class ClientData implements Comparable<ClientData> {
     public Boolean getIsAddressEnabled() {
 		return this.isAddressEnabled;
 	}
+
+	public void setReferredById(Long referredById) {
+        this.referredById = referredById;
+    }
+
+    public void setReferredBy(String referredBy) {
+        this.referredBy = referredBy;
+    }
+
+    public void setReferrals(List<ReferralStatusData> referrals) {
+        this.referrals = referrals;
+    }
 }

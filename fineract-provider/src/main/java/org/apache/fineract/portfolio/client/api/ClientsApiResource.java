@@ -18,27 +18,6 @@
  */
 package org.apache.fineract.portfolio.client.api;
 
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.lang.StringUtils;
@@ -58,6 +37,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.portfolio.accountdetails.data.AccountSummaryCollectionData;
 import org.apache.fineract.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
 import org.apache.fineract.portfolio.client.data.ClientData;
+import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
@@ -65,6 +45,26 @@ import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformS
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Path("/clients")
 @Component
@@ -74,6 +74,7 @@ public class ClientsApiResource {
     private final PlatformSecurityContext context;
     private final ClientReadPlatformService clientReadPlatformService;
     private final ToApiJsonSerializer<ClientData> toApiJsonSerializer;
+    private final ToApiJsonSerializer<ReferralStatusData> referralStatusJsonSerializer;
     private final ClientWritePlatformService clientWritePlatformService;
     private final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
@@ -86,7 +87,7 @@ public class ClientsApiResource {
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
                               final ToApiJsonSerializer<ClientData> toApiJsonSerializer,
-                              ClientWritePlatformService clientWritePlatformService, final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer,
+                              ToApiJsonSerializer<ReferralStatusData> referralStatusJsonSerializer, ClientWritePlatformService clientWritePlatformService, final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer,
                               final ApiRequestParameterHelper apiRequestParameterHelper,
                               final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
                               final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
@@ -96,14 +97,15 @@ public class ClientsApiResource {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
+        this.referralStatusJsonSerializer = referralStatusJsonSerializer;
         this.clientWritePlatformService = clientWritePlatformService;
         this.clientAccountSummaryToApiJsonSerializer = clientAccountSummaryToApiJsonSerializer;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.accountDetailsReadPlatformService = accountDetailsReadPlatformService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
-        this.bulkImportWorkbookPopulatorService=bulkImportWorkbookPopulatorService;
-        this.bulkImportWorkbookService=bulkImportWorkbookService;
+        this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
+        this.bulkImportWorkbookService = bulkImportWorkbookService;
     }
 
     @GET
@@ -219,6 +221,27 @@ public class ClientsApiResource {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
         this.clientWritePlatformService.saveDynamicLink(clientId, dynamicLink);
         return dynamicLink;
+    }
+
+    @POST
+    @Path("set-referral-status")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String setReferralStatus(@QueryParam("clientId") final Long clientId, @QueryParam("status") final String status,
+                                    @QueryParam("referralId") final String referralId, @QueryParam("phoneNo") final String phoneNo,
+                                    @QueryParam("email") final String email, @QueryParam("deviceId") final String deviceId) {
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        this.clientWritePlatformService.setReferralStatus(clientId, referralId, status, phoneNo, email, deviceId);
+        return status;
+    }
+
+    @GET
+    @Path("get-pending-referrals")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String getPendingReferrals() {
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        return this.referralStatusJsonSerializer.serialize(this.clientReadPlatformService.getPendingReferrals());
     }
 
     @POST

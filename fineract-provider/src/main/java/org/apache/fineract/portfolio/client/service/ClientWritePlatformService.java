@@ -50,4 +50,6 @@ public interface ClientWritePlatformService {
 	CommandProcessingResult undoWithdrawal(Long entityId, JsonCommand command);
 
     void saveDynamicLink(Long clientId, String dynamicLink);
+
+	void setReferralStatus(Long clientId, String referralId, String status, String phoneNo, String email, String deviceId);
 }

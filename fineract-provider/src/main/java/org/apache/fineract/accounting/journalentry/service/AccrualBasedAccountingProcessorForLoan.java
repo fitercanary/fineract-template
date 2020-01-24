@@ -78,8 +78,14 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
             else if (loanTransactionDTO.getTransactionType().isRepayment()
                     || loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement()
                     || loanTransactionDTO.getTransactionType().isChargePayment()) {
-                createJournalEntriesForRepaymentsAndWriteOffs(loanDTO, loanTransactionDTO, office, false,
-                        loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement());
+                if(loanTransactionDTO.isBeforeDueDate()) {
+                    createJournalEntriesForRepaymentsAndWriteOffs(loanDTO, loanTransactionDTO, office, false,
+                            loanTransactionDTO.getTransactionType().isRepayment());
+                }else {
+                    createJournalEntriesForRepaymentsAndWriteOffs(loanDTO, loanTransactionDTO, office, false,
+                            loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement());
+                }
+                
             }
 
             /** Logic for handling recovery payments **/

@@ -82,6 +82,7 @@ public class LoanChargeData {
 
     private BigDecimal amountUnrecognized;
     
+    
 
     public static LoanChargeData template(final Collection<ChargeData> chargeOptions) {
         return new LoanChargeData(null, null, null, null, null, null, null, null, chargeOptions, false, null, false, false, null, null,
@@ -221,7 +222,7 @@ public class LoanChargeData {
     }
 
     public LoanChargeData(final Long id, final Long chargeId, final LocalDate dueAsOfDate, EnumOptionData chargeTimeType,
-            final BigDecimal amount, final BigDecimal amountAccrued, final BigDecimal amountWaived, final boolean penalty) {
+            final BigDecimal amount, final BigDecimal amountOutstanding , final BigDecimal amountAccrued, final BigDecimal amountWaived, final boolean penalty) {
         this.id = id;
         this.chargeId = chargeId;
         this.name = null;
@@ -230,7 +231,7 @@ public class LoanChargeData {
         this.amountPaid = null;
         this.amountWaived = amountWaived;
         this.amountWrittenOff = null;
-        this.amountOutstanding = null;
+        this.amountOutstanding = amountOutstanding;
         this.chargeTimeType = chargeTimeType;
         this.dueDate = dueAsOfDate;
         this.chargeCalculationType = null;
@@ -260,7 +261,7 @@ public class LoanChargeData {
         this.amountPaid = null;
         this.amountWaived = chargeData.amountWaived;
         this.amountWrittenOff = null;
-        this.amountOutstanding = null;
+        this.amountOutstanding = chargeData.amountOutstanding;
         this.chargeTimeType = chargeData.chargeTimeType;
         this.dueDate = chargeData.dueDate;
         this.chargeCalculationType = null;

@@ -52,6 +52,7 @@ public class LoanScheduleAccrualData {
     private BigDecimal dueDateFeeIncome;
     private BigDecimal dueDatePenaltyIncome;
     private BigDecimal accruableIncome;
+    private BigDecimal chargeOutstandingAmount; 
 
     public LoanScheduleAccrualData(final Long loanId, final Long officeId, final Integer installmentNumber, final LocalDate accruedTill,
             final PeriodFrequencyType repaymentFrequency, final Integer repayEvery, final LocalDate dueDate, final LocalDate fromDate,
@@ -169,10 +170,11 @@ public class LoanScheduleAccrualData {
     }
 
     public void updateChargeDetails(final Map<LoanChargeData, BigDecimal> applicableCharges, final BigDecimal dueDateFeeIncome,
-            final BigDecimal dueDatePenaltyIncome) {
+            final BigDecimal dueDatePenaltyIncome, final BigDecimal chargeOutstandingAmount) {
         this.applicableCharges = applicableCharges;
         this.dueDateFeeIncome = dueDateFeeIncome;
         this.dueDatePenaltyIncome = dueDatePenaltyIncome;
+        this.chargeOutstandingAmount = chargeOutstandingAmount;
     }
 
     
@@ -188,6 +190,14 @@ public class LoanScheduleAccrualData {
     
     public void updateAccruableIncome (BigDecimal accruableIncome ) {
         this.accruableIncome = accruableIncome ;
+    }
+
+    public BigDecimal getChargeOutstandingAmount() {
+        return chargeOutstandingAmount;
+    }
+
+    public void setChargeOutstandingAmount(BigDecimal chargeOutstandingAmount) {
+        this.chargeOutstandingAmount = chargeOutstandingAmount;
     }
 
 

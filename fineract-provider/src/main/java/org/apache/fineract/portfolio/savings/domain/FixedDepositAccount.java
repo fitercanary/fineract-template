@@ -608,7 +608,7 @@ public class FixedDepositAccount extends SavingsAccount {
             // correct.
             recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
         }
-
+        postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
@@ -640,6 +640,7 @@ public class FixedDepositAccount extends SavingsAccount {
             // correct.
             recalculateDailyBalances(Money.zero(this.currency), accountCloseDate);
         }
+        this.postAccrualInterest(MathContext.DECIMAL64, accountCloseDate, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
         this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
 

@@ -62,6 +62,8 @@ import org.apache.fineract.portfolio.client.domain.ClientNonPersonRepositoryWrap
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
 import org.apache.fineract.portfolio.client.domain.LegalForm;
+import org.apache.fineract.portfolio.client.domain.ReferralStatus;
+import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientActiveForUpdateException;
 import org.apache.fineract.portfolio.client.exception.ClientHasNoStaffException;
 import org.apache.fineract.portfolio.client.exception.ClientMustBePendingToBeDeletedException;
@@ -126,20 +128,22 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
+    private final ReferralStatusRepository referralStatusRepository;
+
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
-            final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
-            final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
-            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
-            final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
-            final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
-            final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
-            final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
-            final ConfigurationReadPlatformService configurationReadPlatformService,
-            final AddressWritePlatformService addressWritePlatformService, final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService, final BusinessEventNotifierService businessEventNotifierService,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
+                                                       final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
+                                                       final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
+                                                       final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
+                                                       final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
+                                                       final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
+                                                       final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
+                                                       final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
+                                                       final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
+                                                       final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
+                                                       final ConfigurationReadPlatformService configurationReadPlatformService,
+                                                       final AddressWritePlatformService addressWritePlatformService, final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService, final BusinessEventNotifierService businessEventNotifierService,
+                                                       final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, ReferralStatusRepository referralStatusRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -163,6 +167,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.clientFamilyMembersWritePlatformService=clientFamilyMembersWritePlatformService;
         this.businessEventNotifierService = businessEventNotifierService;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
+        this.referralStatusRepository = referralStatusRepository;
     }
 
     @Transactional
@@ -296,13 +301,32 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProductId, gender,
                     clientType, clientClassification, legalFormValue, command);
             final String referralId = command.stringValueOfParameterNamed(ClientApiConstants.referralIdParamName);
+            final String deviceId = command.stringValueOfParameterNamed(ClientApiConstants.deviceIdParamName);
+            ReferralStatus referralStatus = null;
             if (StringUtils.isNotBlank(referralId)) {
                 Client referredBy = this.clientRepository.getClientByReferralId(referralId);
                 if (referredBy != null) {
                     newClient.setReferredBy(referredBy);
+                    String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
+                    String email = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+                    if (StringUtils.isNotEmpty(mobileNo)) {
+                        referralStatus = this.referralStatusRepository.findReferralStatusByClientAndPhoneNo(referredBy, mobileNo);
+                    } else if (StringUtils.isNotEmpty(email)) {
+                        referralStatus = this.referralStatusRepository.findReferralStatusByClientAndEmail(referredBy, email);
+                    }
+                    if (referralStatus != null) {
+                        referralStatus.setDeviceId(deviceId);
+                        referralStatus.setStatus("registered");
+                        referralStatus.setLastSaved(LocalDate.now().toDate());
+                        this.referralStatusRepository.save(referralStatus);
+                    }
                 }
             }
             this.clientRepository.save(newClient);
+            if (referralStatus != null && newClient.getId() != null) {
+                referralStatus.setReferredClient(newClient);
+                this.referralStatusRepository.save(referralStatus);
+            }
             boolean rollbackTransaction = false;
             if (newClient.isActive()) {
                 validateParentGroupRulesBeforeClientActivation(newClient);
@@ -974,6 +998,31 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
         client.setReferralDynamicLink(dynamicLink);
         this.clientRepository.save(client);
+    }
+
+    @Override
+    public void setReferralStatus(Long clientId, String referralId, String status, String phoneNo, String email, String deviceId) {
+        Client client = clientId != null ? this.clientRepository.findOneWithNotFoundDetection(clientId) :
+                this.clientRepository.getClientByReferralId(referralId);
+        ReferralStatus referralStatus = null;
+        if (StringUtils.isNotEmpty(phoneNo) || StringUtils.isNotEmpty(email)){
+            if (StringUtils.isNotEmpty(phoneNo)) {
+                referralStatus = this.referralStatusRepository.findReferralStatusByClientAndPhoneNo(client, phoneNo);
+            }
+            if (StringUtils.isNotEmpty(email)) {
+                referralStatus = this.referralStatusRepository.findReferralStatusByClientAndEmail(client, email);
+            }
+            if (referralStatus == null) {
+                referralStatus = new ReferralStatus();
+                referralStatus.setClient(client);
+            }
+            referralStatus.setEmail(email);
+            referralStatus.setStatus(status);
+            referralStatus.setPhoneNo(phoneNo);
+            referralStatus.setDeviceId(deviceId);
+            referralStatus.setLastSaved(LocalDate.now().toDate());
+            this.referralStatusRepository.save(referralStatus);
+        }
     }
 
     private Map<BUSINESS_ENTITY, Object> constructEntityMap(final BUSINESS_ENTITY entityEvent, Object entity) {

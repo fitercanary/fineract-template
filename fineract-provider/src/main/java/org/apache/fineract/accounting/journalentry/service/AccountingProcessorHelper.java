@@ -150,6 +150,18 @@ public class AccountingProcessorHelper {
             if(map.get("isBeforeDueDate") != null) {
                 isBeforeDueDate = (Boolean) map.get("isBeforeDueDate");
             }
+            if((fees != null && fees.compareTo(BigDecimal.ZERO) == 1) || (penalties != null && penalties.compareTo(BigDecimal.ZERO) == 1)) {
+                List<JournalEntry> glEntry = this.glJournalEntryRepository.findJournalEntriesForGlAccount("L" + transactionId,
+                        loanId, PortfolioAccountType.LOAN.getValue(), JournalEntryType.CREDIT.getValue());
+                if (glEntry.size() > 0) {
+                    for(JournalEntry glentry : glEntry) {
+                        if(glentry.getGlAccount().getName().contains("income") || glentry.getGlAccount().getName().contains("Income")) {
+                            isBeforeDueDate = true;
+                        }
+                    }
+
+                }
+            }
 
             final List<ChargePaymentDTO> feePaymentDetails = new ArrayList<>();
             final List<ChargePaymentDTO> penaltyPaymentDetails = new ArrayList<>();

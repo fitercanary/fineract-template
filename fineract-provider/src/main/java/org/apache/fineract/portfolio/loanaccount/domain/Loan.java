@@ -3119,8 +3119,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
             
         }
         // Check loan charge accrued or not for payment account selection
-        if (loanTransaction.getFeeChargesPortion(getCurrency()) != null
-                || loanTransaction.getPenaltyChargesPortion(getCurrency()) != null) {
+        if ((this.loanTransactions.get(this.loanTransactions.size()-1).getFeeChargesPortion(getCurrency()) != null && this.loanTransactions.get(this.loanTransactions.size()-1).getFeeChargesPortion(getCurrency()).isGreaterThanZero())
+                || (this.loanTransactions.get(this.loanTransactions.size()-1).getPenaltyChargesPortion(getCurrency()) != null && this.loanTransactions.get(this.loanTransactions.size()-1).getPenaltyChargesPortion(getCurrency()).isGreaterThanZero())) {
             Collection<LoanCharge> charges = loanTransaction.getLoan().getLoanCharges();
             for (LoanCharge charge : charges) {
                 if (charge.isAccrued()) {
@@ -3488,7 +3488,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
         transactionForAdjustment.reverse();
         transactionForAdjustment.manuallyAdjustedOrReversed();
-
+        
+        
         if (isClosedWrittenOff()) {
             // find write off transaction and reverse it
             final LoanTransaction writeOffTransaction = findWriteOffTransaction();

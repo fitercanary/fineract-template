@@ -150,7 +150,7 @@ public class AuditsApiResource {
         String extraCriteria = "";
 
         if (actionName != null) {
-            extraCriteria += " and aud.action_name = " + ApiParameterHelper.sqlEncodeString(actionName);
+            extraCriteria += " and aud.action_name = '" + actionName + "'";
         }
         if (entityName != null) {
             extraCriteria += " and aud.entity_name like " + ApiParameterHelper.sqlEncodeString(entityName + "%");

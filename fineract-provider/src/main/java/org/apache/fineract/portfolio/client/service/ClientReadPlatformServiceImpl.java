@@ -178,9 +178,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
                 .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.CLIENT.getName(), null);
 
-        return ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions, savingsProductDatas,
+        ClientData clientData = ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions, savingsProductDatas,
                 clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions,
                 clientLegalFormOptions,familyMemberOptions,address,isAddressEnabled, datatableTemplates);
+        clientData.setExistingClients(this.retrieveAllForLookup(null));
+        return clientData;
     }
 
     @Override
@@ -313,8 +315,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                 clientData.setReferredById(client.getReferredBy().getId());
                 clientData.setReferredBy(client.getReferredBy().getDisplayName());
             }
-            if (client.getReferralId() != null) {
-                List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByClient(client);
+            List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByClient(client);
+            if (referralStatuses != null && !referralStatuses.isEmpty()) {
                 clientData.setReferrals(referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList()));
             }
             return clientData;

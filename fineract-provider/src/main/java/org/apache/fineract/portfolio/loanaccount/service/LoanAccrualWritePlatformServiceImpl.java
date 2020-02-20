@@ -530,7 +530,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             } else {
                 dueDateFeeIncome = dueDateFeeIncome.add(chargeAmount);
             }
-            if(loanCharge.getAmountOutstanding() != null) {
+            if(loanCharge.getAmountOutstanding() != null && loanCharge.getDueDate().isAfter(startDate) && !loanCharge.getDueDate().isAfter(endDate)) {
                 outstandingAmount = outstandingAmount.add(loanCharge.getAmountOutstanding());
             }
         }

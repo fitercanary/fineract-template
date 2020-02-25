@@ -55,11 +55,13 @@ public class LoanTransactionDTO {
 
     private boolean isBeforeDueDate;
 
+    private BigDecimal penaltiesAccrued;
+
     public LoanTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
             final LoanTransactionEnumData transactionType, final BigDecimal amount, final BigDecimal principal, final BigDecimal interest,
             final BigDecimal fees, final BigDecimal penalties, final BigDecimal overPayment, final boolean reversed,
-            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments, boolean isAccountTransfer, 
-            boolean isBeforeDueDate) {
+            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments, boolean isAccountTransfer,
+            boolean isBeforeDueDate, final BigDecimal penaltiesAccrued) {
         this.paymentTypeId = paymentTypeId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
@@ -76,6 +78,7 @@ public class LoanTransactionDTO {
         this.officeId = officeId;
         this.isAccountTransfer = isAccountTransfer;
         this.isBeforeDueDate = isBeforeDueDate;
+        this.penaltiesAccrued = penaltiesAccrued;
     }
 
     public Long getOfficeId() {
@@ -152,6 +155,14 @@ public class LoanTransactionDTO {
 
     public void setBeforeDueDate(boolean isBeforeDueDate) {
         this.isBeforeDueDate = isBeforeDueDate;
+    }
+
+    public BigDecimal getPenaltiesAccrued() {
+        return this.penaltiesAccrued;
+    }
+
+    public void setPenaltiesAccrued(BigDecimal penaltiesAccrued) {
+        this.penaltiesAccrued = penaltiesAccrued;
     }
 
 }

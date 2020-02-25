@@ -205,7 +205,8 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
         final BigDecimal principalAmount = loanTransactionDTO.getPrincipal();
         final BigDecimal interestAmount = loanTransactionDTO.getInterest();
         final BigDecimal feesAmount = loanTransactionDTO.getFees();
-        final BigDecimal penaltiesAmount = loanTransactionDTO.getPenalties();
+        BigDecimal penaltiesAmount = loanTransactionDTO.getPenalties();
+        final BigDecimal penaltiesAccruedAmount = loanTransactionDTO.getPenaltiesAccrued();
         final BigDecimal overPaymentAmount = loanTransactionDTO.getOverPayment();
         final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
         final boolean isReversal = loanTransactionDTO.isReversed();
@@ -240,6 +241,7 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
             totalDebitAmount = totalDebitAmount.add(feesAmount);
 
             if (isIncomeFromFee) {
+                
                 GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.INCOME_FROM_FEES.getValue(), paymentTypeId);
                 if (accountMap.containsKey(account)) {
@@ -264,6 +266,17 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
         if (penaltiesAmount != null && !(penaltiesAmount.compareTo(BigDecimal.ZERO) == 0)) {
             totalDebitAmount = totalDebitAmount.add(penaltiesAmount);
             if (isIncomeFromFee) {
+                if(penaltiesAccruedAmount != null) {
+                    penaltiesAmount = penaltiesAmount.subtract(penaltiesAccruedAmount);
+                    GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
+                            ACCRUAL_ACCOUNTS_FOR_LOAN.PENALTIES_RECEIVABLE.getValue(), paymentTypeId);
+                    if (accountMap.containsKey(account)) {
+                        BigDecimal amount = accountMap.get(account).add(penaltiesAmount);
+                        accountMap.put(account, amount);
+                    } else {
+                        accountMap.put(account, penaltiesAccruedAmount);
+                    }
+                }
                 GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.INCOME_FROM_PENALTIES.getValue(), paymentTypeId);
                 if (accountMap.containsKey(account)) {

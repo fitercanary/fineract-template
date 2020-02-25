@@ -836,6 +836,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
+        final Boolean isPrepay = command.booleanObjectValueOfParameterNamed("isPrepay");
 
         final Map<String, Object> changes = new LinkedHashMap<>();
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
@@ -854,6 +855,15 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final HolidayDetailDTO holidayDetailDto = null;
         boolean isAccountTransfer = false;
         final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
+        if (isPrepay != null) {
+            if (isPrepay) {
+                List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
+                for(LoanRepaymentScheduleInstallment installment : installments) {
+                        installment.setInterestCharged(installment.getInterestAccrued());
+                }
+            }
+        }
+        //saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
         this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, transactionDate, transactionAmount, paymentDetail,
                 noteText, txnExternalId, isRecoveryRepayment, isAccountTransfer, holidayDetailDto, isHolidayValidationDone);
 

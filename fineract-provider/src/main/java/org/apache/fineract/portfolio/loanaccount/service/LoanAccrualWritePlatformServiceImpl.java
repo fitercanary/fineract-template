@@ -236,8 +236,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             int totalNumberOfDays = Days.daysBetween(interestStartDate, scheduleAccrualData.getDueDateAsLocaldate()).getDays();
             double interestPerDay = scheduleAccrualData.getAccruableIncome().doubleValue() / totalNumberOfDays;
             interestportion = BigDecimal.valueOf(interestPerDay);
-            interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
-                    MoneyHelper.getRoundingMode());
+            
 
             if (interestportion != null) {
                 if (totalAccInterest == null) {
@@ -246,6 +245,10 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 
                 amount = amount.add(interestportion);
                 totalAccInterest = totalAccInterest.add(interestportion);
+                amount = amount.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
+                        MoneyHelper.getRoundingMode());
+                interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
+                        MoneyHelper.getRoundingMode());
                 if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
                     interestportion = null;
                 }
@@ -310,8 +313,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                     int totalNumberOfDays = Days.daysBetween(interestStartDate, scheduleAccrualData.getDueDateAsLocaldate()).getDays();
                     double interestPerDay = scheduleAccrualData.getAccruableIncome().doubleValue() / totalNumberOfDays;
                     interestportion = BigDecimal.valueOf(interestPerDay);
-                    interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
-                            MoneyHelper.getRoundingMode());
+                    
 
                     if (interestportion != null) {
                         if (totalAccInterest == null) {
@@ -320,6 +322,10 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 
                         amount = amount.add(interestportion);
                         totalAccInterest = totalAccInterest.add(interestportion);
+                        amount = amount.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
+                                MoneyHelper.getRoundingMode());
+                        interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
+                                MoneyHelper.getRoundingMode());
                         if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
                             interestportion = null;
                         }
@@ -530,8 +536,11 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             } else {
                 dueDateFeeIncome = dueDateFeeIncome.add(chargeAmount);
             }
-            if(loanCharge.getAmountOutstanding() != null && loanCharge.getDueDate().isAfter(startDate) && !loanCharge.getDueDate().isAfter(endDate)) {
-                outstandingAmount = outstandingAmount.add(loanCharge.getAmountOutstanding());
+            if(loanCharge.getAmountOutstanding() != null && loanCharge.getDueDate() != null) {
+                if(loanCharge.getDueDate().isAfter(startDate) && !loanCharge.getDueDate().isAfter(endDate)) {
+                    outstandingAmount = outstandingAmount.add(loanCharge.getAmountOutstanding());   
+                }
+                
             }
         }
 

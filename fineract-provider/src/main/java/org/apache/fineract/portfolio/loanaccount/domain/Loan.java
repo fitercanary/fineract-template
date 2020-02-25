@@ -3121,14 +3121,26 @@ public class Loan extends AbstractPersistableCustom<Long> {
         // Check loan charge accrued or not for payment account selection
         if ((this.loanTransactions.get(this.loanTransactions.size()-1).getFeeChargesPortion(getCurrency()) != null && this.loanTransactions.get(this.loanTransactions.size()-1).getFeeChargesPortion(getCurrency()).isGreaterThanZero())
                 || (this.loanTransactions.get(this.loanTransactions.size()-1).getPenaltyChargesPortion(getCurrency()) != null && this.loanTransactions.get(this.loanTransactions.size()-1).getPenaltyChargesPortion(getCurrency()).isGreaterThanZero())) {
+            Money totalAccruedChargeAmount = Money.zero(getCurrency());
+            LoanTransaction transaction = this.loanTransactions.get(this.loanTransactions.size()-1);
             Collection<LoanCharge> charges = loanTransaction.getLoan().getLoanCharges();
             for (LoanCharge charge : charges) {
-                if (charge.isAccrued()) {
-                    this.loanTransactions.get(this.loanTransactions.size()-1).setBeforeDueDate(false);
+                if(charge.isOverdueInstallmentCharge()) {
+                    if (charge.isAccrued()) {
+                        totalAccruedChargeAmount = totalAccruedChargeAmount.plus(charge.getAmount(getCurrency()));
+                        transaction.setAccruedPenalty(totalAccruedChargeAmount.getAmount());
+                    }
+                    transaction.setBeforeDueDate(true);
                 }else {
-                    this.loanTransactions.get(this.loanTransactions.size()-1).setBeforeDueDate(true);
+                    if (charge.isAccrued()) {
+                        transaction.setBeforeDueDate(false);
+                    }else {
+                        transaction.setBeforeDueDate(true);
+                    }  
                 }
-            }
+            }            
+            
+            
         }
         updateLoanSummaryDerivedFields();
 
@@ -5501,12 +5513,12 @@ public class Loan extends AbstractPersistableCustom<Long> {
         List<LoanRepaymentScheduleInstallment> repaymentSchedule = getRepaymentScheduleInstallments();
         for (final LoanRepaymentScheduleInstallment scheduledRepayment : repaymentSchedule) {
             totalPrincipal = totalPrincipal.plus(scheduledRepayment.getPrincipalOutstanding(loanCurrency()));
-            totalInterest = totalInterest.plus(scheduledRepayment.getInterestOutstanding(loanCurrency()));
+            totalInterest = totalInterest.plus(scheduledRepayment.getAccruedInterestOutstanding(loanCurrency()));
             feeCharges = feeCharges.plus(scheduledRepayment.getFeeChargesOutstanding(loanCurrency()));
             penaltyCharges = penaltyCharges.plus(scheduledRepayment.getPenaltyChargesOutstanding(loanCurrency()));
         }
         return new LoanRepaymentScheduleInstallment(null, 0, LocalDate.now(), LocalDate.now(), totalPrincipal.getAmount(),
-                totalInterest.getAmount(), feeCharges.getAmount(), penaltyCharges.getAmount(), false, compoundingDetails);
+                totalInterest.getAmount(), feeCharges.getAmount(), penaltyCharges.getAmount(), false, compoundingDetails, false);
     }
 
     public LocalDate getAccruedTill() {

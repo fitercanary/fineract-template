@@ -142,6 +142,9 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
     @Transient
     private boolean isBeforeDueDate;
 
+    @Transient
+    private BigDecimal accruedPenalty;
+
     protected LoanTransaction() {
         /*
          * this.loan = null; this.dateOf = null; this.typeOf = null;
@@ -649,6 +652,7 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         thisTransactionData.put("interestPortion", this.interestPortion);
         thisTransactionData.put("feeChargesPortion", this.feeChargesPortion);
         thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
+        thisTransactionData.put("accruedPenaltyPortion", this.accruedPenalty);
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
         thisTransactionData.put("isAccountTransfer", this.isAccountTransfer);
         thisTransactionData.put("isBeforeDueDate", this.isBeforeDueDate);
@@ -833,6 +837,22 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
 
     public void setBeforeDueDate(boolean isBeforeDueDate) {
         this.isBeforeDueDate = isBeforeDueDate;
+    }
+
+    public BigDecimal getAccruedPenalty() {
+        return this.accruedPenalty;
+    }
+
+    public void setAccruedPenalty(BigDecimal accruedPenalty) {
+        this.accruedPenalty = accruedPenalty;
+    }
+
+    public BigDecimal getPenaltyChargesPortion() {
+        return this.penaltyChargesPortion;
+    }
+
+    public void setPenaltyChargesPortion(BigDecimal penaltyChargesPortion) {
+        this.penaltyChargesPortion = penaltyChargesPortion;
     }
 
 }

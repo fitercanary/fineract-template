@@ -43,10 +43,7 @@
 			<jndiLocation>java:comp/env/jdbc/mifosplatform-tenants</jndiLocation>
 		</connectionSource>
 	</appender>
-
-
-
-
+	
 	<logger name="org.fineract.platform" level="debug" />
 	<logger name="org.apache.fineract.infrastructure.security.filter"
 		level="info" />

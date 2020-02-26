@@ -91,6 +91,7 @@ public class ClientApiConstants {
     public static final String fullnameParamName = "fullname";
     public static final String mothersMaidenNameParamName="mothersMaidenName";
     public static final String referralIdParamName = "referralId";
+    public static final String referralClientIdParamName = "referralClientId";
     public static final String deviceIdParamName = "deviceId";
     public static final String displaynameParamName = "displayname";
     public static final String officeIdParamName = "officeId";

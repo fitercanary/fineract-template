@@ -576,6 +576,11 @@ public final class Client extends AbstractPersistableCustom<Long> {
             actualChanges.put(ClientApiConstants.savingsProductIdParamName, newValue);
         }
 
+        if (command.isChangeInLongParameterNamed(ClientApiConstants.referralClientIdParamName, getReferredById())) {
+            final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.referralClientIdParamName);
+            actualChanges.put(ClientApiConstants.referralClientIdParamName, newValue);
+        }
+
         if (command.isChangeInLongParameterNamed(ClientApiConstants.genderIdParamName, genderId())) {
             final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.genderIdParamName);
             actualChanges.put(ClientApiConstants.genderIdParamName, newValue);
@@ -1107,6 +1112,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     public Client getReferredBy() {
         return referredBy;
+    }
+
+    public Long getReferredById() {
+        return referredBy != null ? referredBy.getId() : null;
     }
 
     public void setReferredBy(Client referredBy) {

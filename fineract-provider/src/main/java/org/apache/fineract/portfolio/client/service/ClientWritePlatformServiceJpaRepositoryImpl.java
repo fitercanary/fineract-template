@@ -18,14 +18,7 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import javax.persistence.PersistenceException;
-
+import com.google.gson.JsonElement;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -98,7 +91,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.gson.JsonElement;
+import javax.persistence.PersistenceException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
@@ -302,23 +300,38 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     clientType, clientClassification, legalFormValue, command);
             final String referralId = command.stringValueOfParameterNamed(ClientApiConstants.referralIdParamName);
             final String deviceId = command.stringValueOfParameterNamed(ClientApiConstants.deviceIdParamName);
+            final Long referralClientId = command.longValueOfParameterNamed(ClientApiConstants.referralClientIdParamName);
+            Client referredBy = null;
             ReferralStatus referralStatus = null;
             if (StringUtils.isNotBlank(referralId)) {
-                Client referredBy = this.clientRepository.getClientByReferralId(referralId);
-                if (referredBy != null) {
-                    newClient.setReferredBy(referredBy);
-                    String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
-                    String email = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+                referredBy = this.clientRepository.getClientByReferralId(referralId);
+            } else if (referralClientId != null) {
+                referredBy = this.clientRepository.findOneWithNotFoundDetection(referralClientId);
+            }
+            if (referredBy != null) {
+                newClient.setReferredBy(referredBy);
+                String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
+                String email = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+                if (StringUtils.isNotEmpty(mobileNo)) {
+                    referralStatus = this.referralStatusRepository.findReferralStatusByClientAndPhoneNo(referredBy, mobileNo);
+                } else if (StringUtils.isNotEmpty(email)) {
+                    referralStatus = this.referralStatusRepository.findReferralStatusByClientAndEmail(referredBy, email);
+                }
+                if (referralStatus != null) {
+                    referralStatus.setDeviceId(deviceId);
+                    referralStatus.setStatus("registered");
+                    referralStatus.setLastSaved(LocalDate.now().toDate());
+                    this.referralStatusRepository.save(referralStatus);
+                } else {
+                    //Assume registered via web app
+                    referralStatus = new ReferralStatus();
+                    referralStatus.setClient(referredBy);
+                    referralStatus.setStatus("registered");
+                    referralStatus.setLastSaved(LocalDate.now().toDate());
                     if (StringUtils.isNotEmpty(mobileNo)) {
-                        referralStatus = this.referralStatusRepository.findReferralStatusByClientAndPhoneNo(referredBy, mobileNo);
+                        referralStatus.setPhoneNo(mobileNo);
                     } else if (StringUtils.isNotEmpty(email)) {
-                        referralStatus = this.referralStatusRepository.findReferralStatusByClientAndEmail(referredBy, email);
-                    }
-                    if (referralStatus != null) {
-                        referralStatus.setDeviceId(deviceId);
-                        referralStatus.setStatus("registered");
-                        referralStatus.setLastSaved(LocalDate.now().toDate());
-                        this.referralStatusRepository.save(referralStatus);
+                        referralStatus.setEmail(email);
                     }
                 }
             }
@@ -538,6 +551,41 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 	final ClientNonPerson clientNonPerson = this.clientNonPersonRepository.findOneByClientId(clientForUpdate.getId());
                 	if(clientNonPerson != null)
                 		this.clientNonPersonRepository.delete(clientNonPerson);
+                }
+            }
+
+            if (changes.containsKey(ClientApiConstants.referralClientIdParamName)) {
+                final Long referralClientId = command.longValueOfParameterNamed(ClientApiConstants.referralClientIdParamName);
+                Client referredBy = null;
+                ReferralStatus referralStatus = null;
+                if (referralClientId != null) {
+                    referredBy = this.clientRepository.findOneWithNotFoundDetection(referralClientId);
+                }
+                if (referredBy != null) {
+                    clientForUpdate.setReferredBy(referredBy);
+                    referralStatus = this.referralStatusRepository.findReferralStatusByReferredClient(clientForUpdate);
+                    String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
+                    String email = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+                    if (referralStatus != null) {
+                        referralStatus.setStatus("registered");
+                        referralStatus.setLastSaved(LocalDate.now().toDate());
+                        this.referralStatusRepository.save(referralStatus);
+                    } else {
+                        //Assume registered via web app
+                        referralStatus = new ReferralStatus();
+                        referralStatus.setClient(referredBy);
+                        referralStatus.setStatus("registered");
+                        referralStatus.setLastSaved(LocalDate.now().toDate());
+                        if (StringUtils.isNotEmpty(mobileNo)) {
+                            referralStatus.setPhoneNo(mobileNo);
+                        } else if (StringUtils.isNotEmpty(email)) {
+                            referralStatus.setEmail(email);
+                        }
+                    }
+                }
+                if (referralStatus != null && clientForUpdate.getId() != null) {
+                    referralStatus.setReferredClient(clientForUpdate);
+                    this.referralStatusRepository.save(referralStatus);
                 }
             }
             

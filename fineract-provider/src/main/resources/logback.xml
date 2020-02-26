@@ -27,16 +27,23 @@
 		</layout>
 	</appender>
 
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>${catalina.base}/logs/fineract-platform.log</file>
+		<append>true</append>
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder
+			by default -->
+		<encoder>
+			<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
 	<appender name="DB" class="ch.qos.logback.classic.db.DBAppender">
 		<connectionSource class="ch.qos.logback.core.db.JNDIConnectionSource">
 			<!-- please note the "java:comp/env/" prefix -->
 			<jndiLocation>java:comp/env/jdbc/mifosplatform-tenants</jndiLocation>
 		</connectionSource>
 	</appender>
-
-
-
-
+	
 	<logger name="org.fineract.platform" level="debug" />
 	<logger name="org.apache.fineract.infrastructure.security.filter"
 		level="info" />

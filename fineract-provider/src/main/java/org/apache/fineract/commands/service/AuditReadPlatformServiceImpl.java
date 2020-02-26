@@ -198,7 +198,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
     }
 
     @Override
-    public Page<AuditData> retrievePaginatedAuditEntries(final String extraCriteria, final boolean includeJson,
+    public Page<AuditData> retrievePaginatedAuditEntries(String extraCriteria, final boolean includeJson,
             final PaginationParameters parameters) {
 
         this.paginationParametersDataValidator.validateParameterValues(parameters, supportedOrderByValues, "audits");
@@ -215,6 +215,9 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(rm.schema(includeJson, hierarchy));
         sqlBuilder.append(' ').append(updatedExtraCriteria);
+        if(extraCriteria.contains("aud.action_name")) {
+            extraCriteria = extraCriteria.substring(30);
+        }
         this.columnValidator.validateSqlInjection(sqlBuilder.toString(), extraCriteria);
         if (parameters.isOrderByRequested()) {
             sqlBuilder.append(' ').append(parameters.orderBySql());

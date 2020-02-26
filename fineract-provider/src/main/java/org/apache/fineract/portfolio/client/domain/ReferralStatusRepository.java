@@ -30,6 +30,8 @@ public interface ReferralStatusRepository
 
 	ReferralStatus findReferralStatusByClientAndEmail(Client client, String email);
 
+	ReferralStatus findReferralStatusByReferredClient(Client referredClient);
+
 	List<ReferralStatus> findReferralStatusesByStatus(String status);
 
 	List<ReferralStatus> findReferralStatusesByClient(Client client);

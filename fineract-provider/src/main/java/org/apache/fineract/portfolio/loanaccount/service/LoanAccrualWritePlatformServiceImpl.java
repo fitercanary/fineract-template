@@ -253,6 +253,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                     interestportion = null;
                 }
             }
+                
         }
 
         BigDecimal feeportion = null;
@@ -291,7 +292,9 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             }
         }
 
-        if (amount.compareTo(BigDecimal.ZERO) == 1) {
+        if (amount.compareTo(BigDecimal.ZERO) == 1 && 
+                (accuredTill.isBefore(LocalDate.now()) || accuredTill.isEqual(LocalDate.now())) 
+                && (accuredTill.isBefore(scheduleAccrualData.getDueDateAsLocaldate()) || accuredTill.isEqual(scheduleAccrualData.getDueDateAsLocaldate()) ) ) {
             addAccrualAccounting(scheduleAccrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee, penaltyportion,
                     totalAccPenalty, accuredTill);
         }

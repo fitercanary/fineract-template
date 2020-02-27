@@ -835,7 +835,11 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     public Money getAccruedInterestOutstanding(final MonetaryCurrency currency) {
         final Money interestAccountedFor = getInterestPaid(currency).plus(getInterestWaived(currency))
                 .plus(getInterestWrittenOff(currency));
-        return getInterestAccrued(currency).minus(interestAccountedFor);
+         Money interestAccrued =  getInterestAccrued(currency).minus(interestAccountedFor);
+         if(interestAccrued.isLessThanZero()) {
+             return Money.zero(currency);           
+         }
+         return interestAccrued;
     }
 
     public Money getTotalPaid(final MonetaryCurrency currency) {

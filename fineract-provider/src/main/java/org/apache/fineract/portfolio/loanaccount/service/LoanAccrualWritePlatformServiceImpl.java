@@ -303,7 +303,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             LocalDate dateForgettingDays = scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant()) 
                     ? DateUtils.getLocalDateOfTenant() : scheduleAccrualData.getDueDateAsLocaldate();
             int skippedTransactionNumber = 0;
-            if(scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant())) {        
+            if(scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant()) && accuredTill.isBefore(DateUtils.getLocalDateOfTenant())) {        
             skippedTransactionNumber = Days.daysBetween(accuredTill, dateForgettingDays).getDays();
             }
             for (int index = 0; index < skippedTransactionNumber; index++) {

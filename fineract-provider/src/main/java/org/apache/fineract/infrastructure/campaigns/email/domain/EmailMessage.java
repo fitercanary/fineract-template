@@ -26,6 +26,7 @@ import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -100,7 +101,7 @@ public class EmailMessage extends AbstractPersistableCustom<Long> {
         this.emailSubject = emailSubject;
         this.message = message;
         this.campaignName = campaignName;
-        this.submittedOnDate = LocalDate.now().toDate();
+        this.submittedOnDate = DateUtils.getDateOfTenant();
     }
 
     public Map<String, Object> update(final JsonCommand command) {

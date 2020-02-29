@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.campaigns.sms.domain.SmsCampaign;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.sms.SmsApiConstants;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.client.domain.Client;
@@ -119,7 +120,7 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
         this.mobileNo = mobileNo;
         this.message = message;
         this.smsCampaign = smsCampaign;
-        this.submittedOnDate = LocalDate.now().toDate();
+        this.submittedOnDate = DateUtils.getDateOfTenant();
         this.isNotification = isNotification;
     }
 

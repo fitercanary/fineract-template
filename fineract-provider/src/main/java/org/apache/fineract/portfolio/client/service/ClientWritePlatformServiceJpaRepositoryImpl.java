@@ -37,6 +37,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksWritePlatformService;
@@ -320,14 +321,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 if (referralStatus != null) {
                     referralStatus.setDeviceId(deviceId);
                     referralStatus.setStatus("registered");
-                    referralStatus.setLastSaved(LocalDate.now().toDate());
+                    referralStatus.setLastSaved(DateUtils.getDateOfTenant());
                     this.referralStatusRepository.save(referralStatus);
                 } else {
                     //Assume registered via web app
                     referralStatus = new ReferralStatus();
                     referralStatus.setClient(referredBy);
                     referralStatus.setStatus("registered");
-                    referralStatus.setLastSaved(LocalDate.now().toDate());
+                    referralStatus.setLastSaved(DateUtils.getDateOfTenant());
                     if (StringUtils.isNotEmpty(mobileNo)) {
                         referralStatus.setPhoneNo(mobileNo);
                     } else if (StringUtils.isNotEmpty(email)) {
@@ -568,14 +569,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     String email = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
                     if (referralStatus != null) {
                         referralStatus.setStatus("registered");
-                        referralStatus.setLastSaved(LocalDate.now().toDate());
+                        referralStatus.setLastSaved(DateUtils.getDateOfTenant());
                         this.referralStatusRepository.save(referralStatus);
                     } else {
                         //Assume registered via web app
                         referralStatus = new ReferralStatus();
                         referralStatus.setClient(referredBy);
                         referralStatus.setStatus("registered");
-                        referralStatus.setLastSaved(LocalDate.now().toDate());
+                        referralStatus.setLastSaved(DateUtils.getDateOfTenant());
                         if (StringUtils.isNotEmpty(mobileNo)) {
                             referralStatus.setPhoneNo(mobileNo);
                         } else if (StringUtils.isNotEmpty(email)) {
@@ -1068,7 +1069,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             referralStatus.setStatus(status);
             referralStatus.setPhoneNo(phoneNo);
             referralStatus.setDeviceId(deviceId);
-            referralStatus.setLastSaved(LocalDate.now().toDate());
+            referralStatus.setLastSaved(DateUtils.getDateOfTenant());
             this.referralStatusRepository.save(referralStatus);
         }
     }

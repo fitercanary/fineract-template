@@ -610,7 +610,8 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                 interestIncome = interestIncome.subtract(interestWaived.subtract(recognized));
             }
         }
-        if(accrualData.getAccruedInterestIncome().doubleValue() >= accrualData.getInterestIncome().doubleValue()) {
+        if (accrualData.getAccruedInterestIncome() != null && accrualData.getInterestIncome() != null
+                && accrualData.getAccruedInterestIncome().doubleValue() >= accrualData.getInterestIncome().doubleValue()) {
             interestIncome = BigDecimal.ZERO;
         }
 

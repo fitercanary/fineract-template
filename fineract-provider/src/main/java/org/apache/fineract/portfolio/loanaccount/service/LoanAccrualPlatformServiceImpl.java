@@ -69,7 +69,11 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                 if (e.getCause() != null) {
                     realCause = e.getCause();
                 }
+                if(realCause.getMessage() != null) {
                 sb.append("failed to add accural transaction for loan " + mapEntry.getKey() + " with message " + realCause.getMessage());
+                }else {
+                    sb.append("failed to add accural transaction for loan " + mapEntry.getKey() + " with message " + realCause.toString());
+                }
             }
         }
 

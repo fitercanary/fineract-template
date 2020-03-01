@@ -706,8 +706,11 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
     }
 
     public boolean isDueForCollectionForDisburseToSavingsAndIncluding(final LocalDate fromNotInclusive) {
+        if(isDisburseToSavings()) {
         final LocalDate dueDate = getDueLocalDate();
         return occursOnDayFromAndUpToAndIncluding(fromNotInclusive, dueDate);
+        }
+        return false;
     }
 
     private boolean occursOnDayFromAndUpToAndIncluding(final LocalDate fromNotInclusive, final LocalDate target) {

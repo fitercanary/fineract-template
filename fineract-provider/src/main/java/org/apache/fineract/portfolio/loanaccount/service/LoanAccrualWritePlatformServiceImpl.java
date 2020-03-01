@@ -266,6 +266,8 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                 totalAccFee = feeportion;
                 if (scheduleAccrualData.getAccruedFeeIncome() != null) {
                     feeportion = feeportion.subtract(scheduleAccrualData.getAccruedFeeIncome());
+                }else {
+                    feeportion =  scheduleAccrualData.getChargeOutstandingAmount();
                 }
                 amount = amount.add(feeportion);
                 if (feeportion.compareTo(BigDecimal.ZERO) == 0) {
@@ -517,8 +519,18 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                 if (loanCharge.getAmountUnrecognized() != null) {
                     chargeAmount = chargeAmount.subtract(loanCharge.getAmountUnrecognized());
                 }
-                if (chargeAmount.compareTo(BigDecimal.ZERO) == 1) {
-                    applicableCharges.put(loanCharge, chargeAmount);
+                boolean canAddCharge = chargeAmount.compareTo(BigDecimal.ZERO) == 1;
+                if (canAddCharge
+                        && (loanCharge.getAmountAccrued() == null || chargeAmount.compareTo(loanCharge.getAmountAccrued()) != 0)) {
+                    BigDecimal amountForAccrual = chargeAmount;
+                    if (loanCharge.getAmountAccrued() != null) {
+                        amountForAccrual = chargeAmount.subtract(loanCharge.getAmountAccrued());
+                    }else {
+                       if(loanCharge.getAmountOutstanding() != null) {
+                        amountForAccrual = loanCharge.getAmountOutstanding();
+                        }
+                    }
+                    applicableCharges.put(loanCharge, amountForAccrual);
                 }
             }
 

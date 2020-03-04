@@ -778,7 +778,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         final String sql = "select " + this.transactionsMapper.schema()
                 + " where sa.id = ? and sa.deposit_type_enum = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
 
-        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue() });
+        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, savingsId, depositAccountType.getValue() });
     }
     
     @Override
@@ -790,13 +790,14 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 + " and tr.id not in ("+ ids +")"
                 + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
 
-        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue()
+        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue()
                 });
     }
 
     @Override
     public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters) {
         List<Object> paramList = new ArrayList<>();
+        paramList.add(accountId);
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         final StringBuilder sqlBuilder = new StringBuilder(200);
@@ -821,6 +822,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     @Override
     public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId, SearchParameters searchParameters, String transactionIds) {
         List<Object> paramList = new ArrayList<>();
+        paramList.add(accountId);
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
@@ -850,6 +852,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactions(Long accountId, SearchParameters searchParameters,
             String text, String filterCategories, String startDate, String endDate) {
         List<Object> paramList = new ArrayList<>();
+        paramList.add(accountId);
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         final StringBuilder sqlBuilder = new StringBuilder(200);
@@ -973,16 +976,17 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         final String sql = "select " + this.transactionsMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ? and tr.id= ?";
 
         return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper,
-                new Object[] { savingsId, depositAccountType.getValue(), transactionId });
+                new Object[] { savingsId, savingsId, depositAccountType.getValue(), transactionId });
     }
     
    
     @Override
     public SavingsAccountTransactionData retrieveSavingsTransaction(final Long transactionId) {
 
+        SavingsAccountTransaction transaction = this.savingsAccountTransactionRepository.findOne(transactionId);
         final String sql = "select " + this.transactionsMapper.schema() + " where tr.id= ?";
 
-        return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, new Object[] { transactionId });
+        return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, new Object[] { transaction.getSavingsAccount().getId(), transactionId });
     }
 
     /*
@@ -1032,7 +1036,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_payment_detail pd on tr.payment_detail_id = pd.id ");
             sqlBuilder.append("left join m_payment_type pt on pd.payment_type_id = pt.id ");
             sqlBuilder.append(" left join m_appuser au on au.id=tr.appuser_id ");
-            sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id ");
+            sqlBuilder.append(" left join (SELECT * FROM m_note WHERE savings_account_id = ?) nt ON nt.savings_account_transaction_id=tr.id ");
             sqlBuilder.append(" left join m_transaction_request req ON req.transaction_id=tr.id ");
             this.schemaSql = sqlBuilder.toString();
         }

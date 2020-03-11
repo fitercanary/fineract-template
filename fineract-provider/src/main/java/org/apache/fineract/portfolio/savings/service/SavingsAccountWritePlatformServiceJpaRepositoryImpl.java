@@ -370,12 +370,14 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         BigDecimal totalWithdrawOnDate = transactionAmount;
+        if(account.productId() != 32 && account.productId() != 36 && account.productId() != 30) {
         for(SavingsAccount acc: this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {
             for(SavingsAccountTransaction tran: acc.getTransactions()) {
                 if(!tran.isReversed() && tran.isWithdrawal() && tran.getTransactionLocalDate().isEqual(transactionDate)) {
                     totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
                 }
             }
+        }
         }
         if(totalWithdrawOnDate.doubleValue() > account.getClient().getDailyWithdrawLimit().doubleValue()) {
             throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");

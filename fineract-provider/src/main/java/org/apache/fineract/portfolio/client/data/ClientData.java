@@ -287,7 +287,7 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.savingsProductName, clientData.savingsAccountId, clientData.savingAccountOptions, clientData.clientType,
                 clientData.clientClassification, templateData.clientTypeOptions, templateData.clientClassificationOptions, 
                 templateData.clientNonPersonConstitutionOptions, templateData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails,
-                templateData.clientLegalFormOptions,templateData.familyMemberOptions, clientData.legalForm, clientData.address,clientData.isAddressEnabled, null, clientData.isStaff, templateData.existingClients, null);
+                templateData.clientLegalFormOptions,templateData.familyMemberOptions, clientData.legalForm, clientData.address,clientData.isAddressEnabled, null, clientData.isStaff, templateData.existingClients, clientData.dailyWithdrawLimit);
 
     }
 
@@ -451,7 +451,7 @@ final public class ClientData implements Comparable<ClientData> {
                 staffName, allowedOffices, groups, staffOptions, closureReasons, genderOptions, timeline, savingProductOptions,
                 savingsProductId, savingsProductName, savingsAccountId, null, clientType, clientClassification, clientTypeOptions,
                 clientClassificationOptions, clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientNonPerson,
-                clientLegalFormOptions,familyMemberOptions, legalForm,null,null, null, isStaff, null, null);
+                clientLegalFormOptions,familyMemberOptions, legalForm,null,null, null, isStaff, null, dailyWithdrawLimit);
 
     }
 

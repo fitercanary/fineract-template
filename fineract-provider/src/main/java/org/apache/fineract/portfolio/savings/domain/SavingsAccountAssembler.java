@@ -45,6 +45,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdraw
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
@@ -72,6 +73,7 @@ import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundExc
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonElement;
@@ -298,6 +300,10 @@ public class SavingsAccountAssembler {
         final SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(savingsId);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
         return account;
+    }
+    
+    public List<SavingsAccount> findSavingAccountByClientId(Long clientId) {
+        return this.savingsAccountRepository.findSavingAccountByClientId(clientId);
     }
 
     public void setHelpers(final SavingsAccount account) {

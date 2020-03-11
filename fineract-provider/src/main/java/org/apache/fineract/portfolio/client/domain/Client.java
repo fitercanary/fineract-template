@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.client.domain;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -244,6 +245,9 @@ public final class Client extends AbstractPersistableCustom<Long> {
     @OneToOne
     @JoinColumn(name = "referred_by_id")
     private Client referredBy;
+    
+    @Column(name = "daily_withdraw_limit")
+    private BigDecimal dailyWithdrawLimit;
 
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
@@ -286,9 +290,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
             submittedOnDate = command.localDateValueOfParameterNamed(ClientApiConstants.submittedOnDateParamName);
         }
         final Long savingsAccountId = null;
+        final BigDecimal dailyWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
                 activationDate, officeJoiningDate, externalId, mobileNo,mothersMaidenName, emailAddress, staff, submittedOnDate, savingsProductId, savingsAccountId, dataOfBirth,
-                gender, clientType, clientClassification, legalForm, isStaff);
+                gender, clientType, clientClassification, legalForm, isStaff, dailyWithdrawLimit);
     }
 
     protected Client() {
@@ -299,7 +304,8 @@ public final class Client extends AbstractPersistableCustom<Long> {
             final String accountNo, final String firstname, final String middlename, final String lastname, final String fullname,
             final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo,final String mothersMaidenName,
             final String emailAddress, final Staff staff, final LocalDate submittedOnDate, final Long savingsProductId, final Long savingsAccountId,
-            final LocalDate dateOfBirth, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff) {
+            final LocalDate dateOfBirth, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, 
+            final Boolean isStaff, final BigDecimal dailyWithdrawLimit) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -383,6 +389,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
         }
         this.clientType = clientType;
         this.clientClassification = clientClassification;
+        this.dailyWithdrawLimit = dailyWithdrawLimit;
         this.setLegalForm(legalForm);
 
         deriveDisplayName();
@@ -658,6 +665,12 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
             final LocalDate newValue = command.localDateValueOfParameterNamed(ClientApiConstants.submittedOnDateParamName);
             this.submittedOnDate = newValue.toDate();
+        }
+        
+        if(command.isChangeInBigDecimalParameterNamed(ClientApiConstants.dailyWithdrawLimit, this.dailyWithdrawLimit)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
+            actualChanges.put(ClientApiConstants.dailyWithdrawLimit, newValue);
+            this.dailyWithdrawLimit = newValue;
         }
 
         validateUpdate();
@@ -1120,5 +1133,12 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     public void setReferredBy(Client referredBy) {
         this.referredBy = referredBy;
+    }
+    
+    public BigDecimal getDailyWithdrawLimit() {
+        if(this.dailyWithdrawLimit == null) {
+            return BigDecimal.ZERO;
+        }
+        return this.dailyWithdrawLimit;
     }
 }

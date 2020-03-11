@@ -190,6 +190,7 @@ public class ClientApiConstants {
     public static final String staffOptionsParamName = "staffOptions";
 
     public static final String datatables = "datatables";
+    public static final String dailyWithdrawLimit = "dailyWithdrawLimit";
 
 
     /**
@@ -204,7 +205,7 @@ public class ClientApiConstants {
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
             dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName, legalFormParamName, 
-            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName));
+            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit));
 
     protected static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList
             (chargeIdParamName,

@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -542,7 +543,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo,mothersMaidenName, emailAddress, dateOfBirth, gender, activationDate,
                     imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype,
-                    classification, legalForm, clientNonPerson, isStaff);
+                    classification, legalForm, clientNonPerson, isStaff, null);
 
         }
     }
@@ -613,7 +614,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
             builder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
-            builder.append("c.default_savings_account as savingsAccountId ");
+            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
             builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
@@ -718,6 +719,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String mainBusinessLineValue = rs.getString("mainBusinessLineValue");
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
+            final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
             
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill, mainBusinessLine, remarks);
 
@@ -728,7 +730,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName,emailAddress, dateOfBirth, gender, activationDate,
                     imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype,
-                    classification, legalForm, clientNonPerson, isStaff);
+                    classification, legalForm, clientNonPerson, isStaff, dailyWithdrawLimit);
 
         }
     }

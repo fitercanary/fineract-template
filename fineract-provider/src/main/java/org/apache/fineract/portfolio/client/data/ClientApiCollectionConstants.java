@@ -32,7 +32,7 @@ public class ClientApiCollectionConstants extends ClientApiConstants{
                     mobileNoParamName, emailAddressParamName, firstnameParamName, middlenameParamName, lastnameParamName, fullnameParamName, officeIdParamName,
                     activeParamName, activationDateParamName, staffIdParamName, submittedOnDateParamName, savingsProductIdParamName,
                     dateOfBirthParamName, genderIdParamName, clientTypeIdParamName, clientClassificationIdParamName,
-                    clientNonPersonDetailsParamName, displaynameParamName, legalFormIdParamName, datatables, isStaffParamName,mothersMaidenNameParamName, referralIdParamName, deviceIdParamName, referralClientIdParamName));
+                    clientNonPersonDetailsParamName, displaynameParamName, legalFormIdParamName, datatables, isStaffParamName,mothersMaidenNameParamName, referralIdParamName, deviceIdParamName, referralClientIdParamName, dailyWithdrawLimit));
 
     protected static final Set<String> CLIENT_NON_PERSON_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(familyMembers,address,localeParamName, dateFormatParamName, incorpNumberParamName, remarksParamName, incorpValidityTillParamName,
@@ -41,7 +41,7 @@ public class ClientApiCollectionConstants extends ClientApiConstants{
     protected static final Set<String> CLIENT_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, accountNoParamName, externalIdParamName, mobileNoParamName, emailAddressParamName, firstnameParamName, middlenameParamName,
             lastnameParamName, fullnameParamName, activeParamName, activationDateParamName, staffIdParamName, savingsProductIdParamName,
-            dateOfBirthParamName, genderIdParamName, clientTypeIdParamName, clientClassificationIdParamName, submittedOnDateParamName, clientNonPersonDetailsParamName, displaynameParamName, legalFormIdParamName, isStaffParamName, mothersMaidenNameParamName, referralClientIdParamName));
+            dateOfBirthParamName, genderIdParamName, clientTypeIdParamName, clientClassificationIdParamName, submittedOnDateParamName, clientNonPersonDetailsParamName, displaynameParamName, legalFormIdParamName, isStaffParamName, mothersMaidenNameParamName, referralClientIdParamName, dailyWithdrawLimit));
 
     protected static final Set<String> CLIENT_NON_PERSON_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, incorpNumberParamName, remarksParamName, incorpValidityTillParamName,

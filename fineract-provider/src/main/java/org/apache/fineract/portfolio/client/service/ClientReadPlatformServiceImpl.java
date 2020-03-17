@@ -60,6 +60,7 @@ import org.apache.fineract.portfolio.client.data.ClientTimelineData;
 import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
+import org.apache.fineract.portfolio.client.domain.ClientLevel;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
 import org.apache.fineract.portfolio.client.domain.LegalForm;
@@ -176,12 +177,14 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         
         final List<EnumOptionData> clientLegalFormOptions = ClientEnumerations.legalForm(LegalForm.values());
 
+        final List<EnumOptionData> clientLevalOptions = ClientEnumerations.clientLevel(ClientLevel.values());
+
         final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
                 .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.CLIENT.getName(), null);
 
         ClientData clientData = ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions, savingsProductDatas,
                 clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions,
-                clientLegalFormOptions,familyMemberOptions,address,isAddressEnabled, datatableTemplates);
+                clientLegalFormOptions,familyMemberOptions,address,isAddressEnabled, datatableTemplates, clientLevalOptions);
         clientData.setExistingClients(this.retrieveAllForLookup(null));
         return clientData;
     }
@@ -399,6 +402,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("c.client_classification_cv_id as classificationId, ");
             sqlBuilder.append("cvclassification.code_value as classificationValue, ");
             sqlBuilder.append("c.legal_form_enum as legalFormEnum, ");
+            sqlBuilder.append("c.client_level_enum as clientLevelEnum, ");
             sqlBuilder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             sqlBuilder.append("c.staff_id as staffId, s.display_name as staffName,");
             sqlBuilder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
@@ -520,6 +524,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String activatedByLastname = rs.getString("activatedByLastname");
             
             final Integer legalFormEnum = JdbcSupport.getInteger(rs, "legalFormEnum");
+            final Integer clientLevelEnum = JdbcSupport.getInteger(rs, "clientLevelEnum");
+
+            EnumOptionData clientLevel = null;
+            if(clientLevelEnum != null)
+                clientLevel = ClientEnumerations.clientLevel(clientLevelEnum);
             EnumOptionData legalForm = null;
             if(legalFormEnum != null)
             		legalForm = ClientEnumerations.legalForm(legalFormEnum);
@@ -543,7 +552,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo,mothersMaidenName, emailAddress, dateOfBirth, gender, activationDate,
                     imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype,
-                    classification, legalForm, clientNonPerson, isStaff, null);
+                    classification, legalForm, clientNonPerson, isStaff, clientLevel, null );
 
         }
     }
@@ -587,6 +596,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.client_classification_cv_id as classificationId, ");
             builder.append("cvclassification.code_value as classificationValue, ");
             builder.append("c.legal_form_enum as legalFormEnum, ");
+            builder.append("c.client_level_enum as clientLevelEnum, ");
 
             builder.append("c.submittedon_date as submittedOnDate, ");
             builder.append("sbu.username as submittedByUsername, ");
@@ -706,6 +716,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String activatedByLastname = rs.getString("activatedByLastname");
             
             final Integer legalFormEnum = JdbcSupport.getInteger(rs, "legalFormEnum");
+            final Integer clientLevelEnum = JdbcSupport.getInteger(rs, "clientLevelEnum");
+
+            EnumOptionData clientLevel = null;
+            if(clientLevelEnum != null)
+                clientLevel = ClientEnumerations.clientLevel(clientLevelEnum);
             EnumOptionData legalForm = null;
             if(legalFormEnum != null)
             		legalForm = ClientEnumerations.legalForm(legalFormEnum);
@@ -720,7 +735,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
             final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
-            
+
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill, mainBusinessLine, remarks);
 
             final ClientTimelineData timeline = new ClientTimelineData(submittedOnDate, submittedByUsername, submittedByFirstname,
@@ -730,7 +745,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName,emailAddress, dateOfBirth, gender, activationDate,
                     imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype,
-                    classification, legalForm, clientNonPerson, isStaff, dailyWithdrawLimit);
+                    classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit);
 
         }
     }
@@ -841,8 +856,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final Collection<CodeValueData> clientNonPersonConstitutionOptions = null;
         final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions = null;
         final List<EnumOptionData> clientLegalFormOptions = null;
-        return ClientData.template(null, null, null, null, narrations, null, null, clientTypeOptions, clientClassificationOptions, 
-        		clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientLegalFormOptions,null,null,null, null);
+        final List<EnumOptionData> clientLevelOptions = null;
+        return ClientData.template(null, null, null, null, narrations, null, null, clientTypeOptions, clientClassificationOptions,
+        		clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientLegalFormOptions,null,null,null, null, clientLevelOptions);
     }
 
     @Override

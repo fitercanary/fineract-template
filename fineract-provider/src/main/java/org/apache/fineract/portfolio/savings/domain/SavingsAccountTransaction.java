@@ -445,6 +445,11 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         this.balanceNumberOfDays = null;
     }
 
+    
+    public BigDecimal getCumulativeBalance() {
+        return this.cumulativeBalance;
+    }
+
     public void updateRunningBalance(final Money balance) {
         this.runningBalance = balance.getAmount();
     }

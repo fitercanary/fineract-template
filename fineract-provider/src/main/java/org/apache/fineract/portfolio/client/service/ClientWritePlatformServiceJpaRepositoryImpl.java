@@ -51,6 +51,7 @@ import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.client.data.ClientDataValidator;
 import org.apache.fineract.portfolio.client.domain.AccountNumberGenerator;
 import org.apache.fineract.portfolio.client.domain.Client;
+import org.apache.fineract.portfolio.client.domain.ClientLevel;
 import org.apache.fineract.portfolio.client.domain.ClientNonPerson;
 import org.apache.fineract.portfolio.client.domain.ClientNonPersonRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
@@ -60,6 +61,7 @@ import org.apache.fineract.portfolio.client.domain.ReferralStatus;
 import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientActiveForUpdateException;
 import org.apache.fineract.portfolio.client.exception.ClientHasNoStaffException;
+import org.apache.fineract.portfolio.client.exception.ClientLevelHighToLowerException;
 import org.apache.fineract.portfolio.client.exception.ClientMustBePendingToBeDeletedException;
 import org.apache.fineract.portfolio.client.exception.InvalidClientSavingProductException;
 import org.apache.fineract.portfolio.client.exception.InvalidClientStateTransitionException;
@@ -297,8 +299,19 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 }
             }
             
+            final Integer clientLevelParamValue = command.integerValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
+            Integer clientLevelValue = null;
+            if(clientLevelParamValue != null) {
+                ClientLevel clientLevel = ClientLevel.fromInt(clientLevelParamValue);
+                if(clientLevel != null) {
+                    clientLevelValue = clientLevel.getValue();
+                }
+            }else {
+                clientLevelValue = ClientLevel.LEVEL_1.getValue();
+            }
+            
             final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProductId, gender,
-                    clientType, clientClassification, legalFormValue, command);
+                    clientType, clientClassification, legalFormValue, clientLevelValue, command);
             final String referralId = command.stringValueOfParameterNamed(ClientApiConstants.referralIdParamName);
             final String deviceId = command.stringValueOfParameterNamed(ClientApiConstants.deviceIdParamName);
             final Long referralClientId = command.longValueOfParameterNamed(ClientApiConstants.referralClientIdParamName);
@@ -464,6 +477,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String clientHierarchy = clientForUpdate.getOffice().getHierarchy();
 
             this.context.validateAccessRights(clientHierarchy);
+            Integer clientLevelOldValue = clientForUpdate.getClientLevel();
 
             final Map<String, Object> changes = clientForUpdate.update(command);
 
@@ -487,6 +501,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 }
                 clientForUpdate.updateGender(gender);
             }
+            
+            if (changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
+                if (clientLevelOldValue > newValue) { throw new ClientLevelHighToLowerException(newValue,
+                        ClientApiConstants.clientLevelIdParamName); }
+                 
+            }
+
 
             if (changes.containsKey(ClientApiConstants.savingsProductIdParamName)) {
                 if (clientForUpdate.isActive()) { throw new ClientActiveForUpdateException(clientId,

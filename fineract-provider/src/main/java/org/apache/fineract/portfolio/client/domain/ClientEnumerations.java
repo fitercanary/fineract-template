@@ -66,17 +66,16 @@ public class ClientEnumerations {
 
         return optionData;
     }
-    
+
     public static EnumOptionData legalForm(final Integer statusId) {
         return legalForm(LegalForm.fromInt(statusId));
     }
-    
+
     public static EnumOptionData legalForm(final LegalForm legalForm) {
-    	final EnumOptionData optionData = new EnumOptionData(legalForm.getValue().longValue(), legalForm.getCode(),
-                legalForm.toString());
+        final EnumOptionData optionData = new EnumOptionData(legalForm.getValue().longValue(), legalForm.getCode(), legalForm.toString());
         return optionData;
     }
-    
+
     public static List<EnumOptionData> legalForm(final LegalForm[] legalForms) {
         final List<EnumOptionData> optionDatas = new ArrayList<>();
         for (final LegalForm legalForm : legalForms) {
@@ -84,26 +83,6 @@ public class ClientEnumerations {
         }
         return optionDatas;
     }
-    
-    
-    public static EnumOptionData clientLevel(final Integer statusId) {
-        return clientLevel(ClientLevel.fromInt(statusId));
-    }
-    
-    public static EnumOptionData clientLevel(final ClientLevel clientLevel) {
-        final EnumOptionData optionData = new EnumOptionData(clientLevel.getValue().longValue(), clientLevel.getCode(),
-                clientLevel.toString());
-        return optionData;
-    }
-    
-    public static List<EnumOptionData> clientLevel(final ClientLevel[] clientLevels) {
-        final List<EnumOptionData> optionDatas = new ArrayList<>();
-        for (final ClientLevel clientLevel : clientLevels) {
-            optionDatas.add(clientLevel(clientLevel));
-        }
-        return optionDatas;
-    }
-
 
     public static EnumOptionData clientTransactionType(final int id) {
         return clientTransactionType(ClientTransactionType.fromInt(id));

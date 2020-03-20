@@ -18,5 +18,10 @@
 --
 
 ALTER TABLE `m_client`
-	ADD COLUMN `client_level_enum` TINYINT(1) NOT NULL Default 1 AFTER `referred_by_id`;
+	ADD COLUMN `client_level_cv_id` TINYINT(1) NOT NULL Default 1 AFTER `daily_withdraw_limit`;
+
+
+
+
+	
 

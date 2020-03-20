@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.apache.fineract.infrastructure.core.data.EnumOptionData;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 
 /**
  * Immutable data object for charge data.
@@ -30,18 +30,18 @@ import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 public class ValidationLimitData implements Comparable<ValidationLimitData>, Serializable {
 
     private final Long id;
-    private final Long clientLevelId;
+    private final CodeValueData clientLevel;
     private final BigDecimal maximumSingleDepositAmount;
     private final BigDecimal maximumCumulativeBalance;
     private final BigDecimal maximumTransactionLimit;
     private final BigDecimal maximumDailyTransactionAmountLimit;
-    private List<EnumOptionData> clientLevelOptions;
+    private List<CodeValueData> clientLevelOptions;
 
-    private ValidationLimitData(final Long id, final Long clientLevelId, final BigDecimal maximumSingleDepositAmount,
+    private ValidationLimitData(final Long id, final CodeValueData clientLevel, final BigDecimal maximumSingleDepositAmount,
             final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
-            final BigDecimal maximumDailyTransactionAmountLimit, List<EnumOptionData> clientLevelOptions) {
+            final BigDecimal maximumDailyTransactionAmountLimit, List<CodeValueData> clientLevelOptions) {
         this.id = id;
-        this.clientLevelId = clientLevelId;
+        this.clientLevel = clientLevel;
         this.maximumSingleDepositAmount = maximumSingleDepositAmount;
         this.maximumCumulativeBalance = maximumCumulativeBalance;
         this.maximumTransactionLimit = maximumTransactionLimit;
@@ -50,21 +50,21 @@ public class ValidationLimitData implements Comparable<ValidationLimitData>, Ser
 
     }
 
-    public static ValidationLimitData template(final List<EnumOptionData> clientLevelOptions) {
+    public static ValidationLimitData template(final List<CodeValueData> clientLevelOptions) {
 
         return new ValidationLimitData(null, null, null, null, null, null, clientLevelOptions);
     }
 
     public static ValidationLimitData withTemplate(final ValidationLimitData limitData, final ValidationLimitData template) {
-        return new ValidationLimitData(limitData.id, limitData.clientLevelId, limitData.maximumSingleDepositAmount,
+        return new ValidationLimitData(limitData.id, limitData.clientLevel, limitData.maximumSingleDepositAmount,
                 limitData.maximumCumulativeBalance, limitData.maximumTransactionLimit, limitData.maximumDailyTransactionAmountLimit,
                 template.clientLevelOptions);
     }
 
-    public static ValidationLimitData instance(final Long id, final Long clientLevelId, final BigDecimal maximumSingleDepositAmount,
+    public static ValidationLimitData instance(final Long id, final CodeValueData clientLevel, final BigDecimal maximumSingleDepositAmount,
             final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
             final BigDecimal maximumDailyTransactionAmountLimit) {
-        return new ValidationLimitData(id, clientLevelId, maximumSingleDepositAmount, maximumCumulativeBalance, maximumTransactionLimit,
+        return new ValidationLimitData(id, clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance, maximumTransactionLimit,
                 maximumDailyTransactionAmountLimit, null);
     }
 

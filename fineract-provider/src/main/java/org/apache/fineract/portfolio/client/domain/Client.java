@@ -238,9 +238,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     @Column(name = "referral_id")
     private String referralId;
-
-    @Column(name = "client_level_enum", nullable = true)
-    private Integer clientLevel;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_level_cv_id", nullable = true)
+    private CodeValue clientLevel;
 
     @Column(name = "referral_dynamic_link")
     private String referralDynamicLink;
@@ -254,20 +255,20 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
-            final Integer legalForm, final Integer clientLevel, final JsonCommand command) {
+            final Integer legalForm, final CodeValue clientLevel, final JsonCommand command) {
 
         final String accountNo = command.stringValueOfParameterNamed(ClientApiConstants.accountNoParamName);
         final String externalId = command.stringValueOfParameterNamed(ClientApiConstants.externalIdParamName);
         final String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
         final String mothersMaidenName = command.stringValueOfParameterNamed(ClientApiConstants.mothersMaidenNameParamName);
-		final String emailAddress = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+        final String emailAddress = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
 
         final String firstname = command.stringValueOfParameterNamed(ClientApiConstants.firstnameParamName);
         final String middlename = command.stringValueOfParameterNamed(ClientApiConstants.middlenameParamName);
         final String lastname = command.stringValueOfParameterNamed(ClientApiConstants.lastnameParamName);
         final String fullname = command.stringValueOfParameterNamed(ClientApiConstants.fullnameParamName);
-		
-		final boolean isStaff = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.isStaffParamName);
+
+        final boolean isStaff = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.isStaffParamName);
 
         final LocalDate dataOfBirth = command.localDateValueOfParameterNamed(ClientApiConstants.dateOfBirthParamName);
 
@@ -295,8 +296,9 @@ public final class Client extends AbstractPersistableCustom<Long> {
         final Long savingsAccountId = null;
         final BigDecimal dailyWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
-                activationDate, officeJoiningDate, externalId, mobileNo,mothersMaidenName, emailAddress, staff, submittedOnDate, savingsProductId, savingsAccountId, dataOfBirth,
-                gender, clientType, clientClassification, legalForm, isStaff, clientLevel, dailyWithdrawLimit);
+                activationDate, officeJoiningDate, externalId, mobileNo, mothersMaidenName, emailAddress, staff, submittedOnDate,
+                savingsProductId, savingsAccountId, dataOfBirth, gender, clientType, clientClassification, legalForm, isStaff, clientLevel,
+                dailyWithdrawLimit);
     }
 
     protected Client() {
@@ -305,10 +307,11 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     private Client(final AppUser currentUser, final ClientStatus status, final Office office, final Group clientParentGroup,
             final String accountNo, final String firstname, final String middlename, final String lastname, final String fullname,
-            final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo,final String mothersMaidenName,
-            final String emailAddress, final Staff staff, final LocalDate submittedOnDate, final Long savingsProductId, final Long savingsAccountId,
-            final LocalDate dateOfBirth, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, 
-            final Boolean isStaff, final Integer clientLevel, final BigDecimal dailyWithdrawLimit) {
+            final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo,
+            final String mothersMaidenName, final String emailAddress, final Staff staff, final LocalDate submittedOnDate,
+            final Long savingsProductId, final Long savingsAccountId, final LocalDate dateOfBirth, final CodeValue gender,
+            final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff,
+            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -390,8 +393,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
         if (dateOfBirth != null) {
             this.dateOfBirth = dateOfBirth.toDateTimeAtStartOfDay().toDate();
         }
+        if (clientLevel != null) {
+            this.clientLevel = clientLevel;
+        }
         this.clientType = clientType;
-        this.clientLevel = clientLevel;
         this.clientClassification = clientClassification;
         this.dailyWithdrawLimit = dailyWithdrawLimit;
         this.setLegalForm(legalForm);
@@ -522,12 +527,6 @@ public final class Client extends AbstractPersistableCustom<Long> {
             this.status = ClientStatus.fromInt(newValue).getValue();
         }
 
-        if (command.isChangeInIntegerParameterNamed(ClientApiConstants.clientLevelIdParamName, this.clientLevel)) {
-            final Integer newValue = command.integerValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
-            actualChanges.put(ClientApiConstants.clientLevelIdParamName, ClientEnumerations.clientLevel(newValue));
-            this.clientLevel = ClientLevel.fromInt(newValue).getValue();
-        }
-
         if (command.isChangeInStringParameterNamed(ClientApiConstants.accountNoParamName, this.accountNumber)) {
             final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.accountNoParamName);
             actualChanges.put(ClientApiConstants.accountNoParamName, newValue);
@@ -588,6 +587,11 @@ public final class Client extends AbstractPersistableCustom<Long> {
         if (command.isChangeInLongParameterNamed(ClientApiConstants.genderIdParamName, genderId())) {
             final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.genderIdParamName);
             actualChanges.put(ClientApiConstants.genderIdParamName, newValue);
+        }
+
+        if (command.isChangeInLongParameterNamed(ClientApiConstants.clientLevelIdParamName, clientLevelId())) {
+            final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
+            actualChanges.put(ClientApiConstants.clientLevelIdParamName, newValue);
         }
 
         if (command.isChangeInLongParameterNamed(ClientApiConstants.savingsProductIdParamName, savingsProductId())) {
@@ -673,7 +677,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
             this.submittedOnDate = newValue.toDate();
         }
 
-        if(command.isChangeInBigDecimalParameterNamed(ClientApiConstants.dailyWithdrawLimit, this.dailyWithdrawLimit)) {
+        if (command.isChangeInBigDecimalParameterNamed(ClientApiConstants.dailyWithdrawLimit, this.dailyWithdrawLimit)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
             actualChanges.put(ClientApiConstants.dailyWithdrawLimit, newValue);
             this.dailyWithdrawLimit = newValue;
@@ -896,10 +900,6 @@ public final class Client extends AbstractPersistableCustom<Long> {
         return this.staff;
     }
 
-    public Integer getClientLevel() {
-        return this.clientLevel;
-    }
-
     public void unassignStaff() {
         this.staff = null;
     }
@@ -980,6 +980,14 @@ public final class Client extends AbstractPersistableCustom<Long> {
         return genderId;
     }
 
+    public Long clientLevelId() {
+        Long clientLevelId = null;
+        if (this.clientLevel != null) {
+            clientLevelId = this.clientLevel.getId();
+        }
+        return clientLevelId;
+    }
+
     public Long clientTypeId() {
         Long clientTypeId = null;
         if (this.clientType != null) {
@@ -1016,6 +1024,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
         return this.gender;
     }
 
+    public CodeValue clientLevel() {
+        return this.clientLevel;
+    }
+
     public CodeValue clientType() {
         return this.clientType;
     }
@@ -1034,6 +1046,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     public void updateGender(CodeValue gender) {
         this.gender = gender;
+    }
+    
+    public void updateClientLevel(CodeValue clientLevel) {
+        this.clientLevel = clientLevel;
     }
 
     public Date dateOfBirth() {
@@ -1149,9 +1165,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
     }
 
     public BigDecimal getDailyWithdrawLimit() {
-        if(this.dailyWithdrawLimit == null) {
-            return BigDecimal.ZERO;
-        }
+        if (this.dailyWithdrawLimit == null) { return BigDecimal.ZERO; }
         return this.dailyWithdrawLimit;
     }
 }

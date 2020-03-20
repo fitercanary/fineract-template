@@ -77,6 +77,8 @@ public class ClientApiConstants {
     
     
     public static final String CLIENT_TYPE_INDIVIDUAL = "Individual";
+    
+    public static final String CLIENT_LEVELS = "Client Levels";
 
     // request parameters
     public static final String idParamName = "id";
@@ -206,7 +208,7 @@ public class ClientApiConstants {
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
             dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName, legalFormParamName, 
-            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit));
+            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit, clientLevelIdParamName));
 
     protected static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList
             (chargeIdParamName,

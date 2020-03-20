@@ -18,7 +18,14 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import com.google.gson.JsonElement;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.persistence.PersistenceException;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -51,7 +58,6 @@ import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.client.data.ClientDataValidator;
 import org.apache.fineract.portfolio.client.domain.AccountNumberGenerator;
 import org.apache.fineract.portfolio.client.domain.Client;
-import org.apache.fineract.portfolio.client.domain.ClientLevel;
 import org.apache.fineract.portfolio.client.domain.ClientNonPerson;
 import org.apache.fineract.portfolio.client.domain.ClientNonPersonRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
@@ -94,12 +100,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.PersistenceException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import com.google.gson.JsonElement;
 
 @Service
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
@@ -133,18 +134,21 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-                                                       final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
-                                                       final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
-                                                       final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
-                                                       final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
-                                                       final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
-                                                       final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
-                                                       final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
-                                                       final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
-                                                       final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
-                                                       final ConfigurationReadPlatformService configurationReadPlatformService,
-                                                       final AddressWritePlatformService addressWritePlatformService, final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService, final BusinessEventNotifierService businessEventNotifierService,
-                                                       final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, ReferralStatusRepository referralStatusRepository) {
+            final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
+            final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
+            final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
+            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
+            final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
+            final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
+            final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
+            final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
+            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
+            final ConfigurationReadPlatformService configurationReadPlatformService,
+            final AddressWritePlatformService addressWritePlatformService,
+            final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
+            final BusinessEventNotifierService businessEventNotifierService,
+            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
+            ReferralStatusRepository referralStatusRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -165,7 +169,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.configurationReadPlatformService = configurationReadPlatformService;
         this.addressWritePlatformService = addressWritePlatformService;
-        this.clientFamilyMembersWritePlatformService=clientFamilyMembersWritePlatformService;
+        this.clientFamilyMembersWritePlatformService = clientFamilyMembersWritePlatformService;
         this.businessEventNotifierService = businessEventNotifierService;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.referralStatusRepository = referralStatusRepository;
@@ -192,7 +196,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     .withEntityId(clientId) //
                     .build();
         } catch (DataIntegrityViolationException dve) {
-            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             logger.error(throwable.getMessage());
             throw new PlatformDataIntegrityException("error.msg.client.unknown.data.integrity.issue",
                     "Unknown data integrity issue with resource.");
@@ -208,16 +212,16 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         if (realCause.getMessage().contains("external_id")) {
 
             final String externalId = command.stringValueOfParameterNamed("externalId");
-            throw new PlatformDataIntegrityException("error.msg.client.duplicate.externalId", "Client with externalId `" + externalId
-                    + "` already exists", "externalId", externalId);
+            throw new PlatformDataIntegrityException("error.msg.client.duplicate.externalId",
+                    "Client with externalId `" + externalId + "` already exists", "externalId", externalId);
         } else if (realCause.getMessage().contains("account_no_UNIQUE")) {
             final String accountNo = command.stringValueOfParameterNamed("accountNo");
-            throw new PlatformDataIntegrityException("error.msg.client.duplicate.accountNo", "Client with accountNo `" + accountNo
-                    + "` already exists", "accountNo", accountNo);
+            throw new PlatformDataIntegrityException("error.msg.client.duplicate.accountNo",
+                    "Client with accountNo `" + accountNo + "` already exists", "accountNo", accountNo);
         } else if (realCause.getMessage().contains("mobile_no")) {
             final String mobileNo = command.stringValueOfParameterNamed("mobileNo");
-            throw new PlatformDataIntegrityException("error.msg.client.duplicate.mobileNo", "Client with mobileNo `" + mobileNo
-                    + "` already exists", "mobileNo", mobileNo);
+            throw new PlatformDataIntegrityException("error.msg.client.duplicate.mobileNo",
+                    "Client with mobileNo `" + mobileNo + "` already exists", "mobileNo", mobileNo);
         }
 
         logAsErrorUnexpectedDataIntegrityException(dve);
@@ -233,13 +237,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final AppUser currentUser = this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
-            
-			final GlobalConfigurationPropertyData configuration = this.configurationReadPlatformService
-					.retrieveGlobalConfiguration("Enable-Address");
 
-			final Boolean isAddressEnabled = configuration.isEnabled();
-			
-			final Boolean isStaff = command.booleanObjectValueOfParameterNamed(ClientApiConstants.isStaffParamName);
+            final GlobalConfigurationPropertyData configuration = this.configurationReadPlatformService
+                    .retrieveGlobalConfiguration("Enable-Address");
+
+            final Boolean isAddressEnabled = configuration.isEnabled();
+
+            final Boolean isStaff = command.booleanObjectValueOfParameterNamed(ClientApiConstants.isStaffParamName);
 
             final Long officeId = command.longValueOfParameterNamed(ClientApiConstants.officeIdParamName);
 
@@ -265,6 +269,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 gender = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.GENDER, genderId);
             }
 
+            CodeValue clientLevel = null;
+            final Long clientLevelId = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
+            if (clientLevelId != null) {
+                clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
+                        clientLevelId);
+            }
+
             CodeValue clientType = null;
             final Long clientTypeId = command.longValueOfParameterNamed(ClientApiConstants.clientTypeIdParamName);
             if (clientTypeId != null) {
@@ -275,43 +286,29 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             CodeValue clientClassification = null;
             final Long clientClassificationId = command.longValueOfParameterNamed(ClientApiConstants.clientClassificationIdParamName);
             if (clientClassificationId != null) {
-                clientClassification = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
-                        ClientApiConstants.CLIENT_CLASSIFICATION, clientClassificationId);
+                clientClassification = this.codeValueRepository
+                        .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_CLASSIFICATION, clientClassificationId);
             }
 
-           
             final Long savingsProductId = command.longValueOfParameterNamed(ClientApiConstants.savingsProductIdParamName);
             if (savingsProductId != null) {
                 SavingsProduct savingsProduct = this.savingsProductRepository.findOne(savingsProductId);
                 if (savingsProduct == null) { throw new SavingsProductNotFoundException(savingsProductId); }
             }
-            
+
             final Integer legalFormParamValue = command.integerValueOfParameterNamed(ClientApiConstants.legalFormIdParamName);
             boolean isEntity = false;
             Integer legalFormValue = null;
-            if(legalFormParamValue != null)
-            {
-            	LegalForm legalForm = LegalForm.fromInt(legalFormParamValue);
-            	if(legalForm != null)
-                {
-                	legalFormValue = legalForm.getValue();
-                	isEntity = legalForm.isEntity();
+            if (legalFormParamValue != null) {
+                LegalForm legalForm = LegalForm.fromInt(legalFormParamValue);
+                if (legalForm != null) {
+                    legalFormValue = legalForm.getValue();
+                    isEntity = legalForm.isEntity();
                 }
             }
-            
-            final Integer clientLevelParamValue = command.integerValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
-            Integer clientLevelValue = null;
-            if(clientLevelParamValue != null) {
-                ClientLevel clientLevel = ClientLevel.fromInt(clientLevelParamValue);
-                if(clientLevel != null) {
-                    clientLevelValue = clientLevel.getValue();
-                }
-            }else {
-                clientLevelValue = ClientLevel.LEVEL_1.getValue();
-            }
-            
+
             final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProductId, gender,
-                    clientType, clientClassification, legalFormValue, clientLevelValue, command);
+                    clientType, clientClassification, legalFormValue, clientLevel, command);
             final String referralId = command.stringValueOfParameterNamed(ClientApiConstants.referralIdParamName);
             final String deviceId = command.stringValueOfParameterNamed(ClientApiConstants.deviceIdParamName);
             final Long referralClientId = command.longValueOfParameterNamed(ClientApiConstants.referralClientIdParamName);
@@ -337,7 +334,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     referralStatus.setLastSaved(DateUtils.getDateOfTenant());
                     this.referralStatusRepository.save(referralStatus);
                 } else {
-                    //Assume registered via web app
+                    // Assume registered via web app
                     referralStatus = new ReferralStatus();
                     referralStatus.setClient(referredBy);
                     referralStatus.setStatus("registered");
@@ -361,7 +358,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 final CommandWrapper commandWrapper = new CommandWrapperBuilder().activateClient(null).build();
                 rollbackTransaction = this.commandProcessingService.validateCommand(commandWrapper, currentUser);
             }
-			
+
             this.clientRepository.save(newClient);
             if (newClient.isActive()) {
                 this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.CLIENTS_ACTIVATE,
@@ -372,30 +369,28 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 newClient.updateAccountNo(accountNumberGenerator.generate(newClient, accountNumberFormat));
                 this.clientRepository.save(newClient);
             }
-                        
+
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
             CommandProcessingResult result = openSavingsAccount(newClient, fmt);
             if (result.getSavingsId() != null) {
                 this.clientRepository.save(newClient);
-                
+
             }
-            
-            if(isEntity) {
+
+            if (isEntity) {
                 extractAndCreateClientNonPerson(newClient, command);
             }
-            	
+
             if (isAddressEnabled) {
                 this.addressWritePlatformService.addNewClientAddress(newClient, command);
             }
-            
-            
-            if(command.arrayOfParameterNamed("familyMembers")!=null)
-            {
-            	this.clientFamilyMembersWritePlatformService.addClientFamilyMember(newClient, command);
+
+            if (command.arrayOfParameterNamed("familyMembers") != null) {
+                this.clientFamilyMembersWritePlatformService.addClientFamilyMember(newClient, command);
             }
 
-            if(command.parameterExists(ClientApiConstants.datatables)){
+            if (command.parameterExists(ClientApiConstants.datatables)) {
                 this.entityDatatableChecksWritePlatformService.saveDatatables(StatusEnum.CREATE.getCode().longValue(),
                         EntityTables.CLIENT.getName(), newClient.getId(), null,
                         command.arrayOfParameterNamed(ClientApiConstants.datatables));
@@ -419,51 +414,59 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
             return CommandProcessingResult.empty();
-        }catch(final PersistenceException dve) {
-        	Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             handleDataIntegrityIssues(command, throwable, dve);
-         	return CommandProcessingResult.empty();
+            return CommandProcessingResult.empty();
         }
     }
-    
+
     /**
-     * This method extracts ClientNonPerson details from Client command and creates a new ClientNonPerson record
+     * This method extracts ClientNonPerson details from Client command and
+     * creates a new ClientNonPerson record
+     * 
      * @param client
      * @param command
      */
-    public void extractAndCreateClientNonPerson(Client client, JsonCommand command)
-    {    	
-    	final JsonElement clientNonPersonElement = this.fromApiJsonHelper.parse(command.jsonFragment(ClientApiConstants.clientNonPersonDetailsParamName));
+    public void extractAndCreateClientNonPerson(Client client, JsonCommand command) {
+        final JsonElement clientNonPersonElement = this.fromApiJsonHelper
+                .parse(command.jsonFragment(ClientApiConstants.clientNonPersonDetailsParamName));
 
-		if(clientNonPersonElement != null && !isEmpty(clientNonPersonElement))
-		{
-			final String incorpNumber = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.incorpNumberParamName, clientNonPersonElement);
-	        final String remarks = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.remarksParamName, clientNonPersonElement);                
-	        final LocalDate incorpValidityTill = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.incorpValidityTillParamName, clientNonPersonElement);
-	        
-	    	//JsonCommand clientNonPersonCommand = JsonCommand.fromExistingCommand(command, command.arrayOfParameterNamed(ClientApiConstants.clientNonPersonDetailsParamName).getAsJsonObject());
-	    	CodeValue clientNonPersonConstitution = null;
-	        final Long clientNonPersonConstitutionId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.constitutionIdParamName, clientNonPersonElement);
-	        if (clientNonPersonConstitutionId != null) {
-	        	clientNonPersonConstitution = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_NON_PERSON_CONSTITUTION,
-	        			clientNonPersonConstitutionId);
-	        }
-	        
-	        CodeValue clientNonPersonMainBusinessLine = null;
-	        final Long clientNonPersonMainBusinessLineId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.mainBusinessLineIdParamName, clientNonPersonElement);
-	        if (clientNonPersonMainBusinessLineId != null) {
-	        	clientNonPersonMainBusinessLine = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_NON_PERSON_MAIN_BUSINESS_LINE,
-	        			clientNonPersonMainBusinessLineId);
-	        }
-	        
-	    	final ClientNonPerson newClientNonPerson = ClientNonPerson.createNew(client, clientNonPersonConstitution, clientNonPersonMainBusinessLine, incorpNumber, incorpValidityTill, remarks);
-	    	
-	    	this.clientNonPersonRepository.save(newClientNonPerson);
-		}
+        if (clientNonPersonElement != null && !isEmpty(clientNonPersonElement)) {
+            final String incorpNumber = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.incorpNumberParamName,
+                    clientNonPersonElement);
+            final String remarks = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.remarksParamName, clientNonPersonElement);
+            final LocalDate incorpValidityTill = this.fromApiJsonHelper
+                    .extractLocalDateNamed(ClientApiConstants.incorpValidityTillParamName, clientNonPersonElement);
+
+            // JsonCommand clientNonPersonCommand =
+            // JsonCommand.fromExistingCommand(command,
+            // command.arrayOfParameterNamed(ClientApiConstants.clientNonPersonDetailsParamName).getAsJsonObject());
+            CodeValue clientNonPersonConstitution = null;
+            final Long clientNonPersonConstitutionId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.constitutionIdParamName,
+                    clientNonPersonElement);
+            if (clientNonPersonConstitutionId != null) {
+                clientNonPersonConstitution = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+                        ClientApiConstants.CLIENT_NON_PERSON_CONSTITUTION, clientNonPersonConstitutionId);
+            }
+
+            CodeValue clientNonPersonMainBusinessLine = null;
+            final Long clientNonPersonMainBusinessLineId = this.fromApiJsonHelper
+                    .extractLongNamed(ClientApiConstants.mainBusinessLineIdParamName, clientNonPersonElement);
+            if (clientNonPersonMainBusinessLineId != null) {
+                clientNonPersonMainBusinessLine = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+                        ClientApiConstants.CLIENT_NON_PERSON_MAIN_BUSINESS_LINE, clientNonPersonMainBusinessLineId);
+            }
+
+            final ClientNonPerson newClientNonPerson = ClientNonPerson.createNew(client, clientNonPersonConstitution,
+                    clientNonPersonMainBusinessLine, incorpNumber, incorpValidityTill, remarks);
+
+            this.clientNonPersonRepository.save(newClientNonPerson);
+        }
     }
-    
-    public boolean isEmpty(final JsonElement element){
-    	return element.toString().trim().length()<4;
+
+    public boolean isEmpty(final JsonElement element) {
+        return element.toString().trim().length() < 4;
     }
 
     @Transactional
@@ -477,7 +480,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String clientHierarchy = clientForUpdate.getOffice().getHierarchy();
 
             this.context.validateAccessRights(clientHierarchy);
-            Integer clientLevelOldValue = clientForUpdate.getClientLevel();
+            Long clientLevelOldValue = clientForUpdate.clientLevel().getId();
 
             final Map<String, Object> changes = clientForUpdate.update(command);
 
@@ -486,8 +489,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
                 Staff newStaff = null;
                 if (newValue != null) {
-                    newStaff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(newValue, clientForUpdate.getOffice()
-                            .getHierarchy());
+                    newStaff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(newValue,
+                            clientForUpdate.getOffice().getHierarchy());
                 }
                 clientForUpdate.updateStaff(newStaff);
             }
@@ -501,18 +504,25 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 }
                 clientForUpdate.updateGender(gender);
             }
-            
+
             if (changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
-                if (clientLevelOldValue > newValue) { throw new ClientLevelHighToLowerException(newValue,
-                        ClientApiConstants.clientLevelIdParamName); }
-                 
+                CodeValue clientLevel = null;
+                if (newValue != null) {
+                    if (clientLevelOldValue > newValue) {
+                        throw new ClientLevelHighToLowerException(newValue, ClientApiConstants.clientLevelIdParamName);
+                    }
+                    clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
+                            newValue);
+                }
+                clientForUpdate.updateClientLevel(clientLevel);
+
             }
 
-
             if (changes.containsKey(ClientApiConstants.savingsProductIdParamName)) {
-                if (clientForUpdate.isActive()) { throw new ClientActiveForUpdateException(clientId,
-                        ClientApiConstants.savingsProductIdParamName); }
+                if (clientForUpdate.isActive()) {
+                    throw new ClientActiveForUpdateException(clientId, ClientApiConstants.savingsProductIdParamName);
+                }
                 SavingsProduct savingsProduct = null;
                 final Long savingsProductId = command.longValueOfParameterNamed(ClientApiConstants.savingsProductIdParamName);
                 if (savingsProductId != null) {
@@ -545,8 +555,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientClassificationIdParamName);
                 CodeValue newCodeVal = null;
                 if (newValue != null) {
-                    newCodeVal = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
-                            ClientApiConstants.CLIENT_CLASSIFICATION, newValue);
+                    newCodeVal = this.codeValueRepository
+                            .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_CLASSIFICATION, newValue);
                 }
                 clientForUpdate.updateClientClassification(newCodeVal);
             }
@@ -554,26 +564,20 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             if (!changes.isEmpty()) {
                 this.clientRepository.saveAndFlush(clientForUpdate);
             }
-            
+
             if (changes.containsKey(ClientApiConstants.legalFormIdParamName)) {
-            	Integer legalFormValue = clientForUpdate.getLegalForm();
-            	boolean isChangedToEntity = false;
-            	if(legalFormValue != null)
-            	{
-            		LegalForm legalForm = LegalForm.fromInt(legalFormValue);
-            		if(legalForm != null)
-            			isChangedToEntity = legalForm.isEntity();
-            	}
-                
-                if(isChangedToEntity)
-                {
-                	extractAndCreateClientNonPerson(clientForUpdate, command);
+                Integer legalFormValue = clientForUpdate.getLegalForm();
+                boolean isChangedToEntity = false;
+                if (legalFormValue != null) {
+                    LegalForm legalForm = LegalForm.fromInt(legalFormValue);
+                    if (legalForm != null) isChangedToEntity = legalForm.isEntity();
                 }
-                else
-                {
-                	final ClientNonPerson clientNonPerson = this.clientNonPersonRepository.findOneByClientId(clientForUpdate.getId());
-                	if(clientNonPerson != null)
-                		this.clientNonPersonRepository.delete(clientNonPerson);
+
+                if (isChangedToEntity) {
+                    extractAndCreateClientNonPerson(clientForUpdate, command);
+                } else {
+                    final ClientNonPerson clientNonPerson = this.clientNonPersonRepository.findOneByClientId(clientForUpdate.getId());
+                    if (clientNonPerson != null) this.clientNonPersonRepository.delete(clientNonPerson);
                 }
             }
 
@@ -594,7 +598,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                         referralStatus.setLastSaved(DateUtils.getDateOfTenant());
                         this.referralStatusRepository.save(referralStatus);
                     } else {
-                        //Assume registered via web app
+                        // Assume registered via web app
                         referralStatus = new ReferralStatus();
                         referralStatus.setClient(referredBy);
                         referralStatus.setStatus("registered");
@@ -611,37 +615,41 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     this.referralStatusRepository.save(referralStatus);
                 }
             }
-            
+
             final ClientNonPerson clientNonPersonForUpdate = this.clientNonPersonRepository.findOneByClientId(clientId);
-            if(clientNonPersonForUpdate != null)
-            {
-            	final JsonElement clientNonPersonElement = command.jsonElement(ClientApiConstants.clientNonPersonDetailsParamName);
-            	final Map<String, Object> clientNonPersonChanges = clientNonPersonForUpdate.update(JsonCommand.fromExistingCommand(command, clientNonPersonElement));
-                
+            if (clientNonPersonForUpdate != null) {
+                final JsonElement clientNonPersonElement = command.jsonElement(ClientApiConstants.clientNonPersonDetailsParamName);
+                final Map<String, Object> clientNonPersonChanges = clientNonPersonForUpdate
+                        .update(JsonCommand.fromExistingCommand(command, clientNonPersonElement));
+
                 if (clientNonPersonChanges.containsKey(ClientApiConstants.constitutionIdParamName)) {
 
-                    final Long newValue = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.constitutionIdParamName, clientNonPersonElement);
+                    final Long newValue = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.constitutionIdParamName,
+                            clientNonPersonElement);
                     CodeValue constitution = null;
                     if (newValue != null) {
-                        constitution = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_NON_PERSON_CONSTITUTION, newValue);
+                        constitution = this.codeValueRepository
+                                .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_NON_PERSON_CONSTITUTION, newValue);
                     }
                     clientNonPersonForUpdate.updateConstitution(constitution);
                 }
-                
+
                 if (clientNonPersonChanges.containsKey(ClientApiConstants.mainBusinessLineIdParamName)) {
 
-                    final Long newValue = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.mainBusinessLineIdParamName, clientNonPersonElement);
+                    final Long newValue = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.mainBusinessLineIdParamName,
+                            clientNonPersonElement);
                     CodeValue mainBusinessLine = null;
                     if (newValue != null) {
-                        mainBusinessLine = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_NON_PERSON_MAIN_BUSINESS_LINE, newValue);
+                        mainBusinessLine = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+                                ClientApiConstants.CLIENT_NON_PERSON_MAIN_BUSINESS_LINE, newValue);
                     }
                     clientNonPersonForUpdate.updateMainBusinessLine(mainBusinessLine);
                 }
-                
+
                 if (!clientNonPersonChanges.isEmpty()) {
                     this.clientNonPersonRepository.saveAndFlush(clientNonPersonForUpdate);
                 }
-                
+
                 changes.putAll(clientNonPersonChanges);
             } else {
                 final Integer legalFormParamValue = command.integerValueOfParameterNamed(ClientApiConstants.legalFormIdParamName);
@@ -666,10 +674,10 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
             return CommandProcessingResult.empty();
-        }catch(final PersistenceException dve) {
-        	Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             handleDataIntegrityIssues(command, throwable, dve);
-         	return CommandProcessingResult.empty();
+            return CommandProcessingResult.empty();
         }
     }
 
@@ -805,8 +813,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final LocalDate closureDate = command.localDateValueOfParameterNamed(ClientApiConstants.closureDateParamName);
             final Long closureReasonId = command.longValueOfParameterNamed(ClientApiConstants.closureReasonIdParamName);
 
-            final CodeValue closureReason = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
-                    ClientApiConstants.CLIENT_CLOSURE_REASON, closureReasonId);
+            final CodeValue closureReason = this.codeValueRepository
+                    .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_CLOSURE_REASON, closureReasonId);
 
             if (ClientStatus.fromInt(client.getStatus()).isClosed()) {
                 final String errorMessage = "Client is already closed.";
@@ -821,8 +829,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 throw new InvalidClientStateTransitionException("close", "date.cannot.before.client.actvation.date", errorMessage,
                         closureDate, client.getActivationLocalDate());
             }
-            entityDatatableChecksWritePlatformService.runTheCheck(clientId,EntityTables.CLIENT.getName(),
-                    StatusEnum.CLOSE.getCode().longValue(),EntityTables.CLIENT.getForeignKeyColumnNameOnDatatable());
+            entityDatatableChecksWritePlatformService.runTheCheck(clientId, EntityTables.CLIENT.getName(),
+                    StatusEnum.CLOSE.getCode().longValue(), EntityTables.CLIENT.getForeignKeyColumnNameOnDatatable());
 
             final List<Loan> clientLoans = this.loanRepositoryWrapper.findLoanByClientId(clientId);
             for (final Loan loan : clientLoans) {
@@ -911,15 +919,16 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                  * reduce maxNumberOfClients by 1
                  **/
                 final boolean validationsuccess = group.isGroupsClientCountWithinMaxRange(maxNumberOfClients - 1);
-                if (!validationsuccess) { throw new GroupMemberCountNotInPermissibleRangeException(group.getId(), minNumberOfClients,
-                        maxNumberOfClients); }
+                if (!validationsuccess) {
+                    throw new GroupMemberCountNotInPermissibleRangeException(group.getId(), minNumberOfClients, maxNumberOfClients);
+                }
             }
         }
     }
 
     private void runEntityDatatableCheck(final Long clientId) {
-        entityDatatableChecksWritePlatformService.runTheCheck(clientId, EntityTables.CLIENT.getName(), StatusEnum.ACTIVATE.getCode()
-                .longValue(), EntityTables.CLIENT.getForeignKeyColumnNameOnDatatable());
+        entityDatatableChecksWritePlatformService.runTheCheck(clientId, EntityTables.CLIENT.getName(),
+                StatusEnum.ACTIVATE.getCode().longValue(), EntityTables.CLIENT.getForeignKeyColumnNameOnDatatable());
     }
 
     @Override
@@ -931,8 +940,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         final LocalDate rejectionDate = command.localDateValueOfParameterNamed(ClientApiConstants.rejectionDateParamName);
         final Long rejectionReasonId = command.longValueOfParameterNamed(ClientApiConstants.rejectionReasonIdParamName);
 
-        final CodeValue rejectionReason = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
-                ClientApiConstants.CLIENT_REJECT_REASON, rejectionReasonId);
+        final CodeValue rejectionReason = this.codeValueRepository
+                .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_REJECT_REASON, rejectionReasonId);
 
         if (client.isNotPending()) {
             final String errorMessage = "Only clients pending activation may be withdrawn.";
@@ -963,8 +972,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         final LocalDate withdrawalDate = command.localDateValueOfParameterNamed(ClientApiConstants.withdrawalDateParamName);
         final Long withdrawalReasonId = command.longValueOfParameterNamed(ClientApiConstants.withdrawalReasonIdParamName);
 
-        final CodeValue withdrawalReason = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
-                ClientApiConstants.CLIENT_WITHDRAW_REASON, withdrawalReasonId);
+        final CodeValue withdrawalReason = this.codeValueRepository
+                .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_WITHDRAW_REASON, withdrawalReasonId);
 
         if (client.isNotPending()) {
             final String errorMessage = "Only clients pending activation may be withdrawn.";
@@ -1009,60 +1018,58 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 .build();
     }
 
-	@Override
-	public CommandProcessingResult undoRejection(Long entityId, JsonCommand command) {
-		final AppUser currentUser = this.context.authenticatedUser();
-		this.fromApiJsonDeserializer.validateUndoRejection(command);
+    @Override
+    public CommandProcessingResult undoRejection(Long entityId, JsonCommand command) {
+        final AppUser currentUser = this.context.authenticatedUser();
+        this.fromApiJsonDeserializer.validateUndoRejection(command);
 
-		final Client client = this.clientRepository.findOneWithNotFoundDetection(entityId);
-		final LocalDate undoRejectDate = command
-				.localDateValueOfParameterNamed(ClientApiConstants.reopenedDateParamName);
+        final Client client = this.clientRepository.findOneWithNotFoundDetection(entityId);
+        final LocalDate undoRejectDate = command.localDateValueOfParameterNamed(ClientApiConstants.reopenedDateParamName);
 
-		if (!client.isRejected()) {
-			final String errorMessage = "only rejected clients may be reactivated.";
-			throw new InvalidClientStateTransitionException("undorejection", "on.nonrejected.account", errorMessage);
-		} else if (client.getRejectedDate().isAfter(undoRejectDate)) {
-			final String errorMessage = "The client reactivation date cannot be before the client rejected date.";
-			throw new InvalidClientStateTransitionException("reopened", "date.cannot.before.client.rejected.date",
-					errorMessage, undoRejectDate, client.getRejectedDate());
-		}
+        if (!client.isRejected()) {
+            final String errorMessage = "only rejected clients may be reactivated.";
+            throw new InvalidClientStateTransitionException("undorejection", "on.nonrejected.account", errorMessage);
+        } else if (client.getRejectedDate().isAfter(undoRejectDate)) {
+            final String errorMessage = "The client reactivation date cannot be before the client rejected date.";
+            throw new InvalidClientStateTransitionException("reopened", "date.cannot.before.client.rejected.date", errorMessage,
+                    undoRejectDate, client.getRejectedDate());
+        }
 
-		client.reOpened(currentUser, undoRejectDate.toDate());
-		this.clientRepository.saveAndFlush(client);
+        client.reOpened(currentUser, undoRejectDate.toDate());
+        this.clientRepository.saveAndFlush(client);
 
-		return new CommandProcessingResultBuilder() //
-				.withCommandId(command.commandId()) //
-				.withClientId(entityId) //
-				.withEntityId(entityId) //
-				.build();
-	}
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withClientId(entityId) //
+                .withEntityId(entityId) //
+                .build();
+    }
 
-	@Override
-	public CommandProcessingResult undoWithdrawal(Long entityId, JsonCommand command) {
-		final AppUser currentUser = this.context.authenticatedUser();
-		this.fromApiJsonDeserializer.validateUndoWithDrawn(command);
+    @Override
+    public CommandProcessingResult undoWithdrawal(Long entityId, JsonCommand command) {
+        final AppUser currentUser = this.context.authenticatedUser();
+        this.fromApiJsonDeserializer.validateUndoWithDrawn(command);
 
-		final Client client = this.clientRepository.findOneWithNotFoundDetection(entityId);
-		final LocalDate undoWithdrawalDate = command
-				.localDateValueOfParameterNamed(ClientApiConstants.reopenedDateParamName);
+        final Client client = this.clientRepository.findOneWithNotFoundDetection(entityId);
+        final LocalDate undoWithdrawalDate = command.localDateValueOfParameterNamed(ClientApiConstants.reopenedDateParamName);
 
-		if (!client.isWithdrawn()) {
-			final String errorMessage = "only withdrawal clients may be reactivated.";
-			throw new InvalidClientStateTransitionException("undoWithdrawal", "on.nonwithdrawal.account", errorMessage);
-		} else if (client.getWithdrawalDate().isAfter(undoWithdrawalDate)) {
-			final String errorMessage = "The client reactivation date cannot be before the client withdrawal date.";
-			throw new InvalidClientStateTransitionException("reopened", "date.cannot.before.client.withdrawal.date",
-					errorMessage, undoWithdrawalDate, client.getWithdrawalDate());
-		}
-		client.reOpened(currentUser, undoWithdrawalDate.toDate());
-		this.clientRepository.saveAndFlush(client);
+        if (!client.isWithdrawn()) {
+            final String errorMessage = "only withdrawal clients may be reactivated.";
+            throw new InvalidClientStateTransitionException("undoWithdrawal", "on.nonwithdrawal.account", errorMessage);
+        } else if (client.getWithdrawalDate().isAfter(undoWithdrawalDate)) {
+            final String errorMessage = "The client reactivation date cannot be before the client withdrawal date.";
+            throw new InvalidClientStateTransitionException("reopened", "date.cannot.before.client.withdrawal.date", errorMessage,
+                    undoWithdrawalDate, client.getWithdrawalDate());
+        }
+        client.reOpened(currentUser, undoWithdrawalDate.toDate());
+        this.clientRepository.saveAndFlush(client);
 
-		return new CommandProcessingResultBuilder() //
-				.withCommandId(command.commandId()) //
-				.withClientId(entityId) //
-				.withEntityId(entityId) //
-				.build();
-	}
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withClientId(entityId) //
+                .withEntityId(entityId) //
+                .build();
+    }
 
     @Override
     public void saveDynamicLink(Long clientId, String dynamicLink) {
@@ -1073,10 +1080,10 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
     @Override
     public void setReferralStatus(Long clientId, String referralId, String status, String phoneNo, String email, String deviceId) {
-        Client client = clientId != null ? this.clientRepository.findOneWithNotFoundDetection(clientId) :
-                this.clientRepository.getClientByReferralId(referralId);
+        Client client = clientId != null ? this.clientRepository.findOneWithNotFoundDetection(clientId)
+                : this.clientRepository.getClientByReferralId(referralId);
         ReferralStatus referralStatus = null;
-        if (StringUtils.isNotEmpty(phoneNo) || StringUtils.isNotEmpty(email)){
+        if (StringUtils.isNotEmpty(phoneNo) || StringUtils.isNotEmpty(email)) {
             if (StringUtils.isNotEmpty(phoneNo)) {
                 referralStatus = this.referralStatusRepository.findReferralStatusByClientAndPhoneNo(client, phoneNo);
             }

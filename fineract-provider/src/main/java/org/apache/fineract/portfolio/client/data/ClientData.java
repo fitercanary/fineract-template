@@ -18,6 +18,10 @@
  */
 package org.apache.fineract.portfolio.client.data;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.CompareToBuilder;
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -32,10 +36,6 @@ import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.joda.time.LocalDate;
-
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Immutable data object representing client data.
@@ -83,7 +83,7 @@ final public class ClientData implements Comparable<ClientData> {
 
     private final Long savingsAccountId;
     private final EnumOptionData legalForm;
-    private EnumOptionData clientLevel;
+    private CodeValueData clientLevel;
     private Long referredById;
     private String referredBy;
     private List<ReferralStatusData> referrals;
@@ -104,7 +104,7 @@ final public class ClientData implements Comparable<ClientData> {
     private final Collection<CodeValueData> clientNonPersonConstitutionOptions;
     private final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions;
     private final List<EnumOptionData> clientLegalFormOptions;
-    private final List<EnumOptionData> clientLevelOptions;
+    private final List<CodeValueData> clientLevelOptions;
     private final ClientFamilyMembersData familyMemberOptions;
 
     private final ClientNonPersonData clientNonPersonDetails;
@@ -125,7 +125,6 @@ final public class ClientData implements Comparable<ClientData> {
     private Long legalFormId;
     private LocalDate submittedOnDate;
     private final BigDecimal dailyWithdrawLimit;
-    
 
     public static ClientData importClientEntityInstance(Long legalFormId, Integer rowIndex, String fullname, Long officeId,
             Long clientTypeId, Long clientClassificationId, Long staffId, Boolean active, LocalDate activationDate,
@@ -239,7 +238,7 @@ final public class ClientData implements Comparable<ClientData> {
             final Collection<CodeValueData> clientNonPersonConstitutionOptions,
             final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions, final List<EnumOptionData> clientLegalFormOptions,
             final ClientFamilyMembersData familyMemberOptions, final AddressData address, final Boolean isAddressEnabled,
-            final List<DatatableData> datatables, final List<EnumOptionData> clientLevelOptions) {
+            final List<DatatableData> datatables, final List<CodeValueData> clientLevelOptions) {
         final String accountNo = null;
         final EnumOptionData status = null;
         final CodeValueData subStatus = null;
@@ -270,7 +269,7 @@ final public class ClientData implements Comparable<ClientData> {
         final CodeValueData clientType = null;
         final CodeValueData clientClassification = null;
         final EnumOptionData legalForm = null;
-        final EnumOptionData clientLevel = null;
+        final CodeValueData clientLevel = null;
         final Boolean isStaff = false;
         final ClientNonPersonData clientNonPersonDetails = null;
 
@@ -297,7 +296,8 @@ final public class ClientData implements Comparable<ClientData> {
                 templateData.clientClassificationOptions, templateData.clientNonPersonConstitutionOptions,
                 templateData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, templateData.clientLegalFormOptions,
                 templateData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
-                clientData.isStaff, templateData.existingClients, templateData.clientLevelOptions, clientData.clientLevel, clientData.dailyWithdrawLimit);
+                clientData.isStaff, templateData.existingClients, templateData.clientLevelOptions, clientData.clientLevel,
+                clientData.dailyWithdrawLimit);
 
     }
 
@@ -315,7 +315,8 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientClassificationOptions, clientData.clientNonPersonConstitutionOptions,
                 clientData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, clientData.clientLegalFormOptions,
                 clientData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
-                clientData.isStaff, clientData.existingClients, clientData.clientLevelOptions, clientData.clientLevel, clientData.dailyWithdrawLimit);
+                clientData.isStaff, clientData.existingClients, clientData.clientLevelOptions, clientData.clientLevel,
+                clientData.dailyWithdrawLimit);
 
     }
 
@@ -368,12 +369,12 @@ final public class ClientData implements Comparable<ClientData> {
         final Collection<CodeValueData> clientNonPersonConstitutionOptions = null;
         final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions = null;
         final List<EnumOptionData> clientLegalFormOptions = null;
-        final List<EnumOptionData> clientLevelOptions = null;
+        final List<CodeValueData> clientLevelOptions = null;
         final ClientFamilyMembersData familyMemberOptions = null;
         final EnumOptionData status = null;
         final CodeValueData subStatus = null;
         final EnumOptionData legalForm = null;
-        final EnumOptionData clientLevel = null;
+        final CodeValueData clientLevel = null;
 
         final Boolean isStaff = false;
         final ClientNonPersonData clientNonPerson = null;
@@ -424,10 +425,10 @@ final public class ClientData implements Comparable<ClientData> {
         final Collection<CodeValueData> clientNonPersonConstitutionOptions = null;
         final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions = null;
         final List<EnumOptionData> clientLegalFormOptions = null;
-        final List<EnumOptionData> clientLevelOptions = null;
+        final List<CodeValueData> clientLevelOptions = null;
         final ClientFamilyMembersData familyMemberOptions = null;
         final EnumOptionData legalForm = null;
-        final EnumOptionData clientLevel = null;
+        final CodeValueData clientLevel = null;
         final Boolean isStaff = false;
         final ClientNonPersonData clientNonPerson = null;
         return new ClientData(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id, firstname,
@@ -454,7 +455,7 @@ final public class ClientData implements Comparable<ClientData> {
             final String staffName, final ClientTimelineData timeline, final Long savingsProductId, final String savingsProductName,
             final Long savingsAccountId, final CodeValueData clientType, final CodeValueData clientClassification,
             final EnumOptionData legalForm, final ClientNonPersonData clientNonPerson, final Boolean isStaff,
-            final EnumOptionData clientLevel, final BigDecimal dailyWithdrawLimit) {
+            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit) {
 
         final Collection<OfficeData> allowedOffices = null;
         final Collection<GroupGeneralData> groups = null;
@@ -467,7 +468,7 @@ final public class ClientData implements Comparable<ClientData> {
         final Collection<CodeValueData> clientNonPersonConstitutionOptions = null;
         final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions = null;
         final List<EnumOptionData> clientLegalFormOptions = null;
-        final List<EnumOptionData> clientLevelOptions = null;
+        final List<CodeValueData> clientLevelOptions = null;
         final ClientFamilyMembersData familyMemberOptions = null;
         return new ClientData(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id, firstname,
                 middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress, dateOfBirth, gender,
@@ -494,7 +495,8 @@ final public class ClientData implements Comparable<ClientData> {
             final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions, final ClientNonPersonData clientNonPerson,
             final List<EnumOptionData> clientLegalFormOptions, final ClientFamilyMembersData familyMemberOptions,
             final EnumOptionData legalForm, final AddressData address, final Boolean isAddressEnabled, final List<DatatableData> datatables,
-            final Boolean isStaff, Collection<ClientData> existingClients, final List<EnumOptionData> clientLevelOptions, final EnumOptionData clientLevel, final BigDecimal dailyWithdrawLimit) {
+            final Boolean isStaff, Collection<ClientData> existingClients, final List<CodeValueData> clientLevelOptions,
+            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit) {
 
         this.accountNo = accountNo;
         this.status = status;

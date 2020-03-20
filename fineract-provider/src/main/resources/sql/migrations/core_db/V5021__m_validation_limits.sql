@@ -20,7 +20,7 @@
 
 CREATE TABLE `m_validation_limits` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `client_level_id` int(20) NOT NULL,
+  `client_level_cv_id` int(20) NOT NULL,
   `maximum_single_deposit_amount` bigint(50) DEFAULT NULL,
   `maximum_cumulative_balance` bigint(50) DEFAULT NULL,
   `maximum_transaction_limit` bigint(20) DEFAULT NULL,

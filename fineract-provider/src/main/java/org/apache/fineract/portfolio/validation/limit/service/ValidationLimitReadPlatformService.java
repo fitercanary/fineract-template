@@ -28,9 +28,9 @@ public interface ValidationLimitReadPlatformService {
     ValidationLimitData retrieveTemplateDetails();
 
     public ValidationLimitData retrieveValidationLimit(final Long validationLimitId);
-    
+
     public Collection<ValidationLimitData> retrieveAllValidationLimits();
-    
-    public ValidationLimit retriveValidationLimitByClientId(final Long clientLevelId);
+
+    public ValidationLimit retriveValidationLimitByClienLeveltId(Long clientLevelId);
 
 }

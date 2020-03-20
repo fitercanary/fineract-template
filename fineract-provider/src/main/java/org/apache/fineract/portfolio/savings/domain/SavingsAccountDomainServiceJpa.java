@@ -44,6 +44,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepositoryWrapper;
+import org.apache.fineract.portfolio.validation.limit.service.ValidationLimitReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
@@ -65,7 +66,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
-    private final ValidationLimitRepositoryWrapper validationLimitRespositoryWrapper;
+    private final ValidationLimitReadPlatformService validationLimitReadPlatformService;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -75,7 +76,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
             final BusinessEventNotifierService businessEventNotifierService,
-            final ValidationLimitRepositoryWrapper validationLimitRespositoryWrapper) {
+            final ValidationLimitReadPlatformService validationLimitReadPlatformService) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -84,7 +85,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.context = context;
         this.depositAccountOnHoldTransactionRepository = depositAccountOnHoldTransactionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
-        this.validationLimitRespositoryWrapper = validationLimitRespositoryWrapper;
+        this.validationLimitReadPlatformService = validationLimitReadPlatformService;
     }
 
     @Transactional
@@ -254,8 +255,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     }
 
     private ValidationLimit getValidationLimitForClientLevel(SavingsAccount account) {
-        Long clientLevelId = Long.parseLong(account.getClient().getClientLevel().toString());
-        return this.validationLimitRespositoryWrapper.findOneByClientLevelIdWithNotFoundDetection(clientLevelId);
+        Long clientLevelId = account.getClient().clientLevel().getId();
+        return this.validationLimitReadPlatformService.retriveValidationLimitByClienLeveltId(clientLevelId);
     }
 
     @Transactional

@@ -56,7 +56,7 @@ public class ValidationLimitRepositoryWrapper {
 
     public ValidationLimit findOneByClientLevelIdWithNotFoundDetection(final Long clientLevelId) {
 
-        final ValidationLimit validationLimit = this.repository.findOne(clientLevelId);
+        final ValidationLimit validationLimit = this.repository.findByClientLevelId(clientLevelId);
         if (validationLimit == null) { throw new ValidationLimitNotFoundException(clientLevelId); }
 
         return validationLimit;

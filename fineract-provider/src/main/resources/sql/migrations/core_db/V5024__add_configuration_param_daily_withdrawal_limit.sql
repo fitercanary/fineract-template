@@ -19,5 +19,5 @@
 
 INSERT INTO `c_configuration` ( `name`, `value`, `enabled`, `description`)
 VALUES
-  ( 'client-level-validations', 0, 0, 'If this parameter is disabled so validations of Level for clients will be bypassed and there will no limit apply on savings account transactions.');
+  ( 'daily-withdrawal-limit', 0, 0, 'If this parameter is disabled then daily withdrawal limit will not check at the time of withdrawal transaction.');
 

@@ -1547,7 +1547,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
 
     @Override
-    public String fetchReversalTransactionRequest() {
+    public String fetchContraEntryAndReversalTransaction() {
         String reversalIds = "";
         Collection<SavingsTransactionRequest> request = this.savingsTransactionRequestRepository.findByRemarks("%Reversal Of transactionId%");
         for(SavingsTransactionRequest req : request) {

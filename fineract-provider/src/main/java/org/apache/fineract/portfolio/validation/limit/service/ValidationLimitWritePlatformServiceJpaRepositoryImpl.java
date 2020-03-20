@@ -23,11 +23,15 @@ import java.util.Map;
 import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
+import org.apache.fineract.portfolio.validation.limit.api.ValidationLimitApiConstants;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitAlreadyPresentException;
@@ -49,15 +53,17 @@ public class ValidationLimitWritePlatformServiceJpaRepositoryImpl implements Val
     private final ValidationLimitCommandFromApiJsonDeserializer fromApiJsonDeserializer;
 
     private final ValidationLimitRepository validationLimitRepository;
+    private final CodeValueRepositoryWrapper codeValueRepository;
 
     @Autowired
     public ValidationLimitWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final ValidationLimitCommandFromApiJsonDeserializer fromApiJsonDeserializer,
-            final ValidationLimitRepository validationLimitRepository) {
+            final ValidationLimitRepository validationLimitRepository, final CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
 
         this.validationLimitRepository = validationLimitRepository;
+        this.codeValueRepository = codeValueRepository;
 
     }
 
@@ -70,11 +76,20 @@ public class ValidationLimitWritePlatformServiceJpaRepositoryImpl implements Val
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
 
-            final ValidationLimit validationLimit = ValidationLimit.fromJson(command);
+            CodeValue clientLevel = null;
+            final Long clientLevelId = command.longValueOfParameterNamed(ValidationLimitApiConstants.clientLevelIdParamName);
+            if (clientLevelId != null) {
+                clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
+                        clientLevelId);
+            }
+
+            final ValidationLimit validationLimit = ValidationLimit.fromJson(clientLevel, command);
 
             final ValidationLimit exitingValidationLimit = this.validationLimitRepository
-                    .findByClientLevelId(validationLimit.getClientLevelId());
-            if (exitingValidationLimit != null) { throw new ValidationLimitAlreadyPresentException(validationLimit.getClientLevelId()); }
+                    .findByClientLevelId(validationLimit.getClientLevel().getId());
+            if (exitingValidationLimit != null) {
+                throw new ValidationLimitAlreadyPresentException(validationLimit.getClientLevel().getId());
+            }
 
             this.validationLimitRepository.save(validationLimit);
 
@@ -101,6 +116,17 @@ public class ValidationLimitWritePlatformServiceJpaRepositoryImpl implements Val
             if (validationLimitForUpdate == null) { throw new ValidationLimitNotFoundException(validationLimitId); }
 
             final Map<String, Object> changes = validationLimitForUpdate.update(command);
+
+            if (changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
+                CodeValue clientLevel = null;
+                if (newValue != null) {
+                    clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
+                            newValue);
+                }
+                validationLimitForUpdate.updateClientLevel(clientLevel);
+
+            }
 
             if (!changes.isEmpty()) {
                 this.validationLimitRepository.save(validationLimitForUpdate);

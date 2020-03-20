@@ -18,10 +18,7 @@
  */
 package org.apache.fineract.portfolio.validation.limit.api;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -52,9 +49,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("singleton")
 public class ValidationLimitApiResource {
-
-    private final Set<String> VALIDATION_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id, clientLevelId", "maximumSingleDepositAmount",
-            "maximumCumulativeBalance", "maximumTransactionLimit", "maximumDailyTransactionAmountLimit"));
 
     private final DefaultToApiJsonSerializer<ValidationLimitData> toApiJsonSerializer;
 
@@ -88,7 +82,8 @@ public class ValidationLimitApiResource {
         final Collection<ValidationLimitData> limitData = this.readPlatformService.retrieveAllValidationLimits();
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, limitData, this.VALIDATION_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, limitData,
+                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_DATA_PARAMETERS);
     }
 
     @GET
@@ -107,7 +102,8 @@ public class ValidationLimitApiResource {
             limitData = ValidationLimitData.withTemplate(limitData, templateData);
         }
 
-        return this.toApiJsonSerializer.serialize(settings, limitData, this.VALIDATION_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, limitData,
+                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_DATA_PARAMETERS);
     }
 
     @GET
@@ -121,7 +117,8 @@ public class ValidationLimitApiResource {
         final ValidationLimitData validationLimitData = this.readPlatformService.retrieveTemplateDetails();
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, validationLimitData, this.VALIDATION_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, validationLimitData,
+                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_DATA_PARAMETERS);
     }
 
     @POST

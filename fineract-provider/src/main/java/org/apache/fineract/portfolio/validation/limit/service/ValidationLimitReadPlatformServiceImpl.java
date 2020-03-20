@@ -21,13 +21,14 @@ package org.apache.fineract.portfolio.validation.limit.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.fineract.infrastructure.core.data.EnumOptionData;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
-import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
-import org.apache.fineract.portfolio.client.domain.ClientLevel;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepositoryWrapper;
@@ -48,12 +49,15 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
 
     private final JdbcTemplate jdbcTemplate;
     private final ValidationLimitRepositoryWrapper validationLimitRespositoryWrapper;
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
     public ValidationLimitReadPlatformServiceImpl(final RoutingDataSource dataSource,
-            final ValidationLimitRepositoryWrapper validationLimitRespositoryWrapper) {
+            final ValidationLimitRepositoryWrapper validationLimitRespositoryWrapper,
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.validationLimitRespositoryWrapper = validationLimitRespositoryWrapper;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
 
     }
 
@@ -70,7 +74,8 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
     @Override
     public ValidationLimitData retrieveTemplateDetails() {
 
-        final List<EnumOptionData> clientLevalOptions = ClientEnumerations.clientLevel(ClientLevel.values());
+        final List<CodeValueData> clientLevalOptions = new ArrayList<>(
+                this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_LEVELS));
         return ValidationLimitData.template(clientLevalOptions);
     }
 
@@ -92,10 +97,10 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
     private static final class ValidationLimitMapper implements RowMapper<ValidationLimitData> {
 
         public String validationLimitSchema() {
-            return "v.id as id , v.client_level_id as clientLevelId, v.maximum_single_deposit_amount as maximumSingleDepositAmount, "
+            return "v.id as id , v.client_level_cv_id as clientLevelId, cvclientlevel.code_value as clientLevelValue, v.maximum_single_deposit_amount as maximumSingleDepositAmount, "
                     + "v.maximum_cumulative_balance as maximumCumulativeBalance, "
                     + "v.maximum_transaction_limit as maximumTransactionLimit, v.maximum_daily_transaction_amount_limit as maximumDailyTransactionAmountLimit "
-                    + "from m_validation_limits v ";
+                    + "from m_validation_limits v " + "left join m_code_value cvclientlevel on cvclientlevel.id = v.client_level_cv_id ";
 
         }
 
@@ -108,14 +113,16 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
             final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
             final BigDecimal maximumDailyTransactionAmountLimit = rs.getBigDecimal("maximumDailyTransactionAmountLimit");
             final Long clientLevelId = rs.getLong("clientLevelId");
+            final String clientLevelValue = rs.getString("clientLevelValue");
+            final CodeValueData clientLevel = CodeValueData.instance(clientLevelId, clientLevelValue);
 
-            return ValidationLimitData.instance(id, clientLevelId, maximumSingleDepositAmount, maximumCumulativeBalance,
+            return ValidationLimitData.instance(id, clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance,
                     maximumTransactionLimit, maximumDailyTransactionAmountLimit);
         }
     }
 
     @Override
-    public ValidationLimit retriveValidationLimitByClientId(Long clientLevelId) {
+    public ValidationLimit retriveValidationLimitByClienLeveltId(Long clientLevelId) {
         return this.validationLimitRespositoryWrapper.findOneByClientLevelIdWithNotFoundDetection(clientLevelId);
 
     }

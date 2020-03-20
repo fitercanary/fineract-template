@@ -1563,4 +1563,19 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             reversalIds = reversalIds.substring(0, reversalIds.length() - 1);
         return reversalIds;
     }
+    
+    @Override
+    public ArrayList<Long> fetchReversalTransactionRequestList(Long savingAccountId) {
+        ArrayList<Long> reversalIds = new ArrayList<>();
+        Collection<SavingsTransactionRequest> request = this.savingsTransactionRequestRepository.findByRemarks("%Reversal Of transactionId%");
+        for(SavingsTransactionRequest req : request) {
+            if(req.getRemarks().contains("Reversal Of")) {
+                String value[]; 
+                value = req.getRemarks().split(" ");
+                reversalIds.add(Long.parseLong(value[3]));
+                reversalIds.add(req.getTransaction().getId());
+            }
+        }
+        return reversalIds;
+    }
 }

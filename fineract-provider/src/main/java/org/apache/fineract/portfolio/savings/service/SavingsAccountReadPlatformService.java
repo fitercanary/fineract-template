@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -85,5 +86,6 @@ public interface SavingsAccountReadPlatformService {
     String retrieveSavingsTransactionForReversal(Long savingsId, Long transactionId, String apiRequestBodyAsJson);
 
     String fetchContraEntryAndReversalTransaction();
-
+    
+    ArrayList<Long> fetchReversalTransactionRequestList(Long savingAccountId);
 }

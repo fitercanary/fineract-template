@@ -377,11 +377,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
 
         if (dailyWithdrawalLimitConfigDetails.isEnabled()) {
+            final ArrayList<Long> reversalTransactions = this.savingsAccountReadPlatformService.fetchReversalTransactionRequestList(savingsId);
             BigDecimal totalWithdrawOnDate = transactionAmount;
             if (account.productId() != 32 && account.productId() != 36 && account.productId() != 30) {
                 for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {
                     for (SavingsAccountTransaction tran : acc.getTransactions()) {
-                        if (!tran.isReversed() && tran.isWithdrawal() && tran.getTransactionLocalDate().isEqual(transactionDate)) {
+                        if (!tran.isReversed() && tran.isWithdrawal() && !reversalTransactions.contains(tran.getId()) && tran.getTransactionLocalDate().isEqual(transactionDate)) {
                             totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
                                     
                         }

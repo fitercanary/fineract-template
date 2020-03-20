@@ -18,10 +18,6 @@
 --
 
 ALTER TABLE `m_client`
-	ADD COLUMN `client_level_cv_id` TINYINT(1) NOT NULL Default 1 AFTER `daily_withdraw_limit`;
+    ADD COLUMN `client_level_cv_id` INT(11) NOT NULL Default 1;
 
-
-
-
-	
-
+ALTER TABLE `m_client` ADD CONSTRAINT `FK_m_client_m_code_value` FOREIGN KEY (`client_level_cv_id`) REFERENCES `m_code_value` (`id`);

@@ -1117,6 +1117,22 @@ public class CommandWrapperBuilder {
         this.href = "/savingsproducts/template";
         return this;
     }
+    
+    public CommandWrapperBuilder createTransactionClassification() {
+        this.actionName = "CREATE";
+        this.entityName = "TRANSACTIONCLASSIFICATION";
+        this.entityId = null;
+        this.href = "/transactionclassification";
+        return this;
+    }
+    
+    public CommandWrapperBuilder deleteTransactionClassification() {
+        this.actionName = "DELETE";
+        this.entityName = "TRANSACTIONCLASSIFICATION";
+        this.entityId = null;
+        this.href = "/transactionclassification";
+        return this;
+    }
 
     public CommandWrapperBuilder updateSavingProduct(final Long productId) {
         this.actionName = "UPDATE";

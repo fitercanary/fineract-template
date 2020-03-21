@@ -88,4 +88,8 @@ public interface SavingsAccountReadPlatformService {
     String fetchContraEntryAndReversalTransaction();
 
     ArrayList<Long> fetchReversalTransactionRequestList();
+
+    List<Long> retriveUnClassifiedTransactions();
+
+    Long findSavingsTransactionAccountTransfer(Long savingTransactionId);
 }

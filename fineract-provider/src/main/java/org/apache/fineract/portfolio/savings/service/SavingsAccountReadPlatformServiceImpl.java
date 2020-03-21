@@ -18,6 +18,14 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -82,14 +90,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 @Service
 public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountReadPlatformService {
@@ -1577,5 +1577,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             }
         }
         return reversalIds;
+    }
+
+    @Override
+    public List<Long> retriveUnClassifiedTransactions() {
+        String sql = "select msat.id from m_savings_account_transaction msat where msat.transaction_classification = ?";
+        return this.jdbcTemplate.queryForList(sql, Long.class, new Object[] { "UNCLASSIFIED" });
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public Long findSavingsTransactionAccountTransfer(Long savingTransactionId) {
+        String sql = "select msat.id from m_account_transfer_transaction msat where (msat.from_savings_transaction_id = ? or msat.to_savings_transaction_id = ? ) and msat.is_reversed = 0";
+        return this.jdbcTemplate.queryForLong(sql, Long.class, new Object[] { savingTransactionId, savingTransactionId });
     }
 }

@@ -85,9 +85,9 @@ public interface SavingsAccountReadPlatformService {
 
     String retrieveSavingsTransactionForReversal(Long savingsId, Long transactionId, String apiRequestBodyAsJson);
 
-    String fetchContraEntryAndReversalTransaction();
+    String fetchContraEntryAndReversalTransaction(Long savingAccountId);
 
-    ArrayList<Long> fetchReversalTransactionRequestList();
+    ArrayList<Long> fetchReversalTransactionRequestList(Long savingAccountId);
 
     List<Long> retriveUnClassifiedTransactions();
 

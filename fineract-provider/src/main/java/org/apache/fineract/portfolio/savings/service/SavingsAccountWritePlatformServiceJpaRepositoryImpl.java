@@ -124,8 +124,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
-
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
 
@@ -376,7 +374,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .dailyWithdrawalLimitConfigDetails();
 
         if (dailyWithdrawalLimitConfigDetails.isEnabled()) {
-            final ArrayList<Long> reversalTransactions = this.savingsAccountReadPlatformService.fetchReversalTransactionRequestList();
+            final ArrayList<Long> reversalTransactions = this.savingsAccountReadPlatformService
+                    .fetchReversalTransactionRequestList(account.getId());
             BigDecimal totalWithdrawOnDate = transactionAmount;
             if (account.productId() != 32 && account.productId() != 36 && account.productId() != 30) {
                 for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {

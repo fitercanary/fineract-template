@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -825,6 +826,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             SearchParameters searchParameters, String transactionIds) {
         List<Object> paramList = new ArrayList<>();
         paramList.add(accountId);
+        paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
         final StringBuilder sqlBuilder = new StringBuilder(200);
@@ -1552,12 +1554,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public String fetchContraEntryAndReversalTransaction(Long savingAccountId) {
         String reversalIds = "";
         String sql = "select request.transaction_id, request.remarks from m_transaction_request request "
-                + "join m_savings_account_transaction tr on tr.id=request.transaction_id  where tr.savings_account_id = ? " + "and request.remarks like ? ";
-        List<Map<String, Object>> request = jdbcTemplate.queryForList(sql,
-                new Object[] { savingAccountId, "%Reversal Of transactionId%" });
+                + "join m_savings_account_transaction tr on tr.id=request.transaction_id  where tr.savings_account_id = ? "
+                + "and request.remarks like ? ";
+        List<Map<String, Object>> request = jdbcTemplate.queryForList(sql, new Object[] { savingAccountId, "%Reversal Of transactionId%" });
         for (Map<String, Object> req : request) {
             String remarks = (String) req.get("remarks");
-            Long contraId = (Long) req.get("transaction_id");
+            BigInteger contraId = (BigInteger) req.get("transaction_id");
             if (remarks.contains("Reversal Of")) {
                 String value[];
                 value = remarks.split(" ");
@@ -1574,9 +1576,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public ArrayList<Long> fetchReversalTransactionRequestList(Long savingAccountId) {
         ArrayList<Long> reversalIds = new ArrayList<>();
         String sql = "select request.transaction_id, request.remarks from m_transaction_request request "
-                + "join m_savings_account_transaction tr on tr.id=request.transaction_id  where tr.savings_account_id = ? " + "and request.remarks like ? ";
-        List<Map<String, Object>> request = jdbcTemplate.queryForList(sql,
-                new Object[] { savingAccountId, "%Reversal Of transactionId%" });
+                + "join m_savings_account_transaction tr on tr.id=request.transaction_id  where tr.savings_account_id = ? "
+                + "and request.remarks like ? ";
+        List<Map<String, Object>> request = jdbcTemplate.queryForList(sql, new Object[] { savingAccountId, "%Reversal Of transactionId%" });
 
         for (Map<String, Object> req : request) {
             String remarks = (String) req.get("remarks");

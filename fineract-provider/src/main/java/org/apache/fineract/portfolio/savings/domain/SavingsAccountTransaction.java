@@ -129,7 +129,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     private Boolean isAccountTransfer = false;
     
     @Column(name = "transaction_classification", nullable = true)
-    private String transactionClassification;
+    private String transactionClassification = "UNCLASSIFIED";
 
     protected SavingsAccountTransaction() {
         this.dateOf = null;

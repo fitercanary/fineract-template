@@ -290,7 +290,7 @@ public class SavingsAccountsApiResource {
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
-            String ids = this.savingsAccountReadPlatformService.fetchContraEntryAndReversalTransaction();
+            String ids = this.savingsAccountReadPlatformService.fetchContraEntryAndReversalTransaction(accountId);
             if (associationParameters.contains("all")) {
                 associationParameters.addAll(Arrays.asList(SavingsApiConstants.transactions, SavingsApiConstants.charges));
             }

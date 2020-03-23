@@ -825,7 +825,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             SearchParameters searchParameters, String transactionIds) {
         List<Object> paramList = new ArrayList<>();
         paramList.add(accountId);
-        paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
         final StringBuilder sqlBuilder = new StringBuilder(200);

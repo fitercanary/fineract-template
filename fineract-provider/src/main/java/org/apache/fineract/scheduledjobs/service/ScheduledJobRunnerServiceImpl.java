@@ -503,9 +503,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 accountTransferTransaction = null;
             }
             if (request == null) {
-                transactionClassification = "other";
+                transactionClassification = "Other";
             } else if (request != null && accountTransferTransaction != null) {
-                transactionClassification = "transfers to vfd";
+                transactionClassification = "Transfers to VFD";
             } else if (request != null && request.getTransactionBrandName() != null) {
                 for (TransactionClassificationData transanctionClassification : transactionClassifications) {
                     if (request.getTransactionBrandName().equalsIgnoreCase(transanctionClassification.getOperator())) {
@@ -513,7 +513,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     }
                 }
             } else {
-                transactionClassification = "transfers to other banks";
+                transactionClassification = "Transfers to other banks";
             }
             result = result + jdbcTemplate.update("update m_savings_account_transaction set transaction_classification = \""
                     + transactionClassification + "\" where id = " + unCategorisedTransaction);

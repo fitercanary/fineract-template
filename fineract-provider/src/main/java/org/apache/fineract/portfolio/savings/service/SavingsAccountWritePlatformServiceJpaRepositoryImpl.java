@@ -390,7 +390,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
 
-            if (account.getClient().getDailyWithdrawLimit() != null) {
+            if (account.getClient().getDailyWithdrawLimit().doubleValue() > 0) {
                 if (totalWithdrawOnDate.doubleValue() > account.getClient().getDailyWithdrawLimit().doubleValue()) {
                     throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
                 }

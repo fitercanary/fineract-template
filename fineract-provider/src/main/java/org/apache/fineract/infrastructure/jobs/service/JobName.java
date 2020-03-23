@@ -51,7 +51,8 @@ public enum JobName {
     UPDATE_EMAIL_OUTBOUND_WITH_CAMPAIGN_MESSAGE("Update Email Outbound with campaign message"),
     EXECUTE_EMAIL("Execute Email"),
     CHECK_VALIDITY_OF_OVERDRAFT("Check Validity Of Overdraft"),
-    POSTACCRUALINTERESTFORSAVINGS("Post Accrual Interest for Savings");
+    POSTACCRUALINTERESTFORSAVINGS("Post Accrual Interest for Savings"),
+    SAVINGSTRANSACTIONCLASSIFICATION("Savings Transaction Classification");
 
     private final String name;
 

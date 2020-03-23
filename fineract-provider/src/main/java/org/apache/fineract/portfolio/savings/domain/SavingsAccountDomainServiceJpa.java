@@ -18,6 +18,15 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -33,23 +42,17 @@ import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepositoryWrapper;
+import org.apache.fineract.portfolio.validation.limit.service.ValidationLimitReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Service
 public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainService {
@@ -63,6 +66,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final ValidationLimitReadPlatformService validationLimitReadPlatformService;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -71,7 +75,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final JournalEntryWritePlatformService journalEntryWritePlatformService,
             final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService,
+            final ValidationLimitReadPlatformService validationLimitReadPlatformService) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -80,6 +85,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.context = context;
         this.depositAccountOnHoldTransactionRepository = depositAccountOnHoldTransactionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.validationLimitReadPlatformService = validationLimitReadPlatformService;
     }
 
     @Transactional
@@ -94,6 +100,13 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+        final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
+
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+            ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
+            account.validateTransactionAmountByLimit(transactionAmount, validationLimit, SavingsAccountTransactionType.WITHDRAWAL);
+        }
+
         if (transactionBooleanValues.isRegularTransaction() && !account.allowWithdrawal()) {
             throw new DepositAccountTransactionNotAllowedException(account.getId(), "withdraw", account.depositAccountType());
         }
@@ -128,6 +141,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         }
         account.validateAccountBalanceDoesNotBecomeNegative(transactionAmount, transactionBooleanValues.isExceptionForBalanceCheck(),
                 depositAccountOnHoldTransactions);
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+            ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
+            account.validateDailyTranactionLimit(account, validationLimit, transactionDate);
+        }
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
@@ -160,11 +177,18 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final boolean isAccountTransfer, final boolean isRegularTransaction,
             final SavingsAccountTransactionType savingsAccountTransactionType) {
         AppUser user = getAppUserIfPresent();
+
         account.validateForAccountBlock();
         account.validateForCreditBlock();
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+        final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
+
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+            ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
+            account.validateTransactionAmountByLimit(transactionAmount, validationLimit, SavingsAccountTransactionType.DEPOSIT);
+        }
 
         if (isRegularTransaction && !account.allowDeposit()) {
             throw new DepositAccountTransactionNotAllowedException(account.getId(), "deposit", account.depositAccountType());
@@ -191,6 +215,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
+        }
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+            ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
+            account.validateCummulativeBalanceByLimit(account, validationLimit);
         }
 
         saveTransactionToGenerateTransactionId(deposit);
@@ -224,6 +252,11 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             Set<Long> existingReversedTransactionIds) {
         existingTransactionIds.addAll(account.findExistingTransactionIds());
         existingReversedTransactionIds.addAll(account.findExistingReversedTransactionIds());
+    }
+
+    private ValidationLimit getValidationLimitForClientLevel(SavingsAccount account) {
+        Long clientLevelId = account.getClient().clientLevel().getId();
+        return this.validationLimitReadPlatformService.retriveValidationLimitByClienLeveltId(clientLevelId);
     }
 
     @Transactional

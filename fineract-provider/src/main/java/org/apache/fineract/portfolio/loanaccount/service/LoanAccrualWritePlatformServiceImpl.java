@@ -233,9 +233,15 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             interestportion = scheduleAccrualData.getAccruableIncome();
             totalAccInterest = scheduleAccrualData.getAccruedInterestIncome();
 
+            if(scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant())) {
             int totalNumberOfDays = Days.daysBetween(interestStartDate, scheduleAccrualData.getDueDateAsLocaldate()).getDays();
             double interestPerDay = scheduleAccrualData.getAccruableIncome().doubleValue() / totalNumberOfDays;
             interestportion = BigDecimal.valueOf(interestPerDay);
+            interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
+                    MoneyHelper.getRoundingMode());
+            }else {
+                accuredTill = scheduleAccrualData.getDueDateAsLocaldate();
+            }
             
 
             if (interestportion != null) {
@@ -245,14 +251,11 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 
                 amount = amount.add(interestportion);
                 totalAccInterest = totalAccInterest.add(interestportion);
-                amount = amount.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
-                        MoneyHelper.getRoundingMode());
-                interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
-                        MoneyHelper.getRoundingMode());
                 if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
                     interestportion = null;
                 }
             }
+                
         }
 
         BigDecimal feeportion = null;
@@ -291,18 +294,20 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             }
         }
 
-        if (amount.compareTo(BigDecimal.ZERO) == 1) {
+        if (amount.compareTo(BigDecimal.ZERO) == 1 && (!accuredTill.isAfter(DateUtils.getLocalDateOfTenant())
+                && !accuredTill.isAfter(scheduleAccrualData.getDueDateAsLocaldate()))) {
             addAccrualAccounting(scheduleAccrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee, penaltyportion,
                     totalAccPenalty, accuredTill);
         }
 
-        if (accuredTill.isBefore(scheduleAccrualData.getDueDateAsLocaldate()) && (accuredTill.isAfter(scheduleAccrualData.getFromDateAsLocaldate())
-                || accuredTill.isEqual(scheduleAccrualData.getFromDateAsLocaldate()))) {
+        if (accuredTill.isAfter(scheduleAccrualData.getFromDateAsLocaldate()) && !accuredTill.isAfter(scheduleAccrualData.getDueDateAsLocaldate())) {
 
-            LocalDate dateForgettingDays = scheduleAccrualData.getDueDateAsLocaldate().isAfter(LocalDate.now()) 
-                    ? LocalDate.now() : scheduleAccrualData.getDueDateAsLocaldate();
-                    
-            int skippedTransactionNumber = Days.daysBetween(accuredTill, dateForgettingDays).getDays();
+            LocalDate dateForgettingDays = scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant()) 
+                    ? DateUtils.getLocalDateOfTenant() : scheduleAccrualData.getDueDateAsLocaldate();
+            int skippedTransactionNumber = 0;
+            if(scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant()) && accuredTill.isBefore(DateUtils.getLocalDateOfTenant())) {        
+            skippedTransactionNumber = Days.daysBetween(accuredTill, dateForgettingDays).getDays();
+            }
             for (int index = 0; index < skippedTransactionNumber; index++) {
                 amount = BigDecimal.ZERO;
                 accuredTill = accuredTill.plusDays(1);
@@ -310,9 +315,13 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                     LocalDate interestStartDate = scheduleAccrualData.getFromDateAsLocaldate();
                     interestportion = scheduleAccrualData.getAccruableIncome();
 
+                    if(scheduleAccrualData.getDueDateAsLocaldate().isAfter(DateUtils.getLocalDateOfTenant())) {
                     int totalNumberOfDays = Days.daysBetween(interestStartDate, scheduleAccrualData.getDueDateAsLocaldate()).getDays();
                     double interestPerDay = scheduleAccrualData.getAccruableIncome().doubleValue() / totalNumberOfDays;
                     interestportion = BigDecimal.valueOf(interestPerDay);
+                    interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
+                            MoneyHelper.getRoundingMode());
+                    }
                     
 
                     if (interestportion != null) {
@@ -322,10 +331,6 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 
                         amount = amount.add(interestportion);
                         totalAccInterest = totalAccInterest.add(interestportion);
-                        amount = amount.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
-                                MoneyHelper.getRoundingMode());
-                        interestportion = interestportion.setScale(scheduleAccrualData.getCurrencyData().decimalPlaces(),
-                                MoneyHelper.getRoundingMode());
                         if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
                             interestportion = null;
                         }
@@ -510,25 +515,23 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                     
                 }
             } else if (loanCharge.getDueDate().isAfter(startDate) && !loanCharge.getDueDate().isAfter(endDate)) {
-                
-                    chargeAmount = loanCharge.getAmount();
-                    if (loanCharge.getAmountUnrecognized() != null) {
-                        chargeAmount = chargeAmount.subtract(loanCharge.getAmountUnrecognized());
-                    }
-                    boolean canAddCharge = chargeAmount.compareTo(BigDecimal.ZERO) == 1;
-                    if (canAddCharge
-                            && (loanCharge.getAmountAccrued() == null || chargeAmount.compareTo(loanCharge.getAmountAccrued()) != 0)) {
-                        BigDecimal amountForAccrual = chargeAmount;
-                        if (loanCharge.getAmountAccrued() != null) {
-                            amountForAccrual = chargeAmount.subtract(loanCharge.getAmountAccrued());
-                        }else {
-                           if(loanCharge.getAmountOutstanding() != null) {
-                            amountForAccrual = loanCharge.getAmountOutstanding();
-                            }
+                chargeAmount = loanCharge.getAmount();
+                if (loanCharge.getAmountUnrecognized() != null) {
+                    chargeAmount = chargeAmount.subtract(loanCharge.getAmountUnrecognized());
+                }
+                boolean canAddCharge = chargeAmount.compareTo(BigDecimal.ZERO) == 1;
+                if (canAddCharge
+                        && (loanCharge.getAmountAccrued() == null || chargeAmount.compareTo(loanCharge.getAmountAccrued()) != 0)) {
+                    BigDecimal amountForAccrual = chargeAmount;
+                    if (loanCharge.getAmountAccrued() != null) {
+                        amountForAccrual = chargeAmount.subtract(loanCharge.getAmountAccrued());
+                    }else {
+                       if(loanCharge.getAmountOutstanding() != null) {
+                        amountForAccrual = loanCharge.getAmountOutstanding();
                         }
-                        applicableCharges.put(loanCharge, amountForAccrual);
                     }
-                
+                    applicableCharges.put(loanCharge, amountForAccrual);
+                }
             }
 
             if (loanCharge.isPenalty()) {
@@ -606,6 +609,10 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             if (interestWaived.compareTo(recognized) == 1) {
                 interestIncome = interestIncome.subtract(interestWaived.subtract(recognized));
             }
+        }
+        if (accrualData.getAccruedInterestIncome() != null && accrualData.getInterestIncome() != null
+                && accrualData.getAccruedInterestIncome().doubleValue() >= accrualData.getInterestIncome().doubleValue()) {
+            interestIncome = BigDecimal.ZERO;
         }
 
         accrualData.updateAccruableIncome(interestIncome);

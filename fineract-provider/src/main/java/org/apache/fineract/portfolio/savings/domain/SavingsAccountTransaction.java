@@ -127,6 +127,9 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
 
     @Column(name = "is_account_transfer", nullable = false)
     private Boolean isAccountTransfer = false;
+    
+    @Column(name = "transaction_classification", nullable = true)
+    private String transactionClassification = "UNCLASSIFIED";
 
     protected SavingsAccountTransaction() {
         this.dateOf = null;
@@ -443,6 +446,11 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         this.cumulativeBalance = null;
         this.balanceEndDate = null;
         this.balanceNumberOfDays = null;
+    }
+
+    
+    public BigDecimal getCumulativeBalance() {
+        return this.cumulativeBalance;
     }
 
     public void updateRunningBalance(final Money balance) {
@@ -834,5 +842,4 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public Boolean getIsAccountTransfer() {
         return this.isAccountTransfer;
     }
-
 }

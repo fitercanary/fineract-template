@@ -18,9 +18,29 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import org.apache.fineract.portfolio.savings.exception.SavingsAccountDateException;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -82,13 +102,14 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrap
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
-import org.apache.fineract.portfolio.savings.domain.SavingsEvent;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
+import org.apache.fineract.portfolio.savings.exception.ExceedDailyWithdrawLimitException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
 import org.apache.fineract.portfolio.savings.exception.PostInterestClosingDateException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountClosingNotAllowedException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountDateException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsOfficerAssignmentException;
 import org.apache.fineract.portfolio.savings.exception.SavingsOfficerUnassignmentException;
@@ -102,25 +123,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
+import edu.emory.mathcs.backport.java.util.Arrays;
 
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
@@ -288,7 +292,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
-        
+
         final Map<String, Object> changes = new LinkedHashMap<>();
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
@@ -368,6 +372,33 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+        final GlobalConfigurationPropertyData dailyWithdrawalLimitConfigDetails = this.configurationDomainService
+                .dailyWithdrawalLimitConfigDetails();
+
+        if (dailyWithdrawalLimitConfigDetails.isEnabled()) {
+            final ArrayList<Long> reversalTransactions = this.savingsAccountReadPlatformService.fetchReversalTransactionRequestList();
+            BigDecimal totalWithdrawOnDate = transactionAmount;
+            if (account.productId() != 32 && account.productId() != 36 && account.productId() != 30) {
+                for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {
+                    for (SavingsAccountTransaction tran : acc.getTransactions()) {
+                        if (!tran.isReversed() && tran.isWithdrawal() && !reversalTransactions.contains(tran.getId())
+                                && tran.getTransactionLocalDate().isEqual(transactionDate)) {
+                            totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
+
+                        }
+                    }
+                }
+            }
+
+            if (account.getClient().getDailyWithdrawLimit() != null) {
+                if (totalWithdrawOnDate.doubleValue() > account.getClient().getDailyWithdrawLimit().doubleValue()) {
+                    throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
+                }
+            } else if (totalWithdrawOnDate.doubleValue() > dailyWithdrawalLimitConfigDetails.getValue().doubleValue()) {
+                throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
+            }
+        }
+
         checkClientOrGroupActive(account);
         final boolean isAccountTransfer = false;
         final boolean isRegularTransaction = true;
@@ -597,10 +628,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         account.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.undoTransactionAction, depositAccountOnHoldTransactions);
         account.activateAccountBasedOnBalance();
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
-        if(!savingsAccountTransaction.isWaiveCharge()) {
+        if (!savingsAccountTransaction.isWaiveCharge()) {
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
-        
+
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //
                 .withOfficeId(account.officeId()) //
@@ -671,7 +702,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         Integer accountType = null;
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                paymentDetail, savingsAccountTransaction.createdDate(), user, accountType, savingsAccountTransaction.getIsAccountTransfer());
+                paymentDetail, savingsAccountTransaction.createdDate(), user, accountType,
+                savingsAccountTransaction.getIsAccountTransfer());
         if (savingsAccountTransaction.isDeposit()) {
             transaction = account.deposit(transactionDTO);
         } else {
@@ -1097,7 +1129,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 depositAccountOnHoldTransactions);
 
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
-       // postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        // postJournalEntries(account, existingTransactionIds,
+        // existingReversedTransactionIds);
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsAccountChargeId) //
                 .withOfficeId(account.officeId()) //
@@ -1631,14 +1664,14 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.fromApiJsonDeserializer.validateApplyOverdraftParams(command.json());
         validateOverdraftInputDates(command);
         final SavingsAccount savingsForUpdate = this.savingAccountRepositoryWrapper.findOneWithNotFoundDetection(savingsAccountId);
-        
+
         final Boolean allowOverdraft = command.booleanObjectValueOfParameterNamed("allowOverdraft");
         final BigDecimal overdraftLimit = command.bigDecimalValueOfParameterNamed("overdraftLimit");
         final BigDecimal nominalAnnualInterestRateOverdraft = command.bigDecimalValueOfParameterNamed("nominalAnnualInterestRateOverdraft");
         final BigDecimal minOverdraftForInterestCalculation = command.bigDecimalValueOfParameterNamed("minOverdraftForInterestCalculation");
         final LocalDate overdraftStartedOnDate = command.localDateValueOfParameterNamed("overdraftStartedOnDate");
         final LocalDate overdraftClosedOnDate = command.localDateValueOfParameterNamed("overdraftClosedOnDate");
-        if(!allowOverdraft) {
+        if (!allowOverdraft) {
             savingsForUpdate.validateAccountBalanceDoesNotBecomeNegativeAtTheTimeOfDisableOverdraft(BigDecimal.ZERO,
                     SavingsApiConstants.allowOverdraftParamName);
         }
@@ -1731,7 +1764,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
             account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
-            
+
             // for generating transaction id's
             List<SavingsAccountTransaction> transactions = account.getTransactions();
             for (SavingsAccountTransaction accountTransaction : transactions) {
@@ -1739,7 +1772,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     this.savingsAccountTransactionRepository.save(accountTransaction);
                 }
             }
-            
+
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);

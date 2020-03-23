@@ -37,6 +37,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksWritePlatformService;
@@ -527,7 +528,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         groupForUpdate.updateStaff(staff);
 
         if (inheritStaffForClientAccounts) {
-            LocalDate loanOfficerReassignmentDate = LocalDate.now();
+            LocalDate loanOfficerReassignmentDate = DateUtils.getLocalDateOfTenant();
             /*
              * update loan officer for client and update loan officer for
              * clients loans and savings

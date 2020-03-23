@@ -113,6 +113,11 @@ import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.portfolio.tax.domain.TaxComponent;
 import org.apache.fineract.portfolio.tax.domain.TaxGroup;
 import org.apache.fineract.portfolio.tax.service.TaxUtils;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitCummulativeBalanceMoreThanLimitException;
+import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitDailyWithdrwalTransactionException;
+import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitSingleDepositAmountMoreThanLimitException;
+import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitSingleWithdrwalLimitException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -3565,6 +3570,49 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
+    }
+
+    public void validateTransactionAmountByLimit(BigDecimal transactionAmount, ValidationLimit validationLimit,
+            SavingsAccountTransactionType type) {
+        if (type.equals(SavingsAccountTransactionType.DEPOSIT)) {
+            if (validationLimit.getMaximumSingleDepositAmount() != null) {
+                if (transactionAmount.compareTo(validationLimit.getMaximumSingleDepositAmount()) == 1) {
+                    throw new ValidationLimitSingleDepositAmountMoreThanLimitException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
+                            validationLimit.getMaximumSingleDepositAmount());
+                }
+            }
+        } else if (type.equals(SavingsAccountTransactionType.WITHDRAWAL)) {
+            if (validationLimit.getMaximumTransactionLimit() != null) {
+                if (transactionAmount.compareTo(validationLimit.getMaximumTransactionLimit()) == 1) {
+                    throw new ValidationLimitSingleWithdrwalLimitException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
+                            validationLimit.getMaximumTransactionLimit());
+                }
+            }
+        }
+    }
+
+    public void validateCummulativeBalanceByLimit(SavingsAccount account, ValidationLimit validationLimit) {
+        if (validationLimit.getMaximumCumulativeBalance() != null) {
+            if (account.getSummary().getAccountBalance().compareTo(validationLimit.getMaximumCumulativeBalance()) == 1) {
+                throw new ValidationLimitCummulativeBalanceMoreThanLimitException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
+                        validationLimit.getMaximumCumulativeBalance());
+            }
+        }
+    }
+
+    public void validateDailyTranactionLimit(SavingsAccount account, ValidationLimit validationLimit, LocalDate transactionDate) {
+        BigDecimal todayTransactionAmount = BigDecimal.ZERO;
+        if (validationLimit.getMaximumDailyTransactionAmountLimit() != null) {
+            for (SavingsAccountTransaction transaction : account.transactions) {
+                if (!transaction.isReversed() && transaction.isWithdrawal()
+                        && transaction.getTransactionLocalDate().isEqual(transactionDate))
+                    todayTransactionAmount = todayTransactionAmount.add(transaction.getAmount());
+            }
+            if (todayTransactionAmount.compareTo(validationLimit.getMaximumDailyTransactionAmountLimit()) == 1) {
+                throw new ValidationLimitDailyWithdrwalTransactionException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
+                        validationLimit.getMaximumDailyTransactionAmountLimit());
+            }
+        }
     }
 
     public BigDecimal getMinRequiredBalance() {

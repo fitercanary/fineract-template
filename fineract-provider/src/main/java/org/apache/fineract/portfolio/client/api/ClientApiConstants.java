@@ -77,6 +77,8 @@ public class ClientApiConstants {
     
     
     public static final String CLIENT_TYPE_INDIVIDUAL = "Individual";
+    
+    public static final String CLIENT_LEVELS = "Client Levels";
 
     // request parameters
     public static final String idParamName = "id";
@@ -122,6 +124,7 @@ public class ClientApiConstants {
     public static final String clientClassificationIdParamName = "clientClassificationId";
     public static final String clientClassificationParamName = "clientClassification";
     public static final String legalFormIdParamName = "legalFormId";
+    public static final String clientLevelIdParamName = "clientLevelId";
     public static final String legalFormParamName = "legalForm";
     // request parameters for payment details
     public static final String paymentTypeIdParamName = "paymentTypeId";
@@ -190,6 +193,7 @@ public class ClientApiConstants {
     public static final String staffOptionsParamName = "staffOptions";
 
     public static final String datatables = "datatables";
+    public static final String dailyWithdrawLimit = "dailyWithdrawLimit";
 
 
     /**
@@ -204,7 +208,7 @@ public class ClientApiConstants {
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
             dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName, legalFormParamName, 
-            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName));
+            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit, clientLevelIdParamName));
 
     protected static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList
             (chargeIdParamName,

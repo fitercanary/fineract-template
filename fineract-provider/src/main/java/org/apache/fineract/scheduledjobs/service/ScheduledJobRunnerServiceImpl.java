@@ -36,8 +36,12 @@ import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
+import org.apache.fineract.portfolio.savings.classification.data.TransactionClassificationData;
+import org.apache.fineract.portfolio.savings.classification.service.TransactionClassificationReadPlatformService;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
+import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -51,6 +55,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +75,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final ShareAccountDividendReadPlatformService shareAccountDividendReadPlatformService;
     private final ShareAccountSchedularService shareAccountSchedularService;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
+    private final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -79,7 +86,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final DepositAccountWritePlatformService depositAccountWritePlatformService,
             final ShareAccountDividendReadPlatformService shareAccountDividendReadPlatformService,
             final ShareAccountSchedularService shareAccountSchedularService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
+            final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -88,6 +97,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.shareAccountDividendReadPlatformService = shareAccountDividendReadPlatformService;
         this.shareAccountSchedularService = shareAccountSchedularService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
+        this.transactionClassificationReadPlatformService = transactionClassificationReadPlatformService;
     }
 
     @Transactional
@@ -470,6 +481,44 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             }
         }
         if (errorMsg.length() > 0) { throw new JobExecutionException(errorMsg.toString()); }
+    }
+
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.SAVINGSTRANSACTIONCLASSIFICATION)
+    public void savingTransactionClassification() throws JobExecutionException {
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+        int result = 0;
+        String transactionClassification = null;
+        Long accountTransferTransaction = null;
+        Collection<TransactionClassificationData> transactionClassifications = transactionClassificationReadPlatformService
+                .getTransactionClassification();
+        List<Long> unCategorisedTransactions = this.savingsAccountReadPlatformService.retriveUnClassifiedTransactions();
+        for (Long unCategorisedTransaction : unCategorisedTransactions) {
+            SavingsTransactionRequest request = savingsTransactionRequestRepository.findByTransactionId(unCategorisedTransaction);
+            try {
+                accountTransferTransaction = savingsAccountReadPlatformService
+                        .findSavingsTransactionAccountTransfer(unCategorisedTransaction);
+            } catch (EmptyResultDataAccessException ex) {
+                accountTransferTransaction = null;
+            }
+            if (request == null) {
+                transactionClassification = "other";
+            } else if (request != null && accountTransferTransaction != null) {
+                transactionClassification = "transfers to vfd";
+            } else if (request != null && request.getTransactionBrandName() != null) {
+                for (TransactionClassificationData transanctionClassification : transactionClassifications) {
+                    if (request.getTransactionBrandName().equalsIgnoreCase(transanctionClassification.getOperator())) {
+                        transactionClassification = transanctionClassification.getClassification();
+                    }
+                }
+            } else {
+                transactionClassification = "transfers to other banks";
+            }
+            result = result + jdbcTemplate.update("update m_savings_account_transaction set transaction_classification = \""
+                    + transactionClassification + "\" where id = " + unCategorisedTransaction);
+        }
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
 
 }

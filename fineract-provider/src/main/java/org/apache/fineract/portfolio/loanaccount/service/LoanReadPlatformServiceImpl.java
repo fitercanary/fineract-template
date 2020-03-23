@@ -442,7 +442,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         final CurrencyData currencyData = applicationCurrency.toData();
 
-        final LocalDate earliestUnpaidInstallmentDate = LocalDate.now();
+        final LocalDate earliestUnpaidInstallmentDate = DateUtils.getLocalDateOfTenant();
         final LocalDate recalculateFrom = null;
         final ScheduleGeneratorDTO scheduleGeneratorDTO = loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
         final LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment = loan.fetchPrepaymentDetail(scheduleGeneratorDTO, onDate);
@@ -1140,7 +1140,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                             }
                         } else if (data.isDueForDisbursement(fromDate, dueDate)) {
                             if (!excludePastUndisbursed
-                                    || (excludePastUndisbursed && (data.isDisbursed() || !data.disbursementDate().isBefore(LocalDate.now())))) {
+                                    || (excludePastUndisbursed && (data.isDisbursed() || !data.disbursementDate().isBefore(DateUtils.getLocalDateOfTenant())))) {
                                 principal = principal.add(data.amount());
                                 LoanSchedulePeriodData periodData = null;
                                 if (data.getChargeAmount() == null) {
@@ -1609,8 +1609,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" and (((ls.fee_charges_amount <> if(ls.accrual_fee_charges_derived is null,0, ls.accrual_fee_charges_derived))")
                 .append(" or ( ls.penalty_charges_amount <> if(ls.accrual_penalty_charges_derived is null,0,ls.accrual_penalty_charges_derived))")
                 .append(" or ( ls.interest_amount <> if(ls.accrual_interest_derived is null,0,ls.accrual_interest_derived)))")
-                .append(" and loan.loan_status_id=:active and mpl.accounting_type=:type and loan.is_npa=0 and "
-                        + "(ls.duedate <= CURDATE() or (ls.duedate > CURDATE() and ls.fromdate < CURDATE()))) ");
+                .append(" and loan.loan_status_id=:active and mpl.accounting_type=:type and loan.is_npa=0 "
+                        + " and (loan.closedon_date <= CURDATE() or loan.closedon_date is null) "
+                        + " and (ls.duedate <= CURDATE() or (ls.duedate > CURDATE() and ls.fromdate < CURDATE()))) ");
                        
         if(organisationStartDate != null){
             sqlBuilder.append(" and ls.duedate > :organisationstartdate ");

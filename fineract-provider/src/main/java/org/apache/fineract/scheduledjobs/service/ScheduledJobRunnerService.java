@@ -39,4 +39,6 @@ public interface ScheduledJobRunnerService {
     void postDividends() throws JobExecutionException;
     
     void postAccrualInterestForSavings() throws JobExecutionException;
+    
+    void savingTransactionClassification() throws JobExecutionException;
 }

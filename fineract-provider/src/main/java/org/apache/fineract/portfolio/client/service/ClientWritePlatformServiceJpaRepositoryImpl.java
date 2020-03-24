@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumb
 import org.apache.fineract.infrastructure.accountnumberformat.domain.EntityAccountType;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
+import org.apache.fineract.infrastructure.codes.service.CodeReadPlatformService;
 import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.configuration.service.ConfigurationReadPlatformService;
@@ -117,6 +118,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final AccountNumberGenerator accountNumberGenerator;
     private final StaffRepositoryWrapper staffRepository;
     private final CodeValueRepositoryWrapper codeValueRepository;
+    private final CodeReadPlatformService codeReadPlatformService;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
     private final SavingsAccountRepositoryWrapper savingsRepositoryWrapper;
     private final SavingsProductRepository savingsProductRepository;
@@ -148,7 +150,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
             final BusinessEventNotifierService businessEventNotifierService,
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-            ReferralStatusRepository referralStatusRepository) {
+            ReferralStatusRepository referralStatusRepository, final CodeReadPlatformService codeReadPlatformService) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -173,6 +175,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.businessEventNotifierService = businessEventNotifierService;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.referralStatusRepository = referralStatusRepository;
+        this.codeReadPlatformService = codeReadPlatformService;
     }
 
     @Transactional
@@ -270,10 +273,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             }
 
             CodeValue clientLevel = null;
+
             final Long clientLevelId = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
             if (clientLevelId != null) {
                 clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
                         clientLevelId);
+            } else {
+                clientLevel = this.codeValueRepository.findOneByCodeNameAndLabelWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
+                        ClientApiConstants.Level_1);
             }
 
             CodeValue clientType = null;

@@ -79,6 +79,7 @@ public class ClientApiConstants {
     public static final String CLIENT_TYPE_INDIVIDUAL = "Individual";
     
     public static final String CLIENT_LEVELS = "Client Levels";
+    public static final String Level_1 = "Level_1";
 
     // request parameters
     public static final String idParamName = "id";

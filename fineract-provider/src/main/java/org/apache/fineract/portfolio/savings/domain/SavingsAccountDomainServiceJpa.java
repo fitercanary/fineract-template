@@ -92,7 +92,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Override
     public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final SavingsTransactionBooleanValues transactionBooleanValues) {
+            final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isSavingToLoanTransfer) {
 
         AppUser user = getAppUserIfPresent();
         account.validateForAccountBlock();
@@ -102,7 +102,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isSavingToLoanTransfer) {
             ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
             account.validateTransactionAmountByLimit(transactionAmount, validationLimit, SavingsAccountTransactionType.WITHDRAWAL);
         }
@@ -141,7 +141,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         }
         account.validateAccountBalanceDoesNotBecomeNegative(transactionAmount, transactionBooleanValues.isExceptionForBalanceCheck(),
                 depositAccountOnHoldTransactions);
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isSavingToLoanTransfer) {
             ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
             account.validateDailyTranactionLimit(account, validationLimit, transactionDate);
         }

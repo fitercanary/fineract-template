@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.savings.domain;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -42,8 +44,9 @@ import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
+import org.apache.fineract.portfolio.savings.exception.ExceedDailyWithdrawLimitException;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
-import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepositoryWrapper;
 import org.apache.fineract.portfolio.validation.limit.service.ValidationLimitReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -67,6 +70,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final ValidationLimitReadPlatformService validationLimitReadPlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsAccountAssembler savingAccountAssembler;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -76,7 +81,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
             final BusinessEventNotifierService businessEventNotifierService,
-            final ValidationLimitReadPlatformService validationLimitReadPlatformService) {
+            final ValidationLimitReadPlatformService validationLimitReadPlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsAccountAssembler savingAccountAssembler) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -86,13 +93,15 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.depositAccountOnHoldTransactionRepository = depositAccountOnHoldTransactionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
         this.validationLimitReadPlatformService = validationLimitReadPlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingAccountAssembler = savingAccountAssembler;
     }
 
     @Transactional
     @Override
     public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isSavingToLoanTransfer) {
+            final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotSavingToSavingTransfer) {
 
         AppUser user = getAppUserIfPresent();
         account.validateForAccountBlock();
@@ -102,7 +111,14 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isSavingToLoanTransfer) {
+        final GlobalConfigurationPropertyData dailyWithdrawalLimitConfigDetails = this.configurationDomainService
+                .dailyWithdrawalLimitConfigDetails();
+        if (dailyWithdrawalLimitConfigDetails.isEnabled() && account.depositAccountType().isSavingsDeposit() && !account.depositAccountType().isFixedDeposit() && !isNotSavingToSavingTransfer) {
+            ValidateDailyWithdrawalLimit(account, transactionDate, transactionAmount,
+                    dailyWithdrawalLimitConfigDetails.getValue().doubleValue());
+        }
+
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotSavingToSavingTransfer) {
             ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
             account.validateTransactionAmountByLimit(transactionAmount, validationLimit, SavingsAccountTransactionType.WITHDRAWAL);
         }
@@ -141,7 +157,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         }
         account.validateAccountBalanceDoesNotBecomeNegative(transactionAmount, transactionBooleanValues.isExceptionForBalanceCheck(),
                 depositAccountOnHoldTransactions);
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isSavingToLoanTransfer) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotSavingToSavingTransfer) {
             ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
             account.validateDailyTranactionLimit(account, validationLimit, transactionDate);
         }
@@ -257,6 +273,33 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private ValidationLimit getValidationLimitForClientLevel(SavingsAccount account) {
         Long clientLevelId = account.getClient().clientLevel().getId();
         return this.validationLimitReadPlatformService.retriveValidationLimitByClienLeveltId(clientLevelId);
+    }
+
+    private void ValidateDailyWithdrawalLimit(SavingsAccount account, LocalDate transactionDate, BigDecimal transactionAmount,
+            Double dailyWithdrawalLimitDefaultValue) {
+        final ArrayList<Long> reversalTransactions = this.savingsAccountReadPlatformService
+                .fetchReversalTransactionRequestList(account.getId());
+        BigDecimal totalWithdrawOnDate = transactionAmount;
+        if (account.productId() != 32 && account.productId() != 36 && account.productId() != 30) {
+            for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {
+                for (SavingsAccountTransaction tran : acc.getTransactions()) {
+                    if (!tran.isReversed() && tran.isWithdrawal() && !reversalTransactions.contains(tran.getId())
+                            && tran.getTransactionLocalDate().isEqual(transactionDate)) {
+                        totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
+
+                    }
+                }
+            }
+        }
+
+        if (account.getClient().getDailyWithdrawLimit().doubleValue() > 0) {
+            if (totalWithdrawOnDate.doubleValue() > account.getClient().getDailyWithdrawLimit().doubleValue()) {
+                throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
+            }
+        } else if (totalWithdrawOnDate.doubleValue() > dailyWithdrawalLimitDefaultValue) {
+            throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
+        }
+
     }
 
     @Transactional

@@ -40,7 +40,6 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
-import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -104,7 +103,6 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
-import org.apache.fineract.portfolio.savings.exception.ExceedDailyWithdrawLimitException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
 import org.apache.fineract.portfolio.savings.exception.PostInterestClosingDateException;
@@ -370,33 +368,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
-        final GlobalConfigurationPropertyData dailyWithdrawalLimitConfigDetails = this.configurationDomainService
-                .dailyWithdrawalLimitConfigDetails();
-
-        if (dailyWithdrawalLimitConfigDetails.isEnabled()) {
-            final ArrayList<Long> reversalTransactions = this.savingsAccountReadPlatformService
-                    .fetchReversalTransactionRequestList(account.getId());
-            BigDecimal totalWithdrawOnDate = transactionAmount;
-            if (account.productId() != 32 && account.productId() != 36 && account.productId() != 30) {
-                for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {
-                    for (SavingsAccountTransaction tran : acc.getTransactions()) {
-                        if (!tran.isReversed() && tran.isWithdrawal() && !reversalTransactions.contains(tran.getId())
-                                && tran.getTransactionLocalDate().isEqual(transactionDate)) {
-                            totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
-
-                        }
-                    }
-                }
-            }
-
-            if (account.getClient().getDailyWithdrawLimit().doubleValue() > 0) {
-                if (totalWithdrawOnDate.doubleValue() > account.getClient().getDailyWithdrawLimit().doubleValue()) {
-                    throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
-                }
-            } else if (totalWithdrawOnDate.doubleValue() > dailyWithdrawalLimitConfigDetails.getValue().doubleValue()) {
-                throw new ExceedDailyWithdrawLimitException("Withdraw Exceeding daily withdraw limit withdraw not allowed");
-            }
-        }
 
         checkClientOrGroupActive(account);
         final boolean isAccountTransfer = false;

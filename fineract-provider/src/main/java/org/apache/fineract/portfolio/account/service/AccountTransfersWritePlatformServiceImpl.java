@@ -410,6 +410,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 toSavingsAccount = accountTransferDetails.toSavingsAccount();
                 this.savingsAccountAssembler.setHelpers(toSavingsAccount);
             }
+            
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(),
@@ -418,7 +419,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
-                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, false);
+                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, true);
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),

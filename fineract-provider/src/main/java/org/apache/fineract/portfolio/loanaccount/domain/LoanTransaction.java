@@ -669,6 +669,7 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
                 loanChargePaidData.put("isPenalty", chargePaidBy.getLoanCharge().isPenaltyCharge());
                 loanChargePaidData.put("loanChargeId", chargePaidBy.getLoanCharge().getId());
                 loanChargePaidData.put("amount", chargePaidBy.getAmount());
+                
 
                 loanChargesPaidData.add(loanChargePaidData);
             }

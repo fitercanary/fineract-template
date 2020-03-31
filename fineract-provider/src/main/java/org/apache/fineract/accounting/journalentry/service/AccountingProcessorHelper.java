@@ -1256,7 +1256,7 @@ public class AccountingProcessorHelper {
         return glAccount;
     }
 
-    private GLAccount getLinkedGLAccountForLoanCharges(final Long loanProductId, final int accountMappingTypeId, final Long chargeId) {
+    GLAccount getLinkedGLAccountForLoanCharges(final Long loanProductId, final int accountMappingTypeId, final Long chargeId) {
         ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(loanProductId,
                 PortfolioProductType.LOAN.getValue(), accountMappingTypeId);
         /*****

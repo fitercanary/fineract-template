@@ -242,13 +242,18 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
 
             if (isIncomeFromFee) {
                 
-                GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
-                        ACCRUAL_ACCOUNTS_FOR_LOAN.INCOME_FROM_FEES.getValue(), paymentTypeId);
-                if (accountMap.containsKey(account)) {
-                    BigDecimal amount = accountMap.get(account).add(feesAmount);
-                    accountMap.put(account, amount);
-                } else {
-                    accountMap.put(account, feesAmount);
+                for (final ChargePaymentDTO chargePaymentDTO : loanTransactionDTO.getFeePayments()) {
+                    final Long chargeId = chargePaymentDTO.getChargeId();
+                    final GLAccount chargeSpecificAccount = this.helper.getLinkedGLAccountForLoanCharges(loanProductId,
+                            ACCRUAL_ACCOUNTS_FOR_LOAN.INCOME_FROM_FEES.getValue(), chargeId);
+                    BigDecimal chargeSpecificAmount = chargePaymentDTO.getAmount();
+
+                    if (accountMap.containsKey(chargeSpecificAccount)) {
+                        final BigDecimal existingAmount = accountMap.get(chargeSpecificAccount);
+                        chargeSpecificAmount = chargeSpecificAmount.add(existingAmount);
+                    } else {
+                        accountMap.put(chargeSpecificAccount, chargeSpecificAmount);
+                    }
                 }
             } else {
                 GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,

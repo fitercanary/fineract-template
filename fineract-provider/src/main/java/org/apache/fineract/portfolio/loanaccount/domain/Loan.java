@@ -115,7 +115,6 @@ import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerUnassignme
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
 import org.apache.fineract.portfolio.loanaccount.exception.UndoLastTrancheDisbursementException;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleDTO;
-import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleParams;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.AprCalculator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
@@ -388,6 +387,9 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
     @Column(name = "is_topup", nullable = false)
     private boolean isTopup = false;
+
+    @Transient
+    private boolean isDisburseToSavingsLoan = false;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "loan", optional = true, orphanRemoval = true, fetch = FetchType.EAGER)
     private LoanTopupDetails loanTopupDetails;
@@ -2338,7 +2340,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
         validateDisbursementDateIsOnHoliday(holidayDetailDTO.isAllowTransactionsOnHoliday(), holidayDetailDTO.getHolidays());
 
         if (this.repaymentScheduleDetail().isInterestRecalculationEnabled()
-                && (fetchRepaymentScheduleInstallment(1).getDueDate().isBefore(DateUtils.getLocalDateOfTenant()) || isDisbursementMissed())) {
+                && (fetchRepaymentScheduleInstallment(1).getDueDate().isBefore(DateUtils.getLocalDateOfTenant())
+                        || isDisbursementMissed())) {
             regenerateRepaymentScheduleWithInterestRecalculation(scheduleGeneratorDTO, currentUser);
         }
 
@@ -3116,31 +3119,33 @@ public class Loan extends AbstractPersistableCustom<Long> {
              * transactions first and then new transactions.
              */
             this.loanTransactions.addAll(changedTransactionDetail.getNewTransactionMappings().values());
-            
+
         }
         // Check loan charge accrued or not for payment account selection
-        if ((this.loanTransactions.get(this.loanTransactions.size()-1).getFeeChargesPortion(getCurrency()) != null && this.loanTransactions.get(this.loanTransactions.size()-1).getFeeChargesPortion(getCurrency()).isGreaterThanZero())
-                || (this.loanTransactions.get(this.loanTransactions.size()-1).getPenaltyChargesPortion(getCurrency()) != null && this.loanTransactions.get(this.loanTransactions.size()-1).getPenaltyChargesPortion(getCurrency()).isGreaterThanZero())) {
+        if ((this.loanTransactions.get(this.loanTransactions.size() - 1).getFeeChargesPortion(getCurrency()) != null
+                && this.loanTransactions.get(this.loanTransactions.size() - 1).getFeeChargesPortion(getCurrency()).isGreaterThanZero())
+                || (this.loanTransactions.get(this.loanTransactions.size() - 1).getPenaltyChargesPortion(getCurrency()) != null
+                        && this.loanTransactions.get(this.loanTransactions.size() - 1).getPenaltyChargesPortion(getCurrency())
+                                .isGreaterThanZero())) {
             Money totalAccruedChargeAmount = Money.zero(getCurrency());
-            LoanTransaction transaction = this.loanTransactions.get(this.loanTransactions.size()-1);
+            LoanTransaction transaction = this.loanTransactions.get(this.loanTransactions.size() - 1);
             Collection<LoanCharge> charges = loanTransaction.getLoan().getLoanCharges();
             for (LoanCharge charge : charges) {
-                if(charge.isOverdueInstallmentCharge()) {
+                if (charge.isOverdueInstallmentCharge()) {
                     if (charge.isAccrued()) {
                         totalAccruedChargeAmount = totalAccruedChargeAmount.plus(charge.getAmount(getCurrency()));
                         transaction.setAccruedPenalty(totalAccruedChargeAmount.getAmount());
                     }
                     transaction.setBeforeDueDate(true);
-                }else {
+                } else {
                     if (charge.isAccrued()) {
                         transaction.setBeforeDueDate(false);
-                    }else {
+                    } else {
                         transaction.setBeforeDueDate(true);
-                    }  
+                    }
                 }
-            }            
-            
-            
+            }
+
         }
         updateLoanSummaryDerivedFields();
 
@@ -3500,8 +3505,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
         transactionForAdjustment.reverse();
         transactionForAdjustment.manuallyAdjustedOrReversed();
-        
-        
+
         if (isClosedWrittenOff()) {
             // find write off transaction and reverse it
             final LoanTransaction writeOffTransaction = findWriteOffTransaction();
@@ -5517,8 +5521,9 @@ public class Loan extends AbstractPersistableCustom<Long> {
             feeCharges = feeCharges.plus(scheduledRepayment.getFeeChargesOutstanding(loanCurrency()));
             penaltyCharges = penaltyCharges.plus(scheduledRepayment.getPenaltyChargesOutstanding(loanCurrency()));
         }
-        return new LoanRepaymentScheduleInstallment(null, 0, DateUtils.getLocalDateOfTenant(), DateUtils.getLocalDateOfTenant(), totalPrincipal.getAmount(),
-                totalInterest.getAmount(), feeCharges.getAmount(), penaltyCharges.getAmount(), false, compoundingDetails, false);
+        return new LoanRepaymentScheduleInstallment(null, 0, DateUtils.getLocalDateOfTenant(), DateUtils.getLocalDateOfTenant(),
+                totalPrincipal.getAmount(), totalInterest.getAmount(), feeCharges.getAmount(), penaltyCharges.getAmount(), false,
+                compoundingDetails, false);
     }
 
     public LocalDate getAccruedTill() {
@@ -6579,4 +6584,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
     public boolean isIndividualLoan() {
         return AccountType.fromInt(this.loanType).isIndividualAccount();
     }
+
+
+
 }

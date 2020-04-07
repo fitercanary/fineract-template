@@ -196,7 +196,7 @@ public class ImportHandlerUtils {
     public static CellStyle getCellStyle(Workbook workbook, IndexedColors color) {
         CellStyle style = workbook.createCellStyle();
         style.setFillForegroundColor(color.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         return style;
     }
 

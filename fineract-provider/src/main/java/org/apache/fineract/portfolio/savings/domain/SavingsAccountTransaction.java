@@ -601,12 +601,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         if (isDeposit() || isDividendPayoutAndNotReversed()) {
             endOfDayBalance = openingBalance.plus(getAmount(currency));
         } else if (isWithdrawal() || isChargeTransactionAndNotReversed()) {
-
-            if (openingBalance.isGreaterThanZero()) {
-                endOfDayBalance = openingBalance.minus(getAmount(currency));
-            } else {
-                endOfDayBalance = Money.of(currency, this.runningBalance);
-            }
+            endOfDayBalance = openingBalance.minus(getAmount(currency));
         }
 
         return EndOfDayBalance.from(getTransactionLocalDate(), openingBalance, endOfDayBalance, this.balanceNumberOfDays);

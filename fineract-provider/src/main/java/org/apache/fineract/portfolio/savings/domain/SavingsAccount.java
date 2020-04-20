@@ -513,8 +513,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 }
             }
             interestPostingsInPeriod.clear();
+            if(PositiveInterest != Money.zero(getCurrency())) {
             interestPostingsInPeriod.add(PositiveInterest);
+            }
+            if(negativeInterest != Money.zero(getCurrency())) {
             interestPostingsInPeriod.add(negativeInterest);
+            }
             for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
                 if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
@@ -3493,8 +3497,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 }
             }
             interestPostingsInPeriod.clear();
+            if(PositiveInterest != Money.zero(getCurrency())) {
             interestPostingsInPeriod.add(PositiveInterest);
+            }
+            if(negativeInterest != Money.zero(getCurrency())) {
             interestPostingsInPeriod.add(negativeInterest);
+            }
             if (postingTransactions.isEmpty()) {
                 for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 

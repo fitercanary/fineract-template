@@ -26,6 +26,7 @@ import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConn
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.report.annotation.ReportService;
+import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
@@ -70,14 +71,17 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 	@Autowired
 	private JDBCDriverConfig driverConfig;
+	
+	private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
 
 	@Autowired
-	public PentahoReportingProcessServiceImpl(final PlatformSecurityContext context) {
+	public PentahoReportingProcessServiceImpl(final PlatformSecurityContext context,final BasicAuthTenantDetailsService basicAuthTenantDetailsService) {
 		// kick off pentaho reports server
 		ClassicEngineBoot.getInstance().start();
 		this.noPentaho = false;
 
 		this.context = context;
+		this.basicAuthTenantDetailsService = basicAuthTenantDetailsService;
 	}
 
 	@Override
@@ -207,8 +211,14 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			// data scoping
 			final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
 			final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
+			
+
+                        final FineractPlatformTenantConnection redshiftConnection = basicAuthTenantDetailsService.getRedshiftReportConnection(tenant.getTenantIdentifier());
+                        logger.info("redshift db URL:" + tenant.getTenantIdentifier() );
+                        
 			//String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(), tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
-			String tenantUrl = "jdbc:mysql://" + tenantConnection.getSchemaServer() + ":" + tenantConnection.getSchemaServerPort() + "/" + tenantConnection.getSchemaName();
+			String tenantUrl =  "jdbc:postgresql://" + redshiftConnection.getSchemaServer() + ":" + redshiftConnection.getSchemaServerPort() + "/" + redshiftConnection.getSchemaName();
+			//"jdbc:mysql://" + tenantConnection.getSchemaServer() + ":" + tenantConnection.getSchemaServerPort() + "/" + tenantConnection.getSchemaName();
 			final String userhierarchy = currentUser.getOffice().getHierarchy();
 			logger.info("db URL:" + tenantUrl + "      userhierarchy:" + userhierarchy);
 			rptParamValues.put("userhierarchy", userhierarchy);
@@ -218,8 +228,10 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			rptParamValues.put("userid", userid);
 
 			rptParamValues.put("tenantUrl", tenantUrl);
-			rptParamValues.put("username", tenantConnection.getSchemaUsername());
-			rptParamValues.put("password", tenantConnection.getSchemaPassword());
+			rptParamValues.put("username", redshiftConnection.getSchemaUsername());
+			rptParamValues.put("password", redshiftConnection.getSchemaPassword());
+			
+			// test getting redshift connection details
 		} catch (final Exception e) {
 			logger.error("error.msg.reporting.error:" + e.getMessage());
 			throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());

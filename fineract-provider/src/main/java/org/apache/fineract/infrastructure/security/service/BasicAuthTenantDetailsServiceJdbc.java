@@ -161,7 +161,7 @@ public class BasicAuthTenantDetailsServiceJdbc implements BasicAuthTenantDetails
                 .append(" from tenants t left join tenant_server_connections ts ");
         
         public String schema() {
-            this.sqlBuilder.append(" on t.report_redshift_id = ts.id");
+            this.sqlBuilder.append(" on t.report_database_id = ts.id");
             return this.sqlBuilder.toString();
         }
 
@@ -209,14 +209,14 @@ public class BasicAuthTenantDetailsServiceJdbc implements BasicAuthTenantDetails
       }
 
     @Override
-    public FineractPlatformTenantConnection getRedshiftReportConnection(String tenantId) {
+    public FineractPlatformTenantConnection getExtraDatabaseReportConnection(String tenantId) {
         try {
             final TenantConnectionMapper rm = new TenantConnectionMapper();
             final String sql = "select  " + rm.schema() + " where t.identifier like ?";
 
             return this.jdbcTemplate.queryForObject(sql, rm, new Object[] { tenantId });
         } catch (final EmptyResultDataAccessException e) {
-            throw new InvalidTenantIdentiferException("The redshift tenant identifier: " + tenantId + " is not valid.");
+            throw new InvalidTenantIdentiferException("The database tenant identifier: " + tenantId + " is not valid.");
         }
     }
 }

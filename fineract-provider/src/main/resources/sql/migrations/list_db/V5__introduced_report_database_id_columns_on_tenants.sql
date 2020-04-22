@@ -17,5 +17,5 @@
 -- under the License.
 --
 
-alter table `tenants` add `report_redshift_id` BIGINT(20) NULL DEFAULT NULL; 
+alter table `tenants` add `report_database_id` BIGINT(20) NULL DEFAULT NULL; 
 

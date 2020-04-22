@@ -25,5 +25,5 @@ public interface BasicAuthTenantDetailsService {
 
     FineractPlatformTenant loadTenantById(String tenantId, boolean isReport);
     
-    FineractPlatformTenantConnection getRedshiftReportConnection(String tenantId);
+    FineractPlatformTenantConnection getExtraDatabaseReportConnection(String tenantId);
 }

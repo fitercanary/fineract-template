@@ -75,6 +75,9 @@ public final class Report extends AbstractPersistableCustom<Long> {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "report", orphanRemoval = true, fetch=FetchType.EAGER)
     private Set<ReportParameterUsage> reportParameterUsages = new HashSet<>();
+    
+    @Column(name = "report_database_type")
+    private Integer reportDatabaseType;
 
     public static Report fromJson(final JsonCommand command, final Collection<String> reportTypes) {
 
@@ -85,6 +88,7 @@ public final class Report extends AbstractPersistableCustom<Long> {
         String description = null;
         boolean useReport = false;
         String reportSql = null;
+        Integer reportDatabase = null;
 
         if (command.parameterExists("reportName")) {
             reportName = command.stringValueOfParameterNamed("reportName");
@@ -107,6 +111,10 @@ public final class Report extends AbstractPersistableCustom<Long> {
         if (command.parameterExists("reportSql")) {
             reportSql = command.stringValueOfParameterNamed("reportSql");
         }
+        
+        if (command.parameterExists("reportDatabase")) {
+            reportDatabase = command.integerValueOfParameterNamed("reportDatabase");
+        }
 
         return new Report(reportName, reportType, reportSubType, reportCategory, description, useReport, reportSql, reportTypes);
     }
@@ -125,6 +133,20 @@ public final class Report extends AbstractPersistableCustom<Long> {
         this.coreReport = false;
         this.useReport = useReport;
         this.reportSql = reportSql;
+        validate(reportTypes);
+    }
+    
+    public Report(final String reportName, final String reportType, final String reportSubType, final String reportCategory,
+            final String description, final boolean useReport, final String reportSql,final Integer reportDatabase, final Collection<String> reportTypes) {
+        this.reportName = reportName;
+        this.reportType = reportType;
+        this.reportSubType = reportSubType;
+        this.reportCategory = reportCategory;
+        this.description = description;
+        this.coreReport = false;
+        this.useReport = useReport;
+        this.reportSql = reportSql;
+        this.reportDatabaseType = reportDatabase;
         validate(reportTypes);
     }
 
@@ -280,4 +302,8 @@ public final class Report extends AbstractPersistableCustom<Long> {
 	public Set<ReportParameterUsage> getReportParameterUsages() {
         return this.reportParameterUsages;
     }
+	
+    public Integer getReportDatabase() {
+	        return this.reportDatabaseType;
+	       }
 }

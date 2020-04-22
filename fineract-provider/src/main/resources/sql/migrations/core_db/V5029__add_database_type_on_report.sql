@@ -17,4 +17,4 @@
 -- under the License.
 --
 
-alter table `stretchy_report` add `report_database_type` BIGINT(20) NULL DEFAULT 1; 
+alter table `stretchy_report` add `report_database_type` BIGINT(20) NOT NULL DEFAULT 1; 

@@ -25,7 +25,10 @@ import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
+import org.apache.fineract.infrastructure.dataqueries.service.ReadReportingService;
 import org.apache.fineract.infrastructure.report.annotation.ReportService;
+import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
@@ -70,14 +73,21 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 	@Autowired
 	private JDBCDriverConfig driverConfig;
+	
+	private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
+	
+	private final ReadReportingService readReportingService;
 
 	@Autowired
-	public PentahoReportingProcessServiceImpl(final PlatformSecurityContext context) {
+	public PentahoReportingProcessServiceImpl(final PlatformSecurityContext context,final BasicAuthTenantDetailsService basicAuthTenantDetailsService,
+	        final ReadReportingService readReportingService) {
 		// kick off pentaho reports server
 		ClassicEngineBoot.getInstance().start();
 		this.noPentaho = false;
 
 		this.context = context;
+		this.basicAuthTenantDetailsService = basicAuthTenantDetailsService;
+		this.readReportingService = readReportingService;
 	}
 
 	@Override
@@ -118,7 +128,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			if (locale != null) {
 				reportEnvironment.setLocale(locale);
 			}
-			addParametersToReport(masterReport, reportParams);
+			addParametersToReport(masterReport, reportParams, reportName);
 
 			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -160,7 +170,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 		throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
 	}
 
-	private void addParametersToReport(final MasterReport report, final Map<String, String> queryParams) {
+	private void addParametersToReport(final MasterReport report, final Map<String, String> queryParams, String reportName) {
 
 		final AppUser currentUser = this.context.authenticatedUser();
 
@@ -207,8 +217,32 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			// data scoping
 			final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
 			final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
+			
+			String tenantUrl = null;
+			ReportDatabaseTypeEnumData databaseType = readReportingService.getReportDatabaseType(reportName);
+			if( databaseType != null && databaseType.isMysql()) {
+			    tenantUrl = "jdbc:mysql://" + tenantConnection.getSchemaServer() + ":" + tenantConnection.getSchemaServerPort() + "/" + tenantConnection.getSchemaName();
+			    
+			    rptParamValues.put("username", tenantConnection.getSchemaUsername());
+	                    rptParamValues.put("password", tenantConnection.getSchemaPassword()); 
+	                    
+			}else if( databaseType != null && databaseType.isPostgres()) {// postgres, redshfit
+			    final FineractPlatformTenantConnection postgresConnection = basicAuthTenantDetailsService.getExtraDatabaseReportConnection(tenant.getTenantIdentifier());
+	                        logger.info("redshift db URL:" + tenant.getTenantIdentifier() );
+	                        
+	                    if( postgresConnection.getSchemaServer() == null || 
+	                            postgresConnection.getSchemaServerPort() == null || postgresConnection.getSchemaName() == null) {
+	                        logger.error("error.msg.reporting.error:" + "Connection properties to extrat report database are empty");
+	                        throw new PlatformDataIntegrityException("error.msg.reporting.error", "Connection properties to extra report database are empty");
+	                    }
+			    tenantUrl =  "jdbc:postgresql://" + postgresConnection.getSchemaServer() + ":" + postgresConnection.getSchemaServerPort() + "/" + postgresConnection.getSchemaName();	
+			    
+			    rptParamValues.put("username", postgresConnection.getSchemaUsername());
+                            rptParamValues.put("password", postgresConnection.getSchemaPassword()); 
+			}
+                        
 			//String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(), tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
-			String tenantUrl = "jdbc:mysql://" + tenantConnection.getSchemaServer() + ":" + tenantConnection.getSchemaServerPort() + "/" + tenantConnection.getSchemaName();
+			//"jdbc:mysql://" + tenantConnection.getSchemaServer() + ":" + tenantConnection.getSchemaServerPort() + "/" + tenantConnection.getSchemaName();
 			final String userhierarchy = currentUser.getOffice().getHierarchy();
 			logger.info("db URL:" + tenantUrl + "      userhierarchy:" + userhierarchy);
 			rptParamValues.put("userhierarchy", userhierarchy);
@@ -218,8 +252,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			rptParamValues.put("userid", userid);
 
 			rptParamValues.put("tenantUrl", tenantUrl);
-			rptParamValues.put("username", tenantConnection.getSchemaUsername());
-			rptParamValues.put("password", tenantConnection.getSchemaPassword());
+			
 		} catch (final Exception e) {
 			logger.error("error.msg.reporting.error:" + e.getMessage());
 			throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());

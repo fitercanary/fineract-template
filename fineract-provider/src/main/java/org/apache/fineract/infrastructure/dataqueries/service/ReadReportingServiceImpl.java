@@ -41,6 +41,7 @@ import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityEx
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.dataqueries.data.GenericResultsetData;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportData;
+import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportParameterData;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportParameterJoinData;
 import org.apache.fineract.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
@@ -603,6 +604,23 @@ public class ReadReportingServiceImpl implements ReadReportingService {
     */
         return null ;
     }
+
+    @Override
+    public ReportDatabaseTypeEnumData getReportDatabaseType(String reportName) {
+        final String sql = "SELECT report_database_type as report_database_type FROM `stretchy_report` where report_name = '" + reportName + "'";
+        
+        final String sqlWrapped = this.genericDataService.wrapSQL(sql);
+        
+        final SqlRowSet rs = this.jdbcTemplate.queryForRowSet(sqlWrapped);
+        
+        if (rs.next()) { 
+            ReportDatabaseTypeEnumData data = new ReportDatabaseTypeEnumData(rs.getLong("report_database_type"),null,null);
+            return data;
+        }
+        throw new ReportNotFoundException(sql);
+    }
+    
+    
 }
 
 

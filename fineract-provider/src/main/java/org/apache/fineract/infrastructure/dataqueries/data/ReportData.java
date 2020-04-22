@@ -51,6 +51,10 @@ final public class ReportData {
     private List<String> allowedReportSubTypes;
     @SuppressWarnings("unused")
     private Collection<ReportParameterData> allowedParameters;
+    
+
+    @SuppressWarnings("unused")
+    private final Integer reportDatabaseType;
 
     public ReportData(final Long id, final String reportName, final String reportType, final String reportSubType,
             final String reportCategory, final String description, final String reportSql, final Boolean coreReport,
@@ -68,6 +72,7 @@ final public class ReportData {
         this.allowedReportTypes = null;
         this.allowedReportSubTypes = null;
         this.allowedParameters = null;
+        this.reportDatabaseType = null;
     }
 
     public ReportData() {
@@ -84,6 +89,26 @@ final public class ReportData {
         this.allowedReportTypes = null;
         this.allowedReportSubTypes = null;
         this.allowedParameters = null;
+        this.reportDatabaseType = null;
+    }
+    
+    public ReportData(final Long id, final String reportName, final String reportType, final String reportSubType,
+            final String reportCategory, final String description, final String reportSql, final Boolean coreReport,
+            final Boolean useReport, final Collection<ReportParameterData> reportParameters,final Integer reportDatabase ) {
+        this.id = id;
+        this.reportName = reportName;
+        this.reportType = reportType;
+        this.reportSubType = reportSubType;
+        this.reportCategory = reportCategory;
+        this.description = description;
+        this.reportParameters = reportParameters;
+        this.reportSql = reportSql;
+        this.coreReport = coreReport;
+        this.useReport = useReport;
+        this.allowedReportTypes = null;
+        this.allowedReportSubTypes = null;
+        this.allowedParameters = null;
+        this.reportDatabaseType = reportDatabase;
     }
 
     public void appendedTemplate(final Collection<ReportParameterData> allowedParameters, final Collection<String> allowedReportTypes) {

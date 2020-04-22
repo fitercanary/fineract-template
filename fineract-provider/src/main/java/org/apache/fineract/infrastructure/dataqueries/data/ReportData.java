@@ -54,7 +54,10 @@ final public class ReportData {
     
 
     @SuppressWarnings("unused")
-    private final Integer reportDatabaseType;
+    private final ReportDatabaseTypeEnumData reportDatabaseType;
+    
+    @SuppressWarnings("unused")
+    private Collection<ReportDatabaseTypeEnumData> reportDatabaseTypes;
 
     public ReportData(final Long id, final String reportName, final String reportType, final String reportSubType,
             final String reportCategory, final String description, final String reportSql, final Boolean coreReport,
@@ -73,6 +76,7 @@ final public class ReportData {
         this.allowedReportSubTypes = null;
         this.allowedParameters = null;
         this.reportDatabaseType = null;
+        this.reportDatabaseTypes = null;
     }
 
     public ReportData() {
@@ -90,11 +94,12 @@ final public class ReportData {
         this.allowedReportSubTypes = null;
         this.allowedParameters = null;
         this.reportDatabaseType = null;
+        this.reportDatabaseTypes = null;
     }
     
     public ReportData(final Long id, final String reportName, final String reportType, final String reportSubType,
             final String reportCategory, final String description, final String reportSql, final Boolean coreReport,
-            final Boolean useReport, final Collection<ReportParameterData> reportParameters,final Integer reportDatabase ) {
+            final Boolean useReport, final Collection<ReportParameterData> reportParameters,final ReportDatabaseTypeEnumData reportDatabaseType ) {
         this.id = id;
         this.reportName = reportName;
         this.reportType = reportType;
@@ -108,7 +113,29 @@ final public class ReportData {
         this.allowedReportTypes = null;
         this.allowedReportSubTypes = null;
         this.allowedParameters = null;
-        this.reportDatabaseType = reportDatabase;
+        this.reportDatabaseType = reportDatabaseType;
+        this.reportDatabaseTypes = null;
+    }
+    
+    public ReportData(final Long id, final String reportName, final String reportType, final String reportSubType,
+            final String reportCategory, final String description, final String reportSql, final Boolean coreReport,
+            final Boolean useReport, final Collection<ReportParameterData> reportParameters,final ReportDatabaseTypeEnumData reportDatabaseType, 
+            Collection<ReportDatabaseTypeEnumData> reportDatabaseTypes ) {
+        this.id = id;
+        this.reportName = reportName;
+        this.reportType = reportType;
+        this.reportSubType = reportSubType;
+        this.reportCategory = reportCategory;
+        this.description = description;
+        this.reportParameters = reportParameters;
+        this.reportSql = reportSql;
+        this.coreReport = coreReport;
+        this.useReport = useReport;
+        this.allowedReportTypes = null;
+        this.allowedReportSubTypes = null;
+        this.allowedParameters = null;
+        this.reportDatabaseType = reportDatabaseType;
+        this.reportDatabaseTypes = reportDatabaseTypes;
     }
 
     public void appendedTemplate(final Collection<ReportParameterData> allowedParameters, final Collection<String> allowedReportTypes) {
@@ -123,6 +150,24 @@ final public class ReportData {
         this.allowedReportSubTypes = reportSubTypes;
 
         this.allowedParameters = allowedParameters;
+
+    }
+    
+    public void appendedTemplate(final Collection<ReportParameterData> allowedParameters, final Collection<String> allowedReportTypes,
+            final Collection<ReportDatabaseTypeEnumData> reportDatabaseTypes) {
+
+        final List<String> reportTypes = new ArrayList<>();
+        reportTypes.addAll(allowedReportTypes);
+        this.allowedReportTypes = reportTypes;
+
+        final List<String> reportSubTypes = new ArrayList<>();
+        reportSubTypes.add("Bar");
+        reportSubTypes.add("Pie");
+        this.allowedReportSubTypes = reportSubTypes;
+
+        this.allowedParameters = allowedParameters;
+        
+        this.reportDatabaseTypes = reportDatabaseTypes;
 
     }
 

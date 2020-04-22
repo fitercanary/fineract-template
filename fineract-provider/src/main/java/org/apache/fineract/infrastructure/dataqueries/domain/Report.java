@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,7 +78,7 @@ public final class Report extends AbstractPersistableCustom<Long> {
     private Set<ReportParameterUsage> reportParameterUsages = new HashSet<>();
     
     @Column(name = "report_database_type")
-    private Integer reportDatabaseType;
+    private Integer reportDatabaseTypeId;
 
     public static Report fromJson(final JsonCommand command, final Collection<String> reportTypes) {
 
@@ -88,7 +89,7 @@ public final class Report extends AbstractPersistableCustom<Long> {
         String description = null;
         boolean useReport = false;
         String reportSql = null;
-        Integer reportDatabase = null;
+        Integer reportDatabaseTypeId = null;
 
         if (command.parameterExists("reportName")) {
             reportName = command.stringValueOfParameterNamed("reportName");
@@ -112,11 +113,11 @@ public final class Report extends AbstractPersistableCustom<Long> {
             reportSql = command.stringValueOfParameterNamed("reportSql");
         }
         
-        if (command.parameterExists("reportDatabase")) {
-            reportDatabase = command.integerValueOfParameterNamed("reportDatabase");
+        if (command.parameterExists("reportDatabaseTypeId")) {
+            reportDatabaseTypeId = command.integerValueOfParameterNamed("reportDatabaseTypeId", Locale.getDefault());
         }
 
-        return new Report(reportName, reportType, reportSubType, reportCategory, description, useReport, reportSql, reportTypes);
+        return new Report(reportName, reportType, reportSubType, reportCategory, description, useReport, reportSql, reportDatabaseTypeId,reportTypes);
     }
 
     protected Report() {
@@ -137,7 +138,7 @@ public final class Report extends AbstractPersistableCustom<Long> {
     }
     
     public Report(final String reportName, final String reportType, final String reportSubType, final String reportCategory,
-            final String description, final boolean useReport, final String reportSql,final Integer reportDatabase, final Collection<String> reportTypes) {
+            final String description, final boolean useReport, final String reportSql,final Integer reportDatabaseTypeId, final Collection<String> reportTypes) {
         this.reportName = reportName;
         this.reportType = reportType;
         this.reportSubType = reportSubType;
@@ -146,7 +147,7 @@ public final class Report extends AbstractPersistableCustom<Long> {
         this.coreReport = false;
         this.useReport = useReport;
         this.reportSql = reportSql;
-        this.reportDatabaseType = reportDatabase;
+        this.reportDatabaseTypeId = reportDatabaseTypeId;
         validate(reportTypes);
     }
 
@@ -203,6 +204,13 @@ public final class Report extends AbstractPersistableCustom<Long> {
             if (jsonArray != null) {
                 actualChanges.put(reportParametersParamName, command.jsonFragment(reportParametersParamName));
             }
+        }
+        
+        paramName = "reportDatabaseTypeId";
+        if (command.isChangeInIntegerParameterNamed(paramName, this.reportDatabaseTypeId)) {
+            final Integer newValue = command.integerValueOfParameterNamed(paramName);
+            actualChanges.put(paramName, newValue);
+            this.reportDatabaseTypeId = newValue;
         }
 
         validate(reportTypes);
@@ -268,6 +276,9 @@ public final class Report extends AbstractPersistableCustom<Long> {
                         .mustBeBlankWhenParameterProvidedIs("reportType", this.reportType);
             }
         }
+        
+        baseDataValidator.reset().parameter("reportDatabaseTypeId").value(this.reportDatabaseTypeId).notBlank();
+        
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
@@ -304,6 +315,6 @@ public final class Report extends AbstractPersistableCustom<Long> {
     }
 	
     public Integer getReportDatabase() {
-	        return this.reportDatabaseType;
+	        return this.reportDatabaseTypeId;
 	       }
 }

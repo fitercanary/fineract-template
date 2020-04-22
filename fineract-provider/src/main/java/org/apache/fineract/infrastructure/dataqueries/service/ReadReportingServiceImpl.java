@@ -340,6 +340,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         Boolean coreReport = null;
         Boolean useReport = null;
         String reportSql = null;
+        ReportDatabaseTypeEnumData reportDatabaseType = null;
 
         Long prevReportId = (long) -1234;
         Boolean firstReport = true;
@@ -373,6 +374,10 @@ public class ReadReportingServiceImpl implements ReadReportingService {
                 reportSql = rpJoin.getReportSql();
                 coreReport = rpJoin.getCoreReport();
                 useReport = rpJoin.getUseReport();
+                
+                if(rpJoin.getReportDatabaseTypeId() != null) {
+                    reportDatabaseType = ReportDatabaseTypeEnumData.generateFromId(rpJoin.getReportDatabaseTypeId());
+                }
 
                 if (rpJoin.getReportParameterId() != null) {
                     // report has at least one parameter
@@ -387,7 +392,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         }
         // write last report
         reportList.add(new ReportData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql, coreReport,
-                useReport, reportParameters));
+                useReport, reportParameters, reportDatabaseType));
 
         return reportList;
     }
@@ -416,7 +421,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
 
             String sql = "select r.id as reportId, r.report_name as reportName, r.report_type as reportType, "
                     + " r.report_subtype as reportSubType, r.report_category as reportCategory, r.description, r.core_report as coreReport, r.use_report as useReport, "
-                    + " rp.id as reportParameterId, rp.parameter_id as parameterId, rp.report_parameter_name as reportParameterName, p.parameter_name as parameterName";
+                    + " r.report_database_type as reportDatabaseTypeId , rp.id as reportParameterId, rp.parameter_id as parameterId, rp.report_parameter_name as reportParameterName, p.parameter_name as parameterName";
 
             if (reportId != null) {
                 sql += ", r.report_sql as reportSql ";
@@ -457,6 +462,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             final String description = rs.getString("description");
             final Boolean coreReport = rs.getBoolean("coreReport");
             final Boolean useReport = rs.getBoolean("useReport");
+            final Long reportDatabaseTypeId = rs.getLong("reportDatabaseTypeId");
 
             String reportSql;
             // reportSql might not be on the select list of columns
@@ -472,7 +478,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             final String parameterName = rs.getString("parameterName");
 
             return new ReportParameterJoinData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql,
-                    coreReport, useReport, reportParameterId, parameterId, reportParameterName, parameterName);
+                    coreReport, useReport, reportParameterId, parameterId, reportParameterName, parameterName, reportDatabaseTypeId);
         }
     }
 
@@ -619,6 +625,17 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         }
         throw new ReportNotFoundException(sql);
     }
+
+    @Override
+    public Collection<ReportDatabaseTypeEnumData> getDatabaseReportTypes() {
+        final List<ReportDatabaseTypeEnumData> reportDatabaseTypes = new ArrayList<>();
+        reportDatabaseTypes.add(new ReportDatabaseTypeEnumData(new Long(1),"mysql","Mysql"));
+        reportDatabaseTypes.add(new ReportDatabaseTypeEnumData(new Long(2),"postgres","Postgres"));
+        //reportTypes.addAll(this.reportingProcessServiceProvider.findAllReportingTypes());
+        return reportDatabaseTypes;
+    }
+    
+    
     
     
 }

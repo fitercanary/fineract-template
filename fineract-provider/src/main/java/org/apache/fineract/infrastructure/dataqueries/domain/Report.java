@@ -207,8 +207,8 @@ public final class Report extends AbstractPersistableCustom<Long> {
         }
         
         paramName = "reportDatabaseTypeId";
-        if (command.isChangeInIntegerParameterNamed(paramName, this.reportDatabaseTypeId)) {
-            final Integer newValue = command.integerValueOfParameterNamed(paramName);
+        if (command.isChangeInIntegerParameterNamed(paramName, this.reportDatabaseTypeId, Locale.getDefault())) {
+            final Integer newValue = command.integerValueOfParameterNamed(paramName, Locale.getDefault());
             actualChanges.put(paramName, newValue);
             this.reportDatabaseTypeId = newValue;
         }

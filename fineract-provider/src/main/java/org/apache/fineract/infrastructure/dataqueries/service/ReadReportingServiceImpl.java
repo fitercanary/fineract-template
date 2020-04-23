@@ -360,7 +360,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
                 } else {
                     // write report entry
                     reportList.add(new ReportData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql,
-                            coreReport, useReport, reportParameters));
+                            coreReport, useReport, reportParameters, reportDatabaseType));
                 }
 
                 prevReportId = rpJoin.getReportId();

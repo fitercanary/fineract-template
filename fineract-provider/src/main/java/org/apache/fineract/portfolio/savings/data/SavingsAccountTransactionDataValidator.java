@@ -52,7 +52,9 @@ import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.exception.CannotHoldFundsInBlockedAccountException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -179,6 +181,10 @@ public class SavingsAccountTransactionDataValidator {
     
     public SavingsAccountTransaction validateHoldAndAssembleForm(final String json, final SavingsAccount account, final AppUser createdUser) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        
+        if(account.getSubStatus().equals(SavingsAccountSubStatusEnum.BLOCK.getValue()) || account.getSubStatus().equals(SavingsAccountSubStatusEnum.BLOCK_DEBIT.getValue())) {
+            throw new CannotHoldFundsInBlockedAccountException();
+        }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SAVINGS_ACCOUNT_HOLD_AMOUNT_REQUEST_DATA_PARAMETERS);

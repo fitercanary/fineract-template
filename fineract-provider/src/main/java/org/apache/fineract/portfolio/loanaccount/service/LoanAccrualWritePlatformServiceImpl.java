@@ -409,10 +409,6 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                     BigDecimal amountForAccrual = chargeAmount;
                     if (loanCharge.getAmountAccrued() != null) {
                         amountForAccrual = chargeAmount.subtract(loanCharge.getAmountAccrued());
-                    }else {
-                       if(loanCharge.getAmountOutstanding() != null) {
-                        amountForAccrual = loanCharge.getAmountOutstanding();
-                        }
                     }
                     applicableCharges.put(loanCharge, amountForAccrual);
                 }

@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.loanaccount.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,26 +29,35 @@ import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.portfolio.loanaccount.data.LoanScheduleAccrualData;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformService {
 
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanAccrualWritePlatformService loanAccrualWritePlatformService;
+    private final LoanRepositoryWrapper loanRepositoryWrapper;
 
     @Autowired
     public LoanAccrualPlatformServiceImpl(final LoanReadPlatformService loanReadPlatformService,
-            final LoanAccrualWritePlatformService loanAccrualWritePlatformService) {
+            final LoanAccrualWritePlatformService loanAccrualWritePlatformService,
+            final LoanRepositoryWrapper loanRepositoryWrapper) {
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanAccrualWritePlatformService = loanAccrualWritePlatformService;
+        this.loanRepositoryWrapper = loanRepositoryWrapper;
     }
 
     @Override
     @CronTarget(jobName = JobName.ADD_ACCRUAL_ENTRIES)
     public void addAccrualAccounting() throws JobExecutionException {
+        verifyAndRemoveWrongAccrualTransactions();
         Collection<LoanScheduleAccrualData> loanScheduleAccrualDatas = this.loanReadPlatformService.retriveScheduleAccrualData();
         StringBuilder sb = new StringBuilder();
         Map<Long, Collection<LoanScheduleAccrualData>> loanDataMap = new HashMap<>();
@@ -83,6 +93,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
     @Override
     @CronTarget(jobName = JobName.ADD_PERIODIC_ACCRUAL_ENTRIES)
     public void addPeriodicAccruals() throws JobExecutionException {
+        verifyAndRemoveWrongAccrualTransactions();
         String errors = addPeriodicAccruals(DateUtils.getLocalDateOfTenant());
         if (errors.length() > 0) { throw new JobExecutionException(errors); }
     }
@@ -140,6 +151,76 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                 }
             }
             if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
+        }
+    }
+    
+    @Transactional
+    void verifyAndRemoveWrongAccrualTransactions() {
+        Collection<Long> loanIds = this.loanReadPlatformService.retriveActiveAndClosedLoans();
+        LocalDate accruedTilldefault = new LocalDate(2019, 9, 30);
+        for (Long loanid : loanIds) {
+            Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanid, true);
+            for (LoanRepaymentScheduleInstallment installment : loan.getRepaymentScheduleInstallments()) {
+                if (installment.getDueDate().isAfter(DateUtils.getLocalDateOfTenant()) || installment.isRecalculatedInterestComponent()
+                        || installment.getDueDate().isBefore(accruedTilldefault)) {
+                    continue;
+                }
+                ArrayList<LoanTransaction> loanAccrualTransactions = new ArrayList<LoanTransaction>();
+                BigDecimal accruedInterestAmount = BigDecimal.ZERO;
+                BigDecimal accruedFeesAmount = BigDecimal.ZERO;
+                BigDecimal accruedPenaltiesAmount = BigDecimal.ZERO;
+                LocalDate startDate = installment.getFromDate().plusDays(1);
+                LocalDate endDate = installment.getDueDate();
+                if (startDate.isAfter(endDate)) {
+                    startDate = endDate;
+                }
+                for (LoanTransaction transaction : loan.getLoanTransactions()) {
+                    BigDecimal accruedInterestAmountTransaction = BigDecimal.ZERO;
+                    BigDecimal accruedFeesAmountTransaction = BigDecimal.ZERO;
+                    BigDecimal accruedPenaltiesAmountTransaction = BigDecimal.ZERO;
+                    if (transaction.isAccrualTransaction() && (!transaction.getTransactionDate().isBefore(startDate)
+                            && !transaction.getTransactionDate().isAfter(endDate))) {
+                        if (transaction.getInterestPortion(loan.getCurrency()) != null) {
+                            accruedInterestAmountTransaction = transaction.getInterestPortion(loan.getCurrency()).getAmount();
+                        }
+                        if (transaction.getFeeChargesPortion(loan.getCurrency()) != null) {
+                            accruedFeesAmountTransaction = transaction.getFeeChargesPortion(loan.getCurrency()).getAmount();
+                        }
+                        if (transaction.getPenaltyChargesPortion() != null) {
+                            accruedPenaltiesAmountTransaction = transaction.getPenaltyChargesPortion();
+                        }
+                        accruedInterestAmount = accruedInterestAmount.add(accruedInterestAmountTransaction);
+                        accruedFeesAmount = accruedFeesAmount.add(accruedFeesAmountTransaction);
+                        accruedPenaltiesAmount = accruedPenaltiesAmount.add(accruedPenaltiesAmountTransaction);
+                        loanAccrualTransactions.add(transaction);
+                    }
+                }
+                installment.setInterestAccrued(accruedInterestAmount);
+                installment.setFeeAccrued(accruedFeesAmount);
+                installment.setPenaltyAccrued(accruedPenaltiesAmount);
+                if (!accruedInterestAmount.equals(installment.getInterestCharged(loan.getCurrency()).getAmount())
+                        || !accruedFeesAmount.equals(installment.getFeeChargesCharged(loan.getCurrency()).getAmount())
+                        || !accruedPenaltiesAmount.equals(installment.getPenaltyChargesCharged(loan.getCurrency()).getAmount())) {
+                    for (LoanTransaction tran : loanAccrualTransactions) {
+                        tran.reverse();
+                    }
+                    installment.setInterestAccrued(null);
+                    installment.setFeeAccrued(null);
+                    installment.setPenaltyAccrued(null);
+                }
+                accruedInterestAmount = BigDecimal.ZERO;
+                accruedFeesAmount = BigDecimal.ZERO;
+                accruedPenaltiesAmount = BigDecimal.ZERO;
+            }
+            for (LoanTransaction transaction : loan.getLoanTransactions()) {
+                if (transaction.isAccrualTransaction()) {
+                    if (transaction.getTransactionDate().isAfter(accruedTilldefault)) {
+                        accruedTilldefault = transaction.getTransactionDate();
+                    }
+                }
+            }
+            loan.setAccruedTill(accruedTilldefault.toDate());
+            this.loanRepositoryWrapper.save(loan);
         }
     }
 }

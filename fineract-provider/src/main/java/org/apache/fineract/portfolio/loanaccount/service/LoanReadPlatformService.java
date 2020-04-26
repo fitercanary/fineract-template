@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.loanaccount.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
@@ -39,6 +40,8 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleD
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanSchedulePeriodData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
 import org.joda.time.LocalDate;
+
+import com.lowagie.text.List;
 
 public interface LoanReadPlatformService {
 
@@ -131,5 +134,7 @@ public interface LoanReadPlatformService {
 
     LoanTransactionData retrieveLoanForeclosureTemplate(final Long loanId, final LocalDate transactionDate);
 
-	LoanAccountData retrieveLoanByLoanAccount(String loanAccountNumber);
+    LoanAccountData retrieveLoanByLoanAccount(String loanAccountNumber);
+    
+    Collection<Long> retriveActiveAndClosedLoans();
 }

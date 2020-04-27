@@ -6585,6 +6585,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return AccountType.fromInt(this.loanType).isIndividualAccount();
     }
 
-
-
+    public void setAccruedTill(Date accruedTill) {
+        this.accruedTill = accruedTill;
+    }
 }

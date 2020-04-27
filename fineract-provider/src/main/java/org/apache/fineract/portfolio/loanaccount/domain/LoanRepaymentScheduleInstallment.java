@@ -854,4 +854,16 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     public void setInterestCharged(BigDecimal interestCharged) {
         this.interestCharged = interestCharged;
     }
+
+    public void setInterestAccrued(BigDecimal interestAccrued) {
+        this.interestAccrued = interestAccrued;
+    }
+
+    public void setFeeAccrued(BigDecimal feeAccrued) {
+        this.feeAccrued = feeAccrued;
+    }
+
+    public void setPenaltyAccrued(BigDecimal penaltyAccrued) {
+        this.penaltyAccrued = penaltyAccrued;
+    }
 }

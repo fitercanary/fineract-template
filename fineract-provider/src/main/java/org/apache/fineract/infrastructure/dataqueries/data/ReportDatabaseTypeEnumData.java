@@ -59,5 +59,14 @@ public class ReportDatabaseTypeEnumData {
         return this.postgres;
     }
     
+    public static ReportDatabaseTypeEnumData generateFromId(Long i) {
+        
+        if(Long.valueOf(1).equals(i)) {
+            return new ReportDatabaseTypeEnumData(i, "mysql", "Mysql");
+        }else if(Long.valueOf(2).equals(i)) {
+            return new ReportDatabaseTypeEnumData(i, "postgres", "Postgres");
+        }
+        return null;
+    }
 
 }

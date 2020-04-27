@@ -58,4 +58,6 @@ public interface ReadReportingService {
             Map<String, String> queryParams, Locale locale, AppUser runReportAsUser, StringBuilder errorLog);
 	
 	ReportDatabaseTypeEnumData getReportDatabaseType(String reportName);
+	
+	Collection<ReportDatabaseTypeEnumData> getDatabaseReportTypes();
 }

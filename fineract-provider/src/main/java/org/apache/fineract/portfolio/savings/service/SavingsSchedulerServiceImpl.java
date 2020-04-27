@@ -56,10 +56,10 @@ public class SavingsSchedulerServiceImpl implements SavingsSchedulerService {
 	@CronTarget(jobName = JobName.POST_INTEREST_FOR_SAVINGS)
 	@Override
 	public void postInterestForAccounts() throws JobExecutionException {
-		final List<SavingsAccount> savingsAccounts = this.savingAccountRepositoryWrapper.findSavingAccountByStatus(SavingsAccountStatusType.ACTIVE
-				.getValue());
+		final List<Long> savingsAccounts = this.savingAccountReadPlatformService.retrieveActiveSavingAccounts();
 		StringBuffer sb = new StringBuffer();
-		for (SavingsAccount savingsAccount : savingsAccounts) {
+		for (Long savingAccount : savingsAccounts) {
+		    SavingsAccount savingsAccount = this.savingAccountRepositoryWrapper.findOneWithNotFoundDetection(savingAccount);
 			try {
 				if (savingsAccount instanceof FixedDepositAccount) {
 					continue;

@@ -1603,4 +1603,10 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         String sql = "select msat.id from m_account_transfer_transaction msat where (msat.from_savings_transaction_id = ? or msat.to_savings_transaction_id = ? ) and msat.is_reversed = 0";
         return this.jdbcTemplate.queryForLong(sql, Long.class, new Object[] { savingTransactionId, savingTransactionId });
     }
+
+    @Override
+    public List<Long> retrieveActiveSavingAccounts() {
+        String sql = " select id from m_savings_account where status_enum = 300 ";
+        return this.jdbcTemplate.queryForList(sql, Long.class);
+    }
 }

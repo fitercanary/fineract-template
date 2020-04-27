@@ -27,6 +27,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.fineract.infrastructure.dataqueries.data.GenericResultsetData;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportData;
+import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportParameterData;
 import org.apache.fineract.useradministration.domain.AppUser;
 
@@ -55,4 +56,6 @@ public interface ReadReportingService {
 
 	ByteArrayOutputStream generatePentahoReportAsOutputStream(String reportName, String outputTypeParam,
             Map<String, String> queryParams, Locale locale, AppUser runReportAsUser, StringBuilder errorLog);
+	
+	ReportDatabaseTypeEnumData getReportDatabaseType(String reportName);
 }

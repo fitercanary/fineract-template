@@ -92,4 +92,6 @@ public interface SavingsAccountReadPlatformService {
     List<Long> retriveUnClassifiedTransactions();
 
     Long findSavingsTransactionAccountTransfer(Long savingTransactionId);
+    
+    List<Long> retrieveActiveSavingAccounts();
 }

@@ -211,7 +211,7 @@ public class PostingPeriod {
                     this.minOverdraftForInterestCalculation.getAmount());
             BigDecimal unCompoundedInterest = compoundInterestValues.getuncompoundedInterest();
             for (BigDecimal interest : interestUnrounded) {
-                unCompoundedInterest.add(interest);
+                unCompoundedInterest = unCompoundedInterest.add(interest);
             }
             compoundInterestValues.setuncompoundedInterest(unCompoundedInterest);
             LocalDate compoundingPeriodEndDate = compoundingPeriod.getPeriodInterval().endDate();

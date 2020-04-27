@@ -61,6 +61,15 @@ public class GLAccountData {
     final Collection<CodeValueData> allowedEquityTagOptions;
     final Collection<CodeValueData> allowedIncomeTagOptions;
     final Collection<CodeValueData> allowedExpensesTagOptions;
+    
+    // CBN
+    final Collection<CodeValueData> cbnCategories;
+    final Collection<CodeValueData> cbnSubCategories;
+    
+    private final String bankCode;
+    private final String bankName;
+    private final CodeValueData cbnCategory;
+    private final CodeValueData cbnSubCategory;
 
     //import fields
     private transient Integer rowIndex;
@@ -101,6 +110,12 @@ public class GLAccountData {
         this.allowedEquityTagOptions = null;
         this.allowedIncomeTagOptions = null;
         this.allowedExpensesTagOptions = null;
+        this.cbnCategories = null;
+        this.cbnSubCategories = null;
+        this.bankCode = null;
+        this.bankName = null;
+        this.cbnCategory = null;
+        this.cbnSubCategory = null;
     }
 
     public Integer getRowIndex() {
@@ -138,6 +153,13 @@ public class GLAccountData {
         this.allowedEquityTagOptions = null;
         this.allowedIncomeTagOptions = null;
         this.allowedExpensesTagOptions = null;
+        this.cbnCategories = null;
+        this.cbnSubCategories = null;
+
+        this.bankCode = null;
+        this.bankName = null;
+        this.cbnCategory = null;
+        this.cbnSubCategory = null;
     }
 
     public GLAccountData(final GLAccountData accountData, final List<EnumOptionData> accountTypeOptions,
@@ -171,6 +193,15 @@ public class GLAccountData {
         this.allowedEquityTagOptions = allowedEquityTagOptions;
         this.allowedIncomeTagOptions = allowedIncomeTagOptions;
         this.allowedExpensesTagOptions = allowedExpensesTagOptions;
+        
+
+        this.cbnCategories = null;
+        this.cbnSubCategories = null;
+
+        this.bankCode = accountData.bankCode;
+        this.bankName = accountData.bankName;
+        this.cbnCategory = accountData.cbnCategory;
+        this.cbnSubCategory = accountData.cbnSubCategory;
     }
 
     public static GLAccountData sensibleDefaultsForNewGLAccountCreation(final Integer glAccType) {
@@ -221,6 +252,13 @@ public class GLAccountData {
         this.allowedEquityTagOptions = null;
         this.allowedIncomeTagOptions = null;
         this.allowedExpensesTagOptions = null;
+        this.cbnCategories = null;
+        this.cbnSubCategories = null;
+
+        this.bankCode = null;
+        this.bankName = null;
+        this.cbnCategory = null;
+        this.cbnSubCategory = null;
     }
 
     public Long getId() {
@@ -243,6 +281,212 @@ public class GLAccountData {
         if (this.type != null) { return this.type.getId().intValue(); }
         return null;
     }
+    
+    // constructor to cater for CBN categories
+    public GLAccountData(final GLAccountData accountData, final List<EnumOptionData> accountTypeOptions,
+            final List<EnumOptionData> usageOptions, final List<GLAccountData> assetHeaderAccountOptions,
+            final List<GLAccountData> liabilityHeaderAccountOptions, final List<GLAccountData> equityHeaderAccountOptions,
+            final List<GLAccountData> incomeHeaderAccountOptions, final List<GLAccountData> expenseHeaderAccountOptions,
+            final Collection<CodeValueData> allowedAssetsTagOptions, final Collection<CodeValueData> allowedLiabilitiesTagOptions,
+            final Collection<CodeValueData> allowedEquityTagOptions, final Collection<CodeValueData> allowedIncomeTagOptions,
+            final Collection<CodeValueData> allowedExpensesTagOptions, final Collection<CodeValueData> cbnCategories, 
+            final Collection<CodeValueData> cbnSubCategories) {
+        this.id = accountData.id;
+        this.name = accountData.name;
+        this.parentId = accountData.parentId;
+        this.glCode = accountData.glCode;
+        this.disabled = accountData.disabled;
+        this.manualEntriesAllowed = accountData.manualEntriesAllowed;
+        this.type = accountData.type;
+        this.usage = accountData.usage;
+        this.description = accountData.description;
+        this.nameDecorated = accountData.nameDecorated;
+        this.tagId = accountData.tagId;
+        this.organizationRunningBalance = accountData.organizationRunningBalance;
+        this.accountTypeOptions = accountTypeOptions;
+        this.usageOptions = usageOptions;
+        this.assetHeaderAccountOptions = assetHeaderAccountOptions;
+        this.liabilityHeaderAccountOptions = liabilityHeaderAccountOptions;
+        this.equityHeaderAccountOptions = equityHeaderAccountOptions;
+        this.incomeHeaderAccountOptions = incomeHeaderAccountOptions;
+        this.expenseHeaderAccountOptions = expenseHeaderAccountOptions;
+        this.allowedAssetsTagOptions = allowedAssetsTagOptions;
+        this.allowedLiabilitiesTagOptions = allowedLiabilitiesTagOptions;
+        this.allowedEquityTagOptions = allowedEquityTagOptions;
+        this.allowedIncomeTagOptions = allowedIncomeTagOptions;
+        this.allowedExpensesTagOptions = allowedExpensesTagOptions;
+        
+        this.cbnCategories = cbnCategories;
+        this.cbnSubCategories = cbnSubCategories;
+        
+        this.bankCode = accountData.bankCode;
+        this.bankName = accountData.bankName;
+        this.cbnCategory = accountData.cbnCategory;
+        this.cbnSubCategory = accountData.cbnSubCategory;
+    }
+    
+    public GLAccountData(final Long id, final String name, final Long parentId, final String glCode, final boolean disabled,
+            final boolean manualEntriesAllowed, final EnumOptionData type, final EnumOptionData usage, final String description,
+            final String nameDecorated, final CodeValueData tagId, final Long organizationRunningBalance, final String bankName,
+            final String bankCode, final CodeValueData cbnCategory, final CodeValueData cbnSubCategory) {
+        this.id = id;
+        this.name = name;
+        this.parentId = parentId;
+        this.glCode = glCode;
+        this.disabled = disabled;
+        this.manualEntriesAllowed = manualEntriesAllowed;
+        this.type = type;
+        this.usage = usage;
+        this.description = description;
+        this.nameDecorated = nameDecorated;
+        this.tagId = tagId;
+        this.organizationRunningBalance = organizationRunningBalance;
+        this.accountTypeOptions = null;
+        this.usageOptions = null;
+        this.assetHeaderAccountOptions = null;
+        this.liabilityHeaderAccountOptions = null;
+        this.equityHeaderAccountOptions = null;
+        this.incomeHeaderAccountOptions = null;
+        this.expenseHeaderAccountOptions = null;
+        this.allowedAssetsTagOptions = null;
+        this.allowedLiabilitiesTagOptions = null;
+        this.allowedEquityTagOptions = null;
+        this.allowedIncomeTagOptions = null;
+        this.allowedExpensesTagOptions = null;
+        this.cbnCategories = null;
+        this.cbnSubCategories = null;
+
+        this.bankName = bankName;
+        this.bankCode = bankCode;
+        this.cbnCategory = cbnCategory;
+        this.cbnSubCategory = cbnSubCategory;
+    }
+
+    
+    public Long getParentId() {
+        return this.parentId;
+    }
+
+    
+    public Boolean getDisabled() {
+        return this.disabled;
+    }
+
+    
+    public Boolean getManualEntriesAllowed() {
+        return this.manualEntriesAllowed;
+    }
+
+    
+    public EnumOptionData getUsage() {
+        return this.usage;
+    }
+
+    
+    public String getDescription() {
+        return this.description;
+    }
+
+    
+    public String getNameDecorated() {
+        return this.nameDecorated;
+    }
+
+    
+    public Long getOrganizationRunningBalance() {
+        return this.organizationRunningBalance;
+    }
+
+    
+    public List<EnumOptionData> getAccountTypeOptions() {
+        return this.accountTypeOptions;
+    }
+
+    
+    public List<EnumOptionData> getUsageOptions() {
+        return this.usageOptions;
+    }
+
+    
+    public List<GLAccountData> getAssetHeaderAccountOptions() {
+        return this.assetHeaderAccountOptions;
+    }
+
+    
+    public List<GLAccountData> getLiabilityHeaderAccountOptions() {
+        return this.liabilityHeaderAccountOptions;
+    }
+
+    
+    public List<GLAccountData> getEquityHeaderAccountOptions() {
+        return this.equityHeaderAccountOptions;
+    }
+
+    
+    public List<GLAccountData> getIncomeHeaderAccountOptions() {
+        return this.incomeHeaderAccountOptions;
+    }
+
+    
+    public List<GLAccountData> getExpenseHeaderAccountOptions() {
+        return this.expenseHeaderAccountOptions;
+    }
+
+    
+    public Collection<CodeValueData> getAllowedAssetsTagOptions() {
+        return this.allowedAssetsTagOptions;
+    }
+
+    
+    public Collection<CodeValueData> getAllowedLiabilitiesTagOptions() {
+        return this.allowedLiabilitiesTagOptions;
+    }
+
+    
+    public Collection<CodeValueData> getAllowedEquityTagOptions() {
+        return this.allowedEquityTagOptions;
+    }
+
+    
+    public Collection<CodeValueData> getAllowedIncomeTagOptions() {
+        return this.allowedIncomeTagOptions;
+    }
+
+    
+    public Collection<CodeValueData> getAllowedExpensesTagOptions() {
+        return this.allowedExpensesTagOptions;
+    }
+
+    public Collection<CodeValueData> getCbnCategories() {
+        return this.cbnSubCategories;
+    }
+    
+    
+    public Collection<CodeValueData> getCbnSubCategories() {
+        return this.cbnSubCategories;
+    }
+
+    
+    public String getBankCode() {
+        return this.bankCode;
+    }
+
+    
+    public String getBankName() {
+        return this.bankName;
+    }
+
+    
+    public CodeValueData getCbnCategory() {
+        return this.cbnCategory;
+    }
+
+    
+    public CodeValueData getCbnSubCategory() {
+        return this.cbnSubCategory;
+    }
+    
+    
 
 
 }

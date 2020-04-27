@@ -44,6 +44,12 @@ public class GLAccountCommand {
     private final Integer type;
     private final String description;
     private final Long tagId;
+    
+    private final Long cbnCategoryId;
+    private final Long cbnSubCategoryId;
+    
+    private final String bankName;
+    private final String bankCode;
 
     public GLAccountCommand(final Long id, final String name, final Long parentId, final String glCode, final Boolean disabled,
             final Boolean manualEntriesAllowed, final Integer type, final Integer usage, final String description, final Long tagId) {
@@ -57,6 +63,32 @@ public class GLAccountCommand {
         this.usage = usage;
         this.description = description;
         this.tagId = tagId;
+        this.cbnCategoryId = null;
+        this.cbnSubCategoryId = null;
+        this.bankName = null;
+        this.bankCode = null;
+        
+    }
+    
+    public GLAccountCommand(final Long id, final String name, final Long parentId, final String glCode, final Boolean disabled,
+            final Boolean manualEntriesAllowed, final Integer type, final Integer usage, final String description, final Long tagId, 
+            final String bankName, final String bankCode, final Long cbnCategoryId, final Long cbnSubCategoryId) {
+        this.id = id;
+        this.name = name;
+        this.parentId = parentId;
+        this.glCode = glCode;
+        this.disabled = disabled;
+        this.manualEntriesAllowed = manualEntriesAllowed;
+        this.type = type;
+        this.usage = usage;
+        this.description = description;
+        this.tagId = tagId;
+        this.cbnCategoryId = cbnCategoryId;
+        this.cbnSubCategoryId = cbnSubCategoryId;
+
+        this.bankName = bankName;
+        this.bankCode = bankCode;
+        
     }
 
     public void validateForCreate() {
@@ -87,6 +119,16 @@ public class GLAccountCommand {
 
         baseDataValidator.reset().parameter(GLAccountJsonInputParams.TAGID.getValue()).value(this.tagId).ignoreIfNull()
                 .longGreaterThanZero();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.BANK_NAME.getValue()).value(this.bankName).ignoreIfNull();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.BANK_CODE.getValue()).value(this.bankCode).ignoreIfNull();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue()).value(this.cbnCategoryId).ignoreIfNull()
+        .longGreaterThanZero();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue()).value(this.cbnSubCategoryId).ignoreIfNull()
+        .longGreaterThanZero();
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
@@ -115,6 +157,16 @@ public class GLAccountCommand {
                 .notBlank().notExceedingLengthOf(500);
 
         baseDataValidator.reset().parameter(GLAccountJsonInputParams.DISABLED.getValue()).value(this.disabled).ignoreIfNull();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.BANK_NAME.getValue()).value(this.bankName).ignoreIfNull();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.BANK_CODE.getValue()).value(this.bankCode).ignoreIfNull();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue()).value(this.cbnCategoryId).ignoreIfNull()
+        .longGreaterThanZero();
+        
+        baseDataValidator.reset().parameter(GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue()).value(this.cbnSubCategoryId).ignoreIfNull()
+        .longGreaterThanZero();
 
         baseDataValidator.reset().anyOfNotNull(this.name, this.glCode, this.parentId, this.type, this.description, this.disabled);
 

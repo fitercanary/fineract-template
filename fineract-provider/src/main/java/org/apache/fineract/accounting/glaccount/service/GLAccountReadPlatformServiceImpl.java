@@ -71,7 +71,10 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
                     " gl.id as id, name as name, parent_id as parentId, gl_code as glCode, disabled as disabled, manual_journal_entries_allowed as manualEntriesAllowed, ")
                     .append("classification_enum as classification, account_usage as accountUsage, gl.description as description, ")
                     .append(nameDecoratedBaseOnHierarchy).append(" as nameDecorated, ")
-                    .append("cv.id as codeId, cv.code_value as codeValue ");
+                    .append("cv.id as codeId, cv.code_value as codeValue ")
+                    .append(", gl.bank_name as bankName, gl.bank_code as bankCode, cbn_cat.id as cbnCategoryId, cbn_cat.code_value as cbnCategoryValue ")
+                    .append(", cbn_sub.id as cbnSubCategoryId, cbn_sub.code_value as cbnSubCategoryValue ");;
+            
             if (this.associationParametersData.isRunningBalanceRequired()) {
                 sb.append(",gl_j.organization_running_balance as organizationRunningBalance ");
             }
@@ -79,6 +82,9 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             if (this.associationParametersData.isRunningBalanceRequired()) {
                 sb.append("left outer Join acc_gl_journal_entry gl_j on gl_j.account_id = gl.id");
             }
+            
+            sb.append(" left join m_code_value cbn_cat on cbn_cat.id=gl.cbn_category_id ");
+            sb.append(" left join m_code_value cbn_sub on cbn_sub.id=gl.cbn_sub_category_id ");
             return sb.toString();
         }
 
@@ -104,8 +110,22 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             if (associationParametersData.isRunningBalanceRequired()) {
                 organizationRunningBalance = rs.getLong("organizationRunningBalance");
             }
+            
+            final String bankName = rs.getString("bankName");
+            final String bankCode = rs.getString("bankCode");
+            
+            final Long cbnCategoryId = rs.wasNull() ? null : rs.getLong("cbnCategoryId");
+            final String cbnCategoryValue = rs.getString("cbnCategoryValue");
+            
+            final CodeValueData cbnCategory = CodeValueData.instance(codeId, cbnCategoryValue);
+            
+            final Long cbnSubCategoryId = rs.wasNull() ? null : rs.getLong("cbnSubCategoryId");
+            final String cbnSubCategoryValue = rs.getString("cbnSubCategoryValue");
+            
+            final CodeValueData cbnSubCategory = CodeValueData.instance(cbnSubCategoryId, cbnSubCategoryValue);
+            
             return new GLAccountData(id, name, parentId, glCode, disabled, manualEntriesAllowed, accountType, usage, description,
-                    nameDecorated, tagId, organizationRunningBalance);
+                    nameDecorated, tagId, organizationRunningBalance, bankName, bankCode, cbnCategory, cbnSubCategory);
         }
     }
 

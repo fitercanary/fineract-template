@@ -98,8 +98,19 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
             if (tagId != null) {
                 glAccountTagType = retrieveTagId(tagId, accountType);
             }
+            
+            // cbn
+            
+            final Long cbnCategoryId = command.longValueOfParameterNamed(GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue());
+            CodeValue cbnCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+                    AccountingConstants.CBN_CATEGORY_OPTION_CODE_NAME, cbnCategoryId);
+            
+            final Long cbnSubCategoryId = command.longValueOfParameterNamed(GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue());
+            CodeValue cbnSubCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+                    AccountingConstants.CBN_SUB_CATEGORY_OPTION_CODE_NAME, cbnSubCategoryId);
+            
 
-            final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glAccountTagType);
+            final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glAccountTagType, cbnCategory, cbnSubCategory);
 
             this.glAccountRepository.saveAndFlush(glAccount);
 
@@ -162,6 +173,27 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
                     if (journalEntriesForAccount.size() > 0) { throw new GLAccountInvalidUpdateException(
                             GL_ACCOUNT_INVALID_UPDATE_REASON.TRANSANCTIONS_LOGGED, glAccountId); }
                 }
+            }
+            
+            /* CBN Category Changes */
+            if (changesOnly.containsKey(GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue())) {
+                final Long cbnCategoryIdLongValue = command.longValueOfParameterNamed(GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue());
+                CodeValue cbnCategory = null;
+                if (cbnCategoryIdLongValue != null) {
+                    cbnCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+                            AccountingConstants.CBN_CATEGORY_OPTION_CODE_NAME, cbnCategoryIdLongValue);
+                }
+                glAccount.updatecbnCategory(cbnCategory);
+            }
+            
+            if (changesOnly.containsKey(GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue())) {
+                final Long cbnSubCategoryIdLongValue = command.longValueOfParameterNamed(GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue());
+                CodeValue cbnSubCategory = null;
+                if (cbnSubCategoryIdLongValue != null) {
+                    cbnSubCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+                            AccountingConstants.CBN_SUB_CATEGORY_OPTION_CODE_NAME, cbnSubCategoryIdLongValue);
+                }
+                glAccount.updatecbnSubCategory(cbnSubCategory);
             }
 
             if (!changesOnly.isEmpty()) {

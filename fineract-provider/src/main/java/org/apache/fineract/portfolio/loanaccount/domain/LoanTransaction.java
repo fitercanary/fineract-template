@@ -96,12 +96,21 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
 
     @Column(name = "interest_portion_derived", scale = 6, precision = 19, nullable = true)
     private BigDecimal interestPortion;
+    
+    @Column(name ="income_interest_portion_derived", scale = 6, precision = 19, nullable = true)
+    private BigDecimal incomeInterestPortion;
 
     @Column(name = "fee_charges_portion_derived", scale = 6, precision = 19, nullable = true)
     private BigDecimal feeChargesPortion;
+    
+    @Column(name = "income_fee_charges_portion_derived", scale = 6, precision = 19, nullable = true)
+    private BigDecimal incomeFeeChargesPortion;
 
     @Column(name = "penalty_charges_portion_derived", scale = 6, precision = 19, nullable = true)
     private BigDecimal penaltyChargesPortion;
+    
+    @Column(name = "income_penalty_charges_portion_derived", scale = 6, precision = 19, nullable = true)
+    private BigDecimal incomePenaltyChargesPortion;
 
     @Column(name = "overpayment_portion_derived", scale = 6, precision = 19, nullable = true)
     private BigDecimal overPaymentPortion;
@@ -855,5 +864,28 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
     public void setPenaltyChargesPortion(BigDecimal penaltyChargesPortion) {
         this.penaltyChargesPortion = penaltyChargesPortion;
     }
-
+    
+    public BigDecimal getIncomeInterestPortion() {
+        return this.incomeInterestPortion;
+    }
+    
+    public void setIncomeInterestPortion(BigDecimal incomeInterestPortion) {
+        this.incomeInterestPortion = incomeInterestPortion;
+    }
+    
+    public BigDecimal getIncomeFeeChargesPortion() {
+        return this.incomeFeeChargesPortion;
+    }
+    
+    public void setIncomeFeeChargesPortion(BigDecimal incomeFeeChargesPortion) {
+        this.incomeFeeChargesPortion = incomeFeeChargesPortion;
+    }
+    
+    public BigDecimal getIncomePenaltyChargesPortion() {
+        return this.incomePenaltyChargesPortion;
+    }
+    
+    public void setIncomePenaltyChargesPortion(BigDecimal incomePenaltyChargesPortion) {
+        this.incomePenaltyChargesPortion = incomePenaltyChargesPortion;
+    }
 }

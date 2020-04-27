@@ -221,10 +221,16 @@ public class GLAccountsApiResource {
                 .retrieveCodeValuesByCode(AccountingConstants.INCOME_TAG_OPTION_CODE_NAME);
         final Collection<CodeValueData> allowedExpensesTagOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(AccountingConstants.EXPENSES_TAG_OPTION_CODE_NAME);
+        
+        final Collection<CodeValueData> cbnCategories = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(AccountingConstants.CBN_CATEGORY_OPTION_CODE_NAME);
+        final Collection<CodeValueData> cbnSubCategories = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(AccountingConstants.CBN_SUB_CATEGORY_OPTION_CODE_NAME);
 
         return new GLAccountData(glAccountData, accountTypeOptions, usageOptions, assetHeaderAccountOptions, liabilityHeaderAccountOptions,
                 equityHeaderAccountOptions, incomeHeaderAccountOptions, expenseHeaderAccountOptions, allowedAssetsTagOptions,
-                allowedLiabilitiesTagOptions, allowedEquityTagOptions, allowedIncomeTagOptions, allowedExpensesTagOptions);
+                allowedLiabilitiesTagOptions, allowedEquityTagOptions, allowedIncomeTagOptions, allowedExpensesTagOptions, cbnCategories, 
+                cbnSubCategories);
     }
 
     private List<GLAccountData> defaultIfEmpty(final List<GLAccountData> list) {

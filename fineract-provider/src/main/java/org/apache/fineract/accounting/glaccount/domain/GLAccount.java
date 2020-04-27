@@ -78,6 +78,20 @@ public class GLAccount extends AbstractPersistableCustom<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id")
     private CodeValue tagId;
+    
+    @Column(name = "bank_name", nullable = true, length = 500)
+    private String bankName;
+    
+    @Column(name = "bank_code", nullable = true, length = 500)
+    private String bankCode;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cbn_category_id")
+    private CodeValue cbnCategory;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cbn_sub_category_id")
+    private CodeValue cbnSubCategory;
 
     protected GLAccount() {
         //
@@ -95,6 +109,26 @@ public class GLAccount extends AbstractPersistableCustom<Long> {
         this.parent = parent;
         this.tagId = tagId;
     }
+    
+    private GLAccount(final GLAccount parent, final String name, final String glCode, final boolean disabled,
+            final boolean manualEntriesAllowed, final Integer type, final Integer usage, final String description, final CodeValue tagId,
+            final String bankName, final String bankCode, final CodeValue cbnCategory, final CodeValue cbnSubCategory) {
+        this.name = StringUtils.defaultIfEmpty(name, null);
+        this.glCode = StringUtils.defaultIfEmpty(glCode, null);
+        this.disabled = BooleanUtils.toBooleanDefaultIfNull(disabled, false);
+        this.manualEntriesAllowed = BooleanUtils.toBooleanDefaultIfNull(manualEntriesAllowed, true);
+        this.usage = usage;
+        this.type = type;
+        this.description = StringUtils.defaultIfEmpty(description, null);
+        this.parent = parent;
+        this.tagId = tagId;
+        
+        this.bankName = bankName;
+        this.bankCode = bankCode;
+        
+        this.cbnCategory = cbnCategory;
+        this.cbnSubCategory = cbnSubCategory;
+    }
 
     public static GLAccount fromJson(final GLAccount parent, final JsonCommand command, final CodeValue glAccountTagType) {
         final String name = command.stringValueOfParameterNamed(GLAccountJsonInputParams.NAME.getValue());
@@ -106,6 +140,24 @@ public class GLAccount extends AbstractPersistableCustom<Long> {
         final Integer type = command.integerValueSansLocaleOfParameterNamed(GLAccountJsonInputParams.TYPE.getValue());
         final String description = command.stringValueOfParameterNamed(GLAccountJsonInputParams.DESCRIPTION.getValue());
         return new GLAccount(parent, name, glCode, disabled, manualEntriesAllowed, type, usage, description, glAccountTagType);
+    }
+    
+    public static GLAccount fromJson(final GLAccount parent, final JsonCommand command, final CodeValue glAccountTagType,
+            final CodeValue cbnCategory, final CodeValue cbnSubCategory) {
+        final String name = command.stringValueOfParameterNamed(GLAccountJsonInputParams.NAME.getValue());
+        final String glCode = command.stringValueOfParameterNamed(GLAccountJsonInputParams.GL_CODE.getValue());
+        final boolean disabled = command.booleanPrimitiveValueOfParameterNamed(GLAccountJsonInputParams.DISABLED.getValue());
+        final boolean manualEntriesAllowed = command.booleanPrimitiveValueOfParameterNamed(GLAccountJsonInputParams.MANUAL_ENTRIES_ALLOWED
+                .getValue());
+        final Integer usage = command.integerValueSansLocaleOfParameterNamed(GLAccountJsonInputParams.USAGE.getValue());
+        final Integer type = command.integerValueSansLocaleOfParameterNamed(GLAccountJsonInputParams.TYPE.getValue());
+        final String description = command.stringValueOfParameterNamed(GLAccountJsonInputParams.DESCRIPTION.getValue());
+        
+        final String bankName = command.stringValueOfParameterNamed(GLAccountJsonInputParams.BANK_NAME.getValue());
+        final String bankCode = command.stringValueOfParameterNamed(GLAccountJsonInputParams.BANK_CODE.getValue());
+        
+        return new GLAccount(parent, name, glCode, disabled, manualEntriesAllowed, type, usage, description, glAccountTagType, bankName, bankCode,
+                cbnCategory, cbnSubCategory);
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -120,6 +172,13 @@ public class GLAccount extends AbstractPersistableCustom<Long> {
         handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.USAGE.getValue(), this.usage, true);
         handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.TAGID.getValue(),
                 this.tagId == null ? 0L : this.tagId.getId());
+        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.BANK_CODE.getValue(),this.bankCode);
+        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.BANK_NAME.getValue(),this.bankName);
+        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue(),
+                this.cbnCategory == null ? 0L : this.cbnCategory.getId());
+        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue(),
+                this.cbnSubCategory == null ? 0L : this.cbnSubCategory.getId());
+        
         return actualChanges;
     }
 
@@ -160,6 +219,10 @@ public class GLAccount extends AbstractPersistableCustom<Long> {
                 this.glCode = newValue;
             } else if (paramName.equals(GLAccountJsonInputParams.NAME.getValue())) {
                 this.name = newValue;
+            } else if (paramName.equals(GLAccountJsonInputParams.BANK_CODE.getValue())) {
+                this.bankCode = newValue;   
+            } else if (paramName.equals(GLAccountJsonInputParams.BANK_NAME.getValue())) {
+                this.bankName = newValue;
             }
         }
     }
@@ -246,5 +309,29 @@ public class GLAccount extends AbstractPersistableCustom<Long> {
     public void updateParentAccount(final GLAccount parentAccount) {
         this.parent = parentAccount;
         generateHierarchy();
+    }
+    
+    public String getBankName() {
+        return this.bankName;
+    }
+    
+    public String getBankCode() {
+        return this.bankCode;
+    }
+    
+    public CodeValue getCbnCategory() {
+        return this.cbnCategory;
+    }
+    
+    public CodeValue getCbnSubCategory() {
+        return this.cbnSubCategory;
+    }
+    
+    public void updatecbnCategory(final CodeValue cbnCategory) {
+        this.cbnCategory = cbnCategory;
+    }
+    
+    public void updatecbnSubCategory(final CodeValue cbnSubCategory) {
+        this.cbnSubCategory = cbnSubCategory;
     }
 }

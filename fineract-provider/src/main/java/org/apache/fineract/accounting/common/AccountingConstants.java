@@ -405,5 +405,9 @@ public class AccountingConstants {
     public static final String EQUITY_TAG_OPTION_CODE_NAME = "EquityAccountTags";
     public static final String INCOME_TAG_OPTION_CODE_NAME = "IncomeAccountTags";
     public static final String EXPENSES_TAG_OPTION_CODE_NAME = "ExpenseAccountTags";
+    
+    // CBN Categories
+    public static final String CBN_CATEGORY_OPTION_CODE_NAME = "CBNCategory";
+    public static final String CBN_SUB_CATEGORY_OPTION_CODE_NAME = "CBNSubCategory";
 
 }

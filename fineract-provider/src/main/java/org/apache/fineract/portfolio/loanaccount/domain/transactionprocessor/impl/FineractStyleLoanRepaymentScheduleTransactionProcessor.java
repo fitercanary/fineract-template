@@ -111,20 +111,63 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
         } else if (loanTransaction.isChargePayment()) {
             if (loanTransaction.isPenaltyPayment()) {
                 penaltyChargesPortion = currentInstallment.payPenaltyChargesComponent(transactionDate, transactionAmountRemaining);
+                if (currentInstallment.getDueDate().isAfter(transactionDate)
+                        && currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())
+                                .isLessThan(currentInstallment.getPenaltyChargesPaid(transactionAmountRemaining.getCurrency()))) {
+                    loanTransaction.setIncomePenaltyChargesPortion(
+                            currentInstallment.getPenaltyChargesPaid(transactionAmountRemaining.getCurrency())
+                                    .minus(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())).getAmount());
+                    currentInstallment.setPenaltyAccrued(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())
+                            .plus(loanTransaction.getIncomePenaltyChargesPortion()).getAmount());
+                }
                 transactionAmountRemaining = transactionAmountRemaining.minus(penaltyChargesPortion);
             } else {
                 feeChargesPortion = currentInstallment.payFeeChargesComponent(transactionDate, transactionAmountRemaining);
+                if (currentInstallment.getDueDate().isAfter(transactionDate)
+                        && currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())
+                                .isLessThan(currentInstallment.getFeeChargesPaid(transactionAmountRemaining.getCurrency()))) {
+                    loanTransaction
+                            .setIncomeFeeChargesPortion(currentInstallment.getFeeChargesPaid(transactionAmountRemaining.getCurrency())
+                                    .minus(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())).getAmount());
+                    currentInstallment.setFeeAccrued(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())
+                            .plus(loanTransaction.getIncomeFeeChargesPortion()).getAmount());
+                }
                 transactionAmountRemaining = transactionAmountRemaining.minus(feeChargesPortion);
             }
             loanTransaction.updateComponents(principalPortion, interestPortion, feeChargesPortion, penaltyChargesPortion);
         } else {
             penaltyChargesPortion = currentInstallment.payPenaltyChargesComponent(transactionDate, transactionAmountRemaining);
+            if (currentInstallment.getDueDate().isAfter(transactionDate)
+                    && currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())
+                            .isLessThan(currentInstallment.getPenaltyChargesPaid(transactionAmountRemaining.getCurrency()))) {
+                loanTransaction
+                        .setIncomePenaltyChargesPortion(currentInstallment.getPenaltyChargesPaid(transactionAmountRemaining.getCurrency())
+                                .minus(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())).getAmount());
+                currentInstallment.setPenaltyAccrued(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())
+                        .plus(loanTransaction.getIncomePenaltyChargesPortion()).getAmount());
+            }
             transactionAmountRemaining = transactionAmountRemaining.minus(penaltyChargesPortion);
 
             feeChargesPortion = currentInstallment.payFeeChargesComponent(transactionDate, transactionAmountRemaining);
+            if (currentInstallment.getDueDate().isAfter(transactionDate)
+                    && currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())
+                            .isLessThan(currentInstallment.getFeeChargesPaid(transactionAmountRemaining.getCurrency()))) {
+                loanTransaction.setIncomeFeeChargesPortion(currentInstallment.getFeeChargesPaid(transactionAmountRemaining.getCurrency())
+                        .minus(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())).getAmount());
+                currentInstallment.setFeeAccrued(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())
+                        .plus(loanTransaction.getIncomeFeeChargesPortion()).getAmount());
+            }
             transactionAmountRemaining = transactionAmountRemaining.minus(feeChargesPortion);
 
             interestPortion = currentInstallment.payInterestComponent(transactionDate, transactionAmountRemaining);
+            if (currentInstallment.getDueDate().isAfter(transactionDate)
+                    && currentInstallment.getInterestAccrued(transactionAmountRemaining.getCurrency())
+                            .isLessThan(currentInstallment.getInterestPaid(transactionAmountRemaining.getCurrency()))) {
+                loanTransaction.setIncomeInterestPortion(currentInstallment.getInterestPaid(transactionAmountRemaining.getCurrency())
+                        .minus(currentInstallment.getInterestAccrued(transactionAmountRemaining.getCurrency())).getAmount());
+                currentInstallment
+                        .setInterestAccrued(currentInstallment.getInterestAccrued().add(loanTransaction.getIncomeInterestPortion()));
+            }
             transactionAmountRemaining = transactionAmountRemaining.minus(interestPortion);
 
             principalPortion = currentInstallment.payPrincipalComponent(transactionDate, transactionAmountRemaining);

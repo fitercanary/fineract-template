@@ -194,6 +194,17 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                         accruedPenaltiesAmount = accruedPenaltiesAmount.add(accruedPenaltiesAmountTransaction);
                         loanAccrualTransactions.add(transaction);
                     }
+                    if (transaction.isRepayment()) {
+                        if (transaction.getIncomeFeeChargesPortion() != null) {
+                            accruedFeesAmount = accruedFeesAmount.add(transaction.getIncomeFeeChargesPortion());
+                        }
+                        if (transaction.getIncomeInterestPortion() != null) {
+                            accruedInterestAmount = accruedInterestAmount.add(transaction.getIncomeInterestPortion());
+                        }
+                        if (transaction.getIncomePenaltyChargesPortion() != null) {
+                            accruedPenaltiesAmount = accruedPenaltiesAmount.add(transaction.getIncomePenaltyChargesPortion());
+                        }
+                    }
                 }
                 installment.setInterestAccrued(accruedInterestAmount);
                 installment.setFeeAccrued(accruedFeesAmount);

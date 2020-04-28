@@ -137,31 +137,21 @@ public class AccountingProcessorHelper {
             final BigDecimal amount = (BigDecimal) map.get("amount");
             final BigDecimal principal = (BigDecimal) map.get("principalPortion");
             final BigDecimal interest = (BigDecimal) map.get("interestPortion");
+            final BigDecimal incomeInterest = (BigDecimal) map.get("incomeInterestPortion");
             final BigDecimal fees = (BigDecimal) map.get("feeChargesPortion");
+            final BigDecimal incomeFees = (BigDecimal) map.get("incomeFeeChargesPortion");
             final BigDecimal penalties = (BigDecimal) map.get("penaltyChargesPortion");
-            final BigDecimal penaltiesAccrued = (BigDecimal) map.get("accruedPenaltyPortion");
+            final BigDecimal incomePenalties = (BigDecimal) map.get("incomePenaltyChargesPortion");
             final BigDecimal overPayments = (BigDecimal) map.get("overPaymentPortion");
             final boolean reversed = (Boolean) map.get("reversed");
             final Long paymentTypeId = (Long) map.get("paymentTypeId");
             Boolean isAccountTransfer = false;
-            Boolean isBeforeDueDate = false;
             if(map.get("isAccountTransfer") != null) {
             isAccountTransfer = (Boolean) map.get("isAccountTransfer");
-            }
-            if(map.get("isBeforeDueDate") != null) {
-                isBeforeDueDate = (Boolean) map.get("isBeforeDueDate");
             }
             if((fees != null && fees.compareTo(BigDecimal.ZERO) == 1) || (penalties != null && penalties.compareTo(BigDecimal.ZERO) == 1)) {
                 List<JournalEntry> glEntry = this.glJournalEntryRepository.findJournalEntriesForGlAccount("L" + transactionId,
                         loanId, PortfolioAccountType.LOAN.getValue(), JournalEntryType.CREDIT.getValue());
-                if (glEntry.size() > 0) {
-                    for(JournalEntry glentry : glEntry) {
-                        if(glentry.getGlAccount().getName().contains("income") || glentry.getGlAccount().getName().contains("Income")) {
-                            isBeforeDueDate = true;
-                        }
-                    }
-
-                }
             }
 
             final List<ChargePaymentDTO> feePaymentDetails = new ArrayList<>();
@@ -186,7 +176,7 @@ public class AccountingProcessorHelper {
 
             final LoanTransactionDTO transaction = new LoanTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
                     transactionDate, transactionType, amount, principal, interest, fees, penalties, overPayments, reversed,
-                    feePaymentDetails, penaltyPaymentDetails, isAccountTransfer, isBeforeDueDate, penaltiesAccrued);
+                    feePaymentDetails, penaltyPaymentDetails, isAccountTransfer, incomeInterest, incomeFees, incomePenalties);
             Boolean isLoanToLoanTransfer = (Boolean) accountingBridgeData.get("isLoanToLoanTransfer");
             if (isLoanToLoanTransfer != null && isLoanToLoanTransfer) {
                 transaction.setIsLoanToLoanTransfer(true);

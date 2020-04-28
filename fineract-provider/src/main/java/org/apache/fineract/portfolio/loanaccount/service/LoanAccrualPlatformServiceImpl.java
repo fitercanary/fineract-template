@@ -157,12 +157,17 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
     @Transactional
     void verifyAndRemoveWrongAccrualTransactions() {
         Collection<Long> loanIds = this.loanReadPlatformService.retriveActiveAndClosedLoans();
-        LocalDate accruedTilldefault = new LocalDate(2019, 9, 30);
+        LocalDate accruedTilldefault = new LocalDate(2019, 10, 1);
         for (Long loanid : loanIds) {
             Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanid, true);
             for (LoanRepaymentScheduleInstallment installment : loan.getRepaymentScheduleInstallments()) {
                 if (installment.getDueDate().isAfter(DateUtils.getLocalDateOfTenant()) || installment.isRecalculatedInterestComponent()
                         || installment.getDueDate().isBefore(accruedTilldefault)) {
+                    if(installment.getDueDate().isBefore(accruedTilldefault)) {
+                        installment.setInterestAccrued(installment.getInterestCharged(loan.getCurrency()).getAmount());
+                        installment.setFeeAccrued(installment.getFeeChargesCharged(loan.getCurrency()).getAmount());
+                        installment.setPenaltyAccrued(installment.getPenaltyChargesCharged(loan.getCurrency()).getAmount());
+                    }
                     continue;
                 }
                 ArrayList<LoanTransaction> loanAccrualTransactions = new ArrayList<LoanTransaction>();

@@ -236,6 +236,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                 }
             }
             loan.setAccruedTill(accruedTilldefault.toDate());
+            accruedTilldefault = new LocalDate(2019, 10, 1);
             this.loanRepositoryWrapper.save(loan);
         }
     }

@@ -148,12 +148,6 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
     @Column(name = "is_account_transfer", nullable = false)
     private Boolean isAccountTransfer = false;
 
-    @Transient
-    private boolean isBeforeDueDate;
-
-    @Transient
-    private BigDecimal accruedPenalty;
-
     protected LoanTransaction() {
         /*
          * this.loan = null; this.dateOf = null; this.typeOf = null;
@@ -659,12 +653,13 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         thisTransactionData.put("amount", this.amount);
         thisTransactionData.put("principalPortion", this.principalPortion);
         thisTransactionData.put("interestPortion", this.interestPortion);
+        thisTransactionData.put("incomeInterestPortion", this.incomeInterestPortion);
         thisTransactionData.put("feeChargesPortion", this.feeChargesPortion);
+        thisTransactionData.put("incomeFeeChargesPortion", this.incomeFeeChargesPortion);
         thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
-        thisTransactionData.put("accruedPenaltyPortion", this.accruedPenalty);
+        thisTransactionData.put("incomePenaltyChargesPortion", this.incomePenaltyChargesPortion);
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
         thisTransactionData.put("isAccountTransfer", this.isAccountTransfer);
-        thisTransactionData.put("isBeforeDueDate", this.isBeforeDueDate);
 
         if (this.paymentDetail != null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
@@ -841,22 +836,6 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         this.isAccountTransfer = isAccountTransfer;
     }
 
-    public boolean isBeforeDueDate() {
-        return this.isBeforeDueDate;
-    }
-
-    public void setBeforeDueDate(boolean isBeforeDueDate) {
-        this.isBeforeDueDate = isBeforeDueDate;
-    }
-
-    public BigDecimal getAccruedPenalty() {
-        return this.accruedPenalty;
-    }
-
-    public void setAccruedPenalty(BigDecimal accruedPenalty) {
-        this.accruedPenalty = accruedPenalty;
-    }
-
     public BigDecimal getPenaltyChargesPortion() {
         return this.penaltyChargesPortion;
     }
@@ -865,24 +844,24 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         this.penaltyChargesPortion = penaltyChargesPortion;
     }
     
-    public BigDecimal getIncomeInterestPortion() {
-        return this.incomeInterestPortion;
+    public Money getIncomeInterestPortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.incomeInterestPortion);
     }
     
     public void setIncomeInterestPortion(BigDecimal incomeInterestPortion) {
         this.incomeInterestPortion = incomeInterestPortion;
     }
     
-    public BigDecimal getIncomeFeeChargesPortion() {
-        return this.incomeFeeChargesPortion;
+    public Money getIncomeFeeChargesPortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.incomeFeeChargesPortion);
     }
     
     public void setIncomeFeeChargesPortion(BigDecimal incomeFeeChargesPortion) {
         this.incomeFeeChargesPortion = incomeFeeChargesPortion;
     }
     
-    public BigDecimal getIncomePenaltyChargesPortion() {
-        return this.incomePenaltyChargesPortion;
+    public Money getIncomePenaltyChargesPortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.incomePenaltyChargesPortion);
     }
     
     public void setIncomePenaltyChargesPortion(BigDecimal incomePenaltyChargesPortion) {

@@ -859,7 +859,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             if (isPrepay) {
                 List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
                 for(LoanRepaymentScheduleInstallment installment : installments) {
-                        installment.setInterestCharged(installment.getInterestAccrued());
+                        installment.setInterestCharged(installment.getInterestAccrued(loan.getCurrency()).getAmount());
                 }
             }
         }

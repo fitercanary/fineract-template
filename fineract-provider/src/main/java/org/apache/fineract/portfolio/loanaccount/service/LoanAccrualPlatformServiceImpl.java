@@ -157,12 +157,17 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
     @Transactional
     void verifyAndRemoveWrongAccrualTransactions() {
         Collection<Long> loanIds = this.loanReadPlatformService.retriveActiveAndClosedLoans();
-        LocalDate accruedTilldefault = new LocalDate(2019, 9, 30);
+        LocalDate accruedTilldefault = new LocalDate(2019, 10, 1);
         for (Long loanid : loanIds) {
             Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanid, true);
             for (LoanRepaymentScheduleInstallment installment : loan.getRepaymentScheduleInstallments()) {
                 if (installment.getDueDate().isAfter(DateUtils.getLocalDateOfTenant()) || installment.isRecalculatedInterestComponent()
                         || installment.getDueDate().isBefore(accruedTilldefault)) {
+                    if(installment.getDueDate().isBefore(accruedTilldefault)) {
+                        installment.setInterestAccrued(installment.getInterestCharged(loan.getCurrency()).getAmount());
+                        installment.setFeeAccrued(installment.getFeeChargesCharged(loan.getCurrency()).getAmount());
+                        installment.setPenaltyAccrued(installment.getPenaltyChargesCharged(loan.getCurrency()).getAmount());
+                    }
                     continue;
                 }
                 ArrayList<LoanTransaction> loanAccrualTransactions = new ArrayList<LoanTransaction>();
@@ -194,6 +199,17 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                         accruedPenaltiesAmount = accruedPenaltiesAmount.add(accruedPenaltiesAmountTransaction);
                         loanAccrualTransactions.add(transaction);
                     }
+                    if (transaction.isRepayment()) {
+                        if (transaction.getIncomeFeeChargesPortion(loan.getCurrency()) != null) {
+                            accruedFeesAmount = accruedFeesAmount.add(transaction.getIncomeFeeChargesPortion(loan.getCurrency()).getAmount());
+                        }
+                        if (transaction.getIncomeInterestPortion(loan.getCurrency()) != null) {
+                            accruedInterestAmount = accruedInterestAmount.add(transaction.getIncomeInterestPortion(loan.getCurrency()).getAmount());
+                        }
+                        if (transaction.getIncomePenaltyChargesPortion(loan.getCurrency()) != null) {
+                            accruedPenaltiesAmount = accruedPenaltiesAmount.add(transaction.getIncomePenaltyChargesPortion(loan.getCurrency()).getAmount());
+                        }
+                    }
                 }
                 installment.setInterestAccrued(accruedInterestAmount);
                 installment.setFeeAccrued(accruedFeesAmount);
@@ -220,6 +236,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                 }
             }
             loan.setAccruedTill(accruedTilldefault.toDate());
+            accruedTilldefault = new LocalDate(2019, 10, 1);
             this.loanRepositoryWrapper.save(loan);
         }
     }

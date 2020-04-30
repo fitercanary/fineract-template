@@ -75,9 +75,6 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
     @Column(name = "due_for_collection_as_of_date")
     private Date dueDate;
 
-    
-    
-
     @Column(name = "charge_calculation_enum")
     private Integer chargeCalculation;
 
@@ -129,9 +126,6 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
     
-    @Column(name = "is_accrued", nullable = false)
-    private boolean isAccrued = false;
-
     @OneToOne(mappedBy = "loancharge", cascade = CascadeType.ALL, optional = true, orphanRemoval = true, fetch = FetchType.EAGER)
     private LoanOverdueInstallmentCharge overdueInstallmentCharge;
 
@@ -1058,9 +1052,5 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
 
     public boolean isDueDateCharge() {
         return this.dueDate != null;
-    }
-    
-    public boolean isAccrued() {
-        return this.isAccrued;
     }
 }

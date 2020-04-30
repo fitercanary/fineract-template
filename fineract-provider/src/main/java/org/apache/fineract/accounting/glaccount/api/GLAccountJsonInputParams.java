@@ -26,7 +26,8 @@ import java.util.Set;
  ***/
 public enum GLAccountJsonInputParams {
     ID("id"), NAME("name"), PARENT_ID("parentId"), GL_CODE("glCode"), DISABLED("disabled"), MANUAL_ENTRIES_ALLOWED("manualEntriesAllowed"), TYPE(
-            "type"), USAGE("usage"), DESCRIPTION("description"), TAGID("tagId");
+            "type"), USAGE("usage"), DESCRIPTION("description"), TAGID("tagId"), BANK_NAME("bankName"), BANK_CODE("bankCode"),
+    CBN_CATEGORY_ID("cbnCategoryId"), CBN_SUB_CATEGORY_ID("cbnSubCategoryId");
 
     private final String value;
 

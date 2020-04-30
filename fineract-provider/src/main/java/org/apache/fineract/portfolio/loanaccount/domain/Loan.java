@@ -3121,32 +3121,6 @@ public class Loan extends AbstractPersistableCustom<Long> {
             this.loanTransactions.addAll(changedTransactionDetail.getNewTransactionMappings().values());
 
         }
-        // Check loan charge accrued or not for payment account selection
-        if ((this.loanTransactions.get(this.loanTransactions.size() - 1).getFeeChargesPortion(getCurrency()) != null
-                && this.loanTransactions.get(this.loanTransactions.size() - 1).getFeeChargesPortion(getCurrency()).isGreaterThanZero())
-                || (this.loanTransactions.get(this.loanTransactions.size() - 1).getPenaltyChargesPortion(getCurrency()) != null
-                        && this.loanTransactions.get(this.loanTransactions.size() - 1).getPenaltyChargesPortion(getCurrency())
-                                .isGreaterThanZero())) {
-            Money totalAccruedChargeAmount = Money.zero(getCurrency());
-            LoanTransaction transaction = this.loanTransactions.get(this.loanTransactions.size() - 1);
-            Collection<LoanCharge> charges = loanTransaction.getLoan().getLoanCharges();
-            for (LoanCharge charge : charges) {
-                if (charge.isOverdueInstallmentCharge()) {
-                    if (charge.isAccrued()) {
-                        totalAccruedChargeAmount = totalAccruedChargeAmount.plus(charge.getAmount(getCurrency()));
-                        transaction.setAccruedPenalty(totalAccruedChargeAmount.getAmount());
-                    }
-                    transaction.setBeforeDueDate(true);
-                } else {
-                    if (charge.isAccrued()) {
-                        transaction.setBeforeDueDate(false);
-                    } else {
-                        transaction.setBeforeDueDate(true);
-                    }
-                }
-            }
-
-        }
         updateLoanSummaryDerivedFields();
 
         /**

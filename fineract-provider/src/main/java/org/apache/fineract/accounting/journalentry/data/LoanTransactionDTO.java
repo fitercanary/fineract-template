@@ -38,8 +38,11 @@ public class LoanTransactionDTO {
     /*** Breakup of amounts in case of repayments **/
     private final BigDecimal principal;
     private final BigDecimal interest;
+    private final BigDecimal incomeInterest;
     private final BigDecimal fees;
+    private final BigDecimal incomeFees;
     private final BigDecimal penalties;
+    private final BigDecimal incomePenalties;
     private final BigDecimal overPayment;
 
     /*** Boolean values determines if the transaction is reversed ***/
@@ -53,15 +56,11 @@ public class LoanTransactionDTO {
 
     private boolean isLoanToLoanTransfer;
 
-    private boolean isBeforeDueDate;
-
-    private BigDecimal penaltiesAccrued;
-
     public LoanTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
             final LoanTransactionEnumData transactionType, final BigDecimal amount, final BigDecimal principal, final BigDecimal interest,
             final BigDecimal fees, final BigDecimal penalties, final BigDecimal overPayment, final boolean reversed,
             final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments, boolean isAccountTransfer,
-            boolean isBeforeDueDate, final BigDecimal penaltiesAccrued) {
+            final BigDecimal incomeInterest, final BigDecimal incomeFees, final BigDecimal incomePenalties) {
         this.paymentTypeId = paymentTypeId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
@@ -77,8 +76,9 @@ public class LoanTransactionDTO {
         this.overPayment = overPayment;
         this.officeId = officeId;
         this.isAccountTransfer = isAccountTransfer;
-        this.isBeforeDueDate = isBeforeDueDate;
-        this.penaltiesAccrued = penaltiesAccrued;
+        this.incomeInterest = incomeInterest;
+        this.incomeFees = incomeFees;
+        this.incomePenalties = incomePenalties;
     }
 
     public Long getOfficeId() {
@@ -148,21 +148,16 @@ public class LoanTransactionDTO {
     public boolean isLoanToLoanTransfer() {
         return this.isLoanToLoanTransfer;
     }
-
-    public boolean isBeforeDueDate() {
-        return this.isBeforeDueDate;
+    
+    public BigDecimal getIncomeInterest() {
+        return this.incomeInterest;
     }
-
-    public void setBeforeDueDate(boolean isBeforeDueDate) {
-        this.isBeforeDueDate = isBeforeDueDate;
+    
+    public BigDecimal getIncomeFees() {
+        return this.incomeFees;
     }
-
-    public BigDecimal getPenaltiesAccrued() {
-        return this.penaltiesAccrued;
+    
+    public BigDecimal getIncomePenalties() {
+        return this.incomePenalties;
     }
-
-    public void setPenaltiesAccrued(BigDecimal penaltiesAccrued) {
-        this.penaltiesAccrued = penaltiesAccrued;
-    }
-
 }

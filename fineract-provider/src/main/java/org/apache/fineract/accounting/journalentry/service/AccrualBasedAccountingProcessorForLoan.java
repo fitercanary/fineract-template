@@ -241,15 +241,15 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
                 } else {
                     accountMap.put(account, interestAmount.subtract(incomeInterestAmount));
                 }
-            }
-            totalDebitAmount = totalDebitAmount.add(incomeInterestAmount);
-            GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
-                    ACCRUAL_ACCOUNTS_FOR_LOAN.INTEREST_ON_LOANS.getValue(), paymentTypeId);
-            if (accountMap.containsKey(account)) {
-                BigDecimal amount = accountMap.get(account).add(incomeInterestAmount);
-                accountMap.put(account, amount);
-            } else {
-                accountMap.put(account, incomeInterestAmount);
+                totalDebitAmount = totalDebitAmount.add(incomeInterestAmount);
+                account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
+                        ACCRUAL_ACCOUNTS_FOR_LOAN.INTEREST_ON_LOANS.getValue(), paymentTypeId);
+                if (accountMap.containsKey(account)) {
+                    BigDecimal amount = accountMap.get(account).add(incomeInterestAmount);
+                    accountMap.put(account, amount);
+                } else {
+                    accountMap.put(account, incomeInterestAmount);
+                }
             }
         }
 

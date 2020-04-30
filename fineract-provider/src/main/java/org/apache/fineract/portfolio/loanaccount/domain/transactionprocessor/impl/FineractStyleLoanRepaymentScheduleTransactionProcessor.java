@@ -118,7 +118,7 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
                             currentInstallment.getPenaltyChargesPaid(transactionAmountRemaining.getCurrency())
                                     .minus(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())).getAmount());
                     currentInstallment.setPenaltyAccrued(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())
-                            .plus(loanTransaction.getIncomePenaltyChargesPortion()).getAmount());
+                            .plus(loanTransaction.getIncomePenaltyChargesPortion(transactionAmountRemaining.getCurrency())).getAmount());
                 }
                 transactionAmountRemaining = transactionAmountRemaining.minus(penaltyChargesPortion);
             } else {
@@ -130,7 +130,7 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
                             .setIncomeFeeChargesPortion(currentInstallment.getFeeChargesPaid(transactionAmountRemaining.getCurrency())
                                     .minus(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())).getAmount());
                     currentInstallment.setFeeAccrued(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())
-                            .plus(loanTransaction.getIncomeFeeChargesPortion()).getAmount());
+                            .plus(loanTransaction.getIncomeFeeChargesPortion(transactionAmountRemaining.getCurrency())).getAmount());
                 }
                 transactionAmountRemaining = transactionAmountRemaining.minus(feeChargesPortion);
             }
@@ -144,7 +144,7 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
                         .setIncomePenaltyChargesPortion(currentInstallment.getPenaltyChargesPaid(transactionAmountRemaining.getCurrency())
                                 .minus(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())).getAmount());
                 currentInstallment.setPenaltyAccrued(currentInstallment.getPenaltyAccrued(transactionAmountRemaining.getCurrency())
-                        .plus(loanTransaction.getIncomePenaltyChargesPortion()).getAmount());
+                        .plus(loanTransaction.getIncomePenaltyChargesPortion(transactionAmountRemaining.getCurrency())).getAmount());
             }
             transactionAmountRemaining = transactionAmountRemaining.minus(penaltyChargesPortion);
 
@@ -155,7 +155,7 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
                 loanTransaction.setIncomeFeeChargesPortion(currentInstallment.getFeeChargesPaid(transactionAmountRemaining.getCurrency())
                         .minus(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())).getAmount());
                 currentInstallment.setFeeAccrued(currentInstallment.getFeeAccrued(transactionAmountRemaining.getCurrency())
-                        .plus(loanTransaction.getIncomeFeeChargesPortion()).getAmount());
+                        .plus(loanTransaction.getIncomeFeeChargesPortion(transactionAmountRemaining.getCurrency())).getAmount());
             }
             transactionAmountRemaining = transactionAmountRemaining.minus(feeChargesPortion);
 
@@ -165,8 +165,8 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
                             .isLessThan(currentInstallment.getInterestPaid(transactionAmountRemaining.getCurrency()))) {
                 loanTransaction.setIncomeInterestPortion(currentInstallment.getInterestPaid(transactionAmountRemaining.getCurrency())
                         .minus(currentInstallment.getInterestAccrued(transactionAmountRemaining.getCurrency())).getAmount());
-                currentInstallment
-                        .setInterestAccrued(currentInstallment.getInterestAccrued().add(loanTransaction.getIncomeInterestPortion()));
+                currentInstallment.setInterestAccrued(currentInstallment.getInterestAccrued(transactionAmountRemaining.getCurrency())
+                        .getAmount().add(loanTransaction.getIncomeInterestPortion(transactionAmountRemaining.getCurrency()).getAmount()));
             }
             transactionAmountRemaining = transactionAmountRemaining.minus(interestPortion);
 

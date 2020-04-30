@@ -200,14 +200,14 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                         loanAccrualTransactions.add(transaction);
                     }
                     if (transaction.isRepayment()) {
-                        if (transaction.getIncomeFeeChargesPortion() != null) {
-                            accruedFeesAmount = accruedFeesAmount.add(transaction.getIncomeFeeChargesPortion());
+                        if (transaction.getIncomeFeeChargesPortion(loan.getCurrency()) != null) {
+                            accruedFeesAmount = accruedFeesAmount.add(transaction.getIncomeFeeChargesPortion(loan.getCurrency()).getAmount());
                         }
-                        if (transaction.getIncomeInterestPortion() != null) {
-                            accruedInterestAmount = accruedInterestAmount.add(transaction.getIncomeInterestPortion());
+                        if (transaction.getIncomeInterestPortion(loan.getCurrency()) != null) {
+                            accruedInterestAmount = accruedInterestAmount.add(transaction.getIncomeInterestPortion(loan.getCurrency()).getAmount());
                         }
-                        if (transaction.getIncomePenaltyChargesPortion() != null) {
-                            accruedPenaltiesAmount = accruedPenaltiesAmount.add(transaction.getIncomePenaltyChargesPortion());
+                        if (transaction.getIncomePenaltyChargesPortion(loan.getCurrency()) != null) {
+                            accruedPenaltiesAmount = accruedPenaltiesAmount.add(transaction.getIncomePenaltyChargesPortion(loan.getCurrency()).getAmount());
                         }
                     }
                 }

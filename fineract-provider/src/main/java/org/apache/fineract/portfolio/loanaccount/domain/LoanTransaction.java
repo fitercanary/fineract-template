@@ -844,24 +844,24 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         this.penaltyChargesPortion = penaltyChargesPortion;
     }
     
-    public BigDecimal getIncomeInterestPortion() {
-        return this.incomeInterestPortion;
+    public Money getIncomeInterestPortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.incomeInterestPortion);
     }
     
     public void setIncomeInterestPortion(BigDecimal incomeInterestPortion) {
         this.incomeInterestPortion = incomeInterestPortion;
     }
     
-    public BigDecimal getIncomeFeeChargesPortion() {
-        return this.incomeFeeChargesPortion;
+    public Money getIncomeFeeChargesPortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.incomeFeeChargesPortion);
     }
     
     public void setIncomeFeeChargesPortion(BigDecimal incomeFeeChargesPortion) {
         this.incomeFeeChargesPortion = incomeFeeChargesPortion;
     }
     
-    public BigDecimal getIncomePenaltyChargesPortion() {
-        return this.incomePenaltyChargesPortion;
+    public Money getIncomePenaltyChargesPortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.incomePenaltyChargesPortion);
     }
     
     public void setIncomePenaltyChargesPortion(BigDecimal incomePenaltyChargesPortion) {

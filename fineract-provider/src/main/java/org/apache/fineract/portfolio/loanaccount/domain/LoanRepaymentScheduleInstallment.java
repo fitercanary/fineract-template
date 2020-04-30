@@ -847,10 +847,6 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
                 .plus(getPrincipalCompleted(currency));
     }
 
-    public BigDecimal getInterestAccrued() {
-        return this.interestAccrued;
-    }
-
     public void setInterestCharged(BigDecimal interestCharged) {
         this.interestCharged = interestCharged;
     }

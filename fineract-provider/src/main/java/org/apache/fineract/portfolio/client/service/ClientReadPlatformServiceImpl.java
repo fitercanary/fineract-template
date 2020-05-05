@@ -177,7 +177,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         final List<EnumOptionData> clientLegalFormOptions = ClientEnumerations.legalForm(LegalForm.values());
 
-        final List<CodeValueData> clientLevalOptions = new ArrayList<>(
+        final List<CodeValueData> clientLevelOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_LEVELS));
 
         final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
@@ -186,8 +186,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         ClientData clientData = ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions,
                 savingsProductDatas, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, familyMemberOptions, address, isAddressEnabled,
-                datatableTemplates, clientLevalOptions);
-        clientData.setExistingClients(this.retrieveAllForLookup(null));
+                datatableTemplates, clientLevelOptions);
+        //clientData.setExistingClients(this.retrieveAllForLookup(null));
         return clientData;
     }
 
@@ -558,7 +558,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, null);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, null, null);
 
         }
     }
@@ -632,7 +632,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
             builder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
-            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit ");
+            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as maximumTransactionLimit ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
             builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
@@ -743,6 +743,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
             final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
+            final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
 
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
                     mainBusinessLine, remarks);
@@ -754,7 +755,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, maximumTransactionLimit);
 
         }
     }

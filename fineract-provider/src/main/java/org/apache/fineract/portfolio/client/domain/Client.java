@@ -253,6 +253,9 @@ public final class Client extends AbstractPersistableCustom<Long> {
     @Column(name = "daily_withdraw_limit")
     private BigDecimal dailyWithdrawLimit;
 
+    @Column(name = "max_transaction_limit")
+    private BigDecimal maximumTransactionLimit;
+
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
             final Integer legalForm, final CodeValue clientLevel, final JsonCommand command) {
@@ -295,10 +298,11 @@ public final class Client extends AbstractPersistableCustom<Long> {
         }
         final Long savingsAccountId = null;
         final BigDecimal dailyWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
+        final BigDecimal maximumTransactionLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.maximumTransactionLimit);
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
                 activationDate, officeJoiningDate, externalId, mobileNo, mothersMaidenName, emailAddress, staff, submittedOnDate,
                 savingsProductId, savingsAccountId, dataOfBirth, gender, clientType, clientClassification, legalForm, isStaff, clientLevel,
-                dailyWithdrawLimit);
+                dailyWithdrawLimit, maximumTransactionLimit);
     }
 
     protected Client() {
@@ -311,7 +315,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
             final String mothersMaidenName, final String emailAddress, final Staff staff, final LocalDate submittedOnDate,
             final Long savingsProductId, final Long savingsAccountId, final LocalDate dateOfBirth, final CodeValue gender,
             final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff,
-            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit) {
+            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -399,6 +403,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
         this.clientType = clientType;
         this.clientClassification = clientClassification;
         this.dailyWithdrawLimit = dailyWithdrawLimit;
+        this.maximumTransactionLimit = maximumTransactionLimit;
         this.setLegalForm(legalForm);
 
         deriveDisplayName();
@@ -682,6 +687,13 @@ public final class Client extends AbstractPersistableCustom<Long> {
             actualChanges.put(ClientApiConstants.dailyWithdrawLimit, newValue);
             this.dailyWithdrawLimit = newValue;
         }
+
+        if (command.isChangeInBigDecimalParameterNamed(ClientApiConstants.maximumTransactionLimit, this.maximumTransactionLimit)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(ClientApiConstants.maximumTransactionLimit);
+            actualChanges.put(ClientApiConstants.maximumTransactionLimit, newValue);
+            this.maximumTransactionLimit = newValue;
+        }
+
 
         validateUpdate();
 
@@ -1165,7 +1177,16 @@ public final class Client extends AbstractPersistableCustom<Long> {
     }
 
     public BigDecimal getDailyWithdrawLimit() {
-        if (this.dailyWithdrawLimit == null) { return BigDecimal.ZERO; }
+        if (this.dailyWithdrawLimit == null) {
+            return BigDecimal.ZERO;
+        }
         return this.dailyWithdrawLimit;
+    }
+
+    public BigDecimal getMaximumTransactionLimit() {
+        if (this.maximumTransactionLimit == null) {
+            return BigDecimal.ZERO;
+        }
+        return this.maximumTransactionLimit;
     }
 }

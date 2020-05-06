@@ -53,91 +53,97 @@ public final class ValidationLimitCommandFromApiJsonDeserializer {
     }
 
     public void validateForCreate(final String json) {
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
 
-        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {
+        }.getType();
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
-                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_CREATE_REQUEST_DATA_PARAMETERS);
+                ValidationLimitApiCollectionConstants.VALIDATION_LIMIT_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("validationLimit");
 
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.clientLevelIdParamName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.CLIENT_LEVEL_ID, element)) {
             final Integer clientLevelId = this.fromApiJsonHelper
-                    .extractIntegerSansLocaleNamed(ValidationLimitApiConstants.clientLevelIdParamName, element);
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.clientLevelIdParamName).value(clientLevelId)
+                    .extractIntegerSansLocaleNamed(ValidationLimitApiConstants.CLIENT_LEVEL_ID, element);
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.CLIENT_LEVEL_ID).value(clientLevelId)
                     .integerGreaterThanZero();
         }
 
         final BigDecimal maximumSingleDepositAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                ValidationLimitApiConstants.maximumSingleDepositAmountParamName, element.getAsJsonObject());
-        baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumSingleDepositAmountParamName)
+                ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT, element.getAsJsonObject());
+        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT)
                 .value(maximumSingleDepositAmount).positiveAmount();
 
         final BigDecimal maximumCumulativeBalance = this.fromApiJsonHelper
-                .extractBigDecimalWithLocaleNamed(ValidationLimitApiConstants.maximumCumulativeBalanceParamName, element.getAsJsonObject());
-        baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumCumulativeBalanceParamName).value(maximumCumulativeBalance)
+                .extractBigDecimalWithLocaleNamed(ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE, element.getAsJsonObject());
+        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE).value(maximumCumulativeBalance)
                 .positiveAmount();
 
         final BigDecimal maximumTransactionLimit = this.fromApiJsonHelper
-                .extractBigDecimalWithLocaleNamed(ValidationLimitApiConstants.maximumTransactionLimitParamName, element.getAsJsonObject());
-        baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumTransactionLimitParamName).value(maximumTransactionLimit)
+                .extractBigDecimalWithLocaleNamed(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT, element.getAsJsonObject());
+        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT).value(maximumTransactionLimit)
                 .positiveAmount();
 
         final BigDecimal maximumDailyTransactionAmountLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName, element.getAsJsonObject());
-        baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName)
+                ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, element.getAsJsonObject());
+        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT)
                 .value(maximumDailyTransactionAmountLimit).positiveAmount();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
     public void validateForUpdate(final String json) {
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
 
-        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {
+        }.getType();
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
-                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_UPDATE_REQUEST_DATA_PARAMETERS);
+                ValidationLimitApiCollectionConstants.VALIDATION_LIMIT_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("validationLimit");
 
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.clientLevelIdParamName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.CLIENT_LEVEL_ID, element)) {
             final Integer clientLevelId = this.fromApiJsonHelper
-                    .extractIntegerSansLocaleNamed(ValidationLimitApiConstants.clientLevelIdParamName, element);
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.clientLevelIdParamName).value(clientLevelId)
+                    .extractIntegerSansLocaleNamed(ValidationLimitApiConstants.CLIENT_LEVEL_ID, element);
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.CLIENT_LEVEL_ID).value(clientLevelId)
                     .integerGreaterThanZero();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.maximumSingleDepositAmountParamName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT, element)) {
             final BigDecimal maximumSingleDepositAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    ValidationLimitApiConstants.maximumSingleDepositAmountParamName, element.getAsJsonObject());
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumSingleDepositAmountParamName)
+                    ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT, element.getAsJsonObject());
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT)
                     .value(maximumSingleDepositAmount).positiveAmount();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.maximumCumulativeBalanceParamName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE, element)) {
             final BigDecimal maximumCumulativeBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    ValidationLimitApiConstants.maximumCumulativeBalanceParamName, element.getAsJsonObject());
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumCumulativeBalanceParamName)
+                    ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE, element.getAsJsonObject());
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE)
                     .value(maximumCumulativeBalance).positiveAmount();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.maximumTransactionLimitParamName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT, element)) {
             final BigDecimal maximumTransactionLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    ValidationLimitApiConstants.maximumTransactionLimitParamName, element.getAsJsonObject());
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumTransactionLimitParamName).value(maximumTransactionLimit)
+                    ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT, element.getAsJsonObject());
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT).value(maximumTransactionLimit)
                     .positiveAmount();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, element)) {
             final BigDecimal maximumDailyTransactionAmountLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName, element.getAsJsonObject());
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName)
+                    ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, element.getAsJsonObject());
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT)
                     .value(maximumDailyTransactionAmountLimit).positiveAmount();
         }
 
@@ -145,6 +151,8 @@ public final class ValidationLimitCommandFromApiJsonDeserializer {
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        if (!dataValidationErrors.isEmpty()) {
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
     }
 }

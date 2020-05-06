@@ -83,7 +83,7 @@ public class ValidationLimitApiResource {
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, limitData,
-                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_DATA_PARAMETERS);
+                ValidationLimitApiCollectionConstants.VALIDATION_LIMIT_DATA_PARAMETERS);
     }
 
     @GET
@@ -103,7 +103,7 @@ public class ValidationLimitApiResource {
         }
 
         return this.toApiJsonSerializer.serialize(settings, limitData,
-                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_DATA_PARAMETERS);
+                ValidationLimitApiCollectionConstants.VALIDATION_LIMIT_DATA_PARAMETERS);
     }
 
     @GET
@@ -118,7 +118,7 @@ public class ValidationLimitApiResource {
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, validationLimitData,
-                ValidationLimitApiCollectionConstants.VALIDATIONLIMIT_DATA_PARAMETERS);
+                ValidationLimitApiCollectionConstants.VALIDATION_LIMIT_DATA_PARAMETERS);
     }
 
     @POST

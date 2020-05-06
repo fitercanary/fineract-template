@@ -58,16 +58,13 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.validationLimitRespositoryWrapper = validationLimitRespositoryWrapper;
         this.codeValueReadPlatformService = codeValueReadPlatformService;
-
     }
 
     @Override
     @Cacheable(value = "ValidationLimit", key = "T(org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat('ch')")
     public Collection<ValidationLimitData> retrieveAllValidationLimits() {
         final ValidationLimitMapper rm = new ValidationLimitMapper();
-
         String sql = "select " + rm.validationLimitSchema();
-
         return this.jdbcTemplate.query(sql, rm, new Object[] {});
     }
 
@@ -84,9 +81,7 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
 
         try {
             final ValidationLimitMapper rm = new ValidationLimitMapper();
-
             String sql = "select " + rm.validationLimitSchema() + " where v.id = ?; ";
-
             return this.jdbcTemplate.queryForObject(sql, rm, new Object[] { validationLimitId });
         } catch (final EmptyResultDataAccessException e) {
             throw new ValidationLimitNotFoundException(validationLimitId);
@@ -99,7 +94,7 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
         public String validationLimitSchema() {
             return "v.id as id , v.client_level_cv_id as clientLevelId, cvclientlevel.code_value as clientLevelValue, v.maximum_single_deposit_amount as maximumSingleDepositAmount, "
                     + "v.maximum_cumulative_balance as maximumCumulativeBalance, "
-                    + "v.maximum_transaction_limit as maximumTransactionLimit, v.maximum_daily_transaction_amount_limit as maximumDailyTransactionAmountLimit "
+                    + "v.maximum_transaction_limit as maximumTransactionLimit, v.maximum_daily_transaction_amount_limit as maximumDailyTransactionAmountLimit, overridable "
                     + "from m_validation_limits v " + "left join m_code_value cvclientlevel on cvclientlevel.id = v.client_level_cv_id ";
 
         }
@@ -112,19 +107,19 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
             final BigDecimal maximumCumulativeBalance = rs.getBigDecimal("maximumCumulativeBalance");
             final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
             final BigDecimal maximumDailyTransactionAmountLimit = rs.getBigDecimal("maximumDailyTransactionAmountLimit");
+            final Boolean overridable = rs.getBoolean("overridable");
             final Long clientLevelId = rs.getLong("clientLevelId");
             final String clientLevelValue = rs.getString("clientLevelValue");
             final CodeValueData clientLevel = CodeValueData.instance(clientLevelId, clientLevelValue);
 
             return ValidationLimitData.instance(id, clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance,
-                    maximumTransactionLimit, maximumDailyTransactionAmountLimit);
+                    maximumTransactionLimit, maximumDailyTransactionAmountLimit, overridable);
         }
     }
 
     @Override
-    public ValidationLimit retriveValidationLimitByClienLeveltId(Long clientLevelId) {
+    public ValidationLimit retrieveValidationLimitByClientLevelId(Long clientLevelId) {
         return this.validationLimitRespositoryWrapper.findOneByClientLevelIdWithNotFoundDetection(clientLevelId);
 
     }
-
 }

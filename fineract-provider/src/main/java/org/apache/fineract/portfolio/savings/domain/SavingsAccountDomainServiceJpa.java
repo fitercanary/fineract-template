@@ -272,7 +272,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
     private ValidationLimit getValidationLimitForClientLevel(SavingsAccount account) {
         Long clientLevelId = account.getClient().clientLevel().getId();
-        return this.validationLimitReadPlatformService.retriveValidationLimitByClienLeveltId(clientLevelId);
+        return this.validationLimitReadPlatformService.retrieveValidationLimitByClientLevelId(clientLevelId);
     }
 
     private void ValidateDailyWithdrawalLimit(SavingsAccount account, LocalDate transactionDate, BigDecimal transactionAmount,

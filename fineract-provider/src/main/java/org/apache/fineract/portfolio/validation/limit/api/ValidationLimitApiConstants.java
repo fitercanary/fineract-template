@@ -20,12 +20,12 @@ package org.apache.fineract.portfolio.validation.limit.api;
 
 public class ValidationLimitApiConstants {
 
-    public static final String id = "id";
-    public static final String clientLevelIdParamName = "clientLevelId";
-    public static final String maximumSingleDepositAmountParamName = "maximumSingleDepositAmount";
-    public static final String maximumCumulativeBalanceParamName = "maximumCumulativeBalance";
-    public static final String maximumDailyTransactionAmountLimitParamName = "maximumDailyTransactionAmountLimit";
-    public static final String maximumTransactionLimitParamName = "maximumTransactionLimit";
-    public static final String locale = "locale";
-
+    public static final String ID = "id";
+    public static final String CLIENT_LEVEL_ID = "clientLevelId";
+    public static final String MAXIMUM_SINGLE_DEPOSIT_AMOUNT = "maximumSingleDepositAmount";
+    public static final String MAXIMUM_CUMULATIVE_BALANCE = "maximumCumulativeBalance";
+    public static final String MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT = "maximumDailyTransactionAmountLimit";
+    public static final String MAXIMUM_TRANSACTION_LIMIT = "maximumTransactionLimit";
+    public static final String LOCALE = "locale";
+    public static final String OVERRIDABLE = "overridable";
 }

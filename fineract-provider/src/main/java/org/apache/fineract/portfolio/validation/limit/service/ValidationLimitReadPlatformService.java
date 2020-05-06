@@ -31,6 +31,6 @@ public interface ValidationLimitReadPlatformService {
 
     public Collection<ValidationLimitData> retrieveAllValidationLimits();
 
-    public ValidationLimit retriveValidationLimitByClienLeveltId(Long clientLevelId);
+    public ValidationLimit retrieveValidationLimitByClientLevelId(Long clientLevelId);
 
 }

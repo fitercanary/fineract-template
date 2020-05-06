@@ -57,8 +57,8 @@ public class ValidationLimitWritePlatformServiceJpaRepositoryImpl implements Val
 
     @Autowired
     public ValidationLimitWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final ValidationLimitCommandFromApiJsonDeserializer fromApiJsonDeserializer,
-            final ValidationLimitRepository validationLimitRepository, final CodeValueRepositoryWrapper codeValueRepository) {
+                                                                final ValidationLimitCommandFromApiJsonDeserializer fromApiJsonDeserializer,
+                                                                final ValidationLimitRepository validationLimitRepository, final CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
 
@@ -77,7 +77,7 @@ public class ValidationLimitWritePlatformServiceJpaRepositoryImpl implements Val
             this.fromApiJsonDeserializer.validateForCreate(command.json());
 
             CodeValue clientLevel = null;
-            final Long clientLevelId = command.longValueOfParameterNamed(ValidationLimitApiConstants.clientLevelIdParamName);
+            final Long clientLevelId = command.longValueOfParameterNamed(ValidationLimitApiConstants.CLIENT_LEVEL_ID);
             if (clientLevelId != null) {
                 clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
                         clientLevelId);
@@ -113,7 +113,9 @@ public class ValidationLimitWritePlatformServiceJpaRepositoryImpl implements Val
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
             final ValidationLimit validationLimitForUpdate = this.validationLimitRepository.findOne(validationLimitId);
-            if (validationLimitForUpdate == null) { throw new ValidationLimitNotFoundException(validationLimitId); }
+            if (validationLimitForUpdate == null) {
+                throw new ValidationLimitNotFoundException(validationLimitId);
+            }
 
             final Map<String, Object> changes = validationLimitForUpdate.update(command);
 

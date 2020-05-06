@@ -150,7 +150,7 @@ public class ClientApiConstants {
     public static final String displayNameParamName = "displayName";
     public static final String officeNameParamName = "officeName";
     public static final String staffNameParamName = "staffName";
-    public static final String trasnferOfficeNameParamName = "transferOfficeName";
+    public static final String transferOfficeNameParamName = "transferOfficeName";
     public static final String transferToOfficeNameParamName = "transferToOfficeName";
     public static final String transferToOfficeIdParamName = "transferToOfficeId";
     public static final String imageKeyParamName = "imageKey";
@@ -195,7 +195,7 @@ public class ClientApiConstants {
 
     public static final String datatables = "datatables";
     public static final String dailyWithdrawLimit = "dailyWithdrawLimit";
-
+    public static String maximumTransactionLimit = "maximumTransactionLimit";
 
     /**
      * These parameters will match the class level parameters of
@@ -209,7 +209,7 @@ public class ClientApiConstants {
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
             dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName, legalFormParamName, 
-            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit, clientLevelIdParamName));
+            clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit, clientLevelIdParamName, maximumTransactionLimit));
 
     protected static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList
             (chargeIdParamName,

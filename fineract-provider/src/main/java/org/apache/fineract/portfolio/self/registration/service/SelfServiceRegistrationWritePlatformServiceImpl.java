@@ -120,7 +120,7 @@ public class SelfServiceRegistrationWritePlatformServiceImpl implements SelfServ
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("user");
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, apiRequestBodyAsJson,
                 SelfServiceApiConstants.REGISTRATION_REQUEST_DATA_PARAMETERS);
-        JsonElement element = gson.fromJson(apiRequestBodyAsJson.toString(), JsonElement.class);
+        JsonElement element = gson.fromJson(apiRequestBodyAsJson, JsonElement.class);
 
         String accountNumber = this.fromApiJsonHelper.extractStringNamed(SelfServiceApiConstants.accountNumberParamName, element);
         baseDataValidator.reset().parameter(SelfServiceApiConstants.accountNumberParamName).value(accountNumber).notNull().notBlank()

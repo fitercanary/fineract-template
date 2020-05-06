@@ -201,7 +201,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer) {
             ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
             account.validateTransactionAmountByLimit(transactionAmount, validationLimit, SavingsAccountTransactionType.DEPOSIT);
         }
@@ -232,7 +232,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
         }
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit()) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer ) {
             ValidationLimit validationLimit = getValidationLimitForClientLevel(account);
             account.validateCummulativeBalanceByLimit(account, validationLimit);
         }
@@ -272,7 +272,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
     private ValidationLimit getValidationLimitForClientLevel(SavingsAccount account) {
         Long clientLevelId = account.getClient().clientLevel().getId();
-        return this.validationLimitReadPlatformService.retriveValidationLimitByClienLeveltId(clientLevelId);
+        return this.validationLimitReadPlatformService.retrieveValidationLimitByClientLevelId(clientLevelId);
     }
 
     private void ValidateDailyWithdrawalLimit(SavingsAccount account, LocalDate transactionDate, BigDecimal transactionAmount,

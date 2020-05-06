@@ -97,17 +97,6 @@ public final class ClientDataValidator {
             final Long savingsProductId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.savingsProductIdParamName, element);
             baseDataValidator.reset().parameter(ClientApiConstants.savingsProductIdParamName).value(savingsProductId).ignoreIfNull()
                     .longGreaterThanZero();
-            /*
-             * if (savingsProductId != null &&
-             * this.fromApiJsonHelper.parameterExists(ClientApiConstants.
-             * datatables, element)) { final JsonArray datatables =
-             * this.fromApiJsonHelper.extractJsonArrayNamed(ClientApiConstants.
-             * datatables, element); if (datatables.size() > 0) {
-             * baseDataValidator.reset().parameter(ClientApiConstants.
-             * savingsProductIdParamName).value(savingsProductId)
-             * .failWithCodeNoParameterAddedToErrorCode(
-             * "should.not.be.used.with.datatables.parameter"); } }
-             */
         }
 
         if (isFullnameProvided(element) || isIndividualNameProvided(element)) {
@@ -173,14 +162,6 @@ public final class ClientDataValidator {
                 final LocalDate joinedDate = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.activationDateParamName,
                         element);
                 baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(joinedDate).notNull();
-                /*
-                 * if(this.fromApiJsonHelper.parameterExists(ClientApiConstants.
-                 * datatables,element)){
-                 * baseDataValidator.reset().parameter(ClientApiConstants.
-                 * activeParamName).value(active)
-                 * .failWithCodeNoParameterAddedToErrorCode(
-                 * "should.not.be.used.with.datatables.parameter"); }
-                 */
             }
         } else {
             baseDataValidator.reset().parameter(ClientApiConstants.activeParamName).value(active).trueOrFalseRequired(false);
@@ -613,6 +594,14 @@ public final class ClientDataValidator {
         baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(activationDate).notNull();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void throwValidationException(String code, String defaultMessage, String paramName, Object value) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(ClientApiCollectionConstants.CLIENT_RESOURCE_NAME);
+        baseDataValidator.reset().parameter(paramName).value(value).failWithCode(code, defaultMessage);
+        this.throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {

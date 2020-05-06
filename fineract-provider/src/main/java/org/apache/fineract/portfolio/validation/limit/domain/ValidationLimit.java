@@ -43,7 +43,7 @@ import org.apache.fineract.portfolio.validation.limit.api.ValidationLimitApiCons
 public class ValidationLimit extends AbstractPersistableCustom<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_level_cv_id", nullable = true)
+    @JoinColumn(name = "client_level_cv_id")
     private CodeValue clientLevel;
 
     @Column(name = "maximum_single_deposit_amount")
@@ -58,10 +58,14 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
     @Column(name = "maximum_daily_transaction_amount_limit")
     private BigDecimal maximumDailyTransactionAmountLimit;
 
+    @Column
+    private Boolean overridable;
+
     private ValidationLimit(final CodeValue clientLevel, final BigDecimal maximumSingleDepositAmount,
             final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
-            final BigDecimal maximumDailyTransactionAmountLimit) {
+            final BigDecimal maximumDailyTransactionAmountLimit, Boolean overridable) {
         this.clientLevel = clientLevel;
+        this.overridable = overridable;
         this.maximumSingleDepositAmount = maximumSingleDepositAmount;
         this.maximumCumulativeBalance = maximumCumulativeBalance;
         this.maximumTransactionLimit = maximumTransactionLimit;
@@ -70,12 +74,13 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
     }
 
     public static ValidationLimit fromJson(final CodeValue clientLevel, final JsonCommand command) {
-        final BigDecimal maximumSingleDepositAmount = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.maximumSingleDepositAmountParamName);
-        final BigDecimal maximumCumulativeBalance = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.maximumCumulativeBalanceParamName);
-        final BigDecimal maximumTransactionLimit = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.maximumTransactionLimitParamName);
-        final BigDecimal maximumDailyTransactionAmountLimit = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName);
+        final BigDecimal maximumSingleDepositAmount = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT);
+        final BigDecimal maximumCumulativeBalance = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE);
+        final BigDecimal maximumTransactionLimit = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT);
+        final BigDecimal maximumDailyTransactionAmountLimit = command.bigDecimalValueOfParameterNamed(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT);
+        final Boolean overridable = command.booleanPrimitiveValueOfParameterNamed(ValidationLimitApiConstants.OVERRIDABLE);
         return new ValidationLimit(clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance, maximumTransactionLimit,
-                maximumDailyTransactionAmountLimit);
+                maximumDailyTransactionAmountLimit, overridable);
     }
 
     public CodeValue getClientLevel() {
@@ -98,6 +103,14 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
         return this.maximumDailyTransactionAmountLimit;
     }
 
+    public Boolean isOverridable() {
+        return overridable;
+    }
+
+    public void setOverridable(Boolean overridable) {
+        this.overridable = overridable;
+    }
+
     public Map<String, Object> update(final JsonCommand command) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(7);
@@ -106,12 +119,12 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
 
-        if (command.isChangeInLongParameterNamed(ValidationLimitApiConstants.clientLevelIdParamName, clientLevelId())) {
-            final Long newValue = command.longValueOfParameterNamed(ValidationLimitApiConstants.clientLevelIdParamName);
-            actualChanges.put(ValidationLimitApiConstants.clientLevelIdParamName, newValue);
+        if (command.isChangeInLongParameterNamed(ValidationLimitApiConstants.CLIENT_LEVEL_ID, clientLevelId())) {
+            final Long newValue = command.longValueOfParameterNamed(ValidationLimitApiConstants.CLIENT_LEVEL_ID);
+            actualChanges.put(ValidationLimitApiConstants.CLIENT_LEVEL_ID, newValue);
         }
 
-        final String maximumSingleDepositAmountParamName = ValidationLimitApiConstants.maximumSingleDepositAmountParamName;
+        final String maximumSingleDepositAmountParamName = ValidationLimitApiConstants.MAXIMUM_SINGLE_DEPOSIT_AMOUNT;
         if (command.isChangeInBigDecimalParameterNamed(maximumSingleDepositAmountParamName, this.maximumSingleDepositAmount)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maximumSingleDepositAmountParamName);
             actualChanges.put(maximumSingleDepositAmountParamName, newValue);
@@ -119,7 +132,7 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
             this.maximumSingleDepositAmount = newValue;
         }
 
-        final String maximumCumulativeBalanceParamName = ValidationLimitApiConstants.maximumCumulativeBalanceParamName;
+        final String maximumCumulativeBalanceParamName = ValidationLimitApiConstants.MAXIMUM_CUMULATIVE_BALANCE;
         if (command.isChangeInBigDecimalParameterNamed(maximumCumulativeBalanceParamName, this.maximumCumulativeBalance)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maximumCumulativeBalanceParamName);
             actualChanges.put(maximumCumulativeBalanceParamName, newValue);
@@ -127,7 +140,7 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
             this.maximumCumulativeBalance = newValue;
         }
 
-        final String maximumTransactionLimitParamName = ValidationLimitApiConstants.maximumTransactionLimitParamName;
+        final String maximumTransactionLimitParamName = ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT;
         if (command.isChangeInBigDecimalParameterNamed(maximumTransactionLimitParamName, this.maximumTransactionLimit)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maximumTransactionLimitParamName);
             actualChanges.put(maximumTransactionLimitParamName, newValue);
@@ -135,13 +148,19 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
             this.maximumTransactionLimit = newValue;
         }
 
-        final String maximumDailyTransactionAmountLimitParamName = ValidationLimitApiConstants.maximumDailyTransactionAmountLimitParamName;
+        final String maximumDailyTransactionAmountLimitParamName = ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT;
         if (command.isChangeInBigDecimalParameterNamed(maximumDailyTransactionAmountLimitParamName,
                 this.maximumDailyTransactionAmountLimit)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maximumDailyTransactionAmountLimitParamName);
             actualChanges.put(maximumDailyTransactionAmountLimitParamName, newValue);
             actualChanges.put("locale", localeAsInput);
             this.maximumDailyTransactionAmountLimit = newValue;
+        }
+
+        if (command.isChangeInBooleanParameterNamed(ValidationLimitApiConstants.OVERRIDABLE, isOverridable())) {
+            final Boolean newValue = command.booleanObjectValueOfParameterNamed(ValidationLimitApiConstants.OVERRIDABLE);
+            actualChanges.put(ValidationLimitApiConstants.OVERRIDABLE, newValue);
+            this.overridable = newValue;
         }
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }

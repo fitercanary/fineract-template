@@ -36,10 +36,11 @@ public class ValidationLimitData implements Comparable<ValidationLimitData>, Ser
     private final BigDecimal maximumTransactionLimit;
     private final BigDecimal maximumDailyTransactionAmountLimit;
     private List<CodeValueData> clientLevelOptions;
+    private final Boolean overridable;
 
     private ValidationLimitData(final Long id, final CodeValueData clientLevel, final BigDecimal maximumSingleDepositAmount,
-            final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
-            final BigDecimal maximumDailyTransactionAmountLimit, List<CodeValueData> clientLevelOptions) {
+                                final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
+                                final BigDecimal maximumDailyTransactionAmountLimit, List<CodeValueData> clientLevelOptions, Boolean overridable) {
         this.id = id;
         this.clientLevel = clientLevel;
         this.maximumSingleDepositAmount = maximumSingleDepositAmount;
@@ -47,25 +48,26 @@ public class ValidationLimitData implements Comparable<ValidationLimitData>, Ser
         this.maximumTransactionLimit = maximumTransactionLimit;
         this.maximumDailyTransactionAmountLimit = maximumDailyTransactionAmountLimit;
         this.clientLevelOptions = clientLevelOptions;
+        this.overridable = overridable;
 
     }
 
     public static ValidationLimitData template(final List<CodeValueData> clientLevelOptions) {
 
-        return new ValidationLimitData(null, null, null, null, null, null, clientLevelOptions);
+        return new ValidationLimitData(null, null, null, null, null, null, clientLevelOptions, null);
     }
 
     public static ValidationLimitData withTemplate(final ValidationLimitData limitData, final ValidationLimitData template) {
         return new ValidationLimitData(limitData.id, limitData.clientLevel, limitData.maximumSingleDepositAmount,
                 limitData.maximumCumulativeBalance, limitData.maximumTransactionLimit, limitData.maximumDailyTransactionAmountLimit,
-                template.clientLevelOptions);
+                template.clientLevelOptions, limitData.overridable);
     }
 
     public static ValidationLimitData instance(final Long id, final CodeValueData clientLevel, final BigDecimal maximumSingleDepositAmount,
-            final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
-            final BigDecimal maximumDailyTransactionAmountLimit) {
+                                               final BigDecimal maximumCumulativeBalance, final BigDecimal maximumTransactionLimit,
+                                               final BigDecimal maximumDailyTransactionAmountLimit, Boolean overridable) {
         return new ValidationLimitData(id, clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance, maximumTransactionLimit,
-                maximumDailyTransactionAmountLimit, null);
+                maximumDailyTransactionAmountLimit, null, overridable);
     }
 
     @Override
@@ -81,7 +83,9 @@ public class ValidationLimitData implements Comparable<ValidationLimitData>, Ser
 
     @Override
     public int compareTo(final ValidationLimitData obj) {
-        if (obj == null) { return -1; }
+        if (obj == null) {
+            return -1;
+        }
 
         return obj.id.compareTo(this.id);
     }

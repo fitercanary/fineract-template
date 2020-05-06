@@ -24,17 +24,12 @@ import java.util.Set;
 
 public class ValidationLimitApiCollectionConstants extends ValidationLimitApiConstants {
 
-    public static final Set<String> VALIDATIONLIMIT_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(clientLevelIdParamName, maximumSingleDepositAmountParamName, maximumCumulativeBalanceParamName,
-                    maximumTransactionLimitParamName, maximumDailyTransactionAmountLimitParamName, locale));
+    public static final Set<String> VALIDATION_LIMIT_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(CLIENT_LEVEL_ID, MAXIMUM_SINGLE_DEPOSIT_AMOUNT, MAXIMUM_CUMULATIVE_BALANCE,
+                    MAXIMUM_TRANSACTION_LIMIT, MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, LOCALE, OVERRIDABLE));
 
-    public static final Set<String> VALIDATIONLIMIT_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(clientLevelIdParamName, maximumSingleDepositAmountParamName, maximumCumulativeBalanceParamName,
-                    maximumTransactionLimitParamName, maximumDailyTransactionAmountLimitParamName, locale));
 
-   
-    
-    public static final Set<String> VALIDATIONLIMIT_DATA_PARAMETERS = new HashSet<>(Arrays.asList(id, clientLevelIdParamName, maximumSingleDepositAmountParamName, 
-            maximumCumulativeBalanceParamName,maximumTransactionLimitParamName, maximumDailyTransactionAmountLimitParamName, locale));
+    protected static final Set<String> VALIDATION_LIMIT_DATA_PARAMETERS = new HashSet<>(Arrays.asList(ID, CLIENT_LEVEL_ID, MAXIMUM_SINGLE_DEPOSIT_AMOUNT,
+            MAXIMUM_CUMULATIVE_BALANCE, MAXIMUM_TRANSACTION_LIMIT, MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, LOCALE, OVERRIDABLE));
 
 }

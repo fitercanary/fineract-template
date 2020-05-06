@@ -18,14 +18,7 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import javax.persistence.PersistenceException;
-
+import com.google.gson.JsonElement;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -36,7 +29,6 @@ import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumb
 import org.apache.fineract.infrastructure.accountnumberformat.domain.EntityAccountType;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
-import org.apache.fineract.infrastructure.codes.service.CodeReadPlatformService;
 import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.configuration.service.ConfigurationReadPlatformService;
@@ -90,6 +82,8 @@ import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -101,7 +95,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.gson.JsonElement;
+import javax.persistence.PersistenceException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
@@ -118,7 +117,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final AccountNumberGenerator accountNumberGenerator;
     private final StaffRepositoryWrapper staffRepository;
     private final CodeValueRepositoryWrapper codeValueRepository;
-    private final CodeReadPlatformService codeReadPlatformService;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
     private final SavingsAccountRepositoryWrapper savingsRepositoryWrapper;
     private final SavingsProductRepository savingsProductRepository;
@@ -133,24 +131,25 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final BusinessEventNotifierService businessEventNotifierService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final ReferralStatusRepository referralStatusRepository;
+    private final ValidationLimitRepository validationLimitRepository;
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
-            final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
-            final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
-            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
-            final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
-            final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
-            final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
-            final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
-            final ConfigurationReadPlatformService configurationReadPlatformService,
-            final AddressWritePlatformService addressWritePlatformService,
-            final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
-            final BusinessEventNotifierService businessEventNotifierService,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-            ReferralStatusRepository referralStatusRepository, final CodeReadPlatformService codeReadPlatformService) {
+                                                       final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
+                                                       final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
+                                                       final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
+                                                       final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
+                                                       final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
+                                                       final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
+                                                       final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
+                                                       final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
+                                                       final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
+                                                       final ConfigurationReadPlatformService configurationReadPlatformService,
+                                                       final AddressWritePlatformService addressWritePlatformService,
+                                                       final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
+                                                       final BusinessEventNotifierService businessEventNotifierService,
+                                                       final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
+                                                       ReferralStatusRepository referralStatusRepository, ValidationLimitRepository validationLimitRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -175,7 +174,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.businessEventNotifierService = businessEventNotifierService;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.referralStatusRepository = referralStatusRepository;
-        this.codeReadPlatformService = codeReadPlatformService;
+        this.validationLimitRepository = validationLimitRepository;
     }
 
     @Transactional
@@ -245,8 +244,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     .retrieveGlobalConfiguration("Enable-Address");
 
             final Boolean isAddressEnabled = configuration.isEnabled();
-
-            final Boolean isStaff = command.booleanObjectValueOfParameterNamed(ClientApiConstants.isStaffParamName);
 
             final Long officeId = command.longValueOfParameterNamed(ClientApiConstants.officeIdParamName);
 
@@ -353,6 +350,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     }
                 }
             }
+            this.validateDailyWithdrawLimit(newClient);
+            this.validateDailyMaximumTransactionLimit(newClient);
+
             this.clientRepository.save(newClient);
             if (referralStatus != null && newClient.getId() != null) {
                 referralStatus.setReferredClient(newClient);
@@ -382,7 +382,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             CommandProcessingResult result = openSavingsAccount(newClient, fmt);
             if (result.getSavingsId() != null) {
                 this.clientRepository.save(newClient);
-
             }
 
             if (isEntity) {
@@ -425,6 +424,34 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             handleDataIntegrityIssues(command, throwable, dve);
             return CommandProcessingResult.empty();
+        }
+    }
+
+    private void validateDailyWithdrawLimit(Client client) {
+        if (client.getDailyWithdrawLimit() != null) {
+            final String errorCode = "daily.withdraw.limit.cannot.exceed.global.limit";
+            final String defaultMessage = "Daily withdraw limit cannot exceed global validation limit";
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+            if (validationLimit != null && !validationLimit.isOverridable()) {
+                if (client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumDailyTransactionAmountLimit()) > 0) {
+                    this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.dailyWithdrawLimit,
+                            client.getDailyWithdrawLimit());
+                }
+            }
+        }
+    }
+
+    private void validateDailyMaximumTransactionLimit(Client client) {
+        if (client.getMaximumTransactionLimit() != null) {
+            final String errorCode = "maximum.transaction.limit.cannot.exceed.global.limit";
+            final String defaultMessage = "Maximum transaction limit cannot exceed global validation limit";
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+            if (validationLimit != null && !validationLimit.isOverridable()) {
+                if (client.getMaximumTransactionLimit().compareTo(validationLimit.getMaximumTransactionLimit()) > 0) {
+                    this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.maximumTransactionLimit,
+                            client.getMaximumTransactionLimit());
+                }
+            }
         }
     }
 
@@ -523,7 +550,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                             newValue);
                 }
                 clientForUpdate.updateClientLevel(clientLevel);
-
             }
 
             if (changes.containsKey(ClientApiConstants.savingsProductIdParamName)) {
@@ -566,6 +592,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                             .findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_CLASSIFICATION, newValue);
                 }
                 clientForUpdate.updateClientClassification(newCodeVal);
+            }
+
+            if (changes.containsKey(ClientApiConstants.dailyWithdrawLimit) || changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
+                this.validateDailyWithdrawLimit(clientForUpdate);
+            }
+
+            if (changes.containsKey(ClientApiConstants.maximumTransactionLimit) || changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
+                this.validateDailyMaximumTransactionLimit(clientForUpdate);
             }
 
             if (!changes.isEmpty()) {

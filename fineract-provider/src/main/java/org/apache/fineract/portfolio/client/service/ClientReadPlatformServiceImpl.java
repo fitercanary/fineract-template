@@ -177,7 +177,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         final List<EnumOptionData> clientLegalFormOptions = ClientEnumerations.legalForm(LegalForm.values());
 
-        final List<CodeValueData> clientLevalOptions = new ArrayList<>(
+        final List<CodeValueData> clientLevelOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_LEVELS));
 
         final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
@@ -186,23 +186,17 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         ClientData clientData = ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions,
                 savingsProductDatas, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, familyMemberOptions, address, isAddressEnabled,
-                datatableTemplates, clientLevalOptions);
-        clientData.setExistingClients(this.retrieveAllForLookup(null));
+                datatableTemplates, clientLevelOptions);
         return clientData;
     }
 
     @Override
-    // @Transactional(readOnly=true)
     public Page<ClientData> retrieveAll(final SearchParameters searchParameters) {
 
         final String userOfficeHierarchy = this.context.officeHierarchy();
         final String underHierarchySearchString = userOfficeHierarchy + "%";
         final String appUserID = String.valueOf(context.authenticatedUser().getId());
 
-        // if (searchParameters.isScopedByOfficeHierarchy()) {
-        // this.context.validateAccessRights(searchParameters.getHierarchy());
-        // underHierarchySearchString = searchParameters.getHierarchy() + "%";
-        // }
         List<Object> paramList = new ArrayList<>(Arrays.asList(underHierarchySearchString, underHierarchySearchString));
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
@@ -449,6 +443,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("left join m_appuser clu on clu.id = c.closedon_userid ");
             sqlBuilder.append("left join m_code_value cv on cv.id = c.gender_cv_id ");
             sqlBuilder.append("left join m_code_value cvclienttype on cvclienttype.id = c.client_type_cv_id ");
+            sqlBuilder.append("left join m_code_value cvclientlevel on cvclientlevel.id = c.client_level_cv_id ");
             sqlBuilder.append("left join m_code_value cvclassification on cvclassification.id = c.client_classification_cv_id ");
             sqlBuilder.append("left join m_code_value cvSubStatus on cvSubStatus.id = c.sub_status ");
             sqlBuilder.append("left join m_code_value cvConstitution on cvConstitution.id = cnp.constitution_cv_id ");
@@ -558,7 +553,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, null);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, null, null);
 
         }
     }
@@ -632,7 +627,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
             builder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
-            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit ");
+            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as maximumTransactionLimit ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
             builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
@@ -743,6 +738,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
             final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
+            final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
 
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
                     mainBusinessLine, remarks);
@@ -754,7 +750,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, maximumTransactionLimit);
 
         }
     }

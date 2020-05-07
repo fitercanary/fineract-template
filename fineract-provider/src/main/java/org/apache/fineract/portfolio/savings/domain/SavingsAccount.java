@@ -70,6 +70,8 @@ import javax.persistence.Version;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
@@ -343,6 +345,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "original_interest_rate", scale = 6, precision = 19)
     protected BigDecimal originalInterestRate;
+    
+    @ManyToOne
+    @JoinColumn(name = "block_narration_id")
+    private CodeValue blockNarration;
 
     protected SavingsAccount() {
         //
@@ -3185,7 +3191,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return actualChanges;
     }
 
-    public Map<String, Object> blockDebits(Integer currentSubstatus) {
+    public Map<String, Object> blockDebits(Integer currentSubstatus,final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3210,12 +3216,21 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         } else {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_DEBIT.getValue();
         }
+        
+        // set narration
+        this.blockNarration = blockNarration;
+        
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
 
         return actualChanges;
     }
 
-    public Map<String, Object> unblockDebits() {
+    public Map<String, Object> unblockDebits(final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3244,6 +3259,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        // set narration
+        this.blockNarration = blockNarration;
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
         return actualChanges;
     }
 
@@ -3625,5 +3647,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     public void setMinRequiredBalance(BigDecimal minRequiredBalance) {
         this.minRequiredBalance = minRequiredBalance;
+    }
+    
+    public void update(final CodeValue blockNarration) {
+        this.blockNarration = blockNarration;
     }
 }

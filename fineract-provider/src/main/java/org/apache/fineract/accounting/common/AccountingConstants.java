@@ -409,5 +409,8 @@ public class AccountingConstants {
     // CBN Categories
     public static final String CBN_CATEGORY_OPTION_CODE_NAME = "CBNCategory";
     public static final String CBN_SUB_CATEGORY_OPTION_CODE_NAME = "CBNSubCategory";
+    
+    // Block Unblock Narrations 
+    public static final String BLOCK_UNBLOCK_OPTION_CODE_NAME = "SavingsAccountBlockUnblockNarration";
 
 }

@@ -1576,7 +1576,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
 
-        final Map<String, Object> changes = account.blockCredits(account.getSubStatus());
+        final Long narrationId = command.longValueOfParameterNamed("narrationId");
+        
+        final CodeValue codeValue =  narrationId != null ? codeValueRepositoryWrapper.findOneWithNotFoundDetection(narrationId) : null;
+        
+        final Map<String, Object> changes = account.blockCredits(account.getSubStatus(),codeValue);
         if (!changes.isEmpty()) {
 
             this.savingAccountRepositoryWrapper.save(account);
@@ -1592,7 +1596,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
 
-        final Map<String, Object> changes = account.unblockCredits();
+        final Long narrationId = command.longValueOfParameterNamed("narrationId");
+        final CodeValue codeValue =  narrationId != null ? codeValueRepositoryWrapper.findOneWithNotFoundDetection(narrationId) : null;
+        
+        final Map<String, Object> changes = account.unblockCredits(codeValue);
         if (!changes.isEmpty()) {
 
             this.savingAccountRepositoryWrapper.save(account);
@@ -1610,7 +1617,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final Long narrationId = command.longValueOfParameterNamed("narrationId");
         
-        CodeValue codeValue =  codeValueRepositoryWrapper.findOneWithNotFoundDetection(narrationId);
+        final CodeValue codeValue =  narrationId != null ? codeValueRepositoryWrapper.findOneWithNotFoundDetection(narrationId) : null;
         
         final Map<String, Object> changes = account.blockDebits(account.getSubStatus(), codeValue);
         if (!changes.isEmpty()) {
@@ -1630,7 +1637,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         
         final Long narrationId = command.longValueOfParameterNamed("narrationId");
         
-        CodeValue codeValue =  codeValueRepositoryWrapper.findOneWithNotFoundDetection(narrationId);
+        final CodeValue codeValue =  narrationId != null ? codeValueRepositoryWrapper.findOneWithNotFoundDetection(narrationId) : null;
 
         final Map<String, Object> changes = account.unblockDebits(codeValue);
         if (!changes.isEmpty()) {

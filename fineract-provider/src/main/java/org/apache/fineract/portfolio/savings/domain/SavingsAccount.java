@@ -3132,7 +3132,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return actualChanges;
     }
 
-    public Map<String, Object> blockCredits(Integer currentSubstatus) {
+    public Map<String, Object> blockCredits(Integer currentSubstatus, final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3158,11 +3158,18 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_CREDIT.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        // set narration
+        this.blockNarration = blockNarration;
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
 
         return actualChanges;
     }
 
-    public Map<String, Object> unblockCredits() {
+    public Map<String, Object> unblockCredits(final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3188,6 +3195,15 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+
+        // set narration
+        this.blockNarration = blockNarration;
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
         return actualChanges;
     }
 

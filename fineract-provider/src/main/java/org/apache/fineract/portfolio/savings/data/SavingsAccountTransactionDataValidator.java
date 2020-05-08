@@ -18,6 +18,42 @@
  */
 package org.apache.fineract.portfolio.savings.data;
 
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.organisation.monetary.domain.Money;
+import org.apache.fineract.portfolio.client.domain.Client;
+import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.exception.CannotHoldFundsInBlockedAccountException;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
+import org.apache.fineract.useradministration.domain.AppUser;
+import org.joda.time.LocalDate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.activatedOnDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.bankNumberParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.checkNumberParamName;
@@ -29,52 +65,20 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transact
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionAmountParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Date;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.ApiParameterError;
-import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
-import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
-import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
-import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
-import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
-import org.apache.fineract.portfolio.savings.SavingsApiConstants;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
-import org.apache.fineract.portfolio.savings.exception.CannotHoldFundsInBlockedAccountException;
-import org.apache.fineract.useradministration.domain.AppUser;
-import org.joda.time.LocalDate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.apache.fineract.organisation.monetary.domain.Money;
-
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
 
 @Component
 public class SavingsAccountTransactionDataValidator {
 
     private final FromJsonHelper fromApiJsonHelper;
+    private final ValidationLimitRepository validationLimitRepository;
 	private static final Set<String> SAVINGS_ACCOUNT_HOLD_AMOUNT_REQUEST_DATA_PARAMETERS = new HashSet<>(
 			Arrays.asList(transactionDateParamName, SavingsApiConstants.dateFormatParamName,
 					SavingsApiConstants.localeParamName, transactionAmountParamName));
 
     @Autowired
-    public SavingsAccountTransactionDataValidator(final FromJsonHelper fromApiJsonHelper) {
+    public SavingsAccountTransactionDataValidator(final FromJsonHelper fromApiJsonHelper, ValidationLimitRepository validationLimitRepository) {
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.validationLimitRepository = validationLimitRepository;
     }
 
     public void validate(final JsonCommand command) {
@@ -256,9 +260,58 @@ public class SavingsAccountTransactionDataValidator {
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
         if (!dataValidationErrors.isEmpty()) {
-            //
-            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
-                    dataValidationErrors);
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
         }
+    }
+
+    public void validateWithdrawLimits(Client client, BigDecimal transactionAmount, BigDecimal totalWithdrawnToday) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
+        BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit();
+        BigDecimal maximumTransactionLimit = client.getMaximumTransactionLimit();
+        if (BigDecimal.ZERO.equals(dailyWithdrawLimit) || BigDecimal.ZERO.equals(maximumTransactionLimit)) {
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+            if (validationLimit != null) {
+                dailyWithdrawLimit = BigDecimal.ZERO.equals(dailyWithdrawLimit) ? validationLimit.getMaximumDailyTransactionAmountLimit() : dailyWithdrawLimit;
+                maximumTransactionLimit = BigDecimal.ZERO.equals(maximumTransactionLimit) ? validationLimit.getMaximumTransactionLimit() : maximumTransactionLimit;
+            }
+        }
+        if (!BigDecimal.ZERO.equals(dailyWithdrawLimit) && dailyWithdrawLimit.compareTo(totalWithdrawnToday) < 0) {
+            baseDataValidator.parameter(SavingsApiConstants.amountParamName).value(transactionAmount)
+                    .failWithCode("validation.msg.amount.exceeds.daily.withdraw.limit", dailyWithdrawLimit);
+        }
+        if (!BigDecimal.ZERO.equals(maximumTransactionLimit) && maximumTransactionLimit.compareTo(transactionAmount) < 0) {
+            baseDataValidator.parameter(SavingsApiConstants.amountParamName).value(transactionAmount)
+                    .failWithCode("validation.msg.amount.exceeds.maximum.transaction.limit", maximumTransactionLimit);
+        }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateSingleDepositLimits(Client client, BigDecimal transactionAmount) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
+        ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+        if (validationLimit != null && validationLimit.getMaximumSingleDepositAmount() != null) {
+            if (transactionAmount.compareTo(validationLimit.getMaximumSingleDepositAmount()) > 0) {
+                baseDataValidator.parameter(SavingsApiConstants.amountParamName).value(transactionAmount)
+                        .failWithCode("validation.msg.amount.exceeds.single.deposit.limit", validationLimit.getMaximumSingleDepositAmount());
+            }
+        }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateCumulativeBalanceByLimit(SavingsAccount account, BigDecimal transactionAmount) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
+        ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(account.getClient().clientLevelId());
+        if (validationLimit.getMaximumCumulativeBalance() != null &&
+                account.getSummary().getAccountBalance().compareTo(validationLimit.getMaximumCumulativeBalance()) > 0) {
+            baseDataValidator.parameter(SavingsApiConstants.amountParamName).value(transactionAmount)
+                    .failWithCode("validation.msg.cumulative.balance.exceeds.limit", validationLimit.getMaximumCumulativeBalance());
+        }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 }

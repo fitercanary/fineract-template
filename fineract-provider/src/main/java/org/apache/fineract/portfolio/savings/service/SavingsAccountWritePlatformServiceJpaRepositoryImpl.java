@@ -574,21 +574,19 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 account.undoTransaction(transactionId + 1);
             }
         }
-        boolean isInterestTransfer = false;
-        LocalDate postInterestOnDate = null;
         checkClientOrGroupActive(account);
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastAccrualPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
-            account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+            account.postAccrualInterest(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth, null);
         }
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
-            account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    postInterestOnDate);
+            account.postInterest(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
+                    null);
         } else {
-            account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+            account.calculateInterestUsing(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth, null);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1) {

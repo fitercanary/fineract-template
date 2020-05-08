@@ -350,7 +350,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
         Integer numberOfDays = 0;
         boolean isSkipRepaymentOnFirstMonthEnabled = this.configurationDomainService.isSkippingMeetingOnFirstDayOfMonthEnabled();
         if(isSkipRepaymentOnFirstMonthEnabled){
-            numberOfDays = this.configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+            numberOfDays = this.configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
             isSkipMeetingOnFirstDay = this.calendarReadPlatformService.isCalendarAssociatedWithEntity(entityId, calendar.getId(), 
             		entityType.getValue().longValue());
         }

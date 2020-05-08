@@ -1151,7 +1151,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             if (isSkipRepaymentOnFirstMonthEnabled) {
                 isSkipRepaymentOnFirstMonth = this.loanUtilService.isLoanRepaymentsSyncWithMeeting(loan.group(), calendar);
                 if (isSkipRepaymentOnFirstMonth) {
-                    numberOfDays = configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+                    numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
                 }
             }
             this.loanScheduleAssembler.validateDisbursementDateWithMeetingDates(expectedDisbursementDate, calendar,

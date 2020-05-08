@@ -116,7 +116,7 @@ public class MeetingWritePlatformServiceJpaRepositoryImpl implements MeetingWrit
             boolean isSkipRepaymentOnFirstMonthEnabled = configurationDomainService.isSkippingMeetingOnFirstDayOfMonthEnabled();
             if(isSkipRepaymentOnFirstMonthEnabled){
             	if(calendarInstance != null){isSkipRepaymentOnFirstMonth = true;}
-                if(isSkipRepaymentOnFirstMonth) { numberOfDays = configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue(); } 
+                if(isSkipRepaymentOnFirstMonth) { numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue(); }
             }
             final Meeting newMeeting = Meeting.createNew(calendarInstance, meetingDate, isTransactionDateOnNonMeetingDate, isSkipRepaymentOnFirstMonth, numberOfDays);
 
@@ -244,7 +244,7 @@ public class MeetingWritePlatformServiceJpaRepositoryImpl implements MeetingWrit
 		if (isSkipRepaymentOnFirstMonthEnabled) {
 			if (calendarInstance != null) {
 				isSkipRepaymentOnFirstMonth = true;
-				numberOfDays = configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+				numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
 			}
 		}
         final Meeting meetingForUpdate = this.meetingRepositoryWrapper.findOneWithNotFoundDetection(command.entityId());
@@ -322,7 +322,7 @@ public class MeetingWritePlatformServiceJpaRepositoryImpl implements MeetingWrit
 			if (isSkipRepaymentOnFirstMonthEnabled) {
 					isSkipRepaymentOnFirstMonth = true;
 				if (isSkipRepaymentOnFirstMonth) {
-					numberOfDays = configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate()
+					numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate()
 							.intValue();
 				}
 			}

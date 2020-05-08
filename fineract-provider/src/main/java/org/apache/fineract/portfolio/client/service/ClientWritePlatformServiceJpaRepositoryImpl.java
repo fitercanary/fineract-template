@@ -514,7 +514,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String clientHierarchy = clientForUpdate.getOffice().getHierarchy();
 
             this.context.validateAccessRights(clientHierarchy);
-            Long clientLevelOldValue = clientForUpdate.clientLevel().getId();
+            int clientLevelOldValue = clientForUpdate.clientLevel().position();
 
             final Map<String, Object> changes = clientForUpdate.update(command);
 
@@ -543,11 +543,11 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientLevelIdParamName);
                 CodeValue clientLevel = null;
                 if (newValue != null) {
-                    if (clientLevelOldValue > newValue) {
-                        throw new ClientLevelHighToLowerException(newValue, ClientApiConstants.clientLevelIdParamName);
-                    }
                     clientLevel = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_LEVELS,
                             newValue);
+                    if (clientLevelOldValue > clientLevel.position()) {
+                        throw new ClientLevelHighToLowerException(newValue, ClientApiConstants.clientLevelIdParamName);
+                    }
                 }
                 clientForUpdate.updateClientLevel(clientLevel);
             }

@@ -386,7 +386,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             this.cashierTransactionDataValidator.validateOnLoanDisbursal(currentUser, loan.getCurrencyCode(), transactionAmount);
         }
         final Boolean isPaymnetypeApplicableforDisbursementCharge = configurationDomainService
-                .isPaymnetypeApplicableforDisbursementCharge();
+                .isPaymentTypeApplicableForDisbursementCharge();
 
         // Recalculate first repayment date based in actual disbursement date.
         updateLoanCounters(loan, actualDisbursementDate);
@@ -709,7 +709,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
                     createAndSaveLoanScheduleArchive(loan, scheduleGeneratorDTO);
                 }
-                if (configurationDomainService.isPaymnetypeApplicableforDisbursementCharge()) {
+                if (configurationDomainService.isPaymentTypeApplicableForDisbursementCharge()) {
                     changedTransactionDetail = loan.disburse(currentUser, command, changes, scheduleGeneratorDTO, paymentDetail,
                             isAccountTransfer);
                 } else {
@@ -2192,7 +2192,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 if (isSkipRepaymentOnFirstMonthEnabled) {
                     isSkipRepaymentOnFirstMonth = this.loanUtilService.isLoanRepaymentsSyncWithMeeting(loan.group(), calendar);
                     if (isSkipRepaymentOnFirstMonth) {
-                        numberOfDays = configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+                        numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
                     }
                 }
 

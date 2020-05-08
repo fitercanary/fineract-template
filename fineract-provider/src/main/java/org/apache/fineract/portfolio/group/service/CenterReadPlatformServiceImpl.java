@@ -40,7 +40,6 @@ import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.data.PaginationParameters;
 import org.apache.fineract.infrastructure.core.data.PaginationParametersDataValidator;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
-import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
@@ -588,7 +587,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
         Integer numberOfDays = 0;
         boolean isSkipRepaymentOnFirstMonthEnabled = this.configurationDomainService.isSkippingMeetingOnFirstDayOfMonthEnabled();
         if (isSkipRepaymentOnFirstMonthEnabled) {
-            numberOfDays = this.configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+            numberOfDays = this.configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
         }
         for (CenterData centerData : centerDataArray) {
             if (centerData.getCollectionMeetingCalendar().isValidRecurringDate(new LocalDate(meetingDate), isSkipRepaymentOnFirstMonthEnabled, numberOfDays)) {

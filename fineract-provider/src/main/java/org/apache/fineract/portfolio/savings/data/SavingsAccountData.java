@@ -1090,12 +1090,7 @@ public class SavingsAccountData {
 	        this.minRequiredOpeningBalance = minRequiredOpeningBalance;
 	        this.lockinPeriodFrequency = lockinPeriodFrequency;
 	        this.lockinPeriodFrequencyType = lockinPeriodFrequencyType;
-	        // this.withdrawalFeeAmount = withdrawalFeeAmount;
-	        // this.withdrawalFeeType = withdrawalFeeType;
 	        this.withdrawalFeeForTransfers = withdrawalFeeForTransfers;
-	        // this.annualFeeAmount = annualFeeAmount;
-	        // this.annualFeeOnMonthDay = annualFeeOnMonthDay;
-	        // this.annualFeeNextDueDate = annualFeeNextDueDate;
 
 	        this.summary = summary;
 	        this.transactions = transactions;
@@ -1109,7 +1104,8 @@ public class SavingsAccountData {
 	        this.lockinPeriodFrequencyTypeOptions = lockinPeriodFrequencyTypeOptions;
 	        this.withdrawalFeeTypeOptions = withdrawalFeeTypeOptions;
 
-	        this.charges = charges;// charges associated with Savings account
+            // charges associated with Savings account
+	        this.charges = charges;
 	        // charges available for adding to Savings account
 	        this.chargeOptions = chargeOptions;
 

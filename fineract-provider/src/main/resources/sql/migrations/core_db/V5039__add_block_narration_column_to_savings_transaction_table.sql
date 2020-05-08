@@ -17,4 +17,4 @@
 -- under the License.
 --
 
-alter table `m_savings_account` add `block_narration_id` BIGINT(20); 
+ALTER TABLE `m_savings_account` ADD `block_narration_id` BIGINT(20);

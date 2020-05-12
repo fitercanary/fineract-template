@@ -549,14 +549,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 final Integer transferType = AccountTransferType.LOAN_REPAYMENT.getValue();
                 final Integer instructionType = StandingInstructionType.DUES.getValue();
                 final Integer status = StandingInstructionStatus.ACTIVE.getValue();
-                final Integer recurrenceType = AccountTransferRecurrenceType.AS_PER_DUES.getValue();
+                final Integer recurrenceType = AccountTransferRecurrenceType.PERIODIC.getValue();
                 final LocalDate validFrom = new LocalDate();
 
                 AccountTransferDetails accountTransferDetails = AccountTransferDetails.savingsToLoanTransfer(fromOffice, fromClient,
                         linkedSavingsAccount, toOffice, toClient, loan, transferType);
 
                 AccountTransferStandingInstruction accountTransferStandingInstruction = AccountTransferStandingInstruction.create(
-                        accountTransferDetails, name, priority, instructionType, status, null, validFrom, null, recurrenceType, null, null,
+                        accountTransferDetails, name, priority, instructionType, status, null, validFrom, null, recurrenceType, 0, 1,
                         null);
                 accountTransferDetails.updateAccountTransferStandingInstruction(accountTransferStandingInstruction);
 

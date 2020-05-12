@@ -22,12 +22,17 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
+import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
+import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
+import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.loanaccount.data.LoanScheduleAccrualData;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
@@ -44,14 +49,20 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanAccrualWritePlatformService loanAccrualWritePlatformService;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
+    private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
+    private final JournalEntryWritePlatformService journalEntryWritePlatformService;
 
     @Autowired
     public LoanAccrualPlatformServiceImpl(final LoanReadPlatformService loanReadPlatformService,
             final LoanAccrualWritePlatformService loanAccrualWritePlatformService,
-            final LoanRepositoryWrapper loanRepositoryWrapper) {
+            final LoanRepositoryWrapper loanRepositoryWrapper,
+            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+            final JournalEntryWritePlatformService journalEntryWritePlatformService) {
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanAccrualWritePlatformService = loanAccrualWritePlatformService;
         this.loanRepositoryWrapper = loanRepositoryWrapper;
+        this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
+        this.journalEntryWritePlatformService = journalEntryWritePlatformService;
     }
 
     @Override
@@ -160,6 +171,10 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
         LocalDate accruedTilldefault = new LocalDate(2019, 10, 1);
         for (Long loanid : loanIds) {
             Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanid, true);
+            final List<Long> existingTransactionIds = new ArrayList<>();
+            final List<Long> existingReversedTransactionIds = new ArrayList<>();
+            existingTransactionIds.addAll(loan.findExistingTransactionIds());
+            existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
             for (LoanRepaymentScheduleInstallment installment : loan.getRepaymentScheduleInstallments()) {
                 if (installment.getDueDate().isAfter(DateUtils.getLocalDateOfTenant()) || installment.isRecalculatedInterestComponent()
                         || installment.getDueDate().isBefore(accruedTilldefault)) {
@@ -238,6 +253,19 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
             loan.setAccruedTill(accruedTilldefault.toDate());
             accruedTilldefault = new LocalDate(2019, 10, 1);
             this.loanRepositoryWrapper.save(loan);
+            postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds, false);
         }
+    }
+    
+    private void postJournalEntries(final Loan loanAccount, final List<Long> existingTransactionIds,
+            final List<Long> existingReversedTransactionIds, boolean isLoanToLoanTransfer) {
+
+        final MonetaryCurrency currency = loanAccount.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+
+        final Map<String, Object> accountingBridgeData = loanAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
+                existingTransactionIds, existingReversedTransactionIds);
+        accountingBridgeData.put("isLoanToLoanTransfer", isLoanToLoanTransfer);
+        this.journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
 }

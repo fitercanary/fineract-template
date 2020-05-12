@@ -18,10 +18,9 @@
  */
 package org.apache.fineract.infrastructure.configuration.domain;
 
-import java.util.Date;
-
 import org.apache.fineract.infrastructure.cache.domain.CacheType;
-import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
+
+import java.util.Date;
 
 public interface ConfigurationDomainService {
 
@@ -37,7 +36,7 @@ public interface ConfigurationDomainService {
 
     boolean allowTransactionsOnNonWorkingDayEnabled();
 
-    boolean isConstraintApproachEnabledForDatatables();
+    boolean isConstraintApproachEnabledForDataTables();
 
     boolean isEhcacheEnabled();
 
@@ -51,15 +50,13 @@ public interface ConfigurationDomainService {
 
     Long retrieveGraceOnPenaltyPostingPeriod();
 
-    Long retrieveOpeningBalancesContraAccount();
-
     boolean isSavingsInterestPostingAtCurrentPeriodEnd();
 
     Integer retrieveFinancialYearBeginningMonth();
 
-    public Integer retrieveMinAllowedClientsInGroup();
+    Integer retrieveMinAllowedClientsInGroup();
 
-    public Integer retrieveMaxAllowedClientsInGroup();
+    Integer retrieveMaxAllowedClientsInGroup();
 
     boolean isMeetingMandatoryForJLGLoans();
 
@@ -67,17 +64,17 @@ public interface ConfigurationDomainService {
 
     boolean isBackdatePenaltiesEnabled();
     
-    boolean isOrganisationstartDateEnabled();
+    boolean isOrganizationStartDateEnabled();
     
     Date retrieveOrganisationStartDate();
     
-    boolean isPaymnetypeApplicableforDisbursementCharge();
+    boolean isPaymentTypeApplicableForDisbursementCharge();
 
     boolean isInterestChargedFromDateSameAsDisbursementDate();
 
     boolean isSkippingMeetingOnFirstDayOfMonthEnabled();
     
-    Long retreivePeroidInNumberOfDaysForSkipMeetingDate();
+    Long retrievePeriodInNumberOfDaysForSkipMeetingDate();
     
     boolean isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled();
     
@@ -86,16 +83,6 @@ public interface ConfigurationDomainService {
     Long getDailyTPTLimit();
 
     void removeGlobalConfigurationPropertyDataFromCache(String propertyName);
-
-    boolean isSMSOTPDeliveryEnabled();
-
-    boolean isEmailOTPDeliveryEnabled();
-
-    Integer retrieveOTPCharacterLength();
-
-    Integer retrieveOTPLiveTime();
     
     boolean isClientLevelValidationEnabled();
-
-    GlobalConfigurationPropertyData dailyWithdrawalLimitConfigDetails();
 }

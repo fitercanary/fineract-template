@@ -18,58 +18,11 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.enforceMinRequiredBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minRequiredBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
-
+import com.google.gson.JsonArray;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
@@ -113,18 +66,60 @@ import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.portfolio.tax.domain.TaxComponent;
 import org.apache.fineract.portfolio.tax.domain.TaxGroup;
 import org.apache.fineract.portfolio.tax.service.TaxUtils;
-import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
-import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitCummulativeBalanceMoreThanLimitException;
-import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitDailyWithdrwalTransactionException;
-import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitSingleDepositAmountMoreThanLimitException;
-import org.apache.fineract.portfolio.validation.limit.exception.ValidationLimitSingleWithdrwalLimitException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.util.CollectionUtils;
 
-import com.google.gson.JsonArray;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
+import javax.persistence.Version;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.enforceMinRequiredBalanceParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minRequiredBalanceParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
 
 @Entity
 @Table(name = "m_savings_account", uniqueConstraints = { @UniqueConstraint(columnNames = { "account_no" }, name = "sa_account_no_UNIQUE"),
@@ -343,6 +338,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "original_interest_rate", scale = 6, precision = 19)
     protected BigDecimal originalInterestRate;
+    
+    @ManyToOne
+    @JoinColumn(name = "block_narration_id")
+    private CodeValue blockNarration;
 
     protected SavingsAccount() {
         //
@@ -3126,7 +3125,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return actualChanges;
     }
 
-    public Map<String, Object> blockCredits(Integer currentSubstatus) {
+    public Map<String, Object> blockCredits(Integer currentSubstatus, final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3152,11 +3151,18 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_CREDIT.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        // set narration
+        this.blockNarration = blockNarration;
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
 
         return actualChanges;
     }
 
-    public Map<String, Object> unblockCredits() {
+    public Map<String, Object> unblockCredits(final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3182,10 +3188,19 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+
+        // set narration
+        this.blockNarration = blockNarration;
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
         return actualChanges;
     }
 
-    public Map<String, Object> blockDebits(Integer currentSubstatus) {
+    public Map<String, Object> blockDebits(Integer currentSubstatus,final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3210,12 +3225,21 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         } else {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_DEBIT.getValue();
         }
+        
+        // set narration
+        this.blockNarration = blockNarration;
+        
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
 
         return actualChanges;
     }
 
-    public Map<String, Object> unblockDebits() {
+    public Map<String, Object> unblockDebits(final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3244,6 +3268,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
+        
+        // set narration
+        this.blockNarration = blockNarration;
+        if(blockNarration != null) {
+
+            actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
+        }
         return actualChanges;
     }
 
@@ -3576,54 +3607,15 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
-    public void validateTransactionAmountByLimit(BigDecimal transactionAmount, ValidationLimit validationLimit,
-            SavingsAccountTransactionType type) {
-        if (type.equals(SavingsAccountTransactionType.DEPOSIT)) {
-            if (validationLimit.getMaximumSingleDepositAmount() != null) {
-                if (transactionAmount.compareTo(validationLimit.getMaximumSingleDepositAmount()) == 1) {
-                    throw new ValidationLimitSingleDepositAmountMoreThanLimitException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
-                            validationLimit.getMaximumSingleDepositAmount());
-                }
-            }
-        } else if (type.equals(SavingsAccountTransactionType.WITHDRAWAL)) {
-            if (validationLimit.getMaximumTransactionLimit() != null) {
-                if (transactionAmount.compareTo(validationLimit.getMaximumTransactionLimit()) == 1) {
-                    throw new ValidationLimitSingleWithdrwalLimitException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
-                            validationLimit.getMaximumTransactionLimit());
-                }
-            }
-        }
-    }
-
-    public void validateCummulativeBalanceByLimit(SavingsAccount account, ValidationLimit validationLimit) {
-        if (validationLimit.getMaximumCumulativeBalance() != null) {
-            if (account.getSummary().getAccountBalance().compareTo(validationLimit.getMaximumCumulativeBalance()) == 1) {
-                throw new ValidationLimitCummulativeBalanceMoreThanLimitException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
-                        validationLimit.getMaximumCumulativeBalance());
-            }
-        }
-    }
-
-    public void validateDailyTranactionLimit(SavingsAccount account, ValidationLimit validationLimit, LocalDate transactionDate) {
-        BigDecimal todayTransactionAmount = BigDecimal.ZERO;
-        if (validationLimit.getMaximumDailyTransactionAmountLimit() != null) {
-            for (SavingsAccountTransaction transaction : account.transactions) {
-                if (!transaction.isReversed() && transaction.isWithdrawal()
-                        && transaction.getTransactionLocalDate().isEqual(transactionDate))
-                    todayTransactionAmount = todayTransactionAmount.add(transaction.getAmount());
-            }
-            if (todayTransactionAmount.compareTo(validationLimit.getMaximumDailyTransactionAmountLimit()) == 1) {
-                throw new ValidationLimitDailyWithdrwalTransactionException(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME,
-                        validationLimit.getMaximumDailyTransactionAmountLimit());
-            }
-        }
-    }
-
     public BigDecimal getMinRequiredBalance() {
         return this.minRequiredBalance;
     }
 
     public void setMinRequiredBalance(BigDecimal minRequiredBalance) {
         this.minRequiredBalance = minRequiredBalance;
+    }
+    
+    public void update(final CodeValue blockNarration) {
+        this.blockNarration = blockNarration;
     }
 }

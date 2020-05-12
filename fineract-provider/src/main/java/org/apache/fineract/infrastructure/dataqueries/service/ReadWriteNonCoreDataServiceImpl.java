@@ -561,7 +561,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
             validateDatatableName(datatableName);
             validateAppTable(apptableName);
-            final boolean isConstraintApproach = this.configurationDomainService.isConstraintApproachEnabledForDatatables();
+            final boolean isConstraintApproach = this.configurationDomainService.isConstraintApproachEnabledForDataTables();
             final String fkColumnName = apptableName.substring(2) + "_id";
             final String dataTableNameAlias = datatableName.toLowerCase().replaceAll("\\s", "_");
             final String fkName = dataTableNameAlias + "_" + fkColumnName;
@@ -873,7 +873,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 mapColumnNameDefinition.put(columnHeader.getColumnName(), columnHeader);
             }
 
-            final boolean isConstraintApproach = this.configurationDomainService.isConstraintApproachEnabledForDatatables();
+            final boolean isConstraintApproach = this.configurationDomainService.isConstraintApproachEnabledForDataTables();
 
             if (!StringUtils.isBlank(apptableName)) {
                 validateAppTable(apptableName);
@@ -1038,7 +1038,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             assertDataTableEmpty(datatableName);
             deregisterDatatable(datatableName);
             String[] sqlArray = null;
-            if (this.configurationDomainService.isConstraintApproachEnabledForDatatables()) {
+            if (this.configurationDomainService.isConstraintApproachEnabledForDataTables()) {
                 final String deleteColumnCodeSql = "delete from x_table_column_code_mappings where column_alias_name like'"
                         + datatableName.toLowerCase().replaceAll("\\s", "_") + "_%'";
                 sqlArray = new String[2];

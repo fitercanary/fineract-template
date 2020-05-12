@@ -486,7 +486,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
             return;
         }
 
-        boolean isOrganisationDateEnabled = this.configurationDomainService.isOrganisationstartDateEnabled();
+        boolean isOrganisationDateEnabled = this.configurationDomainService.isOrganizationStartDateEnabled();
         Date organisationStartDate = new Date();
         if (isOrganisationDateEnabled) {
             organisationStartDate = this.configurationDomainService.retrieveOrganisationStartDate();

@@ -248,7 +248,7 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
 		boolean isSkipRepaymentOnFirstMonthEnabled = this.configurationDomainService
 				.isSkippingMeetingOnFirstDayOfMonthEnabled();
 		if (isSkipRepaymentOnFirstMonthEnabled) {
-			numberOfDays = this.configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+			numberOfDays = this.configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
 		}
 
 		final Collection<LocalDate> recurringDates = CalendarUtils.getRecurringDates(rrule, seedDate, periodStartDate,
@@ -336,7 +336,7 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
 		boolean isSkipRepaymentOnFirstMonthEnabled = configurationDomainService
 				.isSkippingMeetingOnFirstDayOfMonthEnabled();
 		if (isSkipRepaymentOnFirstMonthEnabled) {
-			numberOfDays = configurationDomainService.retreivePeroidInNumberOfDaysForSkipMeetingDate().intValue();
+			numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
 		}
 
 		if (lastMeetingDate != null && !calendarData.isBetweenStartAndEndDate(lastMeetingDate)

@@ -53,12 +53,4 @@ public class ValidationLimitRepositoryWrapper {
 
         return validationLimit;
     }
-
-    public ValidationLimit findOneByClientLevelIdWithNotFoundDetection(final Long clientLevelId) {
-
-        final ValidationLimit validationLimit = this.repository.findByClientLevelId(clientLevelId);
-        if (validationLimit == null) { throw new ValidationLimitNotFoundException(clientLevelId); }
-
-        return validationLimit;
-    }
 }

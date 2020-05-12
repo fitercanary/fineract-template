@@ -104,7 +104,7 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public boolean isConstraintApproachEnabledForDatatables() {
+    public boolean isConstraintApproachEnabledForDataTables() {
         final String propertyName = "constraint_approach_for_datatables";
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
         return property.isEnabled();
@@ -147,13 +147,6 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     @Override
     public Long retrievePasswordLiveTime() {
         final String propertyName = "force-password-reset-days";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
-        return property.getValue();
-    }
-
-    @Override
-    public Long retrieveOpeningBalancesContraAccount() {
-        final String propertyName = "office-opening-balances-contra-account";
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
         return property.getValue();
     }
@@ -217,7 +210,7 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public boolean isOrganisationstartDateEnabled() {
+    public boolean isOrganizationStartDateEnabled() {
         final String propertyName = "organisation-start-date";
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
         return property.isEnabled();
@@ -231,7 +224,7 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public boolean isPaymnetypeApplicableforDisbursementCharge() {
+    public boolean isPaymentTypeApplicableForDisbursementCharge() {
         final String propertyName = "paymenttype-applicable-for-disbursement-charges";
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
         return property.isEnabled();
@@ -243,7 +236,7 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public Long retreivePeroidInNumberOfDaysForSkipMeetingDate() {
+    public Long retrievePeriodInNumberOfDaysForSkipMeetingDate() {
         final String propertyName = "skip-repayment-on-first-day-of-month";
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
         return property.getValue();
@@ -286,52 +279,11 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public boolean isSMSOTPDeliveryEnabled() {
-        final String propertyName = "use-sms-for-2fa";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
-        return property.isEnabled();
-    }
-
-    @Override
-    public boolean isEmailOTPDeliveryEnabled() {
-        final String propertyName = "use-email-for-2fa";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
-        return property.isEnabled();
-    }
-
-    @Override
-    public Integer retrieveOTPCharacterLength() {
-        final String propertyName = "otp-character-length";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
-        int defaultValue = 6;
-        int value = property.getValue().intValue();
-        if (value < 1) return defaultValue;
-        return value;
-    }
-
-    @Override
-    public Integer retrieveOTPLiveTime() {
-        final String propertyName = "otp-validity-period";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
-        int defaultValue = 300;
-        int value = property.getValue().intValue();
-        if (value < 1) { return defaultValue; }
-        return value;
-    }
-
-    @Override
     public boolean isClientLevelValidationEnabled() {
 
         final String propertyName = "client-level-validations";
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
         return property.isEnabled();
-    }
-    
-    @Override
-    public GlobalConfigurationPropertyData dailyWithdrawalLimitConfigDetails() {
-        final String propertyName = "daily-withdrawal-limit";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
-        return property;
     }
 
     private GlobalConfigurationPropertyData getGlobalConfigurationPropertyData(final String propertyName) {

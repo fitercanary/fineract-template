@@ -75,13 +75,6 @@ public class SavingsAccountRepositoryWrapper {
         return accounts ;
     }
 
-    @Transactional(readOnly=true)
-    public List<SavingsAccount> findSavingAccountByStatus(@Param("status") Integer status) {
-        List<SavingsAccount> accounts = this.repository.findSavingAccountByStatus(status) ;
-        loadLazyCollections(accounts); 
-        return accounts ;
-    }
-
     //Root Entities are enough
     public List<SavingsAccount> findByClientIdAndGroupId(@Param("clientId") Long clientId, @Param("groupId") Long groupId) {
         return this.repository.findByClientIdAndGroupId(clientId, groupId) ;

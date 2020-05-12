@@ -29,6 +29,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformServiceImpl;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -122,6 +126,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
+    
+    private static CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
     public SavingsAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -131,7 +137,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final ChargeReadPlatformService chargeReadPlatformService,
             final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator,
             final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
-            final SavingsTransactionRequestRepository savingsTransactionRequestRepository) {
+            final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.clientReadPlatformService = clientReadPlatformService;
@@ -149,6 +156,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         this.columnValidator = columnValidator;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
 
     }
 
@@ -347,7 +355,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sp.is_dormancy_tracking_active as isDormancyTrackingActive, ");
             sqlBuilder.append("sp.days_to_inactive as daysToInactive, ");
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy, ");
-            sqlBuilder.append("sp.days_to_escheat as daysToEscheat ");
+            sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
+            sqlBuilder.append("sa.block_narration_id as blockNarrationId, ");
+            sqlBuilder.append("cvn.code_value as blockNarrationValue ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -361,6 +371,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_appuser avbu on avbu.id = sa.activatedon_userid ");
             sqlBuilder.append("left join m_appuser cbu on cbu.id = sa.closedon_userid ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sa.tax_group_id  ");
+            sqlBuilder.append("left join m_code_value cvn on cvn.id = sa.block_narration_id  ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -576,6 +587,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             if (taxGroupId != null) {
                 taxGroupData = TaxGroupData.lookup(taxGroupId, taxGroupName);
             }
+            
+            final Long blockNarrationId = JdbcSupport.getLong(rs, "blockNarrationId");
+            final String blockNarrationValue = rs.getString("blockNarrationValue");
+            
+            final CodeValueData blockNarration = CodeValueData.instance(blockNarrationId, blockNarrationValue);
+            
             return SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                     interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -583,7 +600,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation,
                     onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate,
                     overdraftClosedOnDate, withHoldTax, taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive,
-                    daysToDormancy, daysToEscheat, onHoldAmount);
+                    daysToDormancy, daysToEscheat, onHoldAmount, blockNarration);
         }
     }
 
@@ -1608,5 +1625,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public List<Long> retrieveActiveSavingAccounts() {
         String sql = " select id from m_savings_account where status_enum = 300 ";
         return this.jdbcTemplate.queryForList(sql, Long.class);
+    }
+    
+    private static CodeValueData getCodeValueDataById(Long codeValueId) {
+        final CodeValueData codeValueData = codeValueReadPlatformService.retrieveCodeValue(codeValueId);
+        
+        return codeValueData;
     }
 }

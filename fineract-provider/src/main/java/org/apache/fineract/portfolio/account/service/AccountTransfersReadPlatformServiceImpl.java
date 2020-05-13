@@ -179,6 +179,7 @@ public class AccountTransfersReadPlatformServiceImpl implements
 		// defaults
 		final LocalDate transferDate = DateUtils.getLocalDateOfTenant();
 		Collection<OfficeData> toOfficeOptions = fromOfficeOptions;
+		Collection<ClientData> toClientOptions = null;
 
 		if (toAccountId != null && fromAccount != null) {
 			toAccount = this.portfolioAccountReadPlatformService.retrieveOne(
@@ -192,6 +193,9 @@ public class AccountTransfersReadPlatformServiceImpl implements
 					.retrieveOne(mostRelevantToClientId);
 			mostRelevantToOfficeId = toClient.officeId();
 
+			toClientOptions = this.clientReadPlatformService
+					.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
+
 			toAccountOptions = retrieveToAccounts(fromAccount,
 					mostRelevantToAccountType, mostRelevantToClientId);
 		}
@@ -201,13 +205,22 @@ public class AccountTransfersReadPlatformServiceImpl implements
 					.retrieveOffice(mostRelevantToOfficeId);
 			toOfficeOptions = this.officeReadPlatformService
 					.retrieveAllOfficesForDropdown();
+
+			toClientOptions = this.clientReadPlatformService
+					.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
+			if (toClientOptions != null && toClientOptions.size() == 1) {
+				toClient = new ArrayList<>(toClientOptions).get(0);
+
+				toAccountOptions = retrieveToAccounts(fromAccount,
+						mostRelevantToAccountType, mostRelevantToClientId);
+			}
 		}
 
 		return AccountTransferData.template(fromOffice, fromClient,
 				fromAccountTypeData, fromAccount, transferDate, toOffice,
 				toClient, toAccountTypeData, toAccount, fromOfficeOptions,
 				null, fromAccountTypeOptions, fromAccountOptions,
-				toOfficeOptions, null, toAccountTypeOptions,
+				toOfficeOptions, toClientOptions, toAccountTypeOptions,
 				toAccountOptions);
 	}
 

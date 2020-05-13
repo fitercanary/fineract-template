@@ -198,6 +198,41 @@ public class ClientsApiResource {
     }
 
     @GET
+    @Path("summaries")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllSummary(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
+                                     @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
+                                     @QueryParam("displayName") final String displayName, @QueryParam("firstName") final String firstname,
+                                     @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy,
+                                     @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
+                                     @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder,
+                                     @QueryParam("orphansOnly") final Boolean orphansOnly) {
+
+        return this.retrieveAllSummary(uriInfo, sqlSearch, officeId, externalId, displayName, firstname,
+                lastname, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, false);
+    }
+
+    private String retrieveAllSummary(final UriInfo uriInfo, final String sqlSearch,
+                                     final Long officeId, final String externalId,
+                                     final String displayName, final String firstname,
+                                     final String lastname, final String hierarchy,
+                                     final Integer offset, final Integer limit,
+                                     final String orderBy, final String sortOrder,
+                                     final Boolean orphansOnly, final boolean isSelfUser) {
+
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
+                lastname, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, isSelfUser);
+
+        final Page<ClientData> clientData = this.clientReadPlatformService.retrieveAllSummary(searchParameters);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+    }
+
+    @GET
     @Path("generate-referral-id/{clientId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })

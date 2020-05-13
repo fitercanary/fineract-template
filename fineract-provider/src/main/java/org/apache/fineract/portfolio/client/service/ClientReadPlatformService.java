@@ -53,4 +53,6 @@ public interface ClientReadPlatformService {
     String getDynamicLink(Long clientId);
 
     List<ReferralStatusData> getPendingReferrals();
+
+    Page<ClientData> retrieveAllSummary(SearchParameters searchParameters);
 }

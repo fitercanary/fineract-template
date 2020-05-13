@@ -68,6 +68,7 @@ import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -77,6 +78,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 
 @Service
 public class ClientReadPlatformServiceImpl implements ClientReadPlatformService {
@@ -102,6 +104,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ColumnValidator columnValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ReferralStatusRepository referralStatusRepository;
+    
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -1016,4 +1019,19 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         if (referralStatuses.isEmpty()) { return new ArrayList<>(); }
         return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
     }
+
+    @Override
+    public ClientData retrieveClientDailyLimits(Long clientId) {
+        ClientData clientData = null;
+        //Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+        
+        //BigDecimal currentWithdrawLimit = this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(client, LocalDate.now());
+        
+        //clientData = new ClientData(clientId, currentWithdrawLimit, BigDecimal.ZERO, BigDecimal.ZERO);
+        //clientData = new ClientData(id, currentWithdrawLimit, maximumTransactionLimit, singleDepositLimit)
+        
+        return clientData;
+    }
+    
+    
 }

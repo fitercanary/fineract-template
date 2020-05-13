@@ -41,7 +41,11 @@ import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.validation.limit.api.ValidationLimitApiCollectionConstants;
+import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,6 +65,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -83,6 +88,7 @@ public class ClientsApiResource {
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
+    private final SavingsAccountDomainService savingsAccountDomainService;
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
@@ -93,7 +99,8 @@ public class ClientsApiResource {
                               final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
                               final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
                               final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-                              final BulkImportWorkbookService bulkImportWorkbookService) {
+                              final BulkImportWorkbookService bulkImportWorkbookService,
+                              final SavingsAccountDomainService savingsAccountDomainService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -106,6 +113,7 @@ public class ClientsApiResource {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.bulkImportWorkbookService = bulkImportWorkbookService;
+        this.savingsAccountDomainService = savingsAccountDomainService;
     }
 
     @GET
@@ -431,5 +439,27 @@ public class ClientsApiResource {
             @FormDataParam("dateFormat") final String dateFormat){
         final Long importDocumentId = bulkImportWorkbookService.importWorkbook(legalFormType, uploadedInputStream,fileDetail,locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+    
+    @GET
+    @Path("{clientId}/currentdailylimits")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
+        
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+        /*BigDecimal withdrawLimit = this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(clientId, LocalDate.now());
+        ClientData clientData =  new ClientData(clientId, withdrawLimit, BigDecimal.ZERO, BigDecimal.ZERO);
+                //this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(clientId, LocalDate.now());
+                //new ClientData(clientId, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);*/
+        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(clientId, LocalDate.now());
+        
+        return this.toApiJsonSerializer.serialize(limitData);
+
+        //return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+        
     }
 }

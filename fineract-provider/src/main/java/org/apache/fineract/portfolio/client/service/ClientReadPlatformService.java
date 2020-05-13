@@ -55,4 +55,6 @@ public interface ClientReadPlatformService {
     List<ReferralStatusData> getPendingReferrals();
 
     Page<ClientData> retrieveAllSummary(SearchParameters searchParameters);
+    
+    ClientData retrieveClientDailyLimits(Long clientId);
 }

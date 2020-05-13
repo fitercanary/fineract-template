@@ -193,9 +193,6 @@ public class AccountTransfersReadPlatformServiceImpl implements
 					.retrieveOne(mostRelevantToClientId);
 			mostRelevantToOfficeId = toClient.officeId();
 
-			toClientOptions = this.clientReadPlatformService
-					.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
-
 			toAccountOptions = retrieveToAccounts(fromAccount,
 					mostRelevantToAccountType, mostRelevantToClientId);
 		}
@@ -205,9 +202,6 @@ public class AccountTransfersReadPlatformServiceImpl implements
 					.retrieveOffice(mostRelevantToOfficeId);
 			toOfficeOptions = this.officeReadPlatformService
 					.retrieveAllOfficesForDropdown();
-
-			toClientOptions = this.clientReadPlatformService
-					.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
 			if (toClientOptions != null && toClientOptions.size() == 1) {
 				toClient = new ArrayList<>(toClientOptions).get(0);
 

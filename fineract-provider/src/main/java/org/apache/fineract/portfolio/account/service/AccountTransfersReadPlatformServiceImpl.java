@@ -169,14 +169,11 @@ public class AccountTransfersReadPlatformServiceImpl implements
 		}
 
 		Collection<OfficeData> fromOfficeOptions = null;
-		Collection<ClientData> fromClientOptions = null;
 		if (mostRelevantFromOfficeId != null) {
 			fromOffice = this.officeReadPlatformService
 					.retrieveOffice(mostRelevantFromOfficeId);
 			fromOfficeOptions = this.officeReadPlatformService
 					.retrieveAllOfficesForDropdown();
-			fromClientOptions = this.clientReadPlatformService
-					.retrieveAllForLookupByOfficeId(mostRelevantFromOfficeId);
 		}
 
 		// defaults
@@ -222,7 +219,7 @@ public class AccountTransfersReadPlatformServiceImpl implements
 		return AccountTransferData.template(fromOffice, fromClient,
 				fromAccountTypeData, fromAccount, transferDate, toOffice,
 				toClient, toAccountTypeData, toAccount, fromOfficeOptions,
-				fromClientOptions, fromAccountTypeOptions, fromAccountOptions,
+				null, fromAccountTypeOptions, fromAccountOptions,
 				toOfficeOptions, toClientOptions, toAccountTypeOptions,
 				toAccountOptions);
 	}

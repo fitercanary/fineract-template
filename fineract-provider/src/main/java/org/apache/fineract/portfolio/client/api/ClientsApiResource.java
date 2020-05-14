@@ -31,6 +31,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -445,21 +446,13 @@ public class ClientsApiResource {
     @Path("{clientId}/currentdailylimits")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
+    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId) {
         
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
-        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-
-        /*BigDecimal withdrawLimit = this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(clientId, LocalDate.now());
-        ClientData clientData =  new ClientData(clientId, withdrawLimit, BigDecimal.ZERO, BigDecimal.ZERO);
-                //this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(clientId, LocalDate.now());
-                //new ClientData(clientId, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);*/
-        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(clientId, LocalDate.now());
+        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentValidationLimitsOnDate(clientId, DateUtils.getLocalDateOfTenant());
         
         return this.toApiJsonSerializer.serialize(limitData);
-
-        //return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
         
     }
 }

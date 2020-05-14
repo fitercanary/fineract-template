@@ -288,13 +288,13 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     
     @Transactional
     @Override
-    public ValidationLimitData getCurrentWithdrawLimitOnDate(Long clientId, LocalDate transactionDate) {
+    public ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate) {
 
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
         
         BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(clientId, transactionDate, BigDecimal.ZERO);
         
-        BigDecimal  cumulativeBalanceOnDate = getCumulativeBalanceOnDate(clientId,  BigDecimal.ZERO);
+        BigDecimal  cumulativeBalanceOnDate = this.getCumulativeBalanceOnDate(clientId);
         
         ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
         
@@ -316,9 +316,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         
     }
     
-    private BigDecimal getCumulativeBalanceOnDate(Long clientId,  BigDecimal transactionAmount) {
+    private BigDecimal getCumulativeBalanceOnDate(Long clientId) {
 
-        BigDecimal balance = transactionAmount;
+        BigDecimal balance = BigDecimal.ZERO;
         for (SavingsAccount account : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
             balance = account.getSummary().getAccountBalance() != null ? 
                     account.getSummary().getAccountBalance().add(balance) : BigDecimal.ZERO;

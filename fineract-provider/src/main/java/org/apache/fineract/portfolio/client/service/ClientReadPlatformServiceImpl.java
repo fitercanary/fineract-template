@@ -1018,20 +1018,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByStatus(status);
         if (referralStatuses.isEmpty()) { return new ArrayList<>(); }
         return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
-    }
-
-    @Override
-    public ClientData retrieveClientDailyLimits(Long clientId) {
-        ClientData clientData = null;
-        //Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
-        
-        //BigDecimal currentWithdrawLimit = this.savingsAccountDomainService.getCurrentWithdrawLimitOnDate(client, LocalDate.now());
-        
-        //clientData = new ClientData(clientId, currentWithdrawLimit, BigDecimal.ZERO, BigDecimal.ZERO);
-        //clientData = new ClientData(id, currentWithdrawLimit, maximumTransactionLimit, singleDepositLimit)
-        
-        return clientData;
-    }
-    
+    }  
     
 }

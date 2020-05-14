@@ -267,6 +267,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         public SavingAccountMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
             sqlBuilder.append("sa.id as id, sa.account_no as accountNo, sa.external_id as externalId, ");
+            sqlBuilder.append("sa.nickname as nickname, ");
             sqlBuilder.append("sa.deposit_type_enum as depositType, ");
             sqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
             sqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
@@ -393,6 +394,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final String groupName = rs.getString("groupName");
             final Long clientId = JdbcSupport.getLong(rs, "clientId");
             final String clientName = rs.getString("clientName");
+
+            final String nickname = rs.getString("nickname");
 
             final Long productId = rs.getLong("productId");
             final String productName = rs.getString("productName");
@@ -600,7 +603,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation,
                     onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate,
                     overdraftClosedOnDate, withHoldTax, taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive,
-                    daysToDormancy, daysToEscheat, onHoldAmount, blockNarration);
+                    daysToDormancy, daysToEscheat, onHoldAmount, blockNarration, nickname);
         }
     }
 
@@ -1368,6 +1371,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final Integer daysToInactive = null;
             final Integer daysToDormancy = null;
             final Integer daysToEscheat = null;
+            final String nickname = null;
 
             final SavingsAccountApplicationTimelineData timeline = SavingsAccountApplicationTimelineData.templateDefault();
             final EnumOptionData depositType = null;
@@ -1378,7 +1382,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation,
                     onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, withHoldTax,
                     taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,
-                    savingsAmountOnHold);
+                    savingsAmountOnHold, nickname);
         }
     }
 

@@ -18,31 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountNoParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.clientIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.enforceMinRequiredBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.externalIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.fieldOfficerIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.groupIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minRequiredBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minRequiredOpeningBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.productIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
@@ -77,6 +52,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonElement;
+
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.*;
 
 @Service
 public class SavingsAccountAssembler {
@@ -121,6 +98,7 @@ public class SavingsAccountAssembler {
         final String accountNo = this.fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
         final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
         final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
+        final String nickname = this.fromApiJsonHelper.extractStringNamed(nicknameParamName, element);
 
         final SavingsProduct product = this.savingProductRepository.findOne(productId);
         if (product == null) { throw new SavingsProductNotFoundException(productId); }
@@ -286,7 +264,7 @@ public class SavingsAccountAssembler {
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges, allowOverdraft,
                 overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, nominalAnnualInterestRateOverdraft,
-                minOverdraftForInterestCalculation, withHoldTax);
+                minOverdraftForInterestCalculation, withHoldTax, nickname);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME);
@@ -344,7 +322,7 @@ public class SavingsAccountAssembler {
                 product.minRequiredOpeningBalance(), product.lockinPeriodFrequency(), product.lockinPeriodFrequencyType(),
                 product.isWithdrawalFeeApplicableForTransfer(), charges, product.isAllowOverdraft(), product.overdraftLimit(),
                 product.isMinRequiredBalanceEnforced(), product.minRequiredBalance(), product.nominalAnnualInterestRateOverdraft(),
-                product.minOverdraftForInterestCalculation(), product.withHoldTax());
+                product.minOverdraftForInterestCalculation(), product.withHoldTax(), null);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME);

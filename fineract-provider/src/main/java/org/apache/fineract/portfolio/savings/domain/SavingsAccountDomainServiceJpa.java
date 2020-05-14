@@ -293,25 +293,36 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
         
         BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(clientId, transactionDate, BigDecimal.ZERO);
-        for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(client.getId())) {
-            for (SavingsAccountTransaction tran : acc.getTransactions()) {
-                if (!tran.isReversed() && tran.isWithdrawal() && tran.getTransactionLocalDate().isEqual(transactionDate)) {
-                    totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
-                }
-            }
-        }
+        
+        BigDecimal  cumulativeBalanceOnDate = getCumulativeBalanceOnDate(clientId,  BigDecimal.ZERO);
         
         ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-        //validationLimit.getMaximumDailyTransactionAmountLimit()
-        if(validationLimit != null && validationLimit.getMaximumDailyTransactionAmountLimit() != null) {
+        
+        
+        if(validationLimit != null ) {
 
-            totalWithdrawOnDate = validationLimit.getMaximumDailyTransactionAmountLimit().subtract(totalWithdrawOnDate);
-            
-
+            totalWithdrawOnDate = validationLimit.getMaximumDailyTransactionAmountLimit() != null ?
+                    validationLimit.getMaximumDailyTransactionAmountLimit().subtract(totalWithdrawOnDate) : null;
+                    
+            cumulativeBalanceOnDate = validationLimit.getMaximumCumulativeBalance() != null ?
+                    validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
+                    
             return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), 
-                    validationLimit.getMaximumCumulativeBalance(), validationLimit.getMaximumTransactionLimit(), totalWithdrawOnDate, null);
+                            cumulativeBalanceOnDate, validationLimit.getMaximumTransactionLimit(), totalWithdrawOnDate, null);
         }
         
         return null;
+        
+        
+    }
+    
+    private BigDecimal getCumulativeBalanceOnDate(Long clientId,  BigDecimal transactionAmount) {
+
+        BigDecimal balance = transactionAmount;
+        for (SavingsAccount account : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
+            balance = account.getSummary().getAccountBalance() != null ? 
+                    account.getSummary().getAccountBalance().add(balance) : BigDecimal.ZERO;
+        }
+        return balance;
     }
 }

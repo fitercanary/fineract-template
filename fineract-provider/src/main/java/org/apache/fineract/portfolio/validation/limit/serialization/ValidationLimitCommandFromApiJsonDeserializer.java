@@ -85,13 +85,13 @@ public final class ValidationLimitCommandFromApiJsonDeserializer {
                 .positiveAmount();
 
         final BigDecimal maximumTransactionLimit = this.fromApiJsonHelper
-                .extractBigDecimalWithLocaleNamed(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT, element.getAsJsonObject());
-        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT).value(maximumTransactionLimit)
+                .extractBigDecimalWithLocaleNamed(ValidationLimitApiConstants.MAXIMUM_SINGLE_WITHDRAW_LIMIT, element.getAsJsonObject());
+        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_SINGLE_WITHDRAW_LIMIT).value(maximumTransactionLimit)
                 .positiveAmount();
 
         final BigDecimal maximumDailyTransactionAmountLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, element.getAsJsonObject());
-        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT)
+                ValidationLimitApiConstants.MAXIMUM_DAILY_WITHDRAW_LIMIT, element.getAsJsonObject());
+        baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_DAILY_WITHDRAW_LIMIT)
                 .value(maximumDailyTransactionAmountLimit).positiveAmount();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -133,17 +133,17 @@ public final class ValidationLimitCommandFromApiJsonDeserializer {
                     .value(maximumCumulativeBalance).positiveAmount();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_SINGLE_WITHDRAW_LIMIT, element)) {
             final BigDecimal maximumTransactionLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT, element.getAsJsonObject());
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_TRANSACTION_LIMIT).value(maximumTransactionLimit)
+                    ValidationLimitApiConstants.MAXIMUM_SINGLE_WITHDRAW_LIMIT, element.getAsJsonObject());
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_SINGLE_WITHDRAW_LIMIT).value(maximumTransactionLimit)
                     .positiveAmount();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, element)) {
+        if (this.fromApiJsonHelper.parameterExists(ValidationLimitApiConstants.MAXIMUM_DAILY_WITHDRAW_LIMIT, element)) {
             final BigDecimal maximumDailyTransactionAmountLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT, element.getAsJsonObject());
-            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_DAILY_TRANSACTION_AMOUNT_LIMIT)
+                    ValidationLimitApiConstants.MAXIMUM_DAILY_WITHDRAW_LIMIT, element.getAsJsonObject());
+            baseDataValidator.reset().parameter(ValidationLimitApiConstants.MAXIMUM_DAILY_WITHDRAW_LIMIT)
                     .value(maximumDailyTransactionAmountLimit).positiveAmount();
         }
 

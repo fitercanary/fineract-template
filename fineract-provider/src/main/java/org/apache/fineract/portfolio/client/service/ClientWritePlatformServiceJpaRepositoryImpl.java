@@ -442,14 +442,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     }
 
     private void validateDailyMaximumTransactionLimit(Client client) {
-        if (client.getMaximumTransactionLimit() != null) {
+        if (client.getSingleWithdrawLimit() != null) {
             final String errorCode = "maximum.transaction.limit.cannot.exceed.global.limit";
             final String defaultMessage = "Maximum transaction limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
             if (validationLimit != null && !validationLimit.isOverridable()) {
-                if (client.getMaximumTransactionLimit().compareTo(validationLimit.getMaximumTransactionLimit()) > 0) {
-                    this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.maximumTransactionLimit,
-                            client.getMaximumTransactionLimit());
+                if (client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumTransactionLimit()) > 0) {
+                    this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.singleWithdrawLimit,
+                            client.getSingleWithdrawLimit());
                 }
             }
         }
@@ -598,7 +598,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 this.validateDailyWithdrawLimit(clientForUpdate);
             }
 
-            if (changes.containsKey(ClientApiConstants.maximumTransactionLimit) || changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
+            if (changes.containsKey(ClientApiConstants.singleWithdrawLimit) || changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
                 this.validateDailyMaximumTransactionLimit(clientForUpdate);
             }
 

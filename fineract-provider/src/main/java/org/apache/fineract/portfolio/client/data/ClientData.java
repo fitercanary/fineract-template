@@ -124,7 +124,7 @@ final public class ClientData implements Comparable<ClientData> {
     private Long legalFormId;
     private LocalDate submittedOnDate;
     private final BigDecimal dailyWithdrawLimit;
-    private final BigDecimal maximumTransactionLimit;
+    private final BigDecimal singleWithdrawLimit;
     private final BigDecimal singleDepositLimit;
 
     public static ClientData importClientEntityInstance(Long legalFormId, Integer rowIndex, String fullname, Long officeId,
@@ -214,7 +214,7 @@ final public class ClientData implements Comparable<ClientData> {
         this.familyMemberOptions = null;
         this.emailAddress = null;
         this.dailyWithdrawLimit = null;
-        this.maximumTransactionLimit = null;
+        this.singleWithdrawLimit = null;
         this.singleDepositLimit  = null;
     }
 
@@ -300,7 +300,7 @@ final public class ClientData implements Comparable<ClientData> {
                 templateData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, templateData.clientLegalFormOptions,
                 templateData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
                 clientData.isStaff, templateData.clientLevelOptions, clientData.clientLevel,
-                clientData.dailyWithdrawLimit, clientData.maximumTransactionLimit);
+                clientData.dailyWithdrawLimit, clientData.singleWithdrawLimit);
 
     }
 
@@ -319,7 +319,7 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, clientData.clientLegalFormOptions,
                 clientData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
                 clientData.isStaff, clientData.clientLevelOptions, clientData.clientLevel,
-                clientData.dailyWithdrawLimit, clientData.maximumTransactionLimit);
+                clientData.dailyWithdrawLimit, clientData.singleWithdrawLimit);
 
     }
 
@@ -335,7 +335,7 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientNonPersonConstitutionOptions, clientData.clientNonPersonMainBusinessLineOptions,
                 clientData.clientNonPersonDetails, clientData.clientLegalFormOptions, clientData.familyMemberOptions, clientData.legalForm,
                 clientData.address, clientData.isAddressEnabled, null, clientData.isStaff,
-                clientData.clientLevelOptions, clientData.clientLevel, clientData.dailyWithdrawLimit, clientData.maximumTransactionLimit);
+                clientData.clientLevelOptions, clientData.clientLevel, clientData.dailyWithdrawLimit, clientData.singleWithdrawLimit);
 
     }
 
@@ -458,7 +458,7 @@ final public class ClientData implements Comparable<ClientData> {
             final String staffName, final ClientTimelineData timeline, final Long savingsProductId, final String savingsProductName,
             final Long savingsAccountId, final CodeValueData clientType, final CodeValueData clientClassification,
             final EnumOptionData legalForm, final ClientNonPersonData clientNonPerson, final Boolean isStaff,
-            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit) {
+            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit) {
 
         final Collection<OfficeData> allowedOffices = null;
         final Collection<GroupGeneralData> groups = null;
@@ -479,7 +479,7 @@ final public class ClientData implements Comparable<ClientData> {
                 savingProductOptions, savingsProductId, savingsProductName, savingsAccountId, null, clientType, clientClassification,
                 clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions,
                 clientNonPerson, clientLegalFormOptions, familyMemberOptions, legalForm, null, null, null, isStaff,
-                clientLevelOptions, clientLevel, dailyWithdrawLimit, maximumTransactionLimit);
+                clientLevelOptions, clientLevel, dailyWithdrawLimit, singleWithdrawLimit);
 
     }
 
@@ -499,7 +499,7 @@ final public class ClientData implements Comparable<ClientData> {
             final List<EnumOptionData> clientLegalFormOptions, final ClientFamilyMembersData familyMemberOptions,
             final EnumOptionData legalForm, final AddressData address, final Boolean isAddressEnabled, final List<DatatableData> datatables,
             final Boolean isStaff, final List<CodeValueData> clientLevelOptions,
-            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit) {
+            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumSingleWithdrawLimit) {
 
         this.accountNo = accountNo;
         this.status = status;
@@ -570,7 +570,7 @@ final public class ClientData implements Comparable<ClientData> {
         this.isAddressEnabled = isAddressEnabled;
         this.datatables = datatables;
         this.dailyWithdrawLimit = dailyWithdrawLimit;
-        this.maximumTransactionLimit = maximumTransactionLimit;
+        this.singleWithdrawLimit = maximumSingleWithdrawLimit;
         this.singleDepositLimit = null;
     }
 
@@ -743,7 +743,7 @@ final public class ClientData implements Comparable<ClientData> {
         this.datatables = null;
         
         this.dailyWithdrawLimit = dailyWithdrawLimit;
-        this.maximumTransactionLimit = maximumTransactionLimit;
+        this.singleWithdrawLimit = maximumTransactionLimit;
         this.singleDepositLimit = singleDepositLimit;
     }
 }

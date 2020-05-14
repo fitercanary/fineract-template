@@ -269,7 +269,7 @@ public class SavingsAccountTransactionDataValidator {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
         BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit();
-        BigDecimal maximumTransactionLimit = client.getMaximumTransactionLimit();
+        BigDecimal maximumTransactionLimit = client.getSingleWithdrawLimit();
         if (BigDecimal.ZERO.equals(dailyWithdrawLimit) || BigDecimal.ZERO.equals(maximumTransactionLimit)) {
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
             if (validationLimit != null) {

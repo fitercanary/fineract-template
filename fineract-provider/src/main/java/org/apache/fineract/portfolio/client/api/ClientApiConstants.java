@@ -195,7 +195,7 @@ public class ClientApiConstants {
 
     public static final String datatables = "datatables";
     public static final String dailyWithdrawLimit = "dailyWithdrawLimit";
-    public static String maximumTransactionLimit = "maximumTransactionLimit";
+    public static String singleWithdrawLimit = "singleWithdrawLimit";
     public static final String singleDepositLimit = "singleDepositLimit";
 
     /**
@@ -211,7 +211,7 @@ public class ClientApiConstants {
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
             dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName, legalFormParamName, 
             clientNonPersonDetailsParamName, isStaffParamName,mothersMaidenNameParamName, dailyWithdrawLimit, clientLevelIdParamName, 
-            maximumTransactionLimit, singleDepositLimit));
+            singleWithdrawLimit, singleDepositLimit));
 
     protected static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList
             (chargeIdParamName,

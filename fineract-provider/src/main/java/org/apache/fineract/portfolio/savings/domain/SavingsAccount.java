@@ -343,6 +343,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     @JoinColumn(name = "block_narration_id")
     private CodeValue blockNarration;
 
+    @Column(name = "nickname")
+    private String nickname;
+
     protected SavingsAccount() {
         //
     }
@@ -357,14 +360,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax) {
+            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final String nickname) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         return new SavingsAccount(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate,
                 submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, enforceMinRequiredBalance,
-                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax);
+                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, nickname);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -380,7 +383,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null,
-                withHoldTax);
+                withHoldTax, null);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff savingsOfficer,
@@ -393,11 +396,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, boolean withHoldTax) {
+            final BigDecimal minOverdraftForInterestCalculation, boolean withHoldTax, final String nickname) {
         this.client = client;
         this.group = group;
         this.product = product;
         this.savingsOfficer = savingsOfficer;
+        this.nickname = nickname;
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
             this.accountNumberRequiresAutoGeneration = true;
@@ -1414,6 +1418,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final String newValue = command.stringValueOfParameterNamed(SavingsApiConstants.accountNoParamName);
             actualChanges.put(SavingsApiConstants.accountNoParamName, newValue);
             this.accountNumber = StringUtils.defaultIfEmpty(newValue, null);
+        }
+
+        if (command.isChangeInStringParameterNamed(SavingsApiConstants.nicknameParamName, this.nickname)) {
+            final String newValue = command.stringValueOfParameterNamed(SavingsApiConstants.nicknameParamName);
+            actualChanges.put(SavingsApiConstants.nicknameParamName, newValue);
+            this.nickname = StringUtils.defaultIfEmpty(newValue, null);
         }
 
         if (command.isChangeInStringParameterNamed(SavingsApiConstants.externalIdParamName, this.externalId)) {
@@ -3617,5 +3627,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     
     public void update(final CodeValue blockNarration) {
         this.blockNarration = blockNarration;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 }

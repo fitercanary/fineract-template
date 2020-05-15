@@ -18,35 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.data;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountNoParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargesParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.clientIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.externalIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.feeIntervalParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.feeOnMonthDayParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.fieldOfficerIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.groupIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minRequiredOpeningBalanceParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftStartedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftClosedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.productIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
-
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -78,6 +49,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.*;
 
 @Component
 public class SavingsAccountDataValidator {
@@ -135,6 +108,11 @@ public class SavingsAccountDataValidator {
         if (this.fromApiJsonHelper.parameterExists(externalIdParamName, element)) {
             final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
             baseDataValidator.reset().parameter(externalIdParamName).value(externalId).notExceedingLengthOf(100);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(nicknameParamName, element)) {
+            final String nickname = this.fromApiJsonHelper.extractStringNamed(nicknameParamName, element);
+            baseDataValidator.reset().parameter(nicknameParamName).value(nickname).notExceedingLengthOf(100);
         }
 
         if (this.fromApiJsonHelper.parameterExists(nominalAnnualInterestRateParamName, element)) {
@@ -318,6 +296,11 @@ public class SavingsAccountDataValidator {
         if (this.fromApiJsonHelper.parameterExists(productIdParamName, element)) {
             final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
             baseDataValidator.reset().parameter(productIdParamName).value(productId).notNull().integerGreaterThanZero();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(nicknameParamName, element)) {
+            final String nickname = this.fromApiJsonHelper.extractStringNamed(nameParamName, element);
+            baseDataValidator.reset().parameter(nickname).value(nickname).ignoreIfNull();
         }
 
         if (this.fromApiJsonHelper.parameterExists(fieldOfficerIdParamName, element)) {

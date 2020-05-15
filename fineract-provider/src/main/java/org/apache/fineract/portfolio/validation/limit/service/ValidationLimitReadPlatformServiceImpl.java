@@ -94,7 +94,7 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
         public String validationLimitSchema() {
             return "v.id as id , v.client_level_cv_id as clientLevelId, cvclientlevel.code_value as clientLevelValue, v.maximum_single_deposit_amount as maximumSingleDepositAmount, "
                     + "v.maximum_cumulative_balance as maximumCumulativeBalance, "
-                    + "v.maximum_transaction_limit as maximumTransactionLimit, v.maximum_daily_transaction_amount_limit as maximumDailyTransactionAmountLimit, overridable "
+                    + "v.maximum_transaction_limit as maximumSingleWithdrawLimit, v.maximum_daily_transaction_amount_limit as maximumDailyWithdrawLimit, overridable "
                     + "from m_validation_limits v "
                     + "left join m_code_value cvclientlevel on cvclientlevel.id = v.client_level_cv_id ";
 
@@ -106,15 +106,15 @@ public class ValidationLimitReadPlatformServiceImpl implements ValidationLimitRe
 
             final BigDecimal maximumSingleDepositAmount = rs.getBigDecimal("maximumSingleDepositAmount");
             final BigDecimal maximumCumulativeBalance = rs.getBigDecimal("maximumCumulativeBalance");
-            final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
-            final BigDecimal maximumDailyTransactionAmountLimit = rs.getBigDecimal("maximumDailyTransactionAmountLimit");
+            final BigDecimal maximumSingleWithdrawLimit = rs.getBigDecimal("maximumSingleWithdrawLimit");
+            final BigDecimal maximumDailyWithdrawLimit = rs.getBigDecimal("maximumDailyWithdrawLimit");
             final Boolean overridable = rs.getBoolean("overridable");
             final Long clientLevelId = rs.getLong("clientLevelId");
             final String clientLevelValue = rs.getString("clientLevelValue");
             final CodeValueData clientLevel = CodeValueData.instance(clientLevelId, clientLevelValue);
 
             return ValidationLimitData.instance(id, clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance,
-                    maximumTransactionLimit, maximumDailyTransactionAmountLimit, overridable);
+                    maximumSingleWithdrawLimit, maximumDailyWithdrawLimit, overridable);
         }
     }
 }

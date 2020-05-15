@@ -254,7 +254,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
     private BigDecimal dailyWithdrawLimit;
 
     @Column(name = "max_transaction_limit")
-    private BigDecimal maximumTransactionLimit;
+    private BigDecimal singleWithdrawLimit;
 
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
@@ -298,11 +298,11 @@ public final class Client extends AbstractPersistableCustom<Long> {
         }
         final Long savingsAccountId = null;
         final BigDecimal dailyWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
-        final BigDecimal maximumTransactionLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.maximumTransactionLimit);
+        final BigDecimal singleWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.singleWithdrawLimit);
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
                 activationDate, officeJoiningDate, externalId, mobileNo, mothersMaidenName, emailAddress, staff, submittedOnDate,
                 savingsProductId, savingsAccountId, dataOfBirth, gender, clientType, clientClassification, legalForm, isStaff, clientLevel,
-                dailyWithdrawLimit, maximumTransactionLimit);
+                dailyWithdrawLimit, singleWithdrawLimit);
     }
 
     protected Client() {
@@ -315,7 +315,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
             final String mothersMaidenName, final String emailAddress, final Staff staff, final LocalDate submittedOnDate,
             final Long savingsProductId, final Long savingsAccountId, final LocalDate dateOfBirth, final CodeValue gender,
             final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff,
-            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit) {
+            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -403,7 +403,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
         this.clientType = clientType;
         this.clientClassification = clientClassification;
         this.dailyWithdrawLimit = dailyWithdrawLimit;
-        this.maximumTransactionLimit = maximumTransactionLimit;
+        this.singleWithdrawLimit = singleWithdrawLimit;
         this.setLegalForm(legalForm);
 
         deriveDisplayName();
@@ -688,10 +688,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
             this.dailyWithdrawLimit = newValue;
         }
 
-        if (command.isChangeInBigDecimalParameterNamed(ClientApiConstants.maximumTransactionLimit, this.maximumTransactionLimit)) {
-            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(ClientApiConstants.maximumTransactionLimit);
-            actualChanges.put(ClientApiConstants.maximumTransactionLimit, newValue);
-            this.maximumTransactionLimit = newValue;
+        if (command.isChangeInBigDecimalParameterNamed(ClientApiConstants.singleWithdrawLimit, this.singleWithdrawLimit)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(ClientApiConstants.singleWithdrawLimit);
+            actualChanges.put(ClientApiConstants.singleWithdrawLimit, newValue);
+            this.singleWithdrawLimit = newValue;
         }
 
 
@@ -1183,10 +1183,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
         return this.dailyWithdrawLimit;
     }
 
-    public BigDecimal getMaximumTransactionLimit() {
-        if (this.maximumTransactionLimit == null) {
+    public BigDecimal getSingleWithdrawLimit() {
+        if (this.singleWithdrawLimit == null) {
             return BigDecimal.ZERO;
         }
-        return this.maximumTransactionLimit;
+        return this.singleWithdrawLimit;
     }
 }

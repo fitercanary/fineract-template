@@ -25,6 +25,9 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.portfolio.client.domain.Client;
+import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
+import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.apache.fineract.portfolio.common.service.BusinessEventNotifierService;
@@ -34,6 +37,10 @@ import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountDoesNotBelongToClientException;
+import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
@@ -63,6 +70,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final BusinessEventNotifierService businessEventNotifierService;
     private final SavingsAccountAssembler savingAccountAssembler;
     private final SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator;
+    private final ClientRepositoryWrapper clientRepositoryWrapper;
+    private final ValidationLimitRepository validationLimitRepository;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -72,7 +81,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
                                           final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
                                           final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
                                           final BusinessEventNotifierService businessEventNotifierService,
-                                          final SavingsAccountAssembler savingAccountAssembler, SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator) {
+                                          final SavingsAccountAssembler savingAccountAssembler, SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
+                                          final ClientRepositoryWrapper clientRepositoryWrapper,
+                                          final ValidationLimitRepository validationLimitRepository) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -83,6 +94,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.businessEventNotifierService = businessEventNotifierService;
         this.savingAccountAssembler = savingAccountAssembler;
         this.savingsAccountTransactionDataValidator = savingsAccountTransactionDataValidator;
+        this.clientRepositoryWrapper = clientRepositoryWrapper;
+        this.validationLimitRepository = validationLimitRepository;
     }
 
     @Transactional
@@ -100,7 +113,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
         if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotTransferToOtherAccount) {
-            BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(account, transactionDate, transactionAmount);
+            BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(account.clientId(), transactionDate, transactionAmount);
             this.savingsAccountTransactionDataValidator.validateWithdrawLimits(account.getClient(), transactionAmount, totalWithdrawOnDate);
         }
 
@@ -242,10 +255,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         existingReversedTransactionIds.addAll(account.findExistingReversedTransactionIds());
     }
 
-    private BigDecimal getTotalWithdrawAmountOnDate(SavingsAccount account, LocalDate transactionDate, BigDecimal transactionAmount) {
+    private BigDecimal getTotalWithdrawAmountOnDate(Long clientId, LocalDate transactionDate, BigDecimal transactionAmount) {
 
         BigDecimal totalWithdrawOnDate = transactionAmount;
-        for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(account.clientId())) {
+        for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
             for (SavingsAccountTransaction tran : acc.getTransactions()) {
                 if (!tran.isReversed() && tran.isWithdrawal() && tran.getTransactionLocalDate().isEqual(transactionDate)) {
                     totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
@@ -272,5 +285,69 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         Map<BUSINESS_ENTITY, Object> map = new HashMap<>(1);
         map.put(BUSINESS_ENTITY.SAVINGS_TRANSACTION, entity);
         return map;
+    }
+    
+    @Transactional
+    @Override
+    public ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate, Long savingsAccountId) {
+        
+        Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+        
+        SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsAccountId);
+        
+        // verify account belongs to client
+        if(account.clientId().compareTo(client.getId()) != 0) {
+            throw new SavingsAccountDoesNotBelongToClientException(savingsAccountId, clientId);
+        }
+               
+        BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(clientId, transactionDate, BigDecimal.ZERO);
+        
+        BigDecimal  cumulativeBalanceOnDate = account.getAccountBalance();
+        
+        ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+        
+        
+        if(validationLimit != null ) {
+            
+            // Maximum Daily Withdraw Limit
+            BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit(); 
+            
+            if(BigDecimal.ZERO.equals(dailyWithdrawLimit)) {
+                totalWithdrawOnDate = validationLimit.getMaximumDailyWithdrawLimit() != null ?
+                        validationLimit.getMaximumDailyWithdrawLimit().subtract(totalWithdrawOnDate) : null;
+            }else {
+                totalWithdrawOnDate = dailyWithdrawLimit.subtract(totalWithdrawOnDate);
+            }
+            
+            // Cumulative Balance 
+            cumulativeBalanceOnDate = validationLimit.getMaximumCumulativeBalance() != null ?
+                        validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
+            
+            // Single Withdraw Limit
+            BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit(); 
+            
+            if( BigDecimal.ZERO.equals(singleWithdrawLimit)) {
+                singleWithdrawLimit = validationLimit.getMaximumSingleWithdrawLimit();
+            }
+                    
+            return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), 
+                            cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate, null);
+        }
+        
+        return null;
+        
+        
+    }
+    
+    @SuppressWarnings("unused")
+    private BigDecimal getCumulativeBalanceOnDate(Long clientId) {
+
+        BigDecimal balance = BigDecimal.ZERO;
+        for (SavingsAccount account : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
+            
+            BigDecimal accountBalance = account.getSummary().getAccountBalance() != null ? account.getSummary().getAccountBalance() : BigDecimal.ZERO;
+            balance = balance.add(accountBalance);
+        }
+        return balance;
     }
 }

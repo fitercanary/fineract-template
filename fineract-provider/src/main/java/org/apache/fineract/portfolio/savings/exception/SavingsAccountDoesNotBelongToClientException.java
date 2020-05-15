@@ -16,16 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.validation.limit.api;
+package org.apache.fineract.portfolio.savings.exception;
 
-public class ValidationLimitApiConstants {
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-    public static final String ID = "id";
-    public static final String CLIENT_LEVEL_ID = "clientLevelId";
-    public static final String MAXIMUM_SINGLE_DEPOSIT_AMOUNT = "maximumSingleDepositAmount";
-    public static final String MAXIMUM_CUMULATIVE_BALANCE = "maximumCumulativeBalance";
-    public static final String MAXIMUM_DAILY_WITHDRAW_LIMIT = "maximumDailyWithdrawLimit";
-    public static final String MAXIMUM_SINGLE_WITHDRAW_LIMIT = "maximumSingleWithdrawLimit";
-    public static final String LOCALE = "locale";
-    public static final String OVERRIDABLE = "overridable";
+public class SavingsAccountDoesNotBelongToClientException extends AbstractPlatformResourceNotFoundException {
+
+    public SavingsAccountDoesNotBelongToClientException(final Long savingsAccountId, final Long clientId) {
+        super("error.msg.saving.account.does.not.belong.to.client", "Saving account with identifier " + savingsAccountId + " does not belong to client with identifier " + clientId, savingsAccountId, clientId);
+    }
 }

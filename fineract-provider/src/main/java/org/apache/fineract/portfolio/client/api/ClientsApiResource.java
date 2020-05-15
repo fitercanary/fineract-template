@@ -31,6 +31,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -41,7 +42,11 @@ import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.validation.limit.api.ValidationLimitApiCollectionConstants;
+import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,6 +66,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -83,6 +89,7 @@ public class ClientsApiResource {
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
+    private final SavingsAccountDomainService savingsAccountDomainService;
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
@@ -93,7 +100,8 @@ public class ClientsApiResource {
                               final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
                               final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
                               final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-                              final BulkImportWorkbookService bulkImportWorkbookService) {
+                              final BulkImportWorkbookService bulkImportWorkbookService,
+                              final SavingsAccountDomainService savingsAccountDomainService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -106,6 +114,7 @@ public class ClientsApiResource {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.bulkImportWorkbookService = bulkImportWorkbookService;
+        this.savingsAccountDomainService = savingsAccountDomainService;
     }
 
     @GET
@@ -431,5 +440,19 @@ public class ClientsApiResource {
             @FormDataParam("dateFormat") final String dateFormat){
         final Long importDocumentId = bulkImportWorkbookService.importWorkbook(legalFormType, uploadedInputStream,fileDetail,locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+    
+    @GET
+    @Path("{clientId}/currentdailylimits/{savingsAccountId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId, @PathParam("savingsAccountId") final Long savingAccountId) {
+        
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentValidationLimitsOnDate(clientId, DateUtils.getLocalDateOfTenant(), savingAccountId);
+        
+        return this.toApiJsonSerializer.serialize(limitData);
+        
     }
 }

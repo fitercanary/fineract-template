@@ -68,6 +68,7 @@ import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -77,6 +78,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 
 @Service
 public class ClientReadPlatformServiceImpl implements ClientReadPlatformService {
@@ -102,6 +104,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ColumnValidator columnValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ReferralStatusRepository referralStatusRepository;
+    
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -678,7 +681,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
             builder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
-            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as maximumTransactionLimit ");
+            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as singleWithdrawLimit ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
             builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
@@ -789,7 +792,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
             final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
-            final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
+            final BigDecimal singleWithdrawLimit = rs.getBigDecimal("singleWithdrawLimit");
 
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
                     mainBusinessLine, remarks);
@@ -801,7 +804,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, maximumTransactionLimit);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, singleWithdrawLimit);
 
         }
     }
@@ -1015,5 +1018,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByStatus(status);
         if (referralStatuses.isEmpty()) { return new ArrayList<>(); }
         return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
-    }
+    }  
+    
 }

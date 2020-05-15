@@ -124,7 +124,8 @@ final public class ClientData implements Comparable<ClientData> {
     private Long legalFormId;
     private LocalDate submittedOnDate;
     private final BigDecimal dailyWithdrawLimit;
-    private final BigDecimal maximumTransactionLimit;
+    private final BigDecimal singleWithdrawLimit;
+    private final BigDecimal singleDepositLimit;
 
     public static ClientData importClientEntityInstance(Long legalFormId, Integer rowIndex, String fullname, Long officeId,
             Long clientTypeId, Long clientClassificationId, Long staffId, Boolean active, LocalDate activationDate,
@@ -213,7 +214,8 @@ final public class ClientData implements Comparable<ClientData> {
         this.familyMemberOptions = null;
         this.emailAddress = null;
         this.dailyWithdrawLimit = null;
-        this.maximumTransactionLimit = null;
+        this.singleWithdrawLimit = null;
+        this.singleDepositLimit  = null;
     }
 
     public Integer getRowIndex() {
@@ -298,7 +300,7 @@ final public class ClientData implements Comparable<ClientData> {
                 templateData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, templateData.clientLegalFormOptions,
                 templateData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
                 clientData.isStaff, templateData.clientLevelOptions, clientData.clientLevel,
-                clientData.dailyWithdrawLimit, clientData.maximumTransactionLimit);
+                clientData.dailyWithdrawLimit, clientData.singleWithdrawLimit);
 
     }
 
@@ -317,7 +319,7 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, clientData.clientLegalFormOptions,
                 clientData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
                 clientData.isStaff, clientData.clientLevelOptions, clientData.clientLevel,
-                clientData.dailyWithdrawLimit, clientData.maximumTransactionLimit);
+                clientData.dailyWithdrawLimit, clientData.singleWithdrawLimit);
 
     }
 
@@ -333,7 +335,7 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientNonPersonConstitutionOptions, clientData.clientNonPersonMainBusinessLineOptions,
                 clientData.clientNonPersonDetails, clientData.clientLegalFormOptions, clientData.familyMemberOptions, clientData.legalForm,
                 clientData.address, clientData.isAddressEnabled, null, clientData.isStaff,
-                clientData.clientLevelOptions, clientData.clientLevel, clientData.dailyWithdrawLimit, clientData.maximumTransactionLimit);
+                clientData.clientLevelOptions, clientData.clientLevel, clientData.dailyWithdrawLimit, clientData.singleWithdrawLimit);
 
     }
 
@@ -456,7 +458,7 @@ final public class ClientData implements Comparable<ClientData> {
             final String staffName, final ClientTimelineData timeline, final Long savingsProductId, final String savingsProductName,
             final Long savingsAccountId, final CodeValueData clientType, final CodeValueData clientClassification,
             final EnumOptionData legalForm, final ClientNonPersonData clientNonPerson, final Boolean isStaff,
-            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit) {
+            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit) {
 
         final Collection<OfficeData> allowedOffices = null;
         final Collection<GroupGeneralData> groups = null;
@@ -477,7 +479,7 @@ final public class ClientData implements Comparable<ClientData> {
                 savingProductOptions, savingsProductId, savingsProductName, savingsAccountId, null, clientType, clientClassification,
                 clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions,
                 clientNonPerson, clientLegalFormOptions, familyMemberOptions, legalForm, null, null, null, isStaff,
-                clientLevelOptions, clientLevel, dailyWithdrawLimit, maximumTransactionLimit);
+                clientLevelOptions, clientLevel, dailyWithdrawLimit, singleWithdrawLimit);
 
     }
 
@@ -497,7 +499,7 @@ final public class ClientData implements Comparable<ClientData> {
             final List<EnumOptionData> clientLegalFormOptions, final ClientFamilyMembersData familyMemberOptions,
             final EnumOptionData legalForm, final AddressData address, final Boolean isAddressEnabled, final List<DatatableData> datatables,
             final Boolean isStaff, final List<CodeValueData> clientLevelOptions,
-            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit) {
+            final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal maximumSingleWithdrawLimit) {
 
         this.accountNo = accountNo;
         this.status = status;
@@ -568,7 +570,8 @@ final public class ClientData implements Comparable<ClientData> {
         this.isAddressEnabled = isAddressEnabled;
         this.datatables = datatables;
         this.dailyWithdrawLimit = dailyWithdrawLimit;
-        this.maximumTransactionLimit = maximumTransactionLimit;
+        this.singleWithdrawLimit = maximumSingleWithdrawLimit;
+        this.singleDepositLimit = null;
     }
 
     public Long id() {
@@ -670,5 +673,77 @@ final public class ClientData implements Comparable<ClientData> {
 
     public void setReferrals(List<ReferralStatusData> referrals) {
         this.referrals = referrals;
+    }
+    
+    public ClientData(final Long id,final BigDecimal dailyWithdrawLimit, final BigDecimal maximumTransactionLimit, 
+            final BigDecimal singleDepositLimit) {
+        this.accountNo = null;
+        this.status = null;
+        if (status != null) {
+            this.active = status.getId().equals(300L);
+        } else {
+            this.active = null;
+        }
+        this.subStatus = null;
+        this.officeId = null;
+        this.officeName = null;
+        this.transferToOfficeId = null;
+        this.transferToOfficeName = null;
+        this.id = id;
+        this.firstname = null;
+        this.middlename = null;
+        this.lastname = null;
+        this.fullname = null;
+        this.displayName = null;
+        this.externalId = null;
+        this.mobileNo = null;
+        this.mothersMaidenName = null;
+        this.emailAddress = null;
+        this.activationDate = null;
+        this.dateOfBirth = null;
+        this.gender = null;
+        this.clientClassification = null;
+        this.clientType = null;
+        this.imageId = null;
+        this.imagePresent = null;
+        this.staffId = null;
+        this.staffName = null;
+
+        // associations
+        this.groups = null;
+
+        // template
+        this.officeOptions = null;
+        this.staffOptions = null;
+        this.narrations = null;
+
+        this.genderOptions = null;
+        this.clientClassificationOptions = null;
+        this.clientTypeOptions = null;
+
+        this.clientNonPersonConstitutionOptions = null;
+        this.clientNonPersonMainBusinessLineOptions = null;
+        this.clientLegalFormOptions = null;
+        this.clientLevelOptions = null;
+        this.familyMemberOptions = null;
+
+        this.timeline = null;
+        this.savingProductOptions = null;
+        this.savingsProductId = null;
+        this.savingsProductName = null;
+        this.savingsAccountId = null;
+        this.savingAccountOptions = null;
+        this.legalForm = null;
+        this.clientLevel = null;
+        this.isStaff = null;
+        this.clientNonPersonDetails = null;
+
+        this.address = null;
+        this.isAddressEnabled = null;
+        this.datatables = null;
+        
+        this.dailyWithdrawLimit = dailyWithdrawLimit;
+        this.singleWithdrawLimit = maximumTransactionLimit;
+        this.singleDepositLimit = singleDepositLimit;
     }
 }

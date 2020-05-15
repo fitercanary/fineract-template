@@ -27,7 +27,6 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepos
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
-import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.apache.fineract.portfolio.common.service.BusinessEventNotifierService;
@@ -259,9 +258,13 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         BigDecimal totalWithdrawOnDate = transactionAmount;
         for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
-            for (SavingsAccountTransaction tran : acc.getTransactions()) {
-                if (!tran.isReversed() && tran.isWithdrawal() && tran.getTransactionLocalDate().isEqual(transactionDate)) {
-                    totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
+            if (acc.depositAccountType().isSavingsDeposit()) {
+                for (SavingsAccountTransaction tran : acc.getTransactions()) {
+                    if (!tran.isReversed() && tran.isWithdrawal() &&
+                            tran.getTransactionLocalDate().isEqual(transactionDate) &&
+                            !tran.getIsAccountTransfer()) {
+                        totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
+                    }
                 }
             }
         }

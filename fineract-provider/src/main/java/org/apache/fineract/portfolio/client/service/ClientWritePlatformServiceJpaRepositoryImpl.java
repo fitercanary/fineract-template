@@ -433,7 +433,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String defaultMessage = "Daily withdraw limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
             if (validationLimit != null && !validationLimit.isOverridable()) {
-                if (client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumDailyTransactionAmountLimit()) > 0) {
+                if (client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumDailyWithdrawLimit()) > 0) {
                     this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.dailyWithdrawLimit,
                             client.getDailyWithdrawLimit());
                 }
@@ -447,7 +447,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String defaultMessage = "Maximum transaction limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
             if (validationLimit != null && !validationLimit.isOverridable()) {
-                if (client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumTransactionLimit()) > 0) {
+                if (client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumSingleWithdrawLimit()) > 0) {
                     this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.singleWithdrawLimit,
                             client.getSingleWithdrawLimit());
                 }

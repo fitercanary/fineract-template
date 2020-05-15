@@ -95,11 +95,11 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
         return this.maximumCumulativeBalance;
     }
 
-    public BigDecimal getMaximumTransactionLimit() {
+    public BigDecimal getMaximumSingleWithdrawLimit() {
         return this.maximumSingleWithdrawLimit;
     }
 
-    public BigDecimal getMaximumDailyTransactionAmountLimit() {
+    public BigDecimal getMaximumDailyWithdrawLimit() {
         return this.maximumDailyWithdrawLimit;
     }
 

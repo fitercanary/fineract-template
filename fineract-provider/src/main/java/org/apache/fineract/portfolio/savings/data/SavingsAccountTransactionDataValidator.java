@@ -273,8 +273,8 @@ public class SavingsAccountTransactionDataValidator {
         if (BigDecimal.ZERO.equals(dailyWithdrawLimit) || BigDecimal.ZERO.equals(maximumTransactionLimit)) {
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
             if (validationLimit != null) {
-                dailyWithdrawLimit = BigDecimal.ZERO.equals(dailyWithdrawLimit) ? validationLimit.getMaximumDailyTransactionAmountLimit() : dailyWithdrawLimit;
-                maximumTransactionLimit = BigDecimal.ZERO.equals(maximumTransactionLimit) ? validationLimit.getMaximumTransactionLimit() : maximumTransactionLimit;
+                dailyWithdrawLimit = BigDecimal.ZERO.equals(dailyWithdrawLimit) ? validationLimit.getMaximumDailyWithdrawLimit() : dailyWithdrawLimit;
+                maximumTransactionLimit = BigDecimal.ZERO.equals(maximumTransactionLimit) ? validationLimit.getMaximumSingleWithdrawLimit() : maximumTransactionLimit;
             }
         }
         if (!BigDecimal.ZERO.equals(dailyWithdrawLimit) && dailyWithdrawLimit.compareTo(totalWithdrawnToday) < 0) {

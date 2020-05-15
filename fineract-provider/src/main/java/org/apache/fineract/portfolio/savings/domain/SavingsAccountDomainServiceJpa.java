@@ -300,15 +300,30 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         
         
         if(validationLimit != null ) {
-
-            totalWithdrawOnDate = validationLimit.getMaximumDailyTransactionAmountLimit() != null ?
-                    validationLimit.getMaximumDailyTransactionAmountLimit().subtract(totalWithdrawOnDate) : null;
-                    
+            
+            // Maximum Daily Withdraw Limit
+            BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit(); 
+            
+            if(BigDecimal.ZERO.equals(dailyWithdrawLimit)) {
+                totalWithdrawOnDate = validationLimit.getMaximumDailyWithdrawLimit() != null ?
+                        validationLimit.getMaximumDailyWithdrawLimit().subtract(totalWithdrawOnDate) : null;
+            }else {
+                totalWithdrawOnDate = dailyWithdrawLimit.subtract(totalWithdrawOnDate);
+            }
+            
+            // Cumulative Balance 
             cumulativeBalanceOnDate = validationLimit.getMaximumCumulativeBalance() != null ?
-                    validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
+                        validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
+            
+            // Single Withdraw Limit
+            BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit(); 
+            
+            if( BigDecimal.ZERO.equals(singleWithdrawLimit)) {
+                singleWithdrawLimit = validationLimit.getMaximumSingleWithdrawLimit();
+            }
                     
             return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), 
-                            cumulativeBalanceOnDate, validationLimit.getMaximumTransactionLimit(), totalWithdrawOnDate, null);
+                            cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate, null);
         }
         
         return null;
@@ -320,8 +335,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         BigDecimal balance = BigDecimal.ZERO;
         for (SavingsAccount account : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
-            balance = account.getSummary().getAccountBalance() != null ? 
-                    account.getSummary().getAccountBalance().add(balance) : BigDecimal.ZERO;
+            
+            BigDecimal accountBalance = account.getSummary().getAccountBalance() != null ? account.getSummary().getAccountBalance() : BigDecimal.ZERO;
+            balance = balance.add(accountBalance);
         }
         return balance;
     }

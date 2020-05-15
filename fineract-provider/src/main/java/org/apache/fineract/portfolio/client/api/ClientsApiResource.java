@@ -443,14 +443,14 @@ public class ClientsApiResource {
     }
     
     @GET
-    @Path("{clientId}/currentdailylimits")
+    @Path("{clientId}/currentdailylimits/{savingsAccountId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId) {
+    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId, @PathParam("savingsAccountId") final Long savingAccountId) {
         
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
-        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentValidationLimitsOnDate(clientId, DateUtils.getLocalDateOfTenant());
+        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentValidationLimitsOnDate(clientId, DateUtils.getLocalDateOfTenant(), savingAccountId);
         
         return this.toApiJsonSerializer.serialize(limitData);
         

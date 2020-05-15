@@ -37,6 +37,7 @@ import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountDoesNotBelongToClientException;
 import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
@@ -288,13 +289,20 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     
     @Transactional
     @Override
-    public ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate) {
-
+    public ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate, Long savingsAccountId) {
+        
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
         
+        SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsAccountId);
+        
+        // verify account belongs to client
+        if(account.clientId().compareTo(client.getId()) != 0) {
+            throw new SavingsAccountDoesNotBelongToClientException(savingsAccountId, clientId);
+        }
+               
         BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(clientId, transactionDate, BigDecimal.ZERO);
         
-        BigDecimal  cumulativeBalanceOnDate = this.getCumulativeBalanceOnDate(clientId);
+        BigDecimal  cumulativeBalanceOnDate = account.getAccountBalance();
         
         ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
         
@@ -331,6 +339,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         
     }
     
+    @SuppressWarnings("unused")
     private BigDecimal getCumulativeBalanceOnDate(Long clientId) {
 
         BigDecimal balance = BigDecimal.ZERO;

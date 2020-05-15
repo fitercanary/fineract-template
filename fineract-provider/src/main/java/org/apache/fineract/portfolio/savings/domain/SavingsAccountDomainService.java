@@ -41,5 +41,5 @@ public interface SavingsAccountDomainService {
 
     SavingsAccountTransaction handleDividendPayout(SavingsAccount account, LocalDate transactionDate, BigDecimal transactionAmount);
     
-    ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate);
+    ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate, Long savingsAccountId);
 }

@@ -41,8 +41,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.common.AccountingConstants;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -63,6 +61,7 @@ import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSeria
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
@@ -77,6 +76,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
 
 @Path("/savingsaccounts")
 @Component
@@ -174,10 +176,16 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
+        if (!this.savingsAccountReadPlatformService.isStaffAccountFieldOfficer(this.context.authenticatedUser().getStaffId(), accountId)
+                && !this.context.authenticatedUser().hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS)) {
+
+            throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);
+        }
+
         if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
                 || is(chargeStatus, "pageSize"))) {
             throw new UnrecognizedQueryParamException("status", chargeStatus,
-                    new Object[] { "all", "active", "inactive", "pageNumber", "pageSize" });
+                    new Object[]{"all", "active", "inactive", "pageNumber", "pageSize"});
         }
 
         final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(accountId);
@@ -203,10 +211,16 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
+        if (!this.savingsAccountReadPlatformService.isStaffAccountFieldOfficer(this.context.authenticatedUser().getStaffId(), accountId)
+                && !this.context.authenticatedUser().hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS)) {
+
+            throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);
+        }
+
         if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
                 || is(chargeStatus, "pageSize"))) {
             throw new UnrecognizedQueryParamException("status", chargeStatus,
-                    new Object[] { "all", "active", "inactive", "pageNumber", "pageSize" });
+                    new Object[]{"all", "active", "inactive", "pageNumber", "pageSize"});
         }
 
         final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOne(accountId);
@@ -220,7 +234,6 @@ public class SavingsAccountsApiResource {
         return this.toApiJsonSerializer.serialize(settings, savingsAccountTemplate,
                 SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
-
 
     private SavingsAccountData populateTemplateAndAssociations(final Long accountId, final SavingsAccountData savingsAccount,
             final boolean staffInSelectedOfficeOnly, final String chargeStatus, final UriInfo uriInfo,

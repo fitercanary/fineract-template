@@ -41,6 +41,7 @@ import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
@@ -187,6 +188,9 @@ public class ClientsApiResource {
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
+        final Boolean allowedToReadAllAccounts = this.context.authenticatedUser()
+                .hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
@@ -196,7 +200,8 @@ public class ClientsApiResource {
                     staffInSelectedOfficeOnly);
             Long referredById = clientData.getReferredById();
             clientData = ClientData.templateOnTop(clientData, templateData);
-            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null);
+            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null,
+                    this.context.authenticatedUser().getId(), allowedToReadAllAccounts);
             if (savingAccountOptions != null && savingAccountOptions.size() > 0) {
                 clientData = ClientData.templateWithSavingAccountOptions(clientData, savingAccountOptions);
             }
@@ -414,8 +419,12 @@ public class ClientsApiResource {
     public String retrieveAssociatedAccounts(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
+        final Boolean allowedToReadAllAccounts = this.context.authenticatedUser()
+                .hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
 
-        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId);
+        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId, 
+                this.context.authenticatedUser().getId(), allowedToReadAllAccounts);
 
         final Set<String> CLIENT_ACCOUNTS_DATA_PARAMETERS = new HashSet<>(Arrays.asList("loanAccounts", "savingsAccounts", "shareAccounts"));
 

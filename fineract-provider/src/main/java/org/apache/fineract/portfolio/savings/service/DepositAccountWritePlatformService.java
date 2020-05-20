@@ -94,4 +94,6 @@ public interface DepositAccountWritePlatformService {
     CommandProcessingResult postAccrualInterest(JsonCommand command, DepositAccountType depositAccountType);
 
     CommandProcessingResult postAccrualInterest(Long fixedDepositAccountId, DepositAccountType depositAccountType);
+
+    CommandProcessingResult partiallyLiquidateAccount(Long accountId, JsonCommand command);
 }

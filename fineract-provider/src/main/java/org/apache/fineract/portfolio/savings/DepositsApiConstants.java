@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.portfolio.savings;
 
+import org.apache.fineract.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.apache.fineract.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
 
 public class DepositsApiConstants {
 
@@ -35,31 +35,14 @@ public class DepositsApiConstants {
     public static final String RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME = "recurringdepositaccount";
 
     public static final String SAVINGS_ACCOUNT_RESOURCE_NAME = "savingsaccount";
-    public static final String SAVINGS_ACCOUNT_TRANSACTION_RESOURCE_NAME = "savingsaccount.transaction";
-    public static final String SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME = "savingsaccountcharge";
 
     // deposit product actions
-    public static final String summitalAction = ".summital";
-    public static final String approvalAction = ".approval";
-    public static final String undoApprovalAction = ".undoApproval";
-    public static final String rejectAction = ".reject";
-    public static final String withdrawnByApplicantAction = ".withdrawnByApplicant";
-    public static final String activateAction = ".activate";
-    public static final String modifyApplicationAction = ".modify";
     public static final String deleteApplicationAction = ".delete";
-    public static final String undoTransactionAction = ".undotransaction";
-    public static final String applyAnnualFeeTransactionAction = ".applyannualfee";
-    public static final String adjustTransactionAction = ".adjusttransaction";
-    public static final String closeAction = ".close";
     public static final String preMatureCloseAction = ".preMatureClose";
-    public static final String payChargeTransactionAction = ".paycharge";
-    public static final String waiveChargeTransactionAction = ".waivecharge";
 
     // command
     public static final String COMMAND_UNDO_TRANSACTION = "undo";
     public static final String COMMAND_ADJUST_TRANSACTION = "modify";
-    public static final String COMMAND_WAIVE_CHARGE = "waive";
-    public static final String COMMAND_PAY_CHARGE = "paycharge";
     public static final String UPDATE_DEPOSIT_AMOUNT = "updateDepositAmount";
 
     // general
@@ -78,9 +61,6 @@ public class DepositsApiConstants {
     public static final String fieldOfficerIdParamName = "fieldOfficerId";
 
     public static final String submittedOnDateParamName = "submittedOnDate";
-    public static final String rejectedOnDateParamName = "rejectedOnDate";
-    public static final String withdrawnOnDateParamName = "withdrawnOnDate";
-    public static final String approvedOnDateParamName = "approvedOnDate";
     public static final String activatedOnDateParamName = "activatedOnDate";
     public static final String closedOnDateParamName = "closedOnDate";
     public static final String expectedFirstDepositOnDateParamName = "expectedFirstDepositOnDate";
@@ -99,7 +79,6 @@ public class DepositsApiConstants {
     public static final String interestCalculationDaysInYearTypeParamName = "interestCalculationDaysInYearType";
     public static final String lockinPeriodFrequencyParamName = "lockinPeriodFrequency";
     public static final String lockinPeriodFrequencyTypeParamName = "lockinPeriodFrequencyType";
-    public static final String feeAmountParamName = "feeAmount";// to be deleted
     public static final String feeOnMonthDayParamName = "feeOnMonthDay";
     public static final String feeIntervalParamName = "feeInterval";
     public static final String accountingRuleParamName = "accountingRule";
@@ -114,10 +93,9 @@ public class DepositsApiConstants {
     public static final String preClosurePenalApplicableParamName = "preClosurePenalApplicable";
     public static final String preClosurePenalInterestParamName = "preClosurePenalInterest";
     public static final String preClosurePenalInterestOnTypeIdParamName = "preClosurePenalInterestOnTypeId";
-    public static final String interestFreePeriodFrequencyType = "interestFreePeriodFrequencyType";
     public static final String preClosurePenalInterestOnType = "preClosurePenalInterestOnType";
 
-    // term paramters
+    // term parameters
     public static final String minDepositTermParamName = "minDepositTerm";
     public static final String maxDepositTermParamName = "maxDepositTerm";
     public static final String minDepositTermTypeIdParamName = "minDepositTermTypeId";
@@ -129,6 +107,7 @@ public class DepositsApiConstants {
     public static final String inMultiplesOfDepositTermType = "inMultiplesOfDepositTermType";
 
     public static final String depositAmountParamName = "depositAmount";
+    public static final String liquidationAmountParamName = "liquidationAmount";
     public static final String depositMinAmountParamName = "minDepositAmount";
     public static final String depositMaxAmountParamName = "maxDepositAmount";
     public static final String depositPeriodParamName = "depositPeriod";
@@ -175,7 +154,6 @@ public class DepositsApiConstants {
     public static final String amountParamName = "amount";
     public static final String amountPaidParamName = "amountPaid";
     public static final String chargeOptionsParamName = "chargeOptions";
-    public static final String chargePaymentModeParamName = "chargePaymentMode";
 
     public static final String noteParamName = "note";
     public static final String chartsParamName = "charts";
@@ -184,7 +162,6 @@ public class DepositsApiConstants {
     // deposit account associations
     public static final String transactions = "transactions";
     public static final String charges = "charges";
-    public static final String activeChart = "activeChart";
 
     // account closure
     public static final String onAccountClosureIdParamName = "onAccountClosureId";
@@ -196,9 +173,6 @@ public class DepositsApiConstants {
 
     public static final String linkedAccountParamName = "linkAccountId";
     public static final String transferInterestToSavingsParamName = "transferInterestToSavings";
-
-    // template
-    public static final String chartTemplate = "chartTemplate";
 
     /**
      * Deposit Product Parameters

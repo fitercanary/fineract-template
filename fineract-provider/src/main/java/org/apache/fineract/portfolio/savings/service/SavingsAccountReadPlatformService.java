@@ -57,7 +57,7 @@ public interface SavingsAccountReadPlatformService {
 
     SavingsAccountTransactionData retrieveSavingsTransaction(Long savingsId, Long transactionId, DepositAccountType depositAccountType);
 
-    Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft);
+    Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft, Long userId, final Boolean allowedToReadAllAccounts);
 
     List<Long> retrieveSavingsIdsPendingInactive(LocalDate tenantLocalDate);
 
@@ -94,4 +94,6 @@ public interface SavingsAccountReadPlatformService {
     Long findSavingsTransactionAccountTransfer(Long savingTransactionId);
     
     List<Long> retrieveActiveSavingAccounts();
+    
+    boolean isStaffAccountFieldOfficer(final Long staffId, final Long accountId);
 }

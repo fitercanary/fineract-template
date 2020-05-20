@@ -31,6 +31,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -40,8 +41,13 @@ import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.validation.limit.api.ValidationLimitApiCollectionConstants;
+import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,6 +67,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -83,6 +90,7 @@ public class ClientsApiResource {
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
+    private final SavingsAccountDomainService savingsAccountDomainService;
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
@@ -93,7 +101,8 @@ public class ClientsApiResource {
                               final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
                               final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
                               final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-                              final BulkImportWorkbookService bulkImportWorkbookService) {
+                              final BulkImportWorkbookService bulkImportWorkbookService,
+                              final SavingsAccountDomainService savingsAccountDomainService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -106,6 +115,7 @@ public class ClientsApiResource {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.bulkImportWorkbookService = bulkImportWorkbookService;
+        this.savingsAccountDomainService = savingsAccountDomainService;
     }
 
     @GET
@@ -178,6 +188,9 @@ public class ClientsApiResource {
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
+        final Boolean allowedToReadAllAccounts = this.context.authenticatedUser()
+                .hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
@@ -187,13 +200,49 @@ public class ClientsApiResource {
                     staffInSelectedOfficeOnly);
             Long referredById = clientData.getReferredById();
             clientData = ClientData.templateOnTop(clientData, templateData);
-            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null);
+            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null,
+                    this.context.authenticatedUser().getId(), allowedToReadAllAccounts);
             if (savingAccountOptions != null && savingAccountOptions.size() > 0) {
                 clientData = ClientData.templateWithSavingAccountOptions(clientData, savingAccountOptions);
             }
             clientData.setReferredById(referredById);
         }
 
+        return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+    }
+
+    @GET
+    @Path("summaries")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllSummary(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
+                                     @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
+                                     @QueryParam("displayName") final String displayName, @QueryParam("firstName") final String firstname,
+                                     @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy,
+                                     @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
+                                     @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder,
+                                     @QueryParam("orphansOnly") final Boolean orphansOnly) {
+
+        return this.retrieveAllSummary(uriInfo, sqlSearch, officeId, externalId, displayName, firstname,
+                lastname, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, false);
+    }
+
+    private String retrieveAllSummary(final UriInfo uriInfo, final String sqlSearch,
+                                     final Long officeId, final String externalId,
+                                     final String displayName, final String firstname,
+                                     final String lastname, final String hierarchy,
+                                     final Integer offset, final Integer limit,
+                                     final String orderBy, final String sortOrder,
+                                     final Boolean orphansOnly, final boolean isSelfUser) {
+
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
+                lastname, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, isSelfUser);
+
+        final Page<ClientData> clientData = this.clientReadPlatformService.retrieveAllSummary(searchParameters);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
     }
 
@@ -370,8 +419,12 @@ public class ClientsApiResource {
     public String retrieveAssociatedAccounts(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
+        final Boolean allowedToReadAllAccounts = this.context.authenticatedUser()
+                .hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
 
-        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId);
+        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId, 
+                this.context.authenticatedUser().getId(), allowedToReadAllAccounts);
 
         final Set<String> CLIENT_ACCOUNTS_DATA_PARAMETERS = new HashSet<>(Arrays.asList("loanAccounts", "savingsAccounts", "shareAccounts"));
 
@@ -396,5 +449,19 @@ public class ClientsApiResource {
             @FormDataParam("dateFormat") final String dateFormat){
         final Long importDocumentId = bulkImportWorkbookService.importWorkbook(legalFormType, uploadedInputStream,fileDetail,locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+    
+    @GET
+    @Path("{clientId}/currentdailylimits/{savingsAccountId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId, @PathParam("savingsAccountId") final Long savingAccountId) {
+        
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentValidationLimitsOnDate(clientId, DateUtils.getLocalDateOfTenant(), savingAccountId);
+        
+        return this.toApiJsonSerializer.serialize(limitData);
+        
     }
 }

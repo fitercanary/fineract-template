@@ -68,6 +68,7 @@ import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -77,6 +78,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 
 @Service
 public class ClientReadPlatformServiceImpl implements ClientReadPlatformService {
@@ -91,6 +93,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final PaginationHelper<ClientData> paginationHelper = new PaginationHelper<>();
     private final ClientMapper clientMapper = new ClientMapper();
     private final ClientLookupMapper lookupMapper = new ClientLookupMapper();
+    private final ClientSummaryMapper clientSummaryMapper = new ClientSummaryMapper();
     private final ClientMembersOfGroupMapper membersOfGroupMapper = new ClientMembersOfGroupMapper();
     private final ParentGroupsMapper clientGroupsMapper = new ParentGroupsMapper();
 
@@ -101,6 +104,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ColumnValidator columnValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ReferralStatusRepository referralStatusRepository;
+    
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -235,6 +239,56 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String sqlCountRows = "SELECT FOUND_ROWS()";
         return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(),
                 this.clientMapper);
+    }
+
+    public Page<ClientData> retrieveAllSummary(final SearchParameters searchParameters) {
+
+        final String userOfficeHierarchy = this.context.officeHierarchy();
+        final String underHierarchySearchString = userOfficeHierarchy + "%";
+        final String appUserID = String.valueOf(context.authenticatedUser().getId());
+
+        // if (searchParameters.isScopedByOfficeHierarchy()) {
+        // this.context.validateAccessRights(searchParameters.getHierarchy());
+        // underHierarchySearchString = searchParameters.getHierarchy() + "%";
+        // }
+        List<Object> paramList = new ArrayList<>(Arrays.asList(underHierarchySearchString, underHierarchySearchString));
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(this.clientSummaryMapper.schema());
+        sqlBuilder.append(" where (o.hierarchy like ? or transferToOffice.hierarchy like ?) ");
+
+        if (searchParameters != null) {
+            if (searchParameters.isSelfUser()) {
+                sqlBuilder.append(
+                        " and c.id in (select umap.client_id from m_selfservice_user_client_mapping as umap where umap.appuser_id = ? ) ");
+                paramList.add(appUserID);
+            }
+
+            final String extraCriteria = buildSqlStringFromClientCriteria(this.clientSummaryMapper.schema(), searchParameters, paramList);
+
+            if (StringUtils.isNotBlank(extraCriteria)) {
+                sqlBuilder.append(" and (").append(extraCriteria).append(")");
+            }
+
+            if (searchParameters.isOrderByRequested()) {
+                sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
+                this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getOrderBy());
+                if (searchParameters.isSortOrderProvided()) {
+                    sqlBuilder.append(' ').append(searchParameters.getSortOrder());
+                    this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getSortOrder());
+                }
+            }
+
+            if (searchParameters.isLimited()) {
+                sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+                if (searchParameters.isOffset()) {
+                    sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+                }
+            }
+        }
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(),
+                this.clientSummaryMapper);
     }
 
     private String buildSqlStringFromClientCriteria(String schemaSql, final SearchParameters searchParameters, List<Object> paramList) {
@@ -627,7 +681,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
             builder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
-            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as maximumTransactionLimit ");
+            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as singleWithdrawLimit ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
             builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
@@ -738,7 +792,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
             final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
-            final BigDecimal maximumTransactionLimit = rs.getBigDecimal("maximumTransactionLimit");
+            final BigDecimal singleWithdrawLimit = rs.getBigDecimal("singleWithdrawLimit");
 
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
                     mainBusinessLine, remarks);
@@ -750,7 +804,75 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, maximumTransactionLimit);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, singleWithdrawLimit);
+
+        }
+    }
+
+    private static final class ClientSummaryMapper implements RowMapper<ClientData> {
+
+        private final String schema;
+
+        public ClientSummaryMapper() {
+            final StringBuilder builder = new StringBuilder(400);
+
+            builder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, ");
+            builder.append("c.office_id as officeId, o.name as officeName, ");
+            builder.append("c.transfer_to_office_id as transferToOfficeId, transferToOffice.name as transferToOfficeName, ");
+            builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
+            builder.append("c.fullname as fullname, c.display_name as displayName, ");
+            builder.append("c.mobile_no as mobileNo, ");
+            builder.append("c.is_staff as isStaff, ");
+
+            builder.append("c.submittedon_date as submittedOnDate, ");
+            builder.append("sbu.username as submittedByUsername, ");
+            builder.append("sbu.firstname as submittedByFirstname, ");
+            builder.append("sbu.lastname as submittedByLastname, ");
+
+            builder.append("c.closedon_date as closedOnDate, ");
+            builder.append("clu.username as closedByUsername, ");
+            builder.append("clu.firstname as closedByFirstname, ");
+            builder.append("clu.lastname as closedByLastname, ");
+
+            // builder.append("c.submittedon as submittedOnDate, ");
+            builder.append("acu.username as activatedByUsername, ");
+            builder.append("acu.firstname as activatedByFirstname, ");
+            builder.append("acu.lastname as activatedByLastname, ");
+
+            builder.append("cnp.constitution_cv_id as constitutionId, ");
+            builder.append("cnp.incorp_no as incorpNo, ");
+            builder.append("cnp.incorp_validity_till as incorpValidityTill, ");
+            builder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
+            builder.append("cnp.remarks as remarks ");
+
+            builder.append("from m_client c ");
+            builder.append("join m_office o on o.id = c.office_id ");
+            builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
+            builder.append("left join m_staff s on s.id = c.staff_id ");
+            builder.append("left join m_appuser sbu on sbu.id = c.submittedon_userid ");
+            builder.append("left join m_appuser acu on acu.id = c.activatedon_userid ");
+            builder.append("left join m_appuser clu on clu.id = c.closedon_userid ");
+            builder.append("left join m_office transferToOffice on transferToOffice.id = c.transfer_to_office_id ");
+
+            this.schema = builder.toString();
+        }
+
+        public String schema() {
+            return this.schema;
+        }
+
+        @Override
+        public ClientData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            final String accountNo = rs.getString("accountNo");
+            final Long id = JdbcSupport.getLong(rs, "id");
+            final String displayName = rs.getString("displayName");
+            final String externalId = rs.getString("externalId");
+
+            return ClientData.instance(accountNo, null, null, null, null, null, null, id,
+                    null, null, null, null, displayName, externalId, null, null, null,
+                    null, null, null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null, null);
 
         }
     }
@@ -896,5 +1018,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByStatus(status);
         if (referralStatuses.isEmpty()) { return new ArrayList<>(); }
         return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
-    }
+    }  
+    
 }

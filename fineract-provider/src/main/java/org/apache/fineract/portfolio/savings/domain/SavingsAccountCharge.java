@@ -318,19 +318,32 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
     }
 
-    public void markAsFullyPaid() {
-        this.amountPaid = this.amount;
-        this.amountOutstanding = BigDecimal.ZERO;
-        this.paid = true;
-    }
-
     public void resetToOriginal(final MonetaryCurrency currency) {
+        this.setId(null);
         this.amountPaid = BigDecimal.ZERO;
         this.amountWaived = BigDecimal.ZERO;
         this.amountWrittenOff = BigDecimal.ZERO;
         this.amountOutstanding = calculateAmountOutstanding(currency);
         this.paid = false;
         this.waived = false;
+        this.savingsAccount = null;
+    }
+
+    public SavingsAccountCharge copy() {
+        SavingsAccountCharge dup = new SavingsAccountCharge();
+        dup.charge = this.charge;
+        dup.chargeTime = this.chargeTime;
+        dup.penaltyCharge = this.penaltyCharge;
+        dup.chargeCalculation = this.chargeCalculation;
+        dup.amount = this.amount;
+        dup.amountPaid = BigDecimal.ZERO;
+        dup.amountWaived = BigDecimal.ZERO;
+        dup.amountWrittenOff = BigDecimal.ZERO;
+        dup.amountOutstanding = dup.calculateAmountOutstanding(this.savingsAccount.currency);
+        dup.paid = false;
+        dup.waived = false;
+        dup.savingsAccount = null;
+        return dup;
     }
 
     public void undoPayment(final MonetaryCurrency currency, final Money transactionAmount) {

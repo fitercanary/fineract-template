@@ -18,12 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-
-import java.util.*;
-
-import javax.persistence.PersistenceException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -64,8 +58,16 @@ import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataDTO;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataValidator;
-import org.apache.fineract.portfolio.savings.domain.*;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeAssembler;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
+import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
+import org.apache.fineract.portfolio.savings.request.FixedDepositApprovalReq;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +75,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.PersistenceException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 
 @Service
 public class
@@ -99,21 +112,22 @@ public class
     private final BusinessEventNotifierService businessEventNotifierService;
 	private final NubanAccountService nubanAccountService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
+    private final SavingsAccountActionService savingsAccountActionService;
 	
     @Autowired
     public SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-																		  final SavingsAccountRepositoryWrapper savingAccountRepository, final SavingsAccountAssembler savingAccountAssembler,
-																		  final SavingsAccountDataValidator savingsAccountDataValidator, final AccountNumberGenerator accountNumberGenerator,
-																		  final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
-																		  final SavingsProductRepository savingsProductRepository, final NoteRepository noteRepository,
-																		  final StaffRepositoryWrapper staffRepository,
-																		  final SavingsAccountApplicationTransitionApiJsonValidator savingsAccountApplicationTransitionApiJsonValidator,
-																		  final SavingsAccountChargeAssembler savingsAccountChargeAssembler, final CommandProcessingService commandProcessingService,
-																		  final SavingsAccountDomainService savingsAccountDomainService,
-																		  final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-																		  final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-																		  final BusinessEventNotifierService businessEventNotifierService,
-																		  NubanAccountService nubanAccountService, final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
+                                                                          final SavingsAccountRepositoryWrapper savingAccountRepository, final SavingsAccountAssembler savingAccountAssembler,
+                                                                          final SavingsAccountDataValidator savingsAccountDataValidator, final AccountNumberGenerator accountNumberGenerator,
+                                                                          final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
+                                                                          final SavingsProductRepository savingsProductRepository, final NoteRepository noteRepository,
+                                                                          final StaffRepositoryWrapper staffRepository,
+                                                                          final SavingsAccountApplicationTransitionApiJsonValidator savingsAccountApplicationTransitionApiJsonValidator,
+                                                                          final SavingsAccountChargeAssembler savingsAccountChargeAssembler, final CommandProcessingService commandProcessingService,
+                                                                          final SavingsAccountDomainService savingsAccountDomainService,
+                                                                          final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+                                                                          final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+                                                                          final BusinessEventNotifierService businessEventNotifierService,
+                                                                          NubanAccountService nubanAccountService, final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, SavingsAccountActionService savingsAccountActionService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.savingAccountAssembler = savingAccountAssembler;
@@ -133,6 +147,7 @@ public class
         this.businessEventNotifierService = businessEventNotifierService ;
 		this.nubanAccountService = nubanAccountService;
 		this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
+        this.savingsAccountActionService = savingsAccountActionService;
     }
 
     /*
@@ -353,8 +368,6 @@ public class
     @Override
     public CommandProcessingResult approveApplication(final Long savingsId, final JsonCommand command) {
 
-        final AppUser currentUser = this.context.authenticatedUser();
-
         this.savingsAccountApplicationTransitionApiJsonValidator.validateApproval(command.json());
 
         final SavingsAccount savingsAccount = this.savingAccountAssembler.assembleFrom(savingsId);
@@ -364,30 +377,19 @@ public class
                 StatusEnum.APPROVE.getCode().longValue(),EntityTables.SAVING.getForeignKeyColumnNameOnDatatable(),
                 savingsAccount.productId());
 
-
-        final Map<String, Object> changes = savingsAccount.approveApplication(currentUser, command, DateUtils.getLocalDateOfTenant());
-        if (!changes.isEmpty()) {
-            this.savingAccountRepository.save(savingsAccount);
-
-            final String noteText = command.stringValueOfParameterNamed("note");
-            if (StringUtils.isNotBlank(noteText)) {
-                final Note note = Note.savingNote(savingsAccount, noteText);
-                changes.put("note", noteText);
-                this.noteRepository.save(note);
-            }
-        }
+        Map<String, Object> changes = this.savingsAccountActionService.approveAccount(FixedDepositApprovalReq.instance(command), savingsAccount);
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_APPROVE,
                 constructEntityMap(BUSINESS_ENTITY.SAVING, savingsAccount));
 
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(savingsId) //
-                .withOfficeId(savingsAccount.officeId()) //
-                .withClientId(savingsAccount.clientId()) //
-                .withGroupId(savingsAccount.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes) //
+        return new CommandProcessingResultBuilder()
+                .withCommandId(command.commandId())
+                .withEntityId(savingsId)
+                .withOfficeId(savingsAccount.officeId())
+                .withClientId(savingsAccount.clientId())
+                .withGroupId(savingsAccount.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
     }
 

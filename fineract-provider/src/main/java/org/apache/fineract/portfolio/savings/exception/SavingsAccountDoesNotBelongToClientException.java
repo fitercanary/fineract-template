@@ -20,14 +20,9 @@ package org.apache.fineract.portfolio.savings.exception;
 
 import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-public class SavingsAccountNotFoundException extends AbstractPlatformResourceNotFoundException {
+public class SavingsAccountDoesNotBelongToClientException extends AbstractPlatformResourceNotFoundException {
 
-    public SavingsAccountNotFoundException(final Long id) {
-        super("error.msg.saving.account.id.invalid", "Savings account with identifier " + id + " does not exist", id);
-    }
-
-    public SavingsAccountNotFoundException(final String globalisationMessageCode, final String defaultUserMessage,
-                                           final Object... defaultUserMessageArgs) {
-        super(globalisationMessageCode, defaultUserMessage, defaultUserMessageArgs);
+    public SavingsAccountDoesNotBelongToClientException(final Long savingsAccountId, final Long clientId) {
+        super("error.msg.saving.account.does.not.belong.to.client", "Saving account with identifier " + savingsAccountId + " does not belong to client with identifier " + clientId, savingsAccountId, clientId);
     }
 }

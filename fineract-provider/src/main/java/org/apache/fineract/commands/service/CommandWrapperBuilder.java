@@ -2022,6 +2022,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder partiallyLiquidateFD(final Long accountId) {
+        this.actionName = "PARTIALLY_LIQUIDATE";
+        this.entityName = "FIXEDDEPOSITACCOUNT";
+        this.entityId = accountId;
+        this.href = "/fixeddepositaccounts/partiallyliquidate";
+        return this;
+    }
+
     public CommandWrapperBuilder updateFixedDepositAccount(final Long accountId) {
         this.actionName = "UPDATE";
         this.entityName = "FIXEDDEPOSITACCOUNT";

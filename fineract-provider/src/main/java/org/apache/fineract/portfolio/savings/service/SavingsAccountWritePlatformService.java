@@ -123,5 +123,7 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult applyOverdraft(Long savingsId, JsonCommand command);
 
     void startOrCloseSavingsAccountOverdraft(List<SavingsAccount> savingsAccountList, Boolean start);
+    
+    CommandProcessingResult modifyNickName(Long savingsAccountId, JsonCommand command);
 
 }

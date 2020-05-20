@@ -3210,4 +3210,12 @@ public class CommandWrapperBuilder {
         this.href = "/twofactor/configure";
         return this;
     }
+    
+    public CommandWrapperBuilder updateNickname(final Long accountId) {
+        this.actionName = "UPDATENICKNAME";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?commad=updateNickName";
+        return this;
+    }
 }

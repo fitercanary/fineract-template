@@ -18,25 +18,16 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.toSavingsAccountIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transferDescriptionParamName;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormat;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormatRepositoryWrapper;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.EntityAccountType;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
@@ -62,8 +53,10 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.request.FixedDepositPreClosureReq;
 import org.apache.fineract.portfolio.savings.service.NubanAccountService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -71,6 +64,20 @@ import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.toSavingsAccountIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transferDescriptionParamName;
 
 @Service
 public class DepositAccountDomainServiceJpa implements DepositAccountDomainService {
@@ -396,8 +403,9 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
     @Transactional
     @Override
-    public Long handleFDAccountPreMatureClosure(final FixedDepositAccount account, final PaymentDetail paymentDetail, final AppUser user,
-            final JsonCommand command, final LocalDate tenantsTodayDate, final Map<String, Object> changes) {
+    public Long prematurelyCloseFDAccount(final FixedDepositAccount account, final PaymentDetail paymentDetail,
+                                          final FixedDepositPreClosureReq fixedDepositPreclosureReq, final Map<String, Object> changes) {
+        final AppUser user = this.context.authenticatedUser();
 
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
@@ -413,13 +421,11 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
          */
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
 
-        final LocalDate closedDate = command.localDateValueOfParameterNamed(SavingsApiConstants.closedOnDateParamName);
-        final Locale locale = command.extractLocale();
-        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+        final LocalDate closedDate = fixedDepositPreclosureReq.getClosedDate();
+        final DateTimeFormatter fmt = fixedDepositPreclosureReq.getFormatter();
         Long savingsTransactionId = null;
 
-        final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
-        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
+        DepositAccountOnClosureType closureType = fixedDepositPreclosureReq.getClosureType();
 
         // post interest
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -450,13 +456,13 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
         if (closureType.isTransferToSavings()) {
             final boolean isExceptionForBalanceCheck = false;
-            final Long toSavingsId = command.longValueOfParameterNamed(toSavingsAccountIdParamName);
-            final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
+            final Long toSavingsId = fixedDepositPreclosureReq.getToSavingsId();
+            final String transferDescription = fixedDepositPreclosureReq.getTransferDescription();
             final SavingsAccount toSavingsAccount = this.depositAccountAssembler.assembleFrom(toSavingsId,
                     DepositAccountType.SAVINGS_DEPOSIT);
             account.withdrawalFeeApplicableForTransfer = false;
             final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(closedDate, account.getAccountBalance(),
-                    PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, locale, fmt, null, null,
+                    PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, fixedDepositPreclosureReq.getLocale(), fmt, null, null,
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
                     isRegularTransaction, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
@@ -468,13 +474,91 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             savingsTransactionId = withdrawal.getId();
         }
 
-        account.prematureClosure(user, command, tenantsTodayDate, changes);
+        this.prematurelyCloseFD(account, fixedDepositPreclosureReq, changes);
 
         this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
 
         return savingsTransactionId;
+    }
+
+    private void prematurelyCloseFD(FixedDepositAccount account, FixedDepositPreClosureReq fixedDepositPreclosureReq, Map<String, Object> changes) {
+        final AppUser user = this.context.authenticatedUser();
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + DepositsApiConstants.preMatureCloseAction);
+
+        final SavingsAccountStatusType currentStatus = SavingsAccountStatusType.fromInt(account.getStatus());
+        if (!currentStatus.isActive()) {
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("not.in.active.state");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+        final LocalDate closedDate = fixedDepositPreclosureReq.getClosedDate();
+
+        if (closedDate.isBefore(account.getActivationLocalDate())) {
+            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
+                    .failWithCode("must.be.after.activation.date");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+
+        if (account.isAccountLocked(closedDate)) {
+            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
+                    .failWithCode("must.be.after.lockin.period");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+
+        if (closedDate.isAfter(account.maturityDate())) {
+            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
+                    .failWithCode("must.be.before.maturity.date");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+
+        if (closedDate.isAfter(DateUtils.getLocalDateOfTenant())) {
+            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
+                    .failWithCode("cannot.be.a.future.date");
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+        }
+        final List<SavingsAccountTransaction> savingsAccountTransactions = account.retreiveListOfTransactions();
+        if (savingsAccountTransactions.size() > 0) {
+            final SavingsAccountTransaction accountTransaction = savingsAccountTransactions.get(savingsAccountTransactions.size() - 1);
+            if (accountTransaction.isAfter(closedDate) && !accountTransaction.isAfter(DateUtils.getLocalDateOfTenant())) {
+                baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
+                        .failWithCode("must.be.after.last.transaction.date");
+                if (!dataValidationErrors.isEmpty()) {
+                    throw new PlatformApiDataValidationException(dataValidationErrors);
+                }
+            }
+        }
+
+        account.validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_CLOSE_ACCOUNT, closedDate);
+        account.setStatus(SavingsAccountStatusType.PRE_MATURE_CLOSURE.getValue());
+
+        account.getAccountTermAndPreClosure().updateOnAccountClosureStatus(fixedDepositPreclosureReq.getClosureType());
+
+        changes.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(account.getStatus()));
+        changes.put(SavingsApiConstants.localeParamName, fixedDepositPreclosureReq.getLocale());
+        changes.put(SavingsApiConstants.dateFormatParamName, fixedDepositPreclosureReq.getDateFormat());
+        changes.put(SavingsApiConstants.closedOnDateParamName, closedDate.toString(fixedDepositPreclosureReq.getFormatter()));
+
+        account.setRejectedOnDate(null);
+        account.setRejectedBy(null);
+        account.setWithdrawnOnDate(null);
+        account.setWithdrawnBy(null);
+        account.setClosedOnDate(closedDate.toDate());
+        account.setClosedBy(user);
+        account.getSummary().updateSummary(account.getCurrency(), account.getSavingsAccountTransactionSummaryWrapper(), account.getTransactions());
     }
 
     @Transactional

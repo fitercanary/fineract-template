@@ -18,28 +18,8 @@
  */
 package org.apache.fineract.portfolio.savings.data;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.activatedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.bankNumberParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.checkNumberParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.closedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.paymentTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.receiptNumberParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.routingCodeParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.toSavingsAccountIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transactionAccountNumberParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transactionAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transactionDateParamName;
-
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -51,12 +31,36 @@ import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.activatedOnDateParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.bankNumberParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.checkNumberParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.closedOnDateParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.dateFormatParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.paymentTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.receiptNumberParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.routingCodeParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.toSavingsAccountIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transactionAccountNumberParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transactionAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transactionDateParamName;
 
 @Component
 public class DepositAccountTransactionDataValidator {
@@ -64,24 +68,29 @@ public class DepositAccountTransactionDataValidator {
     private final FromJsonHelper fromApiJsonHelper;
 
 	private static final Set<String> DEPOSIT_ACCOUNT_TRANSACTION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
-			DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, transactionDateParamName,
+			DepositsApiConstants.localeParamName, dateFormatParamName, transactionDateParamName,
 			transactionAmountParamName, paymentTypeIdParamName, transactionAccountNumberParamName, checkNumberParamName,
 			routingCodeParamName, receiptNumberParamName, bankNumberParamName));
 
 	private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_AMOUNT_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-			Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName,
+			Arrays.asList(DepositsApiConstants.localeParamName, dateFormatParamName,
 					DepositsApiConstants.mandatoryRecommendedDepositAmountParamName,
 					DepositsApiConstants.effectiveDateParamName));
 
 	private static final Set<String> DEPOSIT_ACCOUNT_CLOSE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
-			DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, closedOnDateParamName,
+			DepositsApiConstants.localeParamName, dateFormatParamName, closedOnDateParamName,
 			DepositsApiConstants.noteParamName, onAccountClosureIdParamName, paymentTypeIdParamName,
 			transactionAccountNumberParamName, checkNumberParamName, routingCodeParamName, receiptNumberParamName,
 			bankNumberParamName, DepositsApiConstants.transferDescriptionParamName, toSavingsAccountIdParamName));
 
 	private static final Set<String> DEPOSIT_ACCOUNT_PRE_MATURE_CALCULATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
-			Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName,
+			Arrays.asList(DepositsApiConstants.localeParamName, dateFormatParamName,
 					closedOnDateParamName));
+
+    private static final Set<String> DEPOSIT_ACCOUNT_PARTIAL_LIQUIDATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
+            DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, DepositsApiConstants.submittedOnDateParamName,
+            DepositsApiConstants.noteParamName, DepositsApiConstants.depositPeriodParamName,
+            DepositsApiConstants.depositPeriodFrequencyIdParamName, DepositsApiConstants.liquidationAmountParamName));
 
 
     @Autowired
@@ -93,7 +102,7 @@ public class DepositAccountTransactionDataValidator {
 
         final String json = command.json();
 
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        validateJson(json);
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
 		this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
@@ -128,7 +137,7 @@ public class DepositAccountTransactionDataValidator {
     public void validateDepositAmountUpdate(final JsonCommand command) {
         final String json = command.json();
 
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        validateJson(json);
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
 		this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
@@ -154,7 +163,7 @@ public class DepositAccountTransactionDataValidator {
     public void validateActivation(final JsonCommand command) {
         final String json = command.json();
 
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        validateJson(json);
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
@@ -173,9 +182,7 @@ public class DepositAccountTransactionDataValidator {
     }
 
     public void validatePreMatureAmountCalculation(final String json, final DepositAccountType depositAccountType) {
-
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
-
+        validateJson(json);
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
 		this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
 				DEPOSIT_ACCOUNT_PRE_MATURE_CALCULATION_REQUEST_DATA_PARAMETERS);
@@ -194,9 +201,7 @@ public class DepositAccountTransactionDataValidator {
 
     public void validateClosing(final JsonCommand command, DepositAccountType depositAccountType, final boolean isPreMatureClose) {
         final String json = command.json();
-
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
-
+        validateJson(json);
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
 		this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
 				DEPOSIT_ACCOUNT_CLOSE_REQUEST_DATA_PARAMETERS);
@@ -207,8 +212,8 @@ public class DepositAccountTransactionDataValidator {
 
         final JsonElement element = command.parsedJson();
 
-        final LocalDate activationDate = this.fromApiJsonHelper.extractLocalDateNamed(closedOnDateParamName, element);
-        baseDataValidator.reset().parameter(closedOnDateParamName).value(activationDate).notNull();
+        final LocalDate closureDate = this.fromApiJsonHelper.extractLocalDateNamed(closedOnDateParamName, element);
+        baseDataValidator.reset().parameter(closedOnDateParamName).value(closureDate).notNull();
 
         final Integer onAccountClosureId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(onAccountClosureIdParamName, element);
         baseDataValidator.reset().parameter(onAccountClosureIdParamName).value(onAccountClosureId).notBlank()
@@ -242,6 +247,47 @@ public class DepositAccountTransactionDataValidator {
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validatePartialLiquidation(FixedDepositAccount account, JsonCommand command) {
+        String json = command.json();
+        validateJson(json);
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, DEPOSIT_ACCOUNT_PARTIAL_LIQUIDATION_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(DepositAccountType.FIXED_DEPOSIT
+                .resourceName());
+        final JsonElement element = command.parsedJson();
+
+        final LocalDate submitDate = this.fromApiJsonHelper.extractLocalDateNamed(DepositsApiConstants.submittedOnDateParamName, element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.submittedOnDateParamName).value(submitDate).notNull();
+
+        final BigDecimal liquidationAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(DepositsApiConstants.liquidationAmountParamName, element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName).value(liquidationAmount).notNull();
+
+        if (liquidationAmount.compareTo(account.getAccountTermAndPreClosure().maturityAmount()) > -1) {
+            baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName)
+                    .failWithCode("liquidation.amount.must.be.less.than.maturity.amount");
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(depositPeriodParamName, element)) {
+            final Integer depositPeriod = fromApiJsonHelper.extractIntegerSansLocaleNamed(depositPeriodParamName, element);
+            baseDataValidator.reset().parameter(depositPeriodParamName).value(depositPeriod).notNull().integerGreaterThanZero();
+        }
+
+        final Integer depositPeriodFrequencyId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(depositPeriodFrequencyIdParamName,
+                element);
+        baseDataValidator.reset().parameter(depositPeriodFrequencyIdParamName).value(depositPeriodFrequencyId)
+                .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateJson(String json) {
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {

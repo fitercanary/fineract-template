@@ -71,6 +71,7 @@ import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
+import org.apache.fineract.portfolio.savings.request.FixedDepositActivationReq;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -816,15 +817,15 @@ public class RecurringDepositAccount extends SavingsAccount {
     }
 
     @Override
-    public Map<String, Object> activate(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
+    public Map<String, Object> activate(final AppUser currentUser, FixedDepositActivationReq fixedDepositActivationReq) {
 
-        final Map<String, Object> actualChanges = super.activate(currentUser, command, tenantsTodayDate);
+        final Map<String, Object> actualChanges = super.activate(currentUser, fixedDepositActivationReq);
 
         if (accountTermAndPreClosure.isAfterExpectedFirstDepositDate(getActivationLocalDate())) {
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                     .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
-            final DateTimeFormatter formatter = DateTimeFormat.forPattern(command.dateFormat()).withLocale(command.extractLocale());
+            final DateTimeFormatter formatter = fixedDepositActivationReq.getFormatter();
             final String dateAsString = formatter.print(this.accountTermAndPreClosure.getExpectedFirstDepositOnDate());
             baseDataValidator.reset().parameter(DepositsApiConstants.activatedOnDateParamName).value(dateAsString)
                     .failWithCodeNoParameterAddedToErrorCode("cannot.be.before.expected.first.deposit.date");

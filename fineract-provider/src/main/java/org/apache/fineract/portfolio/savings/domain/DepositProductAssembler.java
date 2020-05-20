@@ -18,49 +18,8 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_PRODUCT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.chartsParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositMaxAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositMinAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.isMandatoryDepositParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargesParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.descriptionParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.idParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.inMultiplesOfParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nameParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.shortNameParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.apache.fineract.accounting.common.AccountingRuleType;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -79,13 +38,55 @@ import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYea
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationPreClosureReq;
+import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationTermsReq;
 import org.apache.fineract.portfolio.tax.domain.TaxGroup;
 import org.apache.fineract.portfolio.tax.domain.TaxGroupRepositoryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_PRODUCT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.chartsParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositMaxAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositMinAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.isMandatoryDepositParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargesParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.descriptionParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.idParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.inMultiplesOfParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nameParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.shortNameParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
 
 @Service
 public class DepositProductAssembler {
@@ -305,39 +306,38 @@ public class DepositProductAssembler {
         return preClosureDetail;
     }
 
-    public DepositPreClosureDetail assemblePreClosureDetail(final JsonCommand command, DepositPreClosureDetail produPreClosureDetail) {
-        boolean preClosurePenalApplicable = false;
+    public DepositPreClosureDetail assemblePreClosureDetail(final FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq,
+                                                            DepositPreClosureDetail productPreClosureDetail) {
+        boolean preClosurePenalApplicable;
         BigDecimal preClosurePenalInterest = null;
-        PreClosurePenalInterestOnType preClosurePenalInterestType = null;
+        PreClosurePenalInterestOnType preClosurePenalInterestType;
         Integer preClosurePenalInterestOnTypeId = null;
-        if (command.parameterExists(preClosurePenalApplicableParamName)) {
-            preClosurePenalApplicable = command.booleanObjectValueOfParameterNamed(preClosurePenalApplicableParamName);
-            if (preClosurePenalApplicable) {
-                if (command.parameterExists(preClosurePenalInterestParamName)) {
-                    preClosurePenalInterest = command.bigDecimalValueOfParameterNamed(preClosurePenalInterestParamName);
+        if (fixedDepositApplicationPreClosureReq.isPreClosurePenalApplicableParamSet()) {
+            preClosurePenalApplicable = fixedDepositApplicationPreClosureReq.isPreClosurePenalApplicable();
+            if (fixedDepositApplicationPreClosureReq.isPreClosurePenalApplicable()) {
+                if (fixedDepositApplicationPreClosureReq.isPreClosurePenalInterestParamSet()) {
+                    preClosurePenalInterest = fixedDepositApplicationPreClosureReq.getPreClosurePenalInterest();
                 } else {
-                    preClosurePenalInterest = produPreClosureDetail.preClosurePenalInterest();
+                    preClosurePenalInterest = productPreClosureDetail.preClosurePenalInterest();
                 }
 
-                if (command.parameterExists(preClosurePenalInterestParamName)) {
-                    preClosurePenalInterestOnTypeId = command.integerValueOfParameterNamed(preClosurePenalInterestOnTypeIdParamName);
+                if (fixedDepositApplicationPreClosureReq.isPreClosurePenalInterestOnTypeIdPramSet()) {
+                    preClosurePenalInterestOnTypeId = fixedDepositApplicationPreClosureReq.getPreClosurePenalInterestOnTypeId();
                 } else {
-                    preClosurePenalInterestOnTypeId = produPreClosureDetail.preClosurePenalInterestOnTypeId();
+                    preClosurePenalInterestOnTypeId = productPreClosureDetail.preClosurePenalInterestOnTypeId();
                 }
             }
         } else {
-            preClosurePenalApplicable = produPreClosureDetail.preClosurePenalApplicable();
-            preClosurePenalInterest = produPreClosureDetail.preClosurePenalInterest();
-            preClosurePenalInterestOnTypeId = produPreClosureDetail.preClosurePenalInterestOnTypeId();
+            preClosurePenalApplicable = productPreClosureDetail.preClosurePenalApplicable();
+            preClosurePenalInterest = productPreClosureDetail.preClosurePenalInterest();
+            preClosurePenalInterestOnTypeId = productPreClosureDetail.preClosurePenalInterestOnTypeId();
         }
 
         preClosurePenalInterestType = preClosurePenalInterestOnTypeId == null ? null : PreClosurePenalInterestOnType
                 .fromInt(preClosurePenalInterestOnTypeId);
 
-        DepositPreClosureDetail preClosureDetail1 = DepositPreClosureDetail.createFrom(preClosurePenalApplicable, preClosurePenalInterest,
+        return DepositPreClosureDetail.createFrom(preClosurePenalApplicable, preClosurePenalInterest,
                 preClosurePenalInterestType);
-
-        return preClosureDetail1;
     }
 
     public DepositTermDetail assembleDepositTermDetail(final JsonCommand command) {
@@ -361,7 +361,7 @@ public class DepositProductAssembler {
         return depositTermDetail;
     }
 
-    public DepositTermDetail assembleDepositTermDetail(final JsonCommand command, final DepositTermDetail prodDepositTermDetail) {
+    public DepositTermDetail assembleDepositTermDetail(final FixedDepositApplicationTermsReq fixedDepositApplicationTermsReq, final DepositTermDetail prodDepositTermDetail) {
 
         Integer minDepositTerm = null;
         Integer maxDepositTerm = null;
@@ -370,26 +370,26 @@ public class DepositProductAssembler {
         Integer inMultiplesOfDepositTerm = null;
         Integer inMultiplesOfDepositTermTypeId = null;
 
-        if (command.parameterExists(minDepositTermParamName)) {
-            minDepositTerm = command.integerValueOfParameterNamed(minDepositTermParamName);
+        if (fixedDepositApplicationTermsReq.isMinDepositTermSet()) {
+            minDepositTerm = fixedDepositApplicationTermsReq.getMinDepositTerm();
         } else if (prodDepositTermDetail != null) {
             minDepositTerm = prodDepositTermDetail.minDepositTerm();
         }
 
-        if (command.parameterExists(maxDepositTermParamName)) {
-            maxDepositTerm = command.integerValueOfParameterNamed(maxDepositTermParamName);
+        if (fixedDepositApplicationTermsReq.isMaxDepositTermSet()) {
+            maxDepositTerm = fixedDepositApplicationTermsReq.getMaxDepositTerm();
         } else if (prodDepositTermDetail != null) {
             maxDepositTerm = prodDepositTermDetail.maxDepositTerm();
         }
 
-        if (command.parameterExists(minDepositTermTypeIdParamName)) {
-            minDepositTermTypeId = command.integerValueOfParameterNamed(minDepositTermTypeIdParamName);
+        if (fixedDepositApplicationTermsReq.isMinDepositTermTypeIdSet()) {
+            minDepositTermTypeId = fixedDepositApplicationTermsReq.getMinDepositTermTypeId();
         } else if (prodDepositTermDetail != null) {
             minDepositTermTypeId = prodDepositTermDetail.minDepositTermType();
         }
 
-        if (command.parameterExists(maxDepositTermTypeIdParamName)) {
-            maxDepositTermTypeId = command.integerValueOfParameterNamed(maxDepositTermTypeIdParamName);
+        if (fixedDepositApplicationTermsReq.isMaxDepositTermTypeIdSet()) {
+            maxDepositTermTypeId = fixedDepositApplicationTermsReq.getMaxDepositTermTypeId();
         } else if (prodDepositTermDetail != null) {
             maxDepositTermTypeId = prodDepositTermDetail.maxDepositTermType();
         }
@@ -400,14 +400,14 @@ public class DepositProductAssembler {
         final SavingsPeriodFrequencyType maxDepositTermType = (maxDepositTermTypeId == null) ? null : SavingsPeriodFrequencyType
                 .fromInt(maxDepositTermTypeId);
 
-        if (command.parameterExists(inMultiplesOfDepositTermParamName)) {
-            inMultiplesOfDepositTerm = command.integerValueOfParameterNamed(inMultiplesOfDepositTermParamName);
+        if (fixedDepositApplicationTermsReq.isInMultiplesOfDepositTermSet()) {
+            inMultiplesOfDepositTerm = fixedDepositApplicationTermsReq.getInMultiplesOfDepositTerm();
         } else if (prodDepositTermDetail != null) {
             inMultiplesOfDepositTerm = prodDepositTermDetail.inMultiplesOfDepositTerm();
         }
 
-        if (command.parameterExists(preClosurePenalApplicableParamName)) {
-            inMultiplesOfDepositTermTypeId = command.integerValueOfParameterNamed(inMultiplesOfDepositTermTypeIdParamName);
+        if (fixedDepositApplicationTermsReq.isInMultiplesOfDepositTermTypeIdSet()) {
+            inMultiplesOfDepositTermTypeId = fixedDepositApplicationTermsReq.getInMultiplesOfDepositTermTypeId();
         } else if (prodDepositTermDetail != null) {
             inMultiplesOfDepositTermTypeId = prodDepositTermDetail.inMultiplesOfDepositTermType();
         }
@@ -415,10 +415,8 @@ public class DepositProductAssembler {
         final SavingsPeriodFrequencyType inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null
                 : SavingsPeriodFrequencyType.fromInt(inMultiplesOfDepositTermTypeId);
 
-        final DepositTermDetail depositTermDetail = DepositTermDetail.createFrom(minDepositTerm, maxDepositTerm, minDepositTermType,
+        return DepositTermDetail.createFrom(minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType);
-
-        return depositTermDetail;
     }
 
     public DepositRecurringDetail assembleRecurringDetail(final JsonCommand command) {

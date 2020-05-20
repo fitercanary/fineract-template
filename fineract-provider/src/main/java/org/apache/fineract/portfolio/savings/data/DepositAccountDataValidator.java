@@ -140,7 +140,7 @@ public class DepositAccountDataValidator {
 
         validateDepositDetailsForUpdate(element, baseDataValidator);
         validatePreClosureDetailForUpdate(element, baseDataValidator);
-        validateDepositTermDeatilForUpdate(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
+        validateDepositTermDetailForUpdate(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
         // validateSavingsCharges(element, baseDataValidator);
         validateWithHoldTax(element, baseDataValidator);
 
@@ -183,7 +183,7 @@ public class DepositAccountDataValidator {
 
         validateDepositDetailsForUpdate(element, baseDataValidator);
         validatePreClosureDetailForUpdate(element, baseDataValidator);
-        validateDepositTermDeatilForUpdate(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
+        validateDepositTermDetailForUpdate(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
         validateRecurringDetailForUpdate(element, baseDataValidator);
         // validateSavingsCharges(element, baseDataValidator);
         validateWithHoldTax(element, baseDataValidator);
@@ -523,8 +523,8 @@ public class DepositAccountDataValidator {
                 .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
     }
 
-    private void validateDepositTermDeatilForUpdate(final JsonElement element, final DataValidatorBuilder baseDataValidator,
-            final DepositAccountType depositAccountType) {
+    private void validateDepositTermDetailForUpdate(final JsonElement element, final DataValidatorBuilder baseDataValidator,
+                                                    final DepositAccountType depositAccountType) {
         this.productDataValidator.validateDepositTermDetailForUpdate(element, baseDataValidator);
 
         if (fromApiJsonHelper.parameterExists(depositAmountParamName, element)) {
@@ -640,18 +640,6 @@ public class DepositAccountDataValidator {
         if (this.fromApiJsonHelper.parameterExists(recurringFrequencyParamName, element)) {
             final Integer frequency = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(recurringFrequencyParamName, element);
             baseDataValidator.reset().parameter(recurringFrequencyParamName).value(frequency).notNull().integerGreaterThanZero();
-            /*
-             * if (this.fromApiJsonHelper.parameterExists(repeatsOnDayParamName,
-             * element)) { if
-             * (CalendarFrequencyType.fromInt(frequency).isWeekly()) { final
-             * Integer repeatsOnDay =
-             * this.fromApiJsonHelper.extractIntegerSansLocaleNamed
-             * (repeatsOnDayParamName, element);
-             * baseDataValidator.reset().parameter
-             * (repeatsOnDayParamName).value(repeatsOnDay).notBlank()
-             * .inMinMaxRange(CalendarWeekDaysType.getMinValue(),
-             * CalendarWeekDaysType.getMaxValue()); } }
-             */
         }
     }
 

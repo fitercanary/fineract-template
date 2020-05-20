@@ -313,4 +313,8 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         }
         return isAfterExpectedFirstDepositDate;
     }
+
+    public DepositPreClosureDetail getPreClosureDetail() {
+        return preClosureDetail;
+    }
 }

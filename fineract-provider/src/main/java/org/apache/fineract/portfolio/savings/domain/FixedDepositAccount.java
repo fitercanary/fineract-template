@@ -18,29 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
-import javax.persistence.CascadeType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToOne;
-import javax.persistence.Transient;
-
 import edu.emory.mathcs.backport.java.util.Arrays;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -54,7 +31,6 @@ import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
-import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
@@ -73,6 +49,27 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import javax.persistence.CascadeType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToOne;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
+
 @Entity
 @DiscriminatorValue("200")
 public class FixedDepositAccount extends SavingsAccount {
@@ -83,34 +80,29 @@ public class FixedDepositAccount extends SavingsAccount {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "account")
     protected DepositAccountInterestRateChart chart;
 
-    @Transient
-    protected InterestRateChartAssembler chartAssembler;
-
     protected FixedDepositAccount() {
         //
     }
 
-    public static FixedDepositAccount createNewApplicationForSubmittal(final Client client, final Group group, final SavingsProduct product,
-            final Staff fieldOfficer, final String accountNo, final String externalId, final AccountType accountType,
-            final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal interestRate,
-            final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
-            final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
-            final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
-            final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
-            final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
-            final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart,
-            boolean withHoldTax) {
+    public static FixedDepositAccount createNewApplicationForSubmission(final Client client, final Group group, final SavingsProduct product,
+                                                                        final Staff fieldOfficer, final String accountNo, final String externalId, final AccountType accountType,
+                                                                        final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal interestRate,
+                                                                        final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
+                                                                        final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
+                                                                        final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
+                                                                        final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
+                                                                        final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
+                                                                        final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart,
+                                                                        boolean withHoldTax) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         final boolean allowOverdraft = false;
         final BigDecimal overdraftLimit = new BigDecimal(0);
-        FixedDepositAccount account = new FixedDepositAccount(client, group, product, fieldOfficer, accountNo, externalId, status,
+        return new FixedDepositAccount(client, group, product, fieldOfficer, accountNo, externalId, status,
                 accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, accountTermAndPreClosure, chart,
                 allowOverdraft, overdraftLimit, withHoldTax);
-
-        return account;
     }
 
     private FixedDepositAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -147,26 +139,26 @@ public class FixedDepositAccount extends SavingsAccount {
         validateDomainRules(baseDataValidator);
         Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.MONTHLY,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY }));
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY));
 
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.QUATERLY,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY));
 
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.BIANNUAL,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
                         SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL));
 
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNUAL,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
                         SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL));
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.TENURE,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
                         SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL));
 
         SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
                 .fromInt(interestPostingPeriodType);
@@ -399,85 +391,6 @@ public class FixedDepositAccount extends SavingsAccount {
         return allPostingPeriods;
     }
 
-    public void prematureClosure(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
-            final Map<String, Object> actualChanges) {
-
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + DepositsApiConstants.preMatureCloseAction);
-
-        final SavingsAccountStatusType currentStatus = SavingsAccountStatusType.fromInt(this.status);
-        if (!SavingsAccountStatusType.ACTIVE.hasStateOf(currentStatus)) {
-            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("not.in.active.state");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-        }
-
-        final Locale locale = command.extractLocale();
-        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
-        final LocalDate closedDate = command.localDateValueOfParameterNamed(SavingsApiConstants.closedOnDateParamName);
-
-        if (closedDate.isBefore(getActivationLocalDate())) {
-            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
-                    .failWithCode("must.be.after.activation.date");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-        }
-
-        if (isAccountLocked(closedDate)) {
-            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
-                    .failWithCode("must.be.after.lockin.period");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-        }
-
-        if (closedDate.isAfter(maturityDate())) {
-            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
-                    .failWithCode("must.be.before.maturity.date");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-        }
-
-        if (closedDate.isAfter(tenantsTodayDate)) {
-            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
-                    .failWithCode("cannot.be.a.future.date");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-        }
-        final List<SavingsAccountTransaction> savingsAccountTransactions = retreiveListOfTransactions();
-        if (savingsAccountTransactions.size() > 0) {
-            final SavingsAccountTransaction accountTransaction = savingsAccountTransactions.get(savingsAccountTransactions.size() - 1);
-            if (accountTransaction.isAfter(closedDate)) {
-                baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName).value(closedDate)
-                        .failWithCode("must.be.after.last.transaction.date");
-                if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-            }
-        }
-
-        validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_CLOSE_ACCOUNT, closedDate);
-        this.status = SavingsAccountStatusType.PRE_MATURE_CLOSURE.getValue();
-
-        final Integer onAccountClosureId = command.integerValueOfParameterNamed(onAccountClosureIdParamName);
-        final DepositAccountOnClosureType onClosureType = DepositAccountOnClosureType.fromInt(onAccountClosureId);
-        this.accountTermAndPreClosure.updateOnAccountClosureStatus(onClosureType);
-
-        /*
-         * // withdraw deposit amount before closing the account final Money
-         * transactionAmountMoney = Money.of(this.currency,
-         * this.getAccountBalance()); final SavingsAccountTransaction withdraw =
-         * SavingsAccountTransaction.withdrawal(this, office(), paymentDetail,
-         * closedDate, transactionAmountMoney, new Date());
-         * this.transactions.add(withdraw);
-         */
-        actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
-        actualChanges.put(SavingsApiConstants.localeParamName, command.locale());
-        actualChanges.put(SavingsApiConstants.dateFormatParamName, command.dateFormat());
-        actualChanges.put(SavingsApiConstants.closedOnDateParamName, closedDate.toString(fmt));
-
-        this.rejectedOnDate = null;
-        this.rejectedBy = null;
-        this.withdrawnOnDate = null;
-        this.withdrawnBy = null;
-        this.closedOnDate = closedDate.toDate();
-        this.closedBy = currentUser;
-        this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-    }
-
     @Override
     public Money activateWithBalance() {
         return Money.of(this.currency, this.accountTermAndPreClosure.depositAmount());
@@ -533,15 +446,6 @@ public class FixedDepositAccount extends SavingsAccount {
         final DepositAccountOnClosureType onClosureType = DepositAccountOnClosureType.fromInt(onAccountClosureId);
         this.accountTermAndPreClosure.updateOnAccountClosureStatus(onClosureType);
 
-        // // withdraw deposit amount before closing the account
-        // final Money transactionAmountMoney = Money.of(this.currency,
-        // this.getAccountBalance());
-        // final SavingsAccountTransaction withdraw =
-        // SavingsAccountTransaction.withdrawal(this, office(), paymentDetail,
-        // closedDate,
-        // transactionAmountMoney, new Date());
-        // this.transactions.add(withdraw);
-
         actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
         actualChanges.put(SavingsApiConstants.localeParamName, command.locale());
         actualChanges.put(SavingsApiConstants.dateFormatParamName, command.dateFormat());
@@ -553,8 +457,6 @@ public class FixedDepositAccount extends SavingsAccount {
         this.withdrawnBy = null;
         this.closedOnDate = closedDate.toDate();
         this.closedBy = currentUser;
-        // this.summary.updateSummary(this.currency,
-        // this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
     public void postMaturityInterest(final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth) {
@@ -733,24 +635,6 @@ public class FixedDepositAccount extends SavingsAccount {
         return interestPostedToDate;
     }
 
-    @Override
-    public Map<String, Object> activate(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
-        final Map<String, Object> actualChanges = super.activate(currentUser, command, tenantsTodayDate);
-
-        // if (isAccountLocked(calculateMaturityDate())) {
-        // final List<ApiParameterError> dataValidationErrors = new
-        // ArrayList<ApiParameterError>();
-        // final DataValidatorBuilder baseDataValidator = new
-        // DataValidatorBuilder(dataValidationErrors)
-        // .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
-        // baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("deposit.period.must.be.greater.than.lock.in.period",
-        // "Deposit period must be greater than account lock-in period.");
-        // if (!dataValidationErrors.isEmpty()) { throw new
-        // PlatformApiDataValidationException(dataValidationErrors); }
-        // }
-        return actualChanges;
-    }
-
     private LocalDate depositStartDate() {
         // TODO: Support to add deposit start date which can be a date after
         // account activation date.
@@ -774,26 +658,26 @@ public class FixedDepositAccount extends SavingsAccount {
         validateDomainRules(baseDataValidator);
         Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.MONTHLY,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY }));
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY));
 
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.QUATERLY,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY));
 
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.BIANNUAL,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
                         SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL));
 
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNUAL,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
                         SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL));
         postingtoCompoundMap.put(SavingsPostingInterestPeriodType.TENURE,
-                java.util.Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+                java.util.Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
                         SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL));
 
         SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
                 .fromInt(interestPostingPeriodType);
@@ -894,7 +778,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final boolean withdrawalFeeApplicableForTransfer = false;
         final String accountNumber = null;
         final boolean withHoldTax = this.withHoldTax;
-        final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
+        final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmission(client, group, product,
                 savingsOfficer, accountNumber, externalId, accountType, getClosedOnDate(), closedBy, interestRate, compoundingPeriodType,
                 postingPeriodType, interestCalculationType, daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure, newChart,
@@ -945,5 +829,9 @@ public class FixedDepositAccount extends SavingsAccount {
     public void loadLazyCollections() {
         super.loadLazyCollections();
         this.chart.getId();
+    }
+
+    public DepositAccountTermAndPreClosure getAccountTermAndPreClosure() {
+        return accountTermAndPreClosure;
     }
 }

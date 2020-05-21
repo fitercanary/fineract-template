@@ -1808,7 +1808,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
     @Override
     public CommandProcessingResult modifyNickName(Long savingsAccountId, JsonCommand command) {
-        
+
         final Map<String, Object> actualChanges = new HashMap<>(1);
         final SavingsAccount savingsForUpdate = this.savingAccountRepositoryWrapper.findOneWithNotFoundDetection(savingsAccountId);
         if (command.isChangeInStringParameterNamed(SavingsApiConstants.nicknameParamName, savingsForUpdate.getNickname())) {
@@ -1817,13 +1817,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             savingsForUpdate.setNickname(newValue);
         }
 
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(savingsAccountId) //
-                .withSavingsId(savingsAccountId) //
-                .with(actualChanges) //
+        return new CommandProcessingResultBuilder()
+                .withCommandId(command.commandId())
+                .withEntityId(savingsAccountId)
+                .withSavingsId(savingsAccountId)
+                .with(actualChanges)
                 .build();
     }
-    
-    
 }

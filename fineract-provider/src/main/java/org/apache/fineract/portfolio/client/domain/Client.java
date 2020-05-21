@@ -1177,16 +1177,10 @@ public final class Client extends AbstractPersistableCustom<Long> {
     }
 
     public BigDecimal getDailyWithdrawLimit() {
-        if (this.dailyWithdrawLimit == null) {
-            return BigDecimal.ZERO;
-        }
-        return this.dailyWithdrawLimit;
+        return this.dailyWithdrawLimit == null ? BigDecimal.ZERO : this.dailyWithdrawLimit;
     }
 
     public BigDecimal getSingleWithdrawLimit() {
-        if (this.singleWithdrawLimit == null) {
-            return BigDecimal.ZERO;
-        }
-        return this.singleWithdrawLimit;
+        return this.singleWithdrawLimit == null ? BigDecimal.ZERO : this.singleWithdrawLimit;
     }
 }

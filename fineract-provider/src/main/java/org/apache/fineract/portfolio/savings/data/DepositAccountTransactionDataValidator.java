@@ -264,7 +264,7 @@ public class DepositAccountTransactionDataValidator {
         baseDataValidator.reset().parameter(DepositsApiConstants.submittedOnDateParamName).value(submitDate).notNull();
 
         final BigDecimal liquidationAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(DepositsApiConstants.liquidationAmountParamName, element);
-        baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName).value(liquidationAmount).notNull();
+        baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName).value(liquidationAmount).notLessThanMin(BigDecimal.ONE).notNull();
 
         if (liquidationAmount.compareTo(account.getAccountTermAndPreClosure().maturityAmount()) > -1) {
             baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName)

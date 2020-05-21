@@ -627,7 +627,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
-            sqlBuilder.append("join m_staff st ON st.id = sa.field_officer_id ");
+            sqlBuilder.append("join m_client c ON c.id = sa.client_id ");
+            sqlBuilder.append("join m_staff st ON st.id = c.staff_id ");
             sqlBuilder.append("join m_appuser au ON au.staff_id = st.id ");
 
             this.schemaSql = sqlBuilder.toString();

@@ -3363,7 +3363,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         SavingsAccountTransaction lastTransaction = null;
         if (transactionsSortedByDate.size() > 0) {
             for (SavingsAccountTransaction transaction : transactionsSortedByDate) {
-                if (transaction.isNotReversed() && !transaction.getTransactionLocalDate().isAfter(DateUtils.getLocalDateOfTenant())) {
+                if (transaction.isNotReversed() && !transaction.isAccrualInterestPosting()) {
                     lastTransaction = transaction;
                 }
             }

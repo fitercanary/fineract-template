@@ -198,6 +198,13 @@ public class SavingsAccountDataValidator {
             final JsonArray datatables = this.fromApiJsonHelper.extractJsonArrayNamed(SavingsApiConstants.datatables, element);
             baseDataValidator.reset().parameter(SavingsApiConstants.datatables).value(datatables).notNull().jsonArrayNotEmpty();
         }
+        
+        if (this.fromApiJsonHelper.parameterExists(requireAuthorizationToViewParamName, element)) {
+            final Boolean isRequireAuthorizationToView = this.fromApiJsonHelper.extractBooleanNamed(
+                    requireAuthorizationToViewParamName, element);
+            baseDataValidator.reset().parameter(requireAuthorizationToViewParamName).value(isRequireAuthorizationToView)
+                    .ignoreIfNull().validateForBooleanValue();
+        }
 
         validateSavingsCharges(element, baseDataValidator);
 

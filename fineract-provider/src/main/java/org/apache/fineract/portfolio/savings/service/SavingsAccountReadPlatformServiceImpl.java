@@ -1677,7 +1677,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         try {
             final StringBuffer buff = new StringBuffer("select sa.client_id from m_savings_account sa ");
             buff.append(
-                    " where sa.id = ? and sa.status_enum = 300");
+                    " where sa.id = ? ");
             return jdbcTemplate.queryForLong(buff.toString(),   new Object[] { accountId });
         } catch (final EmptyResultDataAccessException e) {
             throw new SavingsAccountNotFoundException(accountId);

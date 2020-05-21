@@ -258,13 +258,18 @@ public class SavingsAccountAssembler {
                 throw new UnsupportedParameterException(Arrays.asList(withHoldTaxParamName));
             }
         }
+        
+        boolean isRequireAuthorizationToView = false;
+        if (command.parameterExists(requireAuthorizationToViewParamName)) {
+            isRequireAuthorizationToView = command.booleanPrimitiveValueOfParameterNamed(requireAuthorizationToViewParamName);
+        }
 
         final SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer, accountNo,
                 externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges, allowOverdraft,
                 overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, nominalAnnualInterestRateOverdraft,
-                minOverdraftForInterestCalculation, withHoldTax, nickname);
+                minOverdraftForInterestCalculation, withHoldTax, nickname, isRequireAuthorizationToView);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME);
@@ -322,7 +327,7 @@ public class SavingsAccountAssembler {
                 product.minRequiredOpeningBalance(), product.lockinPeriodFrequency(), product.lockinPeriodFrequencyType(),
                 product.isWithdrawalFeeApplicableForTransfer(), charges, product.isAllowOverdraft(), product.overdraftLimit(),
                 product.isMinRequiredBalanceEnforced(), product.minRequiredBalance(), product.nominalAnnualInterestRateOverdraft(),
-                product.minOverdraftForInterestCalculation(), product.withHoldTax(), null);
+                product.minOverdraftForInterestCalculation(), product.withHoldTax(), null, false);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME);

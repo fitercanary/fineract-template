@@ -63,6 +63,7 @@ import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
@@ -94,6 +95,7 @@ public class SavingsAccountsApiResource {
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
     private final CodeValueReadPlatformService codeValueReadPlatformService;
+    private final ClientReadPlatformService clientReadPlatformService;
 
     @Autowired
     public SavingsAccountsApiResource(final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
@@ -103,7 +105,8 @@ public class SavingsAccountsApiResource {
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
             final BulkImportWorkbookService bulkImportWorkbookService,
             final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-            final CodeValueReadPlatformService codeValueReadPlatformService) {
+            final CodeValueReadPlatformService codeValueReadPlatformService,
+            final ClientReadPlatformService clientReadPlatformService) {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -113,6 +116,7 @@ public class SavingsAccountsApiResource {
         this.bulkImportWorkbookService = bulkImportWorkbookService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.codeValueReadPlatformService = codeValueReadPlatformService;
+        this.clientReadPlatformService = clientReadPlatformService;
     }
 
     @GET
@@ -176,7 +180,10 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        if (!this.savingsAccountReadPlatformService.isStaffAccountFieldOfficer(this.context.authenticatedUser().getStaffId(), accountId)
+        // verify user is client staff
+        Long clientId = this.savingsAccountReadPlatformService.getClientIdFromSavingsAccountId(accountId);
+        
+        if (!this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)
                 && !this.context.authenticatedUser().hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS)) {
 
             throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);
@@ -211,7 +218,10 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        if (!this.savingsAccountReadPlatformService.isStaffAccountFieldOfficer(this.context.authenticatedUser().getStaffId(), accountId)
+        // verify user is client staff
+        Long clientId = this.savingsAccountReadPlatformService.getClientIdFromSavingsAccountId(accountId);
+        
+        if (!this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)
                 && !this.context.authenticatedUser().hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS)) {
 
             throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);

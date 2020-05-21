@@ -96,4 +96,6 @@ public interface SavingsAccountReadPlatformService {
     List<Long> retrieveActiveSavingAccounts();
     
     boolean isStaffAccountFieldOfficer(final Long staffId, final Long accountId);
+    
+    Long getClientIdFromSavingsAccountId(Long accountId);
 }

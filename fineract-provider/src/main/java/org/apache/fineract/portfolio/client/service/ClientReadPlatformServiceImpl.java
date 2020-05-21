@@ -69,6 +69,7 @@ import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -1018,6 +1019,20 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByStatus(status);
         if (referralStatuses.isEmpty()) { return new ArrayList<>(); }
         return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isStaffClientOfficer(Long staffId, Long clientId) {
+        
+        try {
+            final StringBuffer buff = new StringBuffer("select count(*) from m_client c ");
+            buff.append(
+                    " where c.id = ? and c.staff_id = ? and c.status_enum = 300");
+            return this.jdbcTemplate.queryForObject(buff.toString(),
+                    new Object[]{clientId, staffId}, Integer.class) > 0;
+        } catch (final EmptyResultDataAccessException e) {
+            throw new ClientNotFoundException(clientId);
+        }
     }  
     
 }

@@ -141,7 +141,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
      */
     private List<SavingsAccountSummaryData> retrieveAccountDetails(final String savingswhereClause, final Object[] inputs) {
         final SavingsAccountSummaryDataMapper savingsAccountSummaryDataMapper = new SavingsAccountSummaryDataMapper();
-        final String savingsSql = "select " + savingsAccountSummaryDataMapper.schema() + savingswhereClause;
+        final String savingsSql = "select distinct " + savingsAccountSummaryDataMapper.schema() + savingswhereClause;
         this.columnValidator.validateSqlInjection(savingsAccountSummaryDataMapper.schema() , savingswhereClause);
         return this.jdbcTemplate.query(savingsSql, savingsAccountSummaryDataMapper, inputs);
     }

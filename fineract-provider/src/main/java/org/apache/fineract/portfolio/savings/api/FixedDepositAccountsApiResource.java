@@ -326,6 +326,9 @@ public class FixedDepositAccountsApiResource {
         } else if (is(commandParam, "prematureClose")) {
             final CommandWrapper commandRequest = builder.prematureCloseFixedDepositAccount(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "partialLiquidation")) {
+            final CommandWrapper commandRequest = builder.partiallyLiquidateFD(accountId).withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "calculatePrematureAmount")) {
             final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
             final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
@@ -336,9 +339,9 @@ public class FixedDepositAccountsApiResource {
                     DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
         }
 
-        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "reject",
+        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, "reject",
                 "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest", "postInterest", "close",
-                "prematureClose", "calculatePrematureAmount" }); }
+                "prematureClose", "calculatePrematureAmount", "partialLiquidation"); }
 
         return this.toApiJsonSerializer.serialize(result);
     }
@@ -412,19 +415,5 @@ public class FixedDepositAccountsApiResource {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.FIXED_DEPOSIT_TRANSACTIONS.toString(),
                 uploadedInputStream,fileDetail,locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
-    }
-
-    @POST
-    @Path("{accountId}/partiallyliquidate")
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
-    public String partialLiquidation(@PathParam("accountId") final Long accountId, final String apiRequestBodyAsJson) {
-
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().partiallyLiquidateFD(accountId).withJson(apiRequestBodyAsJson)
-                .build();
-
-        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-
-        return this.toApiJsonSerializer.serialize(result);
     }
 }

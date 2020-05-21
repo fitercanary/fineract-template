@@ -96,11 +96,11 @@ public class ValidationLimit extends AbstractPersistableCustom<Long> {
     }
 
     public BigDecimal getMaximumSingleWithdrawLimit() {
-        return this.maximumSingleWithdrawLimit;
+        return this.maximumSingleWithdrawLimit == null ? BigDecimal.ZERO : this.maximumSingleWithdrawLimit;
     }
 
     public BigDecimal getMaximumDailyWithdrawLimit() {
-        return this.maximumDailyWithdrawLimit;
+        return this.maximumDailyWithdrawLimit == null ? BigDecimal.ZERO : this.maximumDailyWithdrawLimit;
     }
 
     public Boolean isOverridable() {

@@ -198,13 +198,6 @@ public class SavingsAccountDataValidator {
             final JsonArray datatables = this.fromApiJsonHelper.extractJsonArrayNamed(SavingsApiConstants.datatables, element);
             baseDataValidator.reset().parameter(SavingsApiConstants.datatables).value(datatables).notNull().jsonArrayNotEmpty();
         }
-        
-        if (this.fromApiJsonHelper.parameterExists(requireAuthorizationToViewParamName, element)) {
-            final Boolean isRequireAuthorizationToView = this.fromApiJsonHelper.extractBooleanNamed(
-                    requireAuthorizationToViewParamName, element);
-            baseDataValidator.reset().parameter(requireAuthorizationToViewParamName).value(isRequireAuthorizationToView)
-                    .ignoreIfNull().validateForBooleanValue();
-        }
 
         validateSavingsCharges(element, baseDataValidator);
 
@@ -394,13 +387,6 @@ public class SavingsAccountDataValidator {
         if (this.fromApiJsonHelper.parameterExists(withHoldTaxParamName, element)) {
             final String withHoldTax = this.fromApiJsonHelper.extractStringNamed(withHoldTaxParamName, element);
             baseDataValidator.reset().parameter(withHoldTaxParamName).value(withHoldTax).ignoreIfNull().validateForBooleanValue();
-        }
-        
-        if (this.fromApiJsonHelper.parameterExists(requireAuthorizationToViewParamName, element)) {
-            final Boolean requireAuthorizationToView = this.fromApiJsonHelper.extractBooleanNamed(
-                    requireAuthorizationToViewParamName, element);
-            baseDataValidator.reset().parameter(requireAuthorizationToViewParamName).value(requireAuthorizationToView)
-                    .ignoreIfNull().validateForBooleanValue();
         }
 
         validateOverdraftParams(baseDataValidator, element);

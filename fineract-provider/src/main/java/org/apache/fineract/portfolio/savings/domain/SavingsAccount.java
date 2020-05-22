@@ -346,9 +346,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "nickname")
     private String nickname;
-    
-    @Column(name = "require_authorization_to_view_account", nullable = false)
-    protected boolean requireAuthorizationToView;
 
     protected SavingsAccount() {
         //
@@ -364,16 +361,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final String nickname, 
-            final boolean requireAuthorizationToView) {
+            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final String nickname) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         return new SavingsAccount(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate,
                 submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, enforceMinRequiredBalance,
-                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, nickname, 
-                requireAuthorizationToView);
+                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, nickname);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -389,7 +384,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null,
-                withHoldTax, null, false);
+                withHoldTax, null);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff savingsOfficer,
@@ -402,8 +397,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, boolean withHoldTax, final String nickname, 
-            final boolean requireAuthorizationToView) {
+            final BigDecimal minOverdraftForInterestCalculation, boolean withHoldTax, final String nickname) {
         this.client = client;
         this.group = group;
         this.product = product;
@@ -451,7 +445,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         // this.savingsOfficerHistory = null;
         this.withHoldTax = withHoldTax;
         this.taxGroup = product.getTaxGroup();
-        this.requireAuthorizationToView = requireAuthorizationToView;
     }
 
     /**
@@ -1602,12 +1595,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
         
-        if (command.isChangeInBooleanParameterNamed(SavingsApiConstants.requireAuthorizationToViewParamName, this.requireAuthorizationToView)) {
-            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.requireAuthorizationToViewParamName);
-            actualChanges.put(SavingsApiConstants.requireAuthorizationToViewParamName, newValue);
-            this.requireAuthorizationToView = newValue;
-        }
-
         validateLockinDetails(baseDataValidator);
         esnureOverdraftLimitsSetForOverdraftAccounts();
     }

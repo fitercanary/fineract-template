@@ -17,4 +17,4 @@
 -- under the License.
 --
 
-ALTER TABLE `m_savings_account` ADD COLUMN `require_authorization_to_view_account` BOOLEAN DEFAULT FALSE;
+ALTER TABLE `m_client` ADD COLUMN `require_authorization_to_view` BOOLEAN DEFAULT FALSE;

@@ -43,7 +43,7 @@ public class SavingsAccountConstant extends SavingsApiConstants {
 			allowOverdraftParamName, overdraftLimitParamName, minRequiredBalanceParamName,
 			enforceMinRequiredBalanceParamName, nominalAnnualInterestRateOverdraftParamName,
 			minOverdraftForInterestCalculationParamName, withHoldTaxParamName, datatables, overdraftStartedOnDateParamName,
-			overdraftClosedOnDateParamName, nicknameParamName, requireAuthorizationToViewParamName));
+			overdraftClosedOnDateParamName, nicknameParamName));
 
 	/**
 	 * These parameters will match the class level parameters of

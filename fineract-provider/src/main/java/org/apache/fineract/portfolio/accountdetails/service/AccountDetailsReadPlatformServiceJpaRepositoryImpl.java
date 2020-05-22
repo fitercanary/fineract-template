@@ -70,20 +70,13 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     }
 
     @Override
-    public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId, final Long userId, final Boolean allowedToReadAllAccounts) {
+    public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId) {
         // Check if client exists
         this.clientReadPlatformService.retrieveOne(clientId);
         final String loanwhereClause = " where l.client_id = ?";
-        final String savingswhereClause;
-        final List<SavingsAccountSummaryData> savingsAccounts;
-        if (!allowedToReadAllAccounts) {
-            savingswhereClause = " where sa.client_id = ? and aus.id = ? order by sa.status_enum ASC, sa.account_no ASC";
-            savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[]{clientId, userId});
-        } else {
-            savingswhereClause = " where sa.client_id = ? order by sa.status_enum ASC, sa.account_no ASC";
-            savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[]{clientId});
-        }
+        final String savingswhereClause = " where sa.client_id = ? order by sa.status_enum ASC, sa.account_no ASC";
         
+        final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[]{clientId});
         final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
         final List<ShareAccountSummaryData> shareAccounts = retrieveShareAccountDetails(clientId) ;
         return new AccountSummaryCollectionData(loanAccounts, savingsAccounts, shareAccounts);
@@ -304,9 +297,6 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
             accountsSummary.append("left join m_appuser abu on abu.id = sa.approvedon_userid ");
             accountsSummary.append("left join m_appuser avbu on rbu.id = sa.activatedon_userid ");
             accountsSummary.append("left join m_appuser cbu on cbu.id = sa.closedon_userid ");
-            accountsSummary.append("left join m_client c ON c.id = sa.client_id ");
-            accountsSummary.append("left join m_staff st ON st.id = c.staff_id ");
-            accountsSummary.append("left join m_appuser aus ON aus.staff_id = st.id ");
 
             this.schemaSql = accountsSummary.toString();
         }

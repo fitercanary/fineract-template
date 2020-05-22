@@ -34,6 +34,7 @@ import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.accountdetails.data.AccountSummaryCollectionData;
 import org.apache.fineract.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
@@ -47,6 +48,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.validation.limit.api.ValidationLimitApiCollectionConstants;
 import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
+import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -189,8 +191,7 @@ public class ClientsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
         
-        final Boolean allowedToReadAllAccounts = this.context.authenticatedUser()
-                .hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
+        this.validateUserHasAuthorityToViewClient(clientId);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
@@ -200,8 +201,7 @@ public class ClientsApiResource {
                     staffInSelectedOfficeOnly);
             Long referredById = clientData.getReferredById();
             clientData = ClientData.templateOnTop(clientData, templateData);
-            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null,
-                    this.context.authenticatedUser().getId(), allowedToReadAllAccounts);
+            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null);
             if (savingAccountOptions != null && savingAccountOptions.size() > 0) {
                 clientData = ClientData.templateWithSavingAccountOptions(clientData, savingAccountOptions);
             }
@@ -420,11 +420,9 @@ public class ClientsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
         
-        final Boolean allowedToReadAllAccounts = this.context.authenticatedUser()
-                .hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
+        this.validateUserHasAuthorityToViewClient(clientId);
 
-        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId, 
-                this.context.authenticatedUser().getId(), allowedToReadAllAccounts);
+        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId);
 
         final Set<String> CLIENT_ACCOUNTS_DATA_PARAMETERS = new HashSet<>(Arrays.asList("loanAccounts", "savingsAccounts", "shareAccounts"));
 
@@ -458,10 +456,22 @@ public class ClientsApiResource {
     public String retrieveClientDailyLimits(@PathParam("clientId") final Long clientId, @PathParam("savingsAccountId") final Long savingAccountId) {
         
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
+        this.validateUserHasAuthorityToViewClient(clientId);
 
         ValidationLimitData limitData = this.savingsAccountDomainService.getCurrentValidationLimitsOnDate(clientId, DateUtils.getLocalDateOfTenant(), savingAccountId);
         
         return this.toApiJsonSerializer.serialize(limitData);
+        
+    }
+    
+    private void validateUserHasAuthorityToViewClient(Long clientId) {
+        
+        if (this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)) return;
+        
+        if(this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) return;
+        
+        throw new NoAuthorizationException("User has no authority to view client with identifier " + clientId);    
         
     }
 }

@@ -255,6 +255,9 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     @Column(name = "max_transaction_limit")
     private BigDecimal singleWithdrawLimit;
+    
+    @Column(name = "require_authorization_to_view", nullable = false)
+    protected boolean requireAuthorizationToView;
 
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
@@ -299,10 +302,16 @@ public final class Client extends AbstractPersistableCustom<Long> {
         final Long savingsAccountId = null;
         final BigDecimal dailyWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
         final BigDecimal singleWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.singleWithdrawLimit);
+        
+        boolean isRequireAuthorizationToView = false;
+        if (command.parameterExists(ClientApiConstants.requireAuthorizationToViewParamName)) {
+            isRequireAuthorizationToView = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName);
+        }
+        
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
                 activationDate, officeJoiningDate, externalId, mobileNo, mothersMaidenName, emailAddress, staff, submittedOnDate,
                 savingsProductId, savingsAccountId, dataOfBirth, gender, clientType, clientClassification, legalForm, isStaff, clientLevel,
-                dailyWithdrawLimit, singleWithdrawLimit);
+                dailyWithdrawLimit, singleWithdrawLimit, isRequireAuthorizationToView);
     }
 
     protected Client() {
@@ -315,7 +324,8 @@ public final class Client extends AbstractPersistableCustom<Long> {
             final String mothersMaidenName, final String emailAddress, final Staff staff, final LocalDate submittedOnDate,
             final Long savingsProductId, final Long savingsAccountId, final LocalDate dateOfBirth, final CodeValue gender,
             final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff,
-            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit) {
+            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit,
+            final boolean requireAuthorizationToView) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -405,6 +415,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
         this.dailyWithdrawLimit = dailyWithdrawLimit;
         this.singleWithdrawLimit = singleWithdrawLimit;
         this.setLegalForm(legalForm);
+        this.requireAuthorizationToView = requireAuthorizationToView;
 
         deriveDisplayName();
         validate();

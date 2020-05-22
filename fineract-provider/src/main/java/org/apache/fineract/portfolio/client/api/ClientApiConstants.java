@@ -197,6 +197,7 @@ public class ClientApiConstants {
     public static final String dailyWithdrawLimit = "dailyWithdrawLimit";
     public static String singleWithdrawLimit = "singleWithdrawLimit";
     public static final String singleDepositLimit = "singleDepositLimit";
+    public static final String requireAuthorizationToViewParamName = "requireAuthorizationToView";
 
     /**
      * These parameters will match the class level parameters of

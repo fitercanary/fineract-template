@@ -92,6 +92,11 @@ public class DepositAccountTransactionDataValidator {
             DepositsApiConstants.noteParamName, DepositsApiConstants.depositPeriodParamName,
             DepositsApiConstants.depositPeriodFrequencyIdParamName, DepositsApiConstants.liquidationAmountParamName));
 
+    private static final Set<String> DEPOSIT_ACCOUNT_TOP_UP_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
+            DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, DepositsApiConstants.submittedOnDateParamName,
+            DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName,
+            DepositsApiConstants.depositAmountParamName));
+
 
     @Autowired
     public DepositAccountTransactionDataValidator(final FromJsonHelper fromApiJsonHelper) {
@@ -249,19 +254,20 @@ public class DepositAccountTransactionDataValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void validatePartialLiquidation(FixedDepositAccount account, JsonCommand command) {
+    private void checkForUnsupportedParameters(JsonCommand command, Set<String> supportedParams) {
         String json = command.json();
         validateJson(json);
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, DEPOSIT_ACCOUNT_PARTIAL_LIQUIDATION_REQUEST_DATA_PARAMETERS);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParams);
+    }
 
+    public void validatePartialLiquidation(FixedDepositAccount account, JsonCommand command) {
+        final JsonElement element = command.parsedJson();
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(DepositAccountType.FIXED_DEPOSIT
                 .resourceName());
-        final JsonElement element = command.parsedJson();
-
-        final LocalDate submitDate = this.fromApiJsonHelper.extractLocalDateNamed(DepositsApiConstants.submittedOnDateParamName, element);
-        baseDataValidator.reset().parameter(DepositsApiConstants.submittedOnDateParamName).value(submitDate).notNull();
+        this.checkForUnsupportedParameters(command, DEPOSIT_ACCOUNT_PARTIAL_LIQUIDATION_REQUEST_DATA_PARAMETERS);
+        this.validateDepositPeriod(baseDataValidator, element);
 
         final BigDecimal liquidationAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(DepositsApiConstants.liquidationAmountParamName, element);
         baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName).value(liquidationAmount).notLessThanMin(BigDecimal.ONE).notNull();
@@ -270,6 +276,27 @@ public class DepositAccountTransactionDataValidator {
             baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName)
                     .failWithCode("liquidation.amount.must.be.less.than.maturity.amount");
         }
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateTopUp(JsonCommand command) {
+        final JsonElement element = command.parsedJson();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(DepositAccountType.FIXED_DEPOSIT
+                .resourceName());
+        this.checkForUnsupportedParameters(command, DEPOSIT_ACCOUNT_TOP_UP_REQUEST_DATA_PARAMETERS);
+        this.validateDepositPeriod(baseDataValidator, element);
+
+        final BigDecimal depositAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(DepositsApiConstants.depositAmountParamName, element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.depositAmountParamName).value(depositAmount).notLessThanMin(BigDecimal.ONE).notNull();
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateDepositPeriod(DataValidatorBuilder baseDataValidator, JsonElement element) {
+        final LocalDate submitDate = this.fromApiJsonHelper.extractLocalDateNamed(DepositsApiConstants.submittedOnDateParamName, element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.submittedOnDateParamName).value(submitDate).notNull();
 
         if (this.fromApiJsonHelper.parameterExists(depositPeriodParamName, element)) {
             final Integer depositPeriod = fromApiJsonHelper.extractIntegerSansLocaleNamed(depositPeriodParamName, element);
@@ -280,8 +307,6 @@ public class DepositAccountTransactionDataValidator {
                 element);
         baseDataValidator.reset().parameter(depositPeriodFrequencyIdParamName).value(depositPeriodFrequencyId)
                 .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
-
-        throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
     private void validateJson(String json) {

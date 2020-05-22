@@ -199,7 +199,7 @@ public class PostingPeriod {
     }
 
     public List<BigDecimal> calculateInterest(final CompoundInterestValues compoundInterestValues) {
-        List<BigDecimal> interestEarned = new ArrayList<BigDecimal>();
+        List<BigDecimal> interestEarned = new ArrayList<>();
 
         // for each compounding period accumulate the amount of interest
         // to be applied to the balanced for interest calculation

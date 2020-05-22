@@ -1601,6 +1601,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 baseDataValidator.reset().parameter(withHoldTaxParamName).failWithCode("not.supported.for.this.account");
             }
         }
+        
+        if (command.isChangeInBooleanParameterNamed(SavingsApiConstants.requireAuthorizationToViewParamName, this.requireAuthorizationToView)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.requireAuthorizationToViewParamName);
+            actualChanges.put(SavingsApiConstants.requireAuthorizationToViewParamName, newValue);
+            this.requireAuthorizationToView = newValue;
+        }
 
         validateLockinDetails(baseDataValidator);
         esnureOverdraftLimitsSetForOverdraftAccounts();

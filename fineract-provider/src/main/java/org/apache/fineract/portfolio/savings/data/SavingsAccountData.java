@@ -118,6 +118,8 @@ public class SavingsAccountData {
     
     private final CodeValueData blockNarration;
     private final String nickname;
+    
+    private final boolean  requireAuthorizationToView;
 
     public static SavingsAccountData importInstanceIndividual(Long clientId, Long productId, Long fieldOfficerId,LocalDate submittedOnDate,
             BigDecimal nominalAnnualInterestRate, EnumOptionData interestCompoundingPeriodTypeEnum,
@@ -207,6 +209,7 @@ public class SavingsAccountData {
         this.blockNarrationOptions = null;
         this.blockNarration = null;
         this.nickname = null;
+        this.requireAuthorizationToView = false;
     }
 
     public static final Comparator<SavingsAccountData> ClientNameComparator = new Comparator<SavingsAccountData>() {
@@ -333,6 +336,7 @@ public class SavingsAccountData {
         this.blockNarrationOptions = null;
         this.blockNarration = null;
         this.nickname = null;
+        this.requireAuthorizationToView = false;
     }
 
     public Integer getRowIndex() {
@@ -354,7 +358,8 @@ public class SavingsAccountData {
             final BigDecimal minOverdraftForInterestCalculation, final LocalDate overdraftStartedOnDate, final LocalDate overdraftClosedOnDate,
                                               final boolean withHoldTax, final TaxGroupData taxGroup,
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
-            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, final String nickname) {
+            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, final String nickname,
+            final boolean requireAuthorizationToViewAccount) {
 
         final Collection<SavingsProductData> productOptions = null;
         final Collection<StaffData> fieldOfficerOptions = null;
@@ -388,7 +393,8 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,overdraftStartedOnDate,overdraftClosedOnDate, withHoldTax, taxGroup,
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname,
+                requireAuthorizationToViewAccount);
     }
 
     public static SavingsAccountData lookup(final Long accountId, final String accountNo, final EnumOptionData depositType) {
@@ -454,6 +460,7 @@ public class SavingsAccountData {
         final Integer daysToEscheat = null;
         final BigDecimal savingsAmountOnHold = null;
         final String nickname = null;
+        final boolean requireAuthorizationToViewAccount = false;
 
         return new SavingsAccountData(accountId, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
@@ -464,7 +471,8 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,overdraftStartedOnDate,overdraftClosedOnDate, withHoldTax, taxGroup,
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname,
+                requireAuthorizationToViewAccount);
     }
 
     public static SavingsAccountData lookupWithProductDetails(final Long accountId, final String accountNo,
@@ -528,6 +536,7 @@ public class SavingsAccountData {
         final Integer daysToEscheat = null;
 		final BigDecimal savingsAmountOnHold = null;
 		final String nickname = null;
+		final boolean requireAuthorizationToViewAccount = false;
 
         return new SavingsAccountData(accountId, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
@@ -538,7 +547,8 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate,  overdraftClosedOnDate, withHoldTax, taxGroup,
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname,
+                requireAuthorizationToViewAccount);
     }
 
     public static SavingsAccountData withTemplateOptions(final SavingsAccountData account, final SavingsAccountData template,
@@ -574,7 +584,8 @@ public class SavingsAccountData {
                 account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
                 account.minOverdraftForInterestCalculation, account.overdraftStartedOnDate, account.overdraftClosedOnDate, account.withHoldTax, account.taxGroup,
                 account.lastActiveTransactionDate, account.isDormancyTrackingActive, account.daysToInactive, 
-                account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, account.blockNarrationOptions, account.blockNarration, account.nickname);
+                account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, account.blockNarrationOptions, account.blockNarration, account.nickname,
+                account.requireAuthorizationToView);
     }
 
     public static SavingsAccountData withTemplateOptions(final SavingsAccountData account,
@@ -599,7 +610,8 @@ public class SavingsAccountData {
                 account.overdraftLimit, account.minRequiredBalance, account.enforceMinRequiredBalance,
                 account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
                 account.minOverdraftForInterestCalculation,  account.overdraftStartedOnDate, account.overdraftClosedOnDate, account.withHoldTax, account.taxGroup, account.lastActiveTransactionDate,
-                account.isDormancyTrackingActive, account.daysToInactive, account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, account.nickname);
+                account.isDormancyTrackingActive, account.daysToInactive, account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, account.nickname, 
+                account.requireAuthorizationToView);
     }
 
     public static SavingsAccountData withClientTemplate(final Long clientId, final String clientName, final Long groupId,
@@ -665,6 +677,7 @@ public class SavingsAccountData {
         final Integer daysToEscheat = null;
 		final BigDecimal savingsAmountOnHold = null;
         final String nickname = null;
+        final boolean requireAuthorizationToView = false;
 
         return new SavingsAccountData(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
@@ -675,7 +688,8 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,  overdraftStartedOnDate, overdraftClosedOnDate, withHoldTax, taxGroup,
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, nickname,
+                requireAuthorizationToView);
     }
 
     private SavingsAccountData(final Long id, final String accountNo, final EnumOptionData depositType, final String externalId,
@@ -699,7 +713,8 @@ public class SavingsAccountData {
             final BigDecimal onHoldFunds, final BigDecimal nominalAnnualInterestRateOverdraft,
             final BigDecimal minOverdraftForInterestCalculation,   final LocalDate overdraftStartedOnDate, final LocalDate overdraftClosedOnDate, final boolean withHoldTax, final TaxGroupData taxGroup,
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
-            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, final String nickname) {
+            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, final String nickname, 
+            final boolean requireAuthorizationToViewAccount) {
         this.id = id;
         this.accountNo = accountNo;
         this.depositType = depositType;
@@ -772,6 +787,7 @@ public class SavingsAccountData {
         this.blockNarrationOptions = null;
         this.blockNarration = null;
         this.nickname = nickname;
+        this.requireAuthorizationToView = requireAuthorizationToViewAccount;
     }
 
     private SavingsAccountChargeData getWithdrawalFee() {
@@ -862,7 +878,7 @@ public class SavingsAccountData {
 	            final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
 	            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold,
 	            final Collection<CodeValueData> blockNarrationOptions,
-	            final CodeValueData blockNarration, final String nickname) {
+	            final CodeValueData blockNarration, final String nickname, final boolean requireAuthorizationToViewAccount) {
 	        this.id = id;
 	        this.accountNo = accountNo;
 	        this.depositType = depositType;
@@ -934,7 +950,8 @@ public class SavingsAccountData {
 	        
 	        this.blockNarrationOptions = blockNarrationOptions;
 	        this.blockNarration = blockNarration;
-            this.nickname = nickname;
+                this.nickname = nickname;
+                this.requireAuthorizationToView = requireAuthorizationToViewAccount;
 	    }
 	
 	public static SavingsAccountData withTemplateOptions(final SavingsAccountData account,
@@ -960,7 +977,7 @@ public class SavingsAccountData {
 	                account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
 	                account.minOverdraftForInterestCalculation,  account.overdraftStartedOnDate, account.overdraftClosedOnDate, account.withHoldTax, account.taxGroup, account.lastActiveTransactionDate,
 	                account.isDormancyTrackingActive, account.daysToInactive, account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, blockNarrationsOptions,
-	                account.blockNarration, account.nickname);
+	                account.blockNarration, account.nickname, account.requireAuthorizationToView);
 	    }
 	
 	public static SavingsAccountData withTemplateOptions(final SavingsAccountData account, final SavingsAccountData template,
@@ -997,7 +1014,8 @@ public class SavingsAccountData {
 	                account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
 	                account.minOverdraftForInterestCalculation, account.overdraftStartedOnDate, account.overdraftClosedOnDate, account.withHoldTax, account.taxGroup,
 	                account.lastActiveTransactionDate, account.isDormancyTrackingActive, account.daysToInactive, 
-	                account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, account.blockNarrationOptions, account.blockNarration, account.nickname);
+	                account.daysToDormancy, account.daysToEscheat, account.savingsAmountOnHold, account.blockNarrationOptions, account.blockNarration, account.nickname,
+	                account.requireAuthorizationToView);
 	    }
 	public static SavingsAccountData instance(final Long id, final String accountNo, final EnumOptionData depositType,
 	            final String externalId, final Long groupId, final String groupName, final Long clientId, final String clientName,
@@ -1015,7 +1033,7 @@ public class SavingsAccountData {
 	                                              final boolean withHoldTax, final TaxGroupData taxGroup,
 	            final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
 	            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, 
-	            final CodeValueData blockNarration, final String nickname) {
+	            final CodeValueData blockNarration, final String nickname, final boolean requireAuthorizationToView) {
 
 	        final Collection<SavingsProductData> productOptions = null;
 	        final Collection<StaffData> fieldOfficerOptions = null;
@@ -1049,7 +1067,8 @@ public class SavingsAccountData {
 	                lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
 	                minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
 	                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,overdraftStartedOnDate,overdraftClosedOnDate, withHoldTax, taxGroup,
-	                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, blockNarration, nickname);
+	                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold, blockNarration, nickname, 
+	                requireAuthorizationToView);
 	    }
     private SavingsAccountData(final Long id, final String accountNo, final EnumOptionData depositType, final String externalId,
                                final Long groupId, final String groupName, final Long clientId, final String clientName, final Long productId,
@@ -1073,7 +1092,7 @@ public class SavingsAccountData {
                                final BigDecimal minOverdraftForInterestCalculation,   final LocalDate overdraftStartedOnDate, final LocalDate overdraftClosedOnDate, final boolean withHoldTax, final TaxGroupData taxGroup,
                                final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive,
                                final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold,
-                               final CodeValueData blockNarration, final String nickname) {
+                               final CodeValueData blockNarration, final String nickname, final boolean requireAuthorizationToView) {
         this.id = id;
         this.accountNo = accountNo;
         this.depositType = depositType;
@@ -1141,5 +1160,6 @@ public class SavingsAccountData {
         this.blockNarration = blockNarration;
         this.blockNarrationOptions = null;
         this.nickname = nickname;
+        this.requireAuthorizationToView =requireAuthorizationToView;
     }
 }

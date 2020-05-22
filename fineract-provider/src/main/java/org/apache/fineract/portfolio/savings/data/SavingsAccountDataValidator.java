@@ -395,6 +395,13 @@ public class SavingsAccountDataValidator {
             final String withHoldTax = this.fromApiJsonHelper.extractStringNamed(withHoldTaxParamName, element);
             baseDataValidator.reset().parameter(withHoldTaxParamName).value(withHoldTax).ignoreIfNull().validateForBooleanValue();
         }
+        
+        if (this.fromApiJsonHelper.parameterExists(requireAuthorizationToViewParamName, element)) {
+            final Boolean requireAuthorizationToView = this.fromApiJsonHelper.extractBooleanNamed(
+                    requireAuthorizationToViewParamName, element);
+            baseDataValidator.reset().parameter(requireAuthorizationToViewParamName).value(requireAuthorizationToView)
+                    .ignoreIfNull().validateForBooleanValue();
+        }
 
         validateOverdraftParams(baseDataValidator, element);
         throwExceptionIfValidationWarningsExist(dataValidationErrors);

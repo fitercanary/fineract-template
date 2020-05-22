@@ -366,7 +366,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy, ");
             sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
             sqlBuilder.append("sa.block_narration_id as blockNarrationId, ");
-            sqlBuilder.append("cvn.code_value as blockNarrationValue ");
+            sqlBuilder.append("cvn.code_value as blockNarrationValue, ");
+            sqlBuilder.append("sa.require_authorization_to_view_account as requireAuthorizationToViewAccount ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -604,6 +605,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             
             final CodeValueData blockNarration = CodeValueData.instance(blockNarrationId, blockNarrationValue);
             
+            final boolean requireAuthorizationToViewAccount = rs.getBoolean("requireAuthorizationToViewAccount");
+            
             return SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                     interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -611,7 +614,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation,
                     onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate,
                     overdraftClosedOnDate, withHoldTax, taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive,
-                    daysToDormancy, daysToEscheat, onHoldAmount, blockNarration, nickname);
+                    daysToDormancy, daysToEscheat, onHoldAmount, blockNarration, nickname,requireAuthorizationToViewAccount);
         }
     }
 
@@ -1383,6 +1386,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final Integer daysToDormancy = null;
             final Integer daysToEscheat = null;
             final String nickname = null;
+            final boolean requireAuthorizationToView = false;
 
             final SavingsAccountApplicationTimelineData timeline = SavingsAccountApplicationTimelineData.templateDefault();
             final EnumOptionData depositType = null;
@@ -1393,7 +1397,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation,
                     onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, withHoldTax,
                     taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,
-                    savingsAmountOnHold, nickname);
+                    savingsAmountOnHold, nickname, requireAuthorizationToView);
         }
     }
 

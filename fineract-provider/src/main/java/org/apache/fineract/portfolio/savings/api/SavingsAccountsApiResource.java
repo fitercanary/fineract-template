@@ -72,6 +72,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -180,14 +181,7 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        // verify user is client staff
-        Long clientId = this.savingsAccountReadPlatformService.getClientIdFromSavingsAccountId(accountId);
-        
-        if (!this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)
-                && !this.context.authenticatedUser().hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS)) {
-
-            throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);
-        }
+        this.validateUserHasAuthorityToViewAccount(accountId);
 
         if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
                 || is(chargeStatus, "pageSize"))) {
@@ -218,14 +212,7 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        // verify user is client staff
-        Long clientId = this.savingsAccountReadPlatformService.getClientIdFromSavingsAccountId(accountId);
-        
-        if (!this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)
-                && !this.context.authenticatedUser().hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS)) {
-
-            throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);
-        }
+        this.validateUserHasAuthorityToViewAccount(accountId);
 
         if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
                 || is(chargeStatus, "pageSize"))) {
@@ -580,6 +567,18 @@ public class SavingsAccountsApiResource {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.SAVINGS_TRANSACTIONS.toString(),
                 uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+    
+    private void validateUserHasAuthorityToViewAccount(Long accountId) {
+
+        Long clientId = this.savingsAccountReadPlatformService.getClientIdFromSavingsAccountId(accountId);
+        
+        if (this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)) return;
+        
+        if(this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) return;
+        
+        throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);    
+        
     }
 
 }

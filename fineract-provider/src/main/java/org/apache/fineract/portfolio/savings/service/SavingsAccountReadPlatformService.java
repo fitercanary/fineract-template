@@ -57,7 +57,7 @@ public interface SavingsAccountReadPlatformService {
 
     SavingsAccountTransactionData retrieveSavingsTransaction(Long savingsId, Long transactionId, DepositAccountType depositAccountType);
 
-    Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft, Long userId, final Boolean allowedToReadAllAccounts);
+    Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft);
 
     List<Long> retrieveSavingsIdsPendingInactive(LocalDate tenantLocalDate);
 

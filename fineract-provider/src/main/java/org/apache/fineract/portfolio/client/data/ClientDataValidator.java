@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.client.data;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -212,6 +213,16 @@ public final class ClientDataValidator {
         if (this.fromApiJsonHelper.parameterExists("isStaff", element)) {
             final Boolean isStaffFlag = this.fromApiJsonHelper.extractBooleanNamed("isStaff", element);
             baseDataValidator.reset().parameter("isStaff").value(isStaffFlag).notNull();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.dailyWithdrawLimit, element)) {
+            final BigDecimal dailyWithdrawLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(ClientApiConstants.dailyWithdrawLimit, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.dailyWithdrawLimit).value(dailyWithdrawLimit).notLessThanMin(BigDecimal.ZERO);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.singleWithdrawLimit, element)) {
+            final BigDecimal singleWithdrawLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(ClientApiConstants.singleWithdrawLimit, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.singleWithdrawLimit).value(singleWithdrawLimit).notLessThanMin(BigDecimal.ZERO);
         }
 
         List<ApiParameterError> dataValidationErrorsForClientNonPerson = getDataValidationErrorsForCreateOnClientNonPerson(
@@ -505,6 +516,18 @@ public final class ClientDataValidator {
         if (this.fromApiJsonHelper.parameterExists("isStaff", element)) {
             final Boolean isStaffFlag = this.fromApiJsonHelper.extractBooleanNamed("isStaff", element);
             baseDataValidator.reset().parameter("isStaff").value(isStaffFlag).notNull();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.dailyWithdrawLimit, element)) {
+            atLeastOneParameterPassedForUpdate = true;
+            final BigDecimal dailyWithdrawLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(ClientApiConstants.dailyWithdrawLimit, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.dailyWithdrawLimit).value(dailyWithdrawLimit).notLessThanMin(BigDecimal.ZERO);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.singleWithdrawLimit, element)) {
+            atLeastOneParameterPassedForUpdate = true;
+            final BigDecimal singleWithdrawLimit = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(ClientApiConstants.singleWithdrawLimit, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.singleWithdrawLimit).value(singleWithdrawLimit).notLessThanMin(BigDecimal.ZERO);
         }
 
         Map<String, Object> parameterUpdateStatusDetails = getParameterUpdateStatusAndDataValidationErrorsForUpdateOnClientNonPerson(

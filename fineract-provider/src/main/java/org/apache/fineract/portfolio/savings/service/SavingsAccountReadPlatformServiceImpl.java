@@ -196,7 +196,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         sqlBuilder.append(this.savingAccountMapper.schema());
 
         sqlBuilder.append(" join m_office o on o.id = c.office_id");
-        sqlBuilder.append(" join m_staff st ON st.id = sa.field_officer_id ");
+        sqlBuilder.append(" join m_client cl ON cl.id = sa.client_id ");
+        sqlBuilder.append(" join m_staff st ON st.id = cl.staff_id ");
         sqlBuilder.append(" join m_appuser aus ON aus.staff_id = st.id ");
         sqlBuilder.append(" where o.hierarchy like ?");
         
@@ -627,8 +628,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
-            sqlBuilder.append("join m_staff st ON st.id = sa.field_officer_id ");
-            sqlBuilder.append("join m_appuser au ON au.staff_id = st.id ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -1396,26 +1395,19 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
 
     @Override
-    public Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft, Long userId, final Boolean allowedToReadAllAccounts) {
+    public Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft) {
 
         SavingAccountMapperForLookup accountMapperForLookup = new SavingAccountMapperForLookup();
         final StringBuilder sqlBuilder = new StringBuilder("select " + accountMapperForLookup.schema());
 
-        if (!allowedToReadAllAccounts) {
-            sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and aus.id = ?");
-        } else {
-            sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 ");
-        }
+        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 ");
+        
         Object[] queryParameters = null;
         if (overdraft == null) {
             queryParameters = new Object[]{clientId};
-            if (!allowedToReadAllAccounts)
-                queryParameters = new Object[]{clientId, userId};
         } else {
             sqlBuilder.append(" and sa.allow_overdraft = ?");
             queryParameters = new Object[]{clientId, overdraft};
-            if (!allowedToReadAllAccounts)
-                queryParameters = new Object[]{clientId, userId, overdraft};
         }
         return this.jdbcTemplate.query(sqlBuilder.toString(), accountMapperForLookup, queryParameters);
 
@@ -1667,4 +1659,20 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             throw new SavingsAccountNotFoundException(accountId);
         }
     }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public Long getClientIdFromSavingsAccountId(Long accountId) {
+        
+        try {
+            final StringBuffer buff = new StringBuffer("select sa.client_id from m_savings_account sa ");
+            buff.append(
+                    " where sa.id = ? and sa.status_enum = 300");
+            return jdbcTemplate.queryForLong(buff.toString(),   new Object[] { accountId });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(accountId);
+        }
+    }
+    
+    
 }

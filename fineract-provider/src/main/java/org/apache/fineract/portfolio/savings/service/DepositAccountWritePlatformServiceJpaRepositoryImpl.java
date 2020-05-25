@@ -673,6 +673,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         AccountAssociations accountAssociations = this.getLinkedSavingsAccount(accountId);
 
         this.checkClientOrGroupActive(account);
+        account.setApplyPreclosureCharges(false);
         this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations);
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         fixedDepositApplicationReq.setDepositAmount(command.bigDecimalValueOfParameterNamed(depositAmountParamName));

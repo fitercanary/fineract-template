@@ -54,6 +54,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
@@ -79,6 +80,9 @@ public class FixedDepositAccount extends SavingsAccount {
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "account")
     protected DepositAccountInterestRateChart chart;
+
+    @Transient
+    private boolean applyPreclosureCharges = true;
 
     protected FixedDepositAccount() {
         //
@@ -833,5 +837,13 @@ public class FixedDepositAccount extends SavingsAccount {
 
     public DepositAccountTermAndPreClosure getAccountTermAndPreClosure() {
         return accountTermAndPreClosure;
+    }
+
+    public boolean shouldApplyPreclosureCharges() {
+        return applyPreclosureCharges;
+    }
+
+    public void setApplyPreclosureCharges(boolean applyPreclosureCharges) {
+        this.applyPreclosureCharges = applyPreclosureCharges;
     }
 }

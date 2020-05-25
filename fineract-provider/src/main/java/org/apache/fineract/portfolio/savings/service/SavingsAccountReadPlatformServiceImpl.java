@@ -262,7 +262,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         try {
             final String sql = "select " + this.savingAccountMapper.schema() + " where sa.id = ?";
 
-            return this.jdbcTemplate.queryForObject(sql, this.savingAccountMapper, new Object[] { accountId });
+            SavingsAccountData savingsAccount = this.jdbcTemplate.queryForObject(sql, this.savingAccountMapper, accountId);
+            this.clientReadPlatformService.validateUserHasAuthorityToViewClient(savingsAccount.getClientId());
+            return savingsAccount;
         } catch (final EmptyResultDataAccessException e) {
             throw new SavingsAccountNotFoundException(accountId);
         }
@@ -320,10 +322,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.min_required_opening_balance as minRequiredOpeningBalance, ");
             sqlBuilder.append("sa.lockin_period_frequency as lockinPeriodFrequency,");
             sqlBuilder.append("sa.lockin_period_frequency_enum as lockinPeriodFrequencyType, ");
-            // sqlBuilder.append("sa.withdrawal_fee_amount as
-            // withdrawalFeeAmount,");
-            // sqlBuilder.append("sa.withdrawal_fee_type_enum as
-            // withdrawalFeeTypeEnum, ");
             sqlBuilder.append("sa.withdrawal_fee_for_transfer as withdrawalFeeForTransfers, ");
             sqlBuilder.append("sa.allow_overdraft as allowOverdraft, ");
             sqlBuilder.append("sa.overdraft_limit as overdraftLimit, ");
@@ -331,12 +329,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.min_overdraft_for_interest_calculation as minOverdraftForInterestCalculation, ");
             sqlBuilder.append("sa.overdraft_startedon_date as overdraftStartedOnDate, ");
             sqlBuilder.append("sa.overdraft_closedon_date as overdraftClosedOnDate, ");
-            // sqlBuilder.append("sa.annual_fee_amount as annualFeeAmount,");
-            // sqlBuilder.append("sa.annual_fee_on_month as annualFeeOnMonth,
-            // ");
-            // sqlBuilder.append("sa.annual_fee_on_day as annualFeeOnDay, ");
-            // sqlBuilder.append("sa.annual_fee_next_due_date as
-            // annualFeeNextDueDate, ");
             sqlBuilder.append("sa.total_deposits_derived as totalDeposits, ");
             sqlBuilder.append("sa.total_withdrawals_derived as totalWithdrawals, ");
             sqlBuilder.append("sa.total_withdrawal_fees_derived as totalWithdrawalFees, ");

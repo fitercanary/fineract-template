@@ -792,10 +792,6 @@ public class SavingsAccountData {
         return this.id;
     }
 
-    public Long clientId() {
-        return this.clientId;
-    }
-
     public Long groupId() {
         return this.groupId;
     }
@@ -824,7 +820,7 @@ public class SavingsAccountData {
     }
 
     public Collection<SavingsAccountChargeData> charges() {
-        return (this.charges == null) ? new HashSet<SavingsAccountChargeData>() : this.charges;
+        return (this.charges == null) ? new HashSet<>() : this.charges;
     }
 
     public void setDatatables(final List<DatatableData> datatables) {
@@ -887,12 +883,7 @@ public class SavingsAccountData {
 	        this.minRequiredOpeningBalance = minRequiredOpeningBalance;
 	        this.lockinPeriodFrequency = lockinPeriodFrequency;
 	        this.lockinPeriodFrequencyType = lockinPeriodFrequencyType;
-	        // this.withdrawalFeeAmount = withdrawalFeeAmount;
-	        // this.withdrawalFeeType = withdrawalFeeType;
 	        this.withdrawalFeeForTransfers = withdrawalFeeForTransfers;
-	        // this.annualFeeAmount = annualFeeAmount;
-	        // this.annualFeeOnMonthDay = annualFeeOnMonthDay;
-	        // this.annualFeeNextDueDate = annualFeeNextDueDate;
 
 	        this.summary = summary;
 	        this.transactions = transactions;

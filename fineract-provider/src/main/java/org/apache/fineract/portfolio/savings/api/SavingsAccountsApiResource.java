@@ -18,29 +18,8 @@
  */
 package org.apache.fineract.portfolio.savings.api;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.common.AccountingConstants;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -61,7 +40,6 @@ import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSeria
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
-import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -72,15 +50,33 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
-import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Path("/savingsaccounts")
 @Component
@@ -96,7 +92,6 @@ public class SavingsAccountsApiResource {
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
     private final CodeValueReadPlatformService codeValueReadPlatformService;
-    private final ClientReadPlatformService clientReadPlatformService;
 
     @Autowired
     public SavingsAccountsApiResource(final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
@@ -106,8 +101,7 @@ public class SavingsAccountsApiResource {
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
             final BulkImportWorkbookService bulkImportWorkbookService,
             final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-            final CodeValueReadPlatformService codeValueReadPlatformService,
-            final ClientReadPlatformService clientReadPlatformService) {
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -117,7 +111,6 @@ public class SavingsAccountsApiResource {
         this.bulkImportWorkbookService = bulkImportWorkbookService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.codeValueReadPlatformService = codeValueReadPlatformService;
-        this.clientReadPlatformService = clientReadPlatformService;
     }
 
     @GET
@@ -181,8 +174,6 @@ public class SavingsAccountsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        this.validateUserHasAuthorityToViewAccount(accountId);
-
         if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
                 || is(chargeStatus, "pageSize"))) {
             throw new UnrecognizedQueryParamException("status", chargeStatus,
@@ -211,9 +202,6 @@ public class SavingsAccountsApiResource {
             @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
-
-        this.validateUserHasAuthorityToViewAccount(accountId);
-
         if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
                 || is(chargeStatus, "pageSize"))) {
             throw new UnrecognizedQueryParamException("status", chargeStatus,
@@ -294,7 +282,7 @@ public class SavingsAccountsApiResource {
         SavingsAccountData templateData = null;
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (settings.isTemplate()) {
-            templateData = this.savingsAccountReadPlatformService.retrieveTemplate(savingsAccount.clientId(), savingsAccount.groupId(),
+            templateData = this.savingsAccountReadPlatformService.retrieveTemplate(savingsAccount.getClientId(), savingsAccount.groupId(),
                     savingsAccount.productId(), staffInSelectedOfficeOnly);
         }
 
@@ -361,7 +349,7 @@ public class SavingsAccountsApiResource {
         SavingsAccountData templateData = null;
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (settings.isTemplate()) {
-            templateData = this.savingsAccountReadPlatformService.retrieveTemplate(savingsAccount.clientId(), savingsAccount.groupId(),
+            templateData = this.savingsAccountReadPlatformService.retrieveTemplate(savingsAccount.getClientId(), savingsAccount.groupId(),
                     savingsAccount.productId(), staffInSelectedOfficeOnly);
         }
 
@@ -568,17 +556,4 @@ public class SavingsAccountsApiResource {
                 uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
-    
-    private void validateUserHasAuthorityToViewAccount(Long accountId) {
-
-        Long clientId = this.savingsAccountReadPlatformService.getClientIdFromSavingsAccountId(accountId);
-        
-        if (this.clientReadPlatformService.isStaffClientOfficer(this.context.authenticatedUser().getStaffId(), clientId)) return;
-        
-        if(this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) return;
-        
-        throw new NoAuthorizationException("User has no authority to view account with identifier " + accountId);    
-        
-    }
-
 }

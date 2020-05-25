@@ -403,8 +403,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
     @Transactional
     @Override
-    public Long prematurelyCloseFDAccount(final FixedDepositAccount account, final PaymentDetail paymentDetail,
-                                          final FixedDepositPreClosureReq fixedDepositPreclosureReq, final Map<String, Object> changes) {
+    public Long prematurelyCloseFDAccount(FixedDepositAccount account, PaymentDetail paymentDetail,
+                                          FixedDepositPreClosureReq fixedDepositPreclosureReq, Map<String, Object> changes) {
         final AppUser user = this.context.authenticatedUser();
 
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
@@ -412,7 +412,6 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
 
         boolean isAccountTransfer = false;
-        boolean isRegularTransaction = false;
         final boolean isPreMatureClosure = true;
         final Set<Long> existingTransactionIds = new HashSet<>();
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
@@ -431,29 +430,30 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
 
-        // Apply pre-closure charge
-        List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(),
-                ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
-        for (SavingsAccountCharge charge : preclosureCharges) {
-            charge.setPercentage(charge.getCharge().getAmount());
-            charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
-            charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
-            charge.setAmountOutstanding(charge.amount());
-            this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"),
-                    user);
-        }
-        Boolean applyWithdrawalFeeForTransfer = account.withdrawalFeeApplicableForTransfer;
-        if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
-            // Apply withdrawal charges
-            List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFeeByAccountId(account.getId(),
-                    ChargeTimeType.WITHDRAWAL_FEE.getValue());
-            for (SavingsAccountCharge charge : withdrawalCharges) {
+        boolean applyWithdrawalFeeForTransfer = account.withdrawalFeeApplicableForTransfer;
+        if (account.shouldApplyPreclosureCharges()) {
+            // Apply pre-closure charge
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(),
+                    ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+            for (SavingsAccountCharge charge : preclosureCharges) {
+                charge.setPercentage(charge.getCharge().getAmount());
+                charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
+                charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
                 charge.setAmountOutstanding(charge.amount());
-                this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(),
-                        DateTimeFormat.forPattern("dd MM yyyy"), user);
+                this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"),
+                        user);
+            }
+            if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
+                // Apply withdrawal charges
+                List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFeeByAccountId(account.getId(),
+                        ChargeTimeType.WITHDRAWAL_FEE.getValue());
+                for (SavingsAccountCharge charge : withdrawalCharges) {
+                    charge.setAmountOutstanding(charge.amount());
+                    this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(),
+                            DateTimeFormat.forPattern("dd MM yyyy"), user);
+                }
             }
         }
-
         if (closureType.isTransferToSavings()) {
             final boolean isExceptionForBalanceCheck = false;
             final Long toSavingsId = fixedDepositPreclosureReq.getToSavingsId();
@@ -464,13 +464,13 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(closedDate, account.getAccountBalance(),
                     PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, fixedDepositPreclosureReq.getLocale(), fmt, null, null,
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
-                    isRegularTransaction, isExceptionForBalanceCheck);
+                    false, isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
             updateAlreadyPostedTransactions(existingTransactionIds, account);
             account.withdrawalFeeApplicableForTransfer = applyWithdrawalFeeForTransfer;
         } else {
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
-                    paymentDetail, false, isRegularTransaction);
+                    paymentDetail, false, false);
             savingsTransactionId = withdrawal.getId();
         }
 

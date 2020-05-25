@@ -329,6 +329,9 @@ public class FixedDepositAccountsApiResource {
         } else if (is(commandParam, "partialLiquidation")) {
             final CommandWrapper commandRequest = builder.partiallyLiquidateFD(accountId).withJson(apiRequestBodyAsJson).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "topUp")) {
+            final CommandWrapper commandRequest = builder.topUpFixedDepositAccount(accountId).withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "calculatePrematureAmount")) {
             final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
             final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
@@ -341,7 +344,7 @@ public class FixedDepositAccountsApiResource {
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, "reject",
                 "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest", "postInterest", "close",
-                "prematureClose", "calculatePrematureAmount", "partialLiquidation"); }
+                "prematureClose", "calculatePrematureAmount", "partialLiquidation", "topUp"); }
 
         return this.toApiJsonSerializer.serialize(result);
     }

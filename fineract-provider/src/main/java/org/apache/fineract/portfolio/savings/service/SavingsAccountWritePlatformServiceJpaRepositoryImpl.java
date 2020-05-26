@@ -525,6 +525,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             List<SavingsAccountTransaction> transactions = account.getTransactions();
             for (SavingsAccountTransaction accountTransaction : transactions) {
                 if (accountTransaction.getId() == null) {
+                    final Note note = Note.savingNote(account, "Interest Posting");
+                    this.noteRepository.save(note);
+
                     this.savingsAccountTransactionRepository.save(accountTransaction);
                 }
             }

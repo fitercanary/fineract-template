@@ -475,7 +475,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         }
 
         this.prematurelyCloseFD(account, fixedDepositPreclosureReq, changes);
-
+        // Force interest earned to equal interest posted when FD is prematurely closed
+        account.getSummary().setTotalInterestEarned(account.getSummary().getTotalInterestPosted());
         this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);

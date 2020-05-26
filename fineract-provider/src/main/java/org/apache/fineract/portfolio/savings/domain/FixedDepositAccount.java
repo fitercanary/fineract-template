@@ -388,7 +388,6 @@ public class FixedDepositAccount extends SavingsAccount {
                 }
             }
         }
-
         this.summary.updateFromInterestPeriodSummaries(this.currency, allPostingPeriods);
         this.savingsHelper.calculateInterestForAllPostingPeriods(this.currency, allPostingPeriods, this.getLockedInUntilLocalDate(),
                 isTransferInterestToOtherAccount());
@@ -549,7 +548,6 @@ public class FixedDepositAccount extends SavingsAccount {
         this.postAccrualInterest(MathContext.DECIMAL64, accountCloseDate, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
         this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
-
     }
 
     public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure,

@@ -23,5 +23,20 @@ public class AppUserConstants {
     public static final String PASSWORD_NEVER_EXPIRES = "passwordNeverExpires";
     public static final String IS_SELF_SERVICE_USER = "isSelfServiceUser";
     public static final String CLIENTS = "clients";
+    
+    // request parameters for authorize user
+    public static final String clientIdParamName = "clientId";
+    public static final String userIdParamName = "userId";
+    public static final String startTimeParamName = "startTime";
+    public static final String endTimeParamName = "endTime";
+    public static final String isExpiredParamName = "isExpired";
+    public static final String authorizedByParamName = "authorizedBy";
+    public static final String commentParamName = "comment";
+    public static final String durationParamName = "duration";
+    public static final String durationTypeParamName = "durationType";
+    
+    // general
+    public static final String localeParamName = "locale";
+    public static final String dateFormatParamName = "dateFormat";
 
 }

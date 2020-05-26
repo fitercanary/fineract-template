@@ -16,18 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.useradministration.service;
+package org.apache.fineract.useradministration.domain;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-public interface AppUserWritePlatformService {
+@Service
+public class ClientUserRepositoryWrapper {
 
-    CommandProcessingResult createUser(JsonCommand command);
-
-    CommandProcessingResult updateUser(Long userId, JsonCommand command);
-
-    CommandProcessingResult deleteUser(Long userId);
+    private final ClientUserRepository clientUserRepository;
     
-    CommandProcessingResult authorizeUser(JsonCommand command);
+    @Autowired
+    public ClientUserRepositoryWrapper(final ClientUserRepository clientUserRepository) {
+        this.clientUserRepository = clientUserRepository;
+    }
+    
+    public void save(ClientUser clientUser) {
+        this.clientUserRepository.save(clientUser);
+    }
 }

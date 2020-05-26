@@ -27,13 +27,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
+import org.apache.fineract.portfolio.client.data.ClientApiCollectionConstants;
 import org.apache.fineract.useradministration.domain.PasswordValidationPolicy;
 import org.apache.fineract.useradministration.domain.PasswordValidationPolicyRepository;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -50,6 +54,13 @@ public final class UserDataValidator {
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("username", "firstname", "lastname", "password",
             "repeatPassword", "email", "officeId", "notSelectedRoles", "roles", "sendPasswordToEmail", "staffId", "passwordNeverExpires",
             AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS));
+    
+    protected static final Set<String> AUTHORIZE_USER_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(AppUserConstants.clientIdParamName, AppUserConstants.userIdParamName, 
+                    AppUserConstants.startTimeParamName, AppUserConstants.isExpiredParamName, 
+                    AppUserConstants.authorizedByParamName, AppUserConstants.commentParamName, 
+                    AppUserConstants.localeParamName, AppUserConstants.dateFormatParamName, 
+                    AppUserConstants.durationParamName, AppUserConstants.durationTypeParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -238,5 +249,48 @@ public final class UserDataValidator {
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+    
+    public void validateForAuthorizeUser(final JsonCommand command) {
+
+        final String json = command.json();
+
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                AUTHORIZE_USER_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(ClientApiCollectionConstants.CLIENT_RESOURCE_NAME);
+
+        final JsonElement element = command.parsedJson();
+
+        final Long clientId = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.clientIdParamName, element);
+        baseDataValidator.reset().parameter(AppUserConstants.clientIdParamName).value(clientId).notNull().integerGreaterThanZero();
+        
+        final Long userId = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.userIdParamName, element);
+        baseDataValidator.reset().parameter(AppUserConstants.userIdParamName).value(userId).notNull().integerGreaterThanZero();
+        
+        final Long authorizedById = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.authorizedByParamName, element);
+        baseDataValidator.reset().parameter(AppUserConstants.authorizedByParamName).value(authorizedById).notNull().integerGreaterThanZero();
+
+        if (this.fromApiJsonHelper.parameterExists(AppUserConstants.commentParamName, element)) {
+            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
+            baseDataValidator.reset().parameter(AppUserConstants.commentParamName).value(comment).notBlank();
+        }
+        
+        final Integer durationType = this.fromApiJsonHelper.extractIntegerNamed(AppUserConstants.durationTypeParamName, element, 
+                command.extractLocale());
+        baseDataValidator.reset().parameter(AppUserConstants.durationTypeParamName).value(durationType).notNull()
+        .integerGreaterThanZero().isOneOfTheseValues(1,2,3,4,5);
+        
+        final Long duration = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.durationParamName, element);
+        baseDataValidator.reset().parameter(AppUserConstants.authorizedByParamName).value(authorizedById).notNull().integerGreaterThanZero();
+
+        
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+
     }
 }

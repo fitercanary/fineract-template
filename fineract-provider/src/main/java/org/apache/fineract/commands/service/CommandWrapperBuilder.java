@@ -3218,4 +3218,11 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?commad=updateNickName";
         return this;
     }
+    
+    public CommandWrapperBuilder authorizeClientUser() {
+        this.actionName = "AUTHORIZECLIENT";
+        this.entityName = "USER";
+        this.href = "/users/authorizeclientuser";
+        return this;
+    }
 }

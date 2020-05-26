@@ -123,6 +123,9 @@ public class AppUser extends AbstractPersistableCustom<Long> implements Platform
     @OneToMany(cascade = CascadeType.ALL,  orphanRemoval = true, fetch=FetchType.EAGER)
     @JoinColumn(name = "appuser_id", referencedColumnName= "id", nullable = false)
     private Set<AppUserClientMapping> appUserClientMappings = new HashSet<>();
+    
+    @OneToMany(mappedBy = "user")
+    protected Set<ClientUser> managedClients;
 
 	public static AppUser fromJson(final Office userOffice, final Staff linkedStaff, final Set<Role> allRoles, 
 			final Collection<Client> clients, final JsonCommand command) {

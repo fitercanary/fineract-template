@@ -202,4 +202,20 @@ public class UsersApiResource {
                 locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
+    
+    @POST
+    @Path("/authorizeclientuser")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String authorizeClientUser(final String apiRequestBodyAsJson) {
+
+        final CommandWrapper commandRequest = new CommandWrapperBuilder() //
+                .authorizeClientUser() //
+                .withJson(apiRequestBodyAsJson) //
+                .build(); //
+
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
+    }
 }

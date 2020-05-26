@@ -3227,10 +3227,11 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder authorizeClientUser() {
+    public CommandWrapperBuilder authorizeUserToViewClient(final Long userId) {
         this.actionName = "AUTHORIZECLIENT";
         this.entityName = "USER";
-        this.href = "/users/authorizeclientuser";
+        this.entityId = userId;
+        this.href = "/users/" + userId + "/authorizeclientuser";
         return this;
     }
 }

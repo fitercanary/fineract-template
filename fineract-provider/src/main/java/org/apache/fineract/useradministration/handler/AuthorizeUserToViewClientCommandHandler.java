@@ -30,19 +30,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @CommandType(entity = "USER", action = "AUTHORIZECLIENT")
-public class AuthorizeClientUserCommandHandler implements NewCommandSourceHandler {
+public class AuthorizeUserToViewClientCommandHandler implements NewCommandSourceHandler {
 
     private final AppUserWritePlatformService appUserWritePlatformService;
     
     @Autowired
-    public AuthorizeClientUserCommandHandler(final AppUserWritePlatformService appUserWritePlatformService) {
+    public AuthorizeUserToViewClientCommandHandler(final AppUserWritePlatformService appUserWritePlatformService) {
         this.appUserWritePlatformService = appUserWritePlatformService;
     }
     
     @Transactional
     @Override
     public CommandProcessingResult processCommand(JsonCommand command) {
-        return this.appUserWritePlatformService.authorizeUser( command);
+        final Long userId = command.entityId();
+        return this.appUserWritePlatformService.authorizeUserToViewClient(userId, command);
     }
 
 }

@@ -26,7 +26,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.EntityExistsException;
 import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -373,10 +372,13 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     }
 
     @Override
-    public CommandProcessingResult authorizeUser(JsonCommand command) {
+    public CommandProcessingResult authorizeUserToViewClient(Long userId, JsonCommand command) {
         
         try {
             final AppUser currentUser = this.context.authenticatedUser();
+
+            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(userId);
+            
             
             this.fromApiJsonDeserializer.validateForAuthorizeUser(command);
             
@@ -386,11 +388,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
             
-            final Long userId = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.userIdParamName, element);
-            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(userId);
-            
             final Locale locale = command.extractLocale();
-            final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
     
             final LocalDateTime startTimeDate = DateUtils.getLocalDateTimeOfTenant();
             
@@ -398,7 +396,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             final Integer duration = command.integerValueOfParameterNamed(AppUserConstants.durationParamName);
             
-            final LocalDateTime endTimeDate = startTimeDate.plusHours(2);
+            final LocalDateTime endTimeDate = startTimeDate.plusHours(duration);
             
             boolean isExpired = false;
             if (this.fromApiJsonHelper.parameterExists(AppUserConstants.isExpiredParamName, element)) {

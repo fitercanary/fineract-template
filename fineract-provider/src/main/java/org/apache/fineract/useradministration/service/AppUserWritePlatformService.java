@@ -29,5 +29,5 @@ public interface AppUserWritePlatformService {
 
     CommandProcessingResult deleteUser(Long userId);
     
-    CommandProcessingResult authorizeUser(JsonCommand command);
+    CommandProcessingResult authorizeUserToViewClient(Long userId, JsonCommand command);
 }

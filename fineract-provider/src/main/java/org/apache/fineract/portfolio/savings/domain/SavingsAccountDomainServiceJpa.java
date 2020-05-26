@@ -27,6 +27,7 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepos
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
+import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.apache.fineract.portfolio.common.service.BusinessEventNotifierService;
@@ -71,6 +72,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ValidationLimitRepository validationLimitRepository;
+    private final ClientReadPlatformService clientReadPlatformService;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -82,7 +84,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
                                           final BusinessEventNotifierService businessEventNotifierService,
                                           final SavingsAccountAssembler savingAccountAssembler, SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
                                           final ClientRepositoryWrapper clientRepositoryWrapper,
-                                          final ValidationLimitRepository validationLimitRepository) {
+                                          final ValidationLimitRepository validationLimitRepository, ClientReadPlatformService clientReadPlatformService) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -95,6 +97,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.savingsAccountTransactionDataValidator = savingsAccountTransactionDataValidator;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
         this.validationLimitRepository = validationLimitRepository;
+        this.clientReadPlatformService = clientReadPlatformService;
     }
 
     @Transactional
@@ -293,7 +296,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Transactional
     @Override
     public ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate, Long savingsAccountId) {
-        
+
+        this.clientReadPlatformService.validateUserHasAuthorityToViewClient(clientId);
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
         
         SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsAccountId);

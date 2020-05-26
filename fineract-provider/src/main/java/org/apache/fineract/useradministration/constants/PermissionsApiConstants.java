@@ -23,9 +23,6 @@ public class PermissionsApiConstants {
     
     /* Permissions */
     
-    // Savings 
-    public static final String READ_ALL_SAVINGSACCOUNT_PERMISSION = "READ_ALL_SAVINGSACCOUNT";
-    
     // Clients
     public static final String READ_ALL_CLIENT_PERMISSION = "READ_ALL_CLIENT";
 

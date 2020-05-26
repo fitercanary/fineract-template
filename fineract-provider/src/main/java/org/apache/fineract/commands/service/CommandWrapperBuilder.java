@@ -2026,7 +2026,15 @@ public class CommandWrapperBuilder {
         this.actionName = "PARTIALLY_LIQUIDATE";
         this.entityName = "FIXEDDEPOSITACCOUNT";
         this.entityId = accountId;
-        this.href = "/fixeddepositaccounts/partiallyliquidate";
+        this.href = "/fixeddepositaccounts/" + accountId + "?command=partialLiquidation";
+        return this;
+    }
+
+    public CommandWrapperBuilder topUpFixedDepositAccount(final Long accountId) {
+        this.actionName = "TOP_UP";
+        this.entityName = "FIXEDDEPOSITACCOUNT";
+        this.entityId = accountId;
+        this.href = "/fixeddepositaccounts/" + accountId + "?command=topUp";
         return this;
     }
 

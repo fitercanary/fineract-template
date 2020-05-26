@@ -44,6 +44,7 @@ import org.apache.fineract.infrastructure.dataqueries.data.DatatableData;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksReadService;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.organisation.office.data.OfficeData;
@@ -68,9 +69,8 @@ import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
-import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
+import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -354,6 +354,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     @Override
     public ClientData retrieveOne(final Long clientId) {
         try {
+            this.validateUserHasAuthorityToViewClient(clientId);
             final String hierarchy = this.context.officeHierarchy();
             final String hierarchySearchString = hierarchy + "%";
 
@@ -1027,21 +1028,26 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String status = "pending";
         List<ReferralStatus> referralStatuses = this.referralStatusRepository.findReferralStatusesByStatus(status);
         if (referralStatuses.isEmpty()) { return new ArrayList<>(); }
-        return referralStatuses.stream().map(x -> new ReferralStatusData(x)).collect(Collectors.toList());
+        return referralStatuses.stream().map(ReferralStatusData::new).collect(Collectors.toList());
     }
 
     @Override
-    public boolean isStaffClientOfficer(Long staffId, Long clientId) {
-        
+    public boolean isCurrentUserClientOfficer(Long clientId) {
         try {
-            final StringBuffer buff = new StringBuffer("select count(*) from m_client c ");
-            buff.append(
-                    " where c.id = ? and c.staff_id = ? and c.status_enum = 300");
-            return this.jdbcTemplate.queryForObject(buff.toString(),
-                    new Object[]{clientId, staffId}, Integer.class) > 0;
+            Long staffId = this.context.authenticatedUser().getStaffId();
+            String sql = "select count(*) from m_client c " + " where c.id = ? and c.staff_id = ? and c.status_enum = 300";
+            return this.jdbcTemplate.queryForObject(sql, new Object[]{clientId, staffId}, Integer.class) > 0;
         } catch (final EmptyResultDataAccessException e) {
             throw new ClientNotFoundException(clientId);
         }
-    }  
-    
+    }
+
+    @Override
+    public void validateUserHasAuthorityToViewClient(Long clientId) {
+        if (this.isCurrentUserClientOfficer(clientId) ||
+                this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) {
+            return;
+        }
+        throw new NoAuthorizationException("User has no authority to view client with identifier " + clientId);
+    }
 }

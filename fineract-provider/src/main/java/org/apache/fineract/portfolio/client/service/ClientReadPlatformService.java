@@ -56,5 +56,7 @@ public interface ClientReadPlatformService {
 
     Page<ClientData> retrieveAllSummary(SearchParameters searchParameters);
     
-    boolean isStaffClientOfficer(final Long staffId, final Long clientId);
+    boolean isCurrentUserClientOfficer(Long clientId);
+
+    void validateUserHasAuthorityToViewClient(Long clientId);
 }

@@ -17,4 +17,4 @@
 -- under the License.
 --
 
-INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`) VALUES ('portfolio', 'READ_ALL_CLIENT', 'ALL_CLIENT', 'READ');
+INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`) VALUES ('transaction_savings', 'TOP_UP_FIXEDDEPOSITACCOUNT', 'FIXEDDEPOSITACCOUNT', 'TOP_UP');

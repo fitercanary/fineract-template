@@ -59,6 +59,9 @@ public final class UserDataValidator {
                     AppUserConstants.authorizedByParamName, AppUserConstants.commentParamName, 
                     AppUserConstants.localeParamName, AppUserConstants.dateFormatParamName, 
                     AppUserConstants.durationParamName, AppUserConstants.durationTypeParamName));
+    
+    protected static final Set<String> AUTHORIZATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(AppUserConstants.clientIdParamName, AppUserConstants.userIdParamName,AppUserConstants.commentParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -286,6 +289,34 @@ public final class UserDataValidator {
                 command.extractLocale());
         baseDataValidator.reset().parameter(AppUserConstants.durationParamName).value(duration).notNull().integerGreaterThanZero();
 
+        
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+
+    }
+    
+    public void validateAuthorizationRequestToViewClient(final JsonCommand command) {
+
+        final String json = command.json();
+
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                AUTHORIZATION_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource("user");
+
+        final JsonElement element = command.parsedJson();
+
+        final Long clientId = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.clientIdParamName, element);
+        baseDataValidator.reset().parameter(AppUserConstants.clientIdParamName).value(clientId).notNull().integerGreaterThanZero();
+        
+        if (this.fromApiJsonHelper.parameterExists(AppUserConstants.commentParamName, element)) {
+            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
+            baseDataValidator.reset().parameter(AppUserConstants.commentParamName).value(comment).notBlank();
+        }
         
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
 

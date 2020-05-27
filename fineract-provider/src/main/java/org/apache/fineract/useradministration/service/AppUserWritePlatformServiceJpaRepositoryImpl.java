@@ -58,6 +58,10 @@ import org.apache.fineract.useradministration.domain.AppUserRepository;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.apache.fineract.useradministration.domain.ClientUser;
 import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.AuthorizationRequest;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestRepository;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestStatusType;
 import org.apache.fineract.useradministration.domain.Role;
 import org.apache.fineract.useradministration.domain.RoleRepository;
 import org.apache.fineract.useradministration.domain.UserDomainService;
@@ -103,6 +107,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     private final FromJsonHelper fromApiJsonHelper;
     private final AppUserRepositoryWrapper appUserRepositoryWrapper;
     private final ClientUserRepositoryWrapper clientUserRepositoryWrapper;
+    private final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper;
 
     @Autowired
     public AppUserWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final AppUserRepository appUserRepository,
@@ -111,7 +116,8 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository, final StaffRepositoryWrapper staffRepositoryWrapper,
             final ClientRepositoryWrapper clientRepositoryWrapper, final TopicDomainService topicDomainService,
             final FromJsonHelper fromApiJsonHelper,
-            final AppUserRepositoryWrapper appUserRepositoryWrapper,final ClientUserRepositoryWrapper clientUserRepositoryWrapper) {
+            final AppUserRepositoryWrapper appUserRepositoryWrapper,final ClientUserRepositoryWrapper clientUserRepositoryWrapper,
+            final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper) {
         this.context = context;
         this.appUserRepository = appUserRepository;
         this.userDomainService = userDomainService;
@@ -126,6 +132,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.appUserRepositoryWrapper = appUserRepositoryWrapper;
         this.clientUserRepositoryWrapper = clientUserRepositoryWrapper;
+        this.authorizationRequestRepositoryWrapper = authorizationRequestRepositoryWrapper;
     }
 
     @Transactional
@@ -373,7 +380,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     }
 
     @Override
-    public CommandProcessingResult authorizeUserToViewClient(Long userId, JsonCommand command) {
+    public CommandProcessingResult authorizeViewClient(Long userId, JsonCommand command) {
         
         try {
             final AppUser currentUser = this.context.authenticatedUser();
@@ -388,8 +395,6 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final Long clientId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.clientIdParamName, element);
             
             final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
-            
-            final Locale locale = command.extractLocale();
     
             final LocalDateTime startTimeDate = DateUtils.getLocalDateTimeOfTenant();
             
@@ -440,6 +445,48 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         handleDataIntegrityIssues(command, throwable, dve);
         return CommandProcessingResult.empty();
     }
+   }
+
+    @Override
+    public CommandProcessingResult requestToViewClient(Long userId, JsonCommand command) {
+        
+        try {
+
+            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(userId);
+            
+            this.fromApiJsonDeserializer.validateAuthorizationRequestToViewClient(command);
+            
+            final JsonElement element = command.parsedJson();
+            
+            final Long clientId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.clientIdParamName, element);
+            
+            final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+            
+            final Date requestedDate = DateUtils.getLocalDateTimeOfTenant().toDate();
+            
+            final AuthorizationRequestStatusType status = AuthorizationRequestStatusType.SUBMITTED_AND_PENDING_APPROVAL;
+            
+            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
+    
+            AuthorizationRequest request = new AuthorizationRequest(user, client, status, requestedDate, comment);
+
+            this.authorizationRequestRepositoryWrapper.save(request);
+            
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withOfficeId(client.officeId()) //
+                    .withClientId(clientId) //
+                    .withEntityId(request.getId()) //
+                    .build();
+            
+        }catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
+        }
     }
     
     

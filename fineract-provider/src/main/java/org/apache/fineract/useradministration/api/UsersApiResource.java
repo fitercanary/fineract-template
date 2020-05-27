@@ -46,6 +46,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
 import org.apache.fineract.useradministration.data.AppUserData;
+import org.apache.fineract.useradministration.data.AuthorizationRequestData;
 import org.apache.fineract.useradministration.service.AppUserReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -62,6 +63,9 @@ public class UsersApiResource {
      */
     private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "officeId", "officeName", "username",
             "firstname", "lastname", "email", "allowedOffices", "availableRoles", "selectedRoles", "staff"));
+    
+    private final Set<String> AUTHORIZATION_REQUEST_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "user", "client", 
+            "status", "requestedDate", "approvedBy", "approvedDate", "rejectedBy", "rejectionDate", "comment"));
 
     private final String resourceNameForPermissions = "USER";
 
@@ -73,6 +77,7 @@ public class UsersApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
+    private final DefaultToApiJsonSerializer<AuthorizationRequestData> toRequestApiJsonSerializer;
 
     @Autowired
     public UsersApiResource(final PlatformSecurityContext context, final AppUserReadPlatformService readPlatformService,
@@ -80,7 +85,7 @@ public class UsersApiResource {
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
-            final BulkImportWorkbookService bulkImportWorkbookService) {
+            final BulkImportWorkbookService bulkImportWorkbookService,final DefaultToApiJsonSerializer<AuthorizationRequestData> toRequestApiJsonSerializer) {
         this.context = context;
         this.readPlatformService = readPlatformService;
         this.officeReadPlatformService = officeReadPlatformService;
@@ -89,6 +94,7 @@ public class UsersApiResource {
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.bulkImportWorkbookPopulatorService=bulkImportWorkbookPopulatorService;
         this.bulkImportWorkbookService=bulkImportWorkbookService;
+        this.toRequestApiJsonSerializer = toRequestApiJsonSerializer;
     }
 
     @GET
@@ -203,18 +209,48 @@ public class UsersApiResource {
     }
     
     @POST
-    @Path("{userId}/authorizeUserToViewClient")
+    @Path("{userId}/authorize")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String authorizeUserToViewClient(@PathParam("userId") final Long userId, final String apiRequestBodyAsJson) {
+    public String authorize(@PathParam("userId") final Long userId, final String apiRequestBodyAsJson) {
 
         final CommandWrapper commandRequest = new CommandWrapperBuilder() //
-                .authorizeUserToViewClient(userId) //
+                .authorizeUser(userId) //
                 .withJson(apiRequestBodyAsJson) //
                 .build(); //
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return this.toApiJsonSerializer.serialize(result);
+    }
+    
+    @POST
+    @Path("{userId}/requestauthorization")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String requestAuthorization(@PathParam("userId") final Long userId, final String apiRequestBodyAsJson) {
+
+        final CommandWrapper commandRequest = new CommandWrapperBuilder() //
+                .requestAuthroization(userId) //
+                .withJson(apiRequestBodyAsJson) //
+                .build(); //
+
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
+    }
+    
+    @GET
+    @Path("requestauthorization")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllAuthorizationRequests(@Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
+
+        final Collection<AuthorizationRequestData> requests = this.readPlatformService.retrieveAuthorizationRequests(100);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toRequestApiJsonSerializer.serialize(settings, requests, this.AUTHORIZATION_REQUEST_RESPONSE_DATA_PARAMETERS);
     }
 }

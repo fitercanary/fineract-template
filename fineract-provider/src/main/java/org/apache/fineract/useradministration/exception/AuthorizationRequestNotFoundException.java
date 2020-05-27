@@ -16,24 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.useradministration.service;
+package org.apache.fineract.useradministration.exception;
 
-import org.apache.fineract.useradministration.data.AppUserData;
-import org.apache.fineract.useradministration.data.AuthorizationRequestData;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-import java.util.Collection;
+public class AuthorizationRequestNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-public interface AppUserReadPlatformService {
+    public AuthorizationRequestNotFoundException(final Long id) {
+        super("error.msg.authorization.request.id.invalid", "AuthorizationRequest with identifier " + id + " does not exist", id);
+    }
 
-    Collection<AppUserData> retrieveAllUsers();
-
-    Collection<AppUserData> retrieveSearchTemplate();
-
-    AppUserData retrieveNewUserDetails();
-
-    AppUserData retrieveUser(Long userId);
-    
-    boolean isUsernameExist(String username);
-    
-    Collection<AuthorizationRequestData> retrieveAuthorizationRequests(Integer status);
 }

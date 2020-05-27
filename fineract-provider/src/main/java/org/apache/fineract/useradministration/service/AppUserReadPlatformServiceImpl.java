@@ -25,7 +25,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.office.data.OfficeData;
@@ -35,12 +37,17 @@ import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
 import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.useradministration.data.AppUserData;
+import org.apache.fineract.useradministration.data.AuthorizationRequestData;
 import org.apache.fineract.useradministration.data.RoleData;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserClientMapping;
 import org.apache.fineract.useradministration.domain.AppUserRepository;
+import org.apache.fineract.useradministration.domain.AuthorizationRequest;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestStatusType;
 import org.apache.fineract.useradministration.domain.Role;
 import org.apache.fineract.useradministration.exception.UserNotFoundException;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -56,17 +63,20 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
     private final RoleReadPlatformService roleReadPlatformService;
     private final AppUserRepository appUserRepository;
     private final StaffReadPlatformService staffReadPlatformService;
+    private final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper;
 
     @Autowired
     public AppUserReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
             final OfficeReadPlatformService officeReadPlatformService, final RoleReadPlatformService roleReadPlatformService,
-            final AppUserRepository appUserRepository, final StaffReadPlatformService staffReadPlatformService) {
+            final AppUserRepository appUserRepository, final StaffReadPlatformService staffReadPlatformService,
+            final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.roleReadPlatformService = roleReadPlatformService;
         this.appUserRepository = appUserRepository;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.staffReadPlatformService = staffReadPlatformService;
+        this.authorizationRequestRepositoryWrapper = authorizationRequestRepositoryWrapper;
     }
 
     /*
@@ -221,4 +231,57 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         if (count == 0) { return false; }
         return true;
     }
+
+    @Override
+    public Collection<AuthorizationRequestData> retrieveAuthorizationRequests(Integer status) {
+        
+        this.context.authenticatedUser();
+        
+        Collection<AuthorizationRequest> requests = this.authorizationRequestRepositoryWrapper.findAllPendingApproval(status);
+
+        Collection<AuthorizationRequestData> requestsData = new ArrayList<>();
+        for(AuthorizationRequest request: requests) {
+            
+            AppUser user = request.getUser();
+            AppUserData retUser = AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
+                    user.getOffice().getName(), user.getFirstname(), user.getLastname(), null, null, null,
+                    user.getPasswordNeverExpires(), user.isSelfServiceUser());
+            
+            AppUser userApprovedBy = request.getApprovedBy();
+            AppUserData retUserApprovedBy = null;
+            if(userApprovedBy != null)
+                retUserApprovedBy = AppUserData.instance(userApprovedBy.getId(), userApprovedBy.getUsername(), userApprovedBy.getEmail(), 
+                    userApprovedBy.getOffice().getId(),userApprovedBy.getOffice().getName(), userApprovedBy.getFirstname(), userApprovedBy.getLastname(), 
+                    null, null, null,userApprovedBy.getPasswordNeverExpires(), userApprovedBy.isSelfServiceUser());
+            
+            AppUser userRejectedBy = request.getRejectedBy();
+            AppUserData retUserRejectedBy = null;
+            if(userRejectedBy != null)
+                retUserRejectedBy = AppUserData.instance(userRejectedBy.getId(), userRejectedBy.getUsername(), userRejectedBy.getEmail(), 
+                    userRejectedBy.getOffice().getId(),userRejectedBy.getOffice().getName(), userRejectedBy.getFirstname(), userRejectedBy.getLastname(), 
+                    null, null, null,userRejectedBy.getPasswordNeverExpires(), userRejectedBy.isSelfServiceUser());
+            
+            Client client = request.getClient();
+            ClientData retClient =  ClientData.instance(client.getId(), client.getDisplayName());
+            
+            LocalDate requestedDate = request.getRequestedDate() != null ? LocalDate.fromDateFields(request.getRequestedDate()) : null;
+            LocalDate approvedDate = request.getApprovedDate() != null ? LocalDate.fromDateFields(request.getApprovedDate()) : null;
+            LocalDate rejectedDate =  request.getRejectionDate() != null ? LocalDate.fromDateFields( request.getRejectionDate()) : null;
+            
+            EnumOptionData requestStatus = null;
+            AuthorizationRequestStatusType statusType = AuthorizationRequestStatusType.fromInt(request.getStatus());
+            if(statusType != null) {
+                requestStatus = new EnumOptionData(statusType.getValue().longValue(), statusType.getCode(), statusType.getName());
+            }
+            
+            AuthorizationRequestData data = new AuthorizationRequestData(request.getId(), retUser, 
+                    retClient, requestStatus, requestedDate, retUserApprovedBy, approvedDate, retUserRejectedBy, rejectedDate, request.getComment());
+            
+            requestsData.add(data);
+        }
+        
+        return requestsData;
+    }
+    
+    
 }

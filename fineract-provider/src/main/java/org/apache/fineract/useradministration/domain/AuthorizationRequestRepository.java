@@ -16,24 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.useradministration.service;
+package org.apache.fineract.useradministration.domain;
 
-import org.apache.fineract.useradministration.data.AppUserData;
-import org.apache.fineract.useradministration.data.AuthorizationRequestData;
+import java.util.List;
 
-import java.util.Collection;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface AppUserReadPlatformService {
+public interface AuthorizationRequestRepository extends JpaRepository<AuthorizationRequest, Long>, JpaSpecificationExecutor<AuthorizationRequest>{
 
-    Collection<AppUserData> retrieveAllUsers();
-
-    Collection<AppUserData> retrieveSearchTemplate();
-
-    AppUserData retrieveNewUserDetails();
-
-    AppUserData retrieveUser(Long userId);
-    
-    boolean isUsernameExist(String username);
-    
-    Collection<AuthorizationRequestData> retrieveAuthorizationRequests(Integer status);
+    List<AuthorizationRequest> findAllByStatus(Integer status);
 }

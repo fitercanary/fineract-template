@@ -20,8 +20,10 @@ package org.apache.fineract.portfolio.note.domain;
 
 import java.util.List;
 
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 public interface NoteRepository extends JpaRepository<Note, Long>, JpaSpecificationExecutor<Note> {
 
@@ -40,6 +42,9 @@ public interface NoteRepository extends JpaRepository<Note, Long>, JpaSpecificat
     Note findByLoanTransactionIdAndId(Long loanTransactionId, Long id);
 
     List<Note> findBySavingsAccountId(Long savingAccountId);
+
+    @Query(value = "SELECT * FROM m_note n WHERE n.savings_account_transaction_id = ?1", nativeQuery = true)
+    List<Note> findBySavingsTransactionId(Long transactionId);
 
     // Note findBySavingsAccountIdAndId(Long savingAccountId, Long id);
 }

@@ -175,6 +175,22 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
             final List<Long> existingReversedTransactionIds = new ArrayList<>();
             existingTransactionIds.addAll(loan.findExistingTransactionIds());
             existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
+			if (loan.status().isOverpaid()) {
+				LocalDate lastTransactionDate = loan.getDisbursementDate();
+				for (LoanTransaction tran : loan.getLoanTransactions()) {
+					if (tran.isRepayment() && !tran.isReversed()
+							&& tran.getTransactionDate().isAfter(lastTransactionDate)) {
+						lastTransactionDate = tran.getTransactionDate();
+					}
+				}
+				for (LoanTransaction tran : loan.getLoanTransactions()) {
+					if (tran.isAccrual() && !tran.isReversed()) {
+						if (tran.getTransactionDate().isAfter(lastTransactionDate)) {
+							tran.reverse();
+						}
+					}
+				}
+			}else {
             for (LoanRepaymentScheduleInstallment installment : loan.getRepaymentScheduleInstallments()) {
                 if (installment.getDueDate().isAfter(DateUtils.getLocalDateOfTenant()) || installment.isRecalculatedInterestComponent()
                         || installment.getDueDate().isBefore(accruedTilldefault)) {
@@ -252,6 +268,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
             }
             loan.setAccruedTill(accruedTilldefault.toDate());
             accruedTilldefault = new LocalDate(2019, 10, 1);
+            }
             this.loanRepositoryWrapper.save(loan);
             postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds, false);
         }

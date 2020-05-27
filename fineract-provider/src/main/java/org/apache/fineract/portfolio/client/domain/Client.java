@@ -1199,4 +1199,8 @@ public final class Client extends AbstractPersistableCustom<Long> {
     public BigDecimal getSingleWithdrawLimit() {
         return this.singleWithdrawLimit == null ? BigDecimal.ZERO : this.singleWithdrawLimit;
     }
+    
+    public boolean doesRequireAuthorizationToView() {
+        return this.requireAuthorizationToView;
+    }
 }

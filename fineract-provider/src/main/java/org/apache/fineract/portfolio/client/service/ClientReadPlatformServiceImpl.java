@@ -72,6 +72,8 @@ import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.ClientUser;
+import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -105,6 +107,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ColumnValidator columnValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ReferralStatusRepository referralStatusRepository;
+    private final ClientUserRepositoryWrapper clientUserRepositoryWrapper;
     
 
     @Autowired
@@ -116,7 +119,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
             final ConfigurationReadPlatformService configurationReadPlatformService,
             final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator,
-            ClientRepositoryWrapper clientRepositoryWrapper, ReferralStatusRepository referralStatusRepository) {
+            ClientRepositoryWrapper clientRepositoryWrapper, ReferralStatusRepository referralStatusRepository,
+            final ClientUserRepositoryWrapper clientUserRepositoryWrapper) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -130,6 +134,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.columnValidator = columnValidator;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
         this.referralStatusRepository = referralStatusRepository;
+        this.clientUserRepositoryWrapper = clientUserRepositoryWrapper;
     }
 
     @Override
@@ -1044,10 +1049,22 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     @Override
     public void validateUserHasAuthorityToViewClient(Long clientId) {
+        
+        ClientUser clientUser = clientUserRepositoryWrapper.findClientUserByUserIdAndClientIdAndExpiry(this.context.authenticatedUser().getId(), clientId, false);
+        
         if (this.isCurrentUserClientOfficer(clientId) ||
-                this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) {
+                (!doesClientRequireAuthrorization(clientId) && 
+                        this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) || 
+                (doesClientRequireAuthrorization(clientId) && clientUser != null) ) {
             return;
         }
         throw new NoAuthorizationException("User has no authority to view client with identifier " + clientId);
+    }
+
+    @Override
+    public boolean doesClientRequireAuthrorization(Long clientId) {
+        Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+        
+        return client.doesRequireAuthorizationToView();
     }
 }

@@ -34,4 +34,12 @@ public class ClientUserRepositoryWrapper {
     public void save(ClientUser clientUser) {
         this.clientUserRepository.save(clientUser);
     }
+    
+    public ClientUser findClientUserByUserIdAndClientId(Long userId, Long clientId) {
+        return this.clientUserRepository.findByIdClientIdAndIdUserId(clientId, userId);
+    }
+    
+    public ClientUser findClientUserByUserIdAndClientIdAndExpiry(Long userId, Long clientId, boolean isExpired) {
+        return this.clientUserRepository.findByIdClientIdAndIdUserIdAndIsExpired(clientId, userId, isExpired);
+    }
 }

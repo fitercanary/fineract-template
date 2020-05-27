@@ -20,8 +20,13 @@ package org.apache.fineract.useradministration.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ClientUserRepository extends JpaRepository<ClientUser, ClientUserId>, JpaSpecificationExecutor<ClientUser>{
 
+   
+    ClientUser findByIdClientIdAndIdUserId(@Param("clientId") Long clientId, @Param("userId") Long userId);
     
+    ClientUser findByIdClientIdAndIdUserIdAndIsExpired(@Param("clientId") Long clientId, @Param("userId") Long userId, @Param("isExpired")boolean isExpired);
 }

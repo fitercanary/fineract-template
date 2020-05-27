@@ -20,6 +20,7 @@ package org.apache.fineract.useradministration.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -395,8 +396,22 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final Integer durationType = command.integerValueOfParameterNamed(AppUserConstants.durationTypeParamName);
             
             final Integer duration = command.integerValueOfParameterNamed(AppUserConstants.durationParamName);
+
+            LocalDateTime endTimeDate = startTimeDate;
+            if(durationType.equals(1)) {
+                endTimeDate = startTimeDate.plusHours(duration);
+            }else if(durationType.equals(2)) {
+                endTimeDate = startTimeDate.plusDays(duration);
+            }else if(durationType.equals(3)) {
+                endTimeDate = startTimeDate.plusWeeks(duration);
+            }else if(durationType.equals(4)) {
+                endTimeDate = startTimeDate.plusMonths(duration);
+            }else if(durationType.equals(5)) {
+                endTimeDate = startTimeDate.plusYears(duration);
+            }
             
-            final LocalDateTime endTimeDate = startTimeDate.plusHours(duration);
+            Date startDate =  startTimeDate.toDate();
+            Date endDate =  endTimeDate.toDate();
             
             boolean isExpired = false;
             if (this.fromApiJsonHelper.parameterExists(AppUserConstants.isExpiredParamName, element)) {
@@ -405,8 +420,8 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
             
-            ClientUser clientUser  = new ClientUser(client, user, 
-                    startTimeDate.toDate(), endTimeDate.toDate(), isExpired, currentUser, comment);
+            ClientUser clientUser  = new ClientUser(client, user, durationType, duration, startDate, endDate, 
+                    isExpired, currentUser, comment);
             
             this.clientUserRepositoryWrapper.save(clientUser);
             

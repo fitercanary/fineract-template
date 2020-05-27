@@ -50,11 +50,17 @@ public class ClientUser {
     @MapsId("userId")
     private AppUser user;
     
-    @Column(name = "start_time", nullable = true)
+    @Column(name = "duration_type", nullable = false)
+    private Integer durationType;
+    
+    @Column(name = "duration", nullable = false)
+    private Integer duration;
+    
+    @Column(name = "start_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date startTime;
     
-    @Column(name = "end_time", nullable = true)
+    @Column(name = "end_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date endTime;
     
@@ -78,9 +84,12 @@ public class ClientUser {
         this.isExpired = isExpired;
     }
     
-    public ClientUser(Client client, AppUser user, Date startTime, Date endTime, boolean isExpired, AppUser authorizedBy, String comment) {
+    public ClientUser(Client client, AppUser user, Integer durationType, Integer duration, Date startTime, Date endTime, 
+            boolean isExpired, AppUser authorizedBy, String comment) {
         this.client = client;
         this.user = user;
+        this.durationType = durationType;
+        this.duration = duration;
         this.startTime = startTime;
         this.endTime = endTime;
         this.isExpired = isExpired;
@@ -102,8 +111,16 @@ public class ClientUser {
     public AppUser getUser() {
         return this.user;
     }
+    
+    public Integer getDurationType() {
+        return this.durationType;
+    }
 
     
+    public Integer getDuration() {
+        return this.duration;
+    }
+
     public Date getStartTime() {
         return this.startTime;
     }

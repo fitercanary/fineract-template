@@ -59,4 +59,6 @@ public interface ClientReadPlatformService {
     boolean isCurrentUserClientOfficer(Long clientId);
 
     void validateUserHasAuthorityToViewClient(Long clientId);
+    
+    boolean doesClientRequireAuthrorization(Long clientId);
 }

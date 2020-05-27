@@ -3228,7 +3228,7 @@ public class CommandWrapperBuilder {
     }
     
     public CommandWrapperBuilder authorizeUserToViewClient(final Long userId) {
-        this.actionName = "AUTHORIZECLIENT";
+        this.actionName = "AUTHORIZEUSERVIEWCLIENT";
         this.entityName = "USER";
         this.entityId = userId;
         this.href = "/users/" + userId + "/authorizeclientuser";

@@ -20,6 +20,8 @@
 CREATE TABLE `m_client_user` (
   `client_id` bigint(20) NOT NULL,
   `user_id` bigint(20) NOT NULL,
+  `duration_type` bigint(20) NOT NULL,
+  `duration` bigint(20) NOT NULL,
   `start_time` datetime NULL,
   `end_time` datetime NULL,
   `is_expired` boolean DEFAULT false,

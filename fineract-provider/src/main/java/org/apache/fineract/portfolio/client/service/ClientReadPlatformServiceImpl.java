@@ -1052,11 +1052,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         
         ClientUser clientUser = clientUserRepositoryWrapper.findClientUserByUserIdAndClientIdAndExpiry(this.context.authenticatedUser().getId(), clientId, false);
         
-        if (this.isCurrentUserClientOfficer(clientId) ||
+        if (this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.ALL_FUNCTIONS) || 
+                this.isCurrentUserClientOfficer(clientId) ||
                 (!this.doesClientRequireAuthrorization(clientId) && 
                         this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) || 
                 (this.doesClientRequireAuthrorization(clientId) && ( (clientUser != null) && !clientUser.hasTimeExpired() ) ) 
-                ||  this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.ALL_FUNCTIONS) ) {
+                 ) {
             return;
         }
         throw new NoAuthorizationException("User has no authority to view client with identifier " + clientId);

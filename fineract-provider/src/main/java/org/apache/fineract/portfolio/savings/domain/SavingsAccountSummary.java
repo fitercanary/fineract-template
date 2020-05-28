@@ -124,11 +124,6 @@ public final class SavingsAccountSummary {
         this.totalInterestEarned = totalEarned.getAmount();
     }
 
-    public boolean isLessThanOrEqualToAccountBalance(final Money amount) {
-        final Money accountBalance = getAccountBalance(amount.getCurrency());
-        return accountBalance.isGreaterThanOrEqualTo(amount);
-    }
-
     public Money getAccountBalance(final MonetaryCurrency currency) {
         return Money.of(currency, this.accountBalance);
     }
@@ -141,7 +136,7 @@ public final class SavingsAccountSummary {
         return this.totalInterestPosted;
     }
 
-	public BigDecimal getTotalInterestEarned() {
-		return totalInterestEarned;
-	}
+    public void setTotalInterestEarned(BigDecimal totalInterestEarned) {
+        this.totalInterestEarned = totalInterestEarned;
+    }
 }

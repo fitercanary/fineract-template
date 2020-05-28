@@ -27,10 +27,13 @@ CREATE TABLE `m_client_user` (
   `is_expired` boolean DEFAULT false,
   `authorized_by` bigint(20) NULL,
   `comment` varchar(500) NULL,
+  `authorization_request_id` bigint(20) NOT NULL,
   KEY `fk_m_client` (`client_id`),
   KEY `fk_m_appuser` (`user_id`),
   KEY `fk_m_appuser_authorized_by` (`authorized_by`),
+  KEY `fk_m_user_client_authorization_request_authorization_request_id` (`authorization_request_id`),
   CONSTRAINT `fk_m_client` FOREIGN KEY (`client_id`) REFERENCES `m_client` (`id`),
   CONSTRAINT `fk_m_appuser` FOREIGN KEY (`user_id`) REFERENCES `m_appuser` (`id`),
-  CONSTRAINT `fk_m_appuser_authorized_by` FOREIGN KEY (`authorized_by`) REFERENCES `m_appuser` (`id`)
+  CONSTRAINT `fk_m_appuser_authorized_by` FOREIGN KEY (`authorized_by`) REFERENCES `m_appuser` (`id`),
+  CONSTRAINT `fk_m_user_client_authorization_request_authorization_request_id` FOREIGN KEY (`authorization_request_id`) REFERENCES `m_user_client_authorization_request` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

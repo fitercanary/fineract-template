@@ -31,6 +31,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.portfolio.client.domain.Client;
 
 @Entity
@@ -74,6 +75,10 @@ public class ClientUser {
     @Column(name = "comment", nullable = true)
     private String comment;
     
+    @OneToOne
+    @Column(name = "authorization_request_id", nullable = false)
+    private AuthorizationRequest authorizationRequest;
+    
     public ClientUser() {}
     
     public ClientUser(Client client, AppUser user, Date startTime, Date endTime, boolean isExpired) {
@@ -85,7 +90,7 @@ public class ClientUser {
     }
     
     public ClientUser(Client client, AppUser user, Integer durationType, Integer duration, Date startTime, Date endTime, 
-            boolean isExpired, AppUser authorizedBy, String comment) {
+            boolean isExpired, AppUser authorizedBy, String comment,AuthorizationRequest request) {
         this.client = client;
         this.user = user;
         this.durationType = durationType;
@@ -95,6 +100,7 @@ public class ClientUser {
         this.isExpired = isExpired;
         this.authorizedBy = authorizedBy;
         this.comment = comment;
+        this.authorizationRequest = request;
     }
 
     
@@ -144,7 +150,16 @@ public class ClientUser {
     public String getComment() {
         return this.comment;
     }
+
     
+    public AuthorizationRequest getAuthorizationRequest() {
+        return this.authorizationRequest;
+    }
+    
+    
+    public boolean hasTimeExpired() {
+        return this.endTime.before(DateUtils.getLocalDateTimeOfTenant().toDate());
+    }
     
     
 }

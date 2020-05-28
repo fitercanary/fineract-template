@@ -65,6 +65,7 @@ import org.apache.fineract.useradministration.domain.AuthorizationRequestStatusT
 import org.apache.fineract.useradministration.domain.Role;
 import org.apache.fineract.useradministration.domain.RoleRepository;
 import org.apache.fineract.useradministration.domain.UserDomainService;
+import org.apache.fineract.useradministration.exception.AuthorizationRequestException;
 import org.apache.fineract.useradministration.exception.PasswordPreviouslyUsedException;
 import org.apache.fineract.useradministration.exception.RoleNotFoundException;
 import org.apache.fineract.useradministration.exception.UserNotFoundException;
@@ -380,74 +381,6 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     }
 
     @Override
-    public CommandProcessingResult authorizeViewClient(Long userId, JsonCommand command) {
-        
-        try {
-            final AppUser currentUser = this.context.authenticatedUser();
-
-            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(userId);
-            
-            
-            this.fromApiJsonDeserializer.validateForAuthorizeUser(command);
-            
-            final JsonElement element = command.parsedJson();
-            
-            final Long clientId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.clientIdParamName, element);
-            
-            final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
-    
-            final LocalDateTime startTimeDate = DateUtils.getLocalDateTimeOfTenant();
-            
-            final Integer durationType = command.integerValueOfParameterNamed(AppUserConstants.durationTypeParamName);
-            
-            final Integer duration = command.integerValueOfParameterNamed(AppUserConstants.durationParamName);
-
-            LocalDateTime endTimeDate = startTimeDate;
-            if(durationType.equals(1)) {
-                endTimeDate = startTimeDate.plusHours(duration);
-            }else if(durationType.equals(2)) {
-                endTimeDate = startTimeDate.plusDays(duration);
-            }else if(durationType.equals(3)) {
-                endTimeDate = startTimeDate.plusWeeks(duration);
-            }else if(durationType.equals(4)) {
-                endTimeDate = startTimeDate.plusMonths(duration);
-            }else if(durationType.equals(5)) {
-                endTimeDate = startTimeDate.plusYears(duration);
-            }
-            
-            Date startDate =  startTimeDate.toDate();
-            Date endDate =  endTimeDate.toDate();
-            
-            boolean isExpired = false;
-            if (this.fromApiJsonHelper.parameterExists(AppUserConstants.isExpiredParamName, element)) {
-                isExpired = this.fromApiJsonHelper.extractBooleanNamed(AppUserConstants.isExpiredParamName, element);
-            }
-            
-            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
-            
-            ClientUser clientUser  = new ClientUser(client, user, durationType, duration, startDate, endDate, 
-                    isExpired, currentUser, comment);
-            
-            this.clientUserRepositoryWrapper.save(clientUser);
-            
-            return new CommandProcessingResultBuilder() //
-                    .withCommandId(command.commandId()) //
-                    .withOfficeId(client.officeId()) //
-                    .withClientId(clientId) //
-                    .withEntityId(userId) //
-                    .build();
-        
-    } catch (final DataIntegrityViolationException dve) {
-        handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
-        return CommandProcessingResult.empty();
-    } catch (final PersistenceException dve) {
-        Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
-        handleDataIntegrityIssues(command, throwable, dve);
-        return CommandProcessingResult.empty();
-    }
-   }
-
-    @Override
     public CommandProcessingResult requestToViewClient(Long userId, JsonCommand command) {
         
         try {
@@ -462,6 +395,28 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
             
+            // validate client requires authorization
+            if( !client.doesRequireAuthorizationToView()) {
+                throw new AuthorizationRequestException(client.getId(), user.getId(), 
+                        "Client with identifier " + client.getId() + " does not require authorization to view");
+            }
+            
+            // validate no other authorization request pending approval
+            List<AuthorizationRequest> pendingRequests = this.authorizationRequestRepositoryWrapper.findUserClientRequestsByStatus(clientId, userId, 
+                    AuthorizationRequestStatusType.SUBMITTED_AND_PENDING_APPROVAL.getValue());
+            
+            if(!pendingRequests.isEmpty()) {
+                throw new AuthorizationRequestException(client.getId(), user.getId(), 
+                        "Cannot create authorization request. Request pending approval already exists");
+            }
+            
+            // validate no other authorization request has already been approved and approval is not expired
+            ClientUser clientUser = this.clientUserRepositoryWrapper.findClientUserByUserIdAndClientIdAndExpiry(userId, clientId, false);
+            if( clientUser != null && !clientUser.hasTimeExpired() ) {
+                throw new AuthorizationRequestException(client.getId(), user.getId(), 
+                        "Cannot create authorization request. Approved and running request already exists");
+            }
+
             final Date requestedDate = DateUtils.getLocalDateTimeOfTenant().toDate();
             
             final AuthorizationRequestStatusType status = AuthorizationRequestStatusType.SUBMITTED_AND_PENDING_APPROVAL;
@@ -488,6 +443,120 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             return CommandProcessingResult.empty();
         }
     }
+
+
+    @Override
+    public CommandProcessingResult approveRequestToViewClient(Long authorizationRequestId, JsonCommand command) {
+        
+        try {
+            final AppUser currentUser = this.context.authenticatedUser();
+            
+            final AuthorizationRequest authorizationRequest = this.authorizationRequestRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequestId);
+            
+            if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.APPROVED)) {
+                throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved");
+            }
+            
+            if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.REJECTED)) {
+                throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected");
+            }
+           
+            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getUser().getId());
+              
+            this.fromApiJsonDeserializer.validateForApproveAuthorizationRequest(command);
+            
+            final JsonElement element = command.parsedJson();
+            
+            final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getClient().getId());
     
+            final LocalDateTime startTimeDate = DateUtils.getLocalDateTimeOfTenant();
+            
+            final Integer durationType = command.integerValueOfParameterNamed(AppUserConstants.durationTypeParamName);
+            
+            final Integer duration = command.integerValueOfParameterNamed(AppUserConstants.durationParamName);
+
+            LocalDateTime endTimeDate = startTimeDate;
+            if(durationType.equals(1)) {
+                endTimeDate = startTimeDate.plusHours(duration);
+            }else if(durationType.equals(2)) {
+                endTimeDate = startTimeDate.plusDays(duration);
+            }else if(durationType.equals(3)) {
+                endTimeDate = startTimeDate.plusWeeks(duration);
+            }else if(durationType.equals(4)) {
+                endTimeDate = startTimeDate.plusMonths(duration);
+            }else if(durationType.equals(5)) {
+                endTimeDate = startTimeDate.plusYears(duration);
+            }
+            
+            Date startDate =  startTimeDate.toDate();
+            Date endDate =  endTimeDate.toDate();
+             
+            boolean isExpired = false;
+            
+            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
+            
+            ClientUser clientUser  = new ClientUser(client, user, durationType, duration, startDate, endDate, 
+                    isExpired, currentUser, comment, authorizationRequest);
+           
+            this.clientUserRepositoryWrapper.save(clientUser);
+            
+            authorizationRequest.approveRequest(startDate, currentUser);
+            
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withOfficeId(client.officeId()) //
+                    .withClientId(client.getId()) //
+                    .withEntityId(authorizationRequest.getId()) //
+                    .build();
+            
+        } catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
+        }
+   }
+
+    @Override
+    public CommandProcessingResult rejectRequestToViewClient(Long authorizationRequestId, JsonCommand command) {
+            try {
+                final AppUser currentUser = this.context.authenticatedUser();
+                
+                final AuthorizationRequest authorizationRequest = this.authorizationRequestRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequestId);
+
+                if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.APPROVED)) {
+                    throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved");
+                }
+                
+                if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.REJECTED)) {
+                    throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected");
+                }
+                
+                final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getClient().getId());
+                
+                authorizationRequest.rejectRequest(DateUtils.getLocalDateTimeOfTenant().toDate(), currentUser);
+                
+                return new CommandProcessingResultBuilder() //
+                        .withCommandId(command.commandId()) //
+                        .withOfficeId(client.officeId()) //
+                        .withClientId(client.getId()) //
+                        .withEntityId(authorizationRequest.getId()) //
+                        .build();
+            
+            } catch (final DataIntegrityViolationException dve) {
+                handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+                return CommandProcessingResult.empty();
+            } catch (final PersistenceException dve) {
+                Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+                handleDataIntegrityIssues(command, throwable, dve);
+                return CommandProcessingResult.empty();
+            }
+    }
     
 }

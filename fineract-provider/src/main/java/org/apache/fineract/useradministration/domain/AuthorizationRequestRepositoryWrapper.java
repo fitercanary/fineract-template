@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.useradministration.domain;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.fineract.useradministration.exception.AuthorizationRequestNotFoundException;
@@ -40,21 +39,27 @@ public class AuthorizationRequestRepositoryWrapper {
         this.authorizationRequestRepository.save(authorizationRequest);
     }
     
+    public void update(AuthorizationRequest authorizationRequest) {
+        this.authorizationRequestRepository.saveAndFlush(authorizationRequest);
+    }
+    
     public AuthorizationRequest findOneWithNotFoundDetection(Long id) {
         return this.findOneWithNotFoundDetection(id, false);
     }
     
+    @SuppressWarnings("unused")
     @Transactional(readOnly=true)
     public AuthorizationRequest findOneWithNotFoundDetection(final Long id, final boolean loadLazyCollections) {
         final AuthorizationRequest authorizationRequest = this.authorizationRequestRepository.findOne(id);
         if (authorizationRequest == null) { throw new AuthorizationRequestNotFoundException(id); }
-        if(loadLazyCollections) {
-           // authorizationRequest.loadLazyCollections();
-        }
         return authorizationRequest;
     }
     
     public List<AuthorizationRequest> findAllPendingApproval(Integer status){
         return this.authorizationRequestRepository.findAllByStatus(status);
+    }
+   
+    public List<AuthorizationRequest> findUserClientRequestsByStatus(Long clientId, Long userId, Integer status){
+        return this.authorizationRequestRepository.findAllByClientAndUserAndStatus(clientId, userId, status);
     }
 }

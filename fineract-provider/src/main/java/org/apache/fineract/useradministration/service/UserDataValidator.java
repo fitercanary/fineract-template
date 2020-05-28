@@ -54,10 +54,8 @@ public final class UserDataValidator {
             AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS));
     
     protected static final Set<String> AUTHORIZE_USER_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(AppUserConstants.clientIdParamName, AppUserConstants.userIdParamName, 
-                    AppUserConstants.startTimeParamName, AppUserConstants.isExpiredParamName, 
-                    AppUserConstants.authorizedByParamName, AppUserConstants.commentParamName, 
-                    AppUserConstants.localeParamName, AppUserConstants.dateFormatParamName, 
+            Arrays.asList( AppUserConstants.isExpiredParamName,  AppUserConstants.commentParamName, 
+                    AppUserConstants.localeParamName, 
                     AppUserConstants.durationParamName, AppUserConstants.durationTypeParamName));
     
     protected static final Set<String> AUTHORIZATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
@@ -252,7 +250,7 @@ public final class UserDataValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
     
-    public void validateForAuthorizeUser(final JsonCommand command) {
+    public void validateForApproveAuthorizationRequest(final JsonCommand command) {
 
         final String json = command.json();
 
@@ -267,12 +265,6 @@ public final class UserDataValidator {
                 .resource("user");
 
         final JsonElement element = command.parsedJson();
-
-        final Long clientId = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.clientIdParamName, element);
-        baseDataValidator.reset().parameter(AppUserConstants.clientIdParamName).value(clientId).notNull().integerGreaterThanZero();
-        
-        final Long authorizedById = this.fromApiJsonHelper.extractLongNamed(AppUserConstants.authorizedByParamName, element);
-        baseDataValidator.reset().parameter(AppUserConstants.authorizedByParamName).value(authorizedById).notNull().integerGreaterThanZero();
 
         if (this.fromApiJsonHelper.parameterExists(AppUserConstants.commentParamName, element)) {
             final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);

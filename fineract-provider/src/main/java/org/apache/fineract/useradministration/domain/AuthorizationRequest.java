@@ -140,6 +140,17 @@ public class AuthorizationRequest extends AbstractPersistableCustom<Long>{
         return this.comment;
     }
     
+    public void approveRequest( Date approvedDate, AppUser approvedBy ) {
+        this.approvedDate = approvedDate;
+        this.approvedBy = approvedBy;
+        this.status = AuthorizationRequestStatusType.APPROVED.getValue();
+    }
+    
+    public void rejectRequest( Date rejectionDate, AppUser rejectedBy ) {
+        this.rejectionDate = rejectionDate;
+        this.rejectedBy = rejectedBy;
+        this.status = AuthorizationRequestStatusType.REJECTED.getValue();
+    }
     
     
     

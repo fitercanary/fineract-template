@@ -17,4 +17,5 @@
 -- under the License.
 --
 
-INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES ('authorisation', 'REQUESTTOVIEWCLIENT_USER', 'USER', 'REQUESTTOVIEWCLIENT',0);
+INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES ('authorisation', 'APPROVEREQUESTTOVIEWCLIENT_AUTHORIZATIONREQUEST', 'AUTHORIZATIONREQUEST', 'APPROVEREQUESTTOVIEWCLIENT',0);
+INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES ('authorisation', 'REJECTREQUESTTOVIEWCLIENT_AUTHORIZATIONREQUEST', 'AUTHORIZATIONREQUEST', 'REJECTREQUESTTOVIEWCLIENT',0);

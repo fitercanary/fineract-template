@@ -34,6 +34,7 @@ public class AppUserConstants {
     public static final String commentParamName = "comment";
     public static final String durationParamName = "duration";
     public static final String durationTypeParamName = "durationType";
+    public static final String authorizationRequestIdParamName = "authorizationRequestId";
     
     // general
     public static final String localeParamName = "locale";

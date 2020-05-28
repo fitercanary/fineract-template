@@ -28,23 +28,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@CommandType(entity = "AUTHORIZATIONREQUEST", action = "REQUESTTOVIEWCLIENT")
-public class RequestToViewClientCommandHandler implements NewCommandSourceHandler {
+@CommandType(entity = "AUTHORIZATIONREQUEST", action = "REJECTREQUESTTOVIEWCLIENT")
+public class RejectRequestToViewClientCommandHandler implements NewCommandSourceHandler{
 
-    private final AppUserWritePlatformService appUserWritePlatformService;
+private final AppUserWritePlatformService appUserWritePlatformService;
     
     @Autowired
-    public RequestToViewClientCommandHandler(final AppUserWritePlatformService appUserWritePlatformService) {
+    public RejectRequestToViewClientCommandHandler(final AppUserWritePlatformService appUserWritePlatformService) {
         this.appUserWritePlatformService = appUserWritePlatformService;
-        
     }
     
     @Transactional
     @Override
     public CommandProcessingResult processCommand(JsonCommand command) {
-        
-        final Long userId = command.entityId();
-        return this.appUserWritePlatformService.requestToViewClient(userId, command);
+        final Long authorizationRequestId = command.entityId();
+        return this.appUserWritePlatformService.rejectRequestToViewClient(authorizationRequestId, command);
     }
-
 }

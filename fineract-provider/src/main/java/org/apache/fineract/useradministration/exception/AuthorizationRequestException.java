@@ -16,22 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.useradministration.service;
+package org.apache.fineract.useradministration.exception;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 
-public interface AppUserWritePlatformService {
+public class AuthorizationRequestException extends AbstractPlatformDomainRuleException{
 
-    CommandProcessingResult createUser(JsonCommand command);
-
-    CommandProcessingResult updateUser(Long userId, JsonCommand command);
-
-    CommandProcessingResult deleteUser(Long userId);
+    public AuthorizationRequestException(final Long id, final String message) {
+        super("error.msg.authorization.request", message, id);
+    }
     
-    CommandProcessingResult requestToViewClient(Long userId, JsonCommand command);
-    
-    CommandProcessingResult approveRequestToViewClient(Long authorizationRequestId, JsonCommand command);
-    
-    CommandProcessingResult rejectRequestToViewClient(Long authorizationRequestId, JsonCommand command);
+    public AuthorizationRequestException(final Long clientId, final Long userId, final String message) {
+        super("error.msg.authorization.request", message, clientId, userId);
+    }
 }

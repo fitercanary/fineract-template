@@ -22,8 +22,13 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AuthorizationRequestRepository extends JpaRepository<AuthorizationRequest, Long>, JpaSpecificationExecutor<AuthorizationRequest>{
 
     List<AuthorizationRequest> findAllByStatus(Integer status);
+    
+    @Query("SELECT ar FROM AuthorizationRequest ar WHERE ar.client.id = :clientId AND ar.user.id = :userId AND ar.status = :status")
+    List<AuthorizationRequest> findAllByClientAndUserAndStatus(@Param("clientId") Long clientId, @Param("userId") Long userId, @Param("status") Integer status);
 }

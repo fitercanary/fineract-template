@@ -32,6 +32,8 @@ import javax.ws.rs.core.UriInfo;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -40,6 +42,7 @@ import org.apache.fineract.infrastructure.bulkimport.service.BulkImportWorkbookP
 import org.apache.fineract.infrastructure.bulkimport.service.BulkImportWorkbookService;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -209,17 +212,26 @@ public class UsersApiResource {
     }
     
     @POST
-    @Path("{userId}/authorize")
+    @Path("/requestauthorization/{authorizationRequestId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String authorize(@PathParam("userId") final Long userId, final String apiRequestBodyAsJson) {
+    public String authorize(@PathParam("authorizationRequestId") final Long authorizationRequestId,@QueryParam("command") final String commandParam, 
+            final String apiRequestBodyAsJson) {
+        
+        final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder() //
-                .authorizeUser(userId) //
-                .withJson(apiRequestBodyAsJson) //
-                .build(); //
+        CommandProcessingResult result = null;
+        CommandWrapper commandRequest = null;
+        if (is(commandParam, "approve")) {
+            commandRequest = builder.approveAuthorizationRequest(authorizationRequestId).withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }else if(is(commandParam, "reject")) {
+            commandRequest = builder.rejectAuthorizationRequest(authorizationRequestId).withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
 
-        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "approve",
+                "reject" }); }
 
         return this.toApiJsonSerializer.serialize(result);
     }
@@ -252,5 +264,9 @@ public class UsersApiResource {
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toRequestApiJsonSerializer.serialize(settings, requests, this.AUTHORIZATION_REQUEST_RESPONSE_DATA_PARAMETERS);
+    }
+    
+    private boolean is(final String commandParam, final String commandValue) {
+        return StringUtils.isNotBlank(commandParam) && commandParam.trim().equalsIgnoreCase(commandValue);
     }
 }

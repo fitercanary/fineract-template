@@ -530,9 +530,21 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
 
-            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            final SavingsAccount savedAccount = this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
-            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+            for (SavingsAccountTransaction accountTransaction : savedAccount.getTransactions()) {
+                if (accountTransaction.getTypeOf().equals(SavingsAccountTransactionType.INTEREST_POSTING.getValue())) {
+                    final List<Note> accountNotes = this.noteRepository.findBySavingsTransactionId(accountTransaction.getId());
+
+                    if (accountNotes.size() < 1) {
+                        final Note note = Note.savingsTransactionNote(account,  accountTransaction,"Interest Posting");
+                        final Note savedNote = this.noteRepository.save(note);
+                    }
+
+                }
+            }
+
+                    postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
     }
 

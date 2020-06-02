@@ -38,14 +38,11 @@ public class SavingsAccountTransactionEnumData {
     private final boolean initiateTransfer;
     private final boolean approveTransfer;
     private final boolean withdrawTransfer;
-    private final boolean rejectTransfer;
     private final boolean overdraftInterest;
-    private final boolean writtenoff;
+    private final boolean writtenOff;
     private final boolean overdraftFee = true;
     private final boolean withholdTax;
     private final boolean escheat;
-    private final boolean amountHold;
-    private final boolean amountRelease;
     private final boolean accrualInterestPosting;
     private final boolean overdraftAccrualInterest;
 
@@ -63,17 +60,12 @@ public class SavingsAccountTransactionEnumData {
         this.initiateTransfer = Long.valueOf(SavingsAccountTransactionType.INITIATE_TRANSFER.getValue()).equals(this.id);
         this.approveTransfer = Long.valueOf(SavingsAccountTransactionType.APPROVE_TRANSFER.getValue()).equals(this.id);
         this.withdrawTransfer = Long.valueOf(SavingsAccountTransactionType.WITHDRAW_TRANSFER.getValue()).equals(this.id);
-        this.rejectTransfer = Long.valueOf(SavingsAccountTransactionType.REJECT_TRANSFER.getValue()).equals(this.id);
-        this.writtenoff = Long.valueOf(SavingsAccountTransactionType.WRITTEN_OFF.getValue()).equals(this.id);
+        this.writtenOff = Long.valueOf(SavingsAccountTransactionType.WRITTEN_OFF.getValue()).equals(this.id);
         this.overdraftInterest = Long.valueOf(SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue()).equals(this.id);
         this.withholdTax = Long.valueOf(SavingsAccountTransactionType.WITHHOLD_TAX.getValue()).equals(this.id);
         this.escheat = Long.valueOf(SavingsAccountTransactionType.ESCHEAT.getValue()).equals(this.id);
-        this.amountHold = Long.valueOf(SavingsAccountTransactionType.AMOUNT_HOLD.getValue()).equals(this.id);
-        this.amountRelease = Long.valueOf(SavingsAccountTransactionType.AMOUNT_RELEASE.getValue()).equals(this.id);
         this.accrualInterestPosting = Long.valueOf(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue()).equals(this.id);
         this.overdraftAccrualInterest = Long.valueOf(SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue()).equals(this.id);
-        // this.overdraftFee =
-        // Long.valueOf(SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue()).equals(this.id);
     }
 
     public Long getId() {
@@ -120,16 +112,12 @@ public class SavingsAccountTransactionEnumData {
         return this.withdrawTransfer;
     }
 
-    public boolean isRejectTransfer() {
-        return this.rejectTransfer;
-    }
-
     public boolean isOverdraftInterest() {
         return this.overdraftInterest;
     }
 
-    public boolean isWrittenoff() {
-        return this.writtenoff;
+    public boolean isWrittenOff() {
+        return this.writtenOff;
     }
 
     public boolean isOverdraftFee() {
@@ -146,14 +134,6 @@ public class SavingsAccountTransactionEnumData {
 
     public boolean isEscheat() {
         return this.escheat;
-    }
-
-    public boolean isAmountOnHold() {
-        return this.amountHold;
-    }
-
-    public boolean isAmountRelease() {
-        return this.amountRelease;
     }
 
     public boolean isAccrualInterestPosting() {

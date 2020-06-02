@@ -272,7 +272,7 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_RECEIVABLE.getValue(),
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST.getValue(), savingsProductId, paymentTypeId, savingsId, transactionId,
                         transactionDate, amount, isReversal);
-            } else if (savingsTransactionDTO.getTransactionType().isWrittenoff()) {
+            } else if (savingsTransactionDTO.getTransactionType().isWrittenOff()) {
                 this.helper.createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.LOSSES_WRITTEN_OFF.getValue(),
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,

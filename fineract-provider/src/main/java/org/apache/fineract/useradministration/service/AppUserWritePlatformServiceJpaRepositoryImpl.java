@@ -58,6 +58,7 @@ import org.apache.fineract.useradministration.domain.AppUserRepository;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.apache.fineract.useradministration.domain.ClientUser;
 import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.DurationType;
 import org.apache.fineract.useradministration.domain.AuthorizationRequest;
 import org.apache.fineract.useradministration.domain.AuthorizationRequestRepository;
 import org.apache.fineract.useradministration.domain.AuthorizationRequestRepositoryWrapper;
@@ -407,14 +408,17 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             if(!pendingRequests.isEmpty()) {
                 throw new AuthorizationRequestException(client.getId(), user.getId(), 
-                        "Cannot create authorization request. Request pending approval already exists");
+                        "Cannot create authorization request. Request pending approval already exists",
+                        "error.msg.user.authorization.request.already.exists");
             }
             
             // validate no other authorization request has already been approved and approval is not expired
-            ClientUser clientUser = this.clientUserRepositoryWrapper.findClientUserByUserIdAndClientIdAndExpiry(userId, clientId, false);
-            if( clientUser != null && !clientUser.hasTimeExpired() ) {
+            ClientUser clientUser = this.clientUserRepositoryWrapper.findByIdClientIdAndIdUserIdAndEndTimeAfter(userId, clientId, 
+                    DateUtils.getLocalDateTimeOfTenant().toDate());
+            if( clientUser != null ) {
                 throw new AuthorizationRequestException(client.getId(), user.getId(), 
-                        "Cannot create authorization request. Approved and running request already exists");
+                        "Cannot create authorization request. Approved and running request already exists",
+                        "error.msg.user.authorization.request.approved.already.exists");
             }
 
             final Date requestedDate = DateUtils.getLocalDateTimeOfTenant().toDate();
@@ -455,12 +459,14 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.APPROVED)) {
                 throw new AuthorizationRequestException(authorizationRequest.getId(), 
-                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved");
+                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved",
+                        "error.msg.user.authorization.request.already.approved");
             }
             
             if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.REJECTED)) {
                 throw new AuthorizationRequestException(authorizationRequest.getId(), 
-                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected");
+                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected",
+                        "error.msg.user.authorization.request.already.rejected");
             }
            
             final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getUser().getId());
@@ -478,15 +484,15 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final Integer duration = command.integerValueOfParameterNamed(AppUserConstants.durationParamName);
 
             LocalDateTime endTimeDate = startTimeDate;
-            if(durationType.equals(1)) {
+            if(DurationType.fromInt(durationType).equals(DurationType.HOURS)) {
                 endTimeDate = startTimeDate.plusHours(duration);
-            }else if(durationType.equals(2)) {
+            }else if(DurationType.fromInt(durationType).equals(DurationType.DAYS)) {
                 endTimeDate = startTimeDate.plusDays(duration);
-            }else if(durationType.equals(3)) {
+            }else if(DurationType.fromInt(durationType).equals(DurationType.WEEKS)) {
                 endTimeDate = startTimeDate.plusWeeks(duration);
-            }else if(durationType.equals(4)) {
+            }else if(DurationType.fromInt(durationType).equals(DurationType.MONTHS)) {
                 endTimeDate = startTimeDate.plusMonths(duration);
-            }else if(durationType.equals(5)) {
+            }else if(DurationType.fromInt(durationType).equals(DurationType.YEARS)) {
                 endTimeDate = startTimeDate.plusYears(duration);
             }
             
@@ -530,12 +536,14 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
 
                 if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.APPROVED)) {
                     throw new AuthorizationRequestException(authorizationRequest.getId(), 
-                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved");
+                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved",
+                            "error.msg.user.authorization.request.already.approved");
                 }
                 
                 if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.REJECTED)) {
                     throw new AuthorizationRequestException(authorizationRequest.getId(), 
-                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected");
+                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected",
+                            "error.msg.user.authorization.request.already.rejected");
                 }
                 
                 final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getClient().getId());

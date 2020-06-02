@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.configuration.service.ConfigurationRea
 import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
@@ -1050,13 +1051,14 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     @Override
     public void validateUserHasAuthorityToViewClient(Long clientId) {
         
-        ClientUser clientUser = clientUserRepositoryWrapper.findClientUserByUserIdAndClientIdAndExpiry(this.context.authenticatedUser().getId(), clientId, false);
+        ClientUser clientUser = clientUserRepositoryWrapper.findByIdClientIdAndIdUserIdAndEndTimeAfter(this.context.authenticatedUser().getId(), 
+                clientId, DateUtils.getLocalDateTimeOfTenant().toDate());
         
         if (this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.ALL_FUNCTIONS) || 
                 this.isCurrentUserClientOfficer(clientId) ||
                 (!this.doesClientRequireAuthrorization(clientId) && 
                         this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) || 
-                (this.doesClientRequireAuthrorization(clientId) && ( (clientUser != null) && !clientUser.hasTimeExpired() ) ) 
+                (this.doesClientRequireAuthrorization(clientId) && clientUser != null ) 
                  ) {
             return;
         }

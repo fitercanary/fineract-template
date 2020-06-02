@@ -22,11 +22,15 @@ import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainR
 
 public class AuthorizationRequestException extends AbstractPlatformDomainRuleException{
 
-    public AuthorizationRequestException(final Long id, final String message) {
-        super("error.msg.authorization.request", message, id);
+    public AuthorizationRequestException(final Long id, final String message, final String errorCode) {
+        super(errorCode, message, id);
     }
     
     public AuthorizationRequestException(final Long clientId, final Long userId, final String message) {
-        super("error.msg.authorization.request", message, clientId, userId);
+        super("error.msg.user.authorization.request", message, clientId, userId);
+    }
+    
+    public AuthorizationRequestException(final Long clientId, final Long userId, final String message, final String errorCode) {
+        super(errorCode, message, clientId, userId);
     }
 }

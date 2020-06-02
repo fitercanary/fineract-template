@@ -18,6 +18,8 @@
  */
 package org.apache.fineract.useradministration.domain;
 
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,5 +43,13 @@ public class ClientUserRepositoryWrapper {
     
     public ClientUser findClientUserByUserIdAndClientIdAndExpiry(Long userId, Long clientId, boolean isExpired) {
         return this.clientUserRepository.findByIdClientIdAndIdUserIdAndIsExpired(clientId, userId, isExpired);
+    }
+    
+    public ClientUser findByIdClientIdAndIdUserIdAndEndTimeBefore(Long userId, Long clientId, Date endTime) {
+        return this.clientUserRepository.findByIdClientIdAndIdUserIdAndEndTimeBefore(clientId, userId, endTime);
+    }
+    
+    public ClientUser findByIdClientIdAndIdUserIdAndEndTimeAfter(Long userId, Long clientId, Date endTime) {
+        return this.clientUserRepository.findByIdClientIdAndIdUserIdAndEndTimeAfter(clientId, userId, endTime);
     }
 }

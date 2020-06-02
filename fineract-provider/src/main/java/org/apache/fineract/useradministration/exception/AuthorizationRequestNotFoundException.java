@@ -23,7 +23,7 @@ import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourc
 public class AuthorizationRequestNotFoundException extends AbstractPlatformResourceNotFoundException {
 
     public AuthorizationRequestNotFoundException(final Long id) {
-        super("error.msg.authorization.request.id.invalid", "AuthorizationRequest with identifier " + id + " does not exist", id);
+        super("error.msg.user.authorization.request.id.invalid", "AuthorizationRequest with identifier " + id + " does not exist", id);
     }
 
 }

@@ -18,6 +18,8 @@
  */
 package org.apache.fineract.useradministration.domain;
 
+import java.util.Date;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -29,4 +31,9 @@ public interface ClientUserRepository extends JpaRepository<ClientUser, ClientUs
     ClientUser findByIdClientIdAndIdUserId(@Param("clientId") Long clientId, @Param("userId") Long userId);
     
     ClientUser findByIdClientIdAndIdUserIdAndIsExpired(@Param("clientId") Long clientId, @Param("userId") Long userId, @Param("isExpired")boolean isExpired);
+    
+    ClientUser findByIdClientIdAndIdUserIdAndEndTimeBefore(@Param("clientId") Long clientId, @Param("userId") Long userId, @Param("endTime") Date endTime);
+    
+    ClientUser findByIdClientIdAndIdUserIdAndEndTimeAfter(@Param("clientId") Long clientId, @Param("userId") Long userId, @Param("endTime") Date endTime);
+    
 }

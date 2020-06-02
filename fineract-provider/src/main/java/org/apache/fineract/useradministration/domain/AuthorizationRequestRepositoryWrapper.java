@@ -55,7 +55,7 @@ public class AuthorizationRequestRepositoryWrapper {
         return authorizationRequest;
     }
     
-    public List<AuthorizationRequest> findAllPendingApproval(Integer status){
+    public List<AuthorizationRequest> findAuthorizationRequestsByStatus(Integer status){
         return this.authorizationRequestRepository.findAllByStatus(status);
     }
    

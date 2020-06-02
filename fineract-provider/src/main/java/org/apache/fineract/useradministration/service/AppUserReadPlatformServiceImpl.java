@@ -237,7 +237,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         
         this.context.authenticatedUser();
         
-        Collection<AuthorizationRequest> requests = this.authorizationRequestRepositoryWrapper.findAllPendingApproval(status);
+        Collection<AuthorizationRequest> requests = this.authorizationRequestRepositoryWrapper.findAuthorizationRequestsByStatus(status);
 
         Collection<AuthorizationRequestData> requestsData = new ArrayList<>();
         for(AuthorizationRequest request: requests) {

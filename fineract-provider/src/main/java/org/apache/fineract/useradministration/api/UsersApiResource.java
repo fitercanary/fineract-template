@@ -256,11 +256,12 @@ public class UsersApiResource {
     @Path("requestauthorization")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllAuthorizationRequests(@Context final UriInfo uriInfo) {
+    public String retrieveAllAuthorizationRequests( @DefaultValue("100") @QueryParam("status") final Integer status,
+            @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final Collection<AuthorizationRequestData> requests = this.readPlatformService.retrieveAuthorizationRequests(100);
+        final Collection<AuthorizationRequestData> requests = this.readPlatformService.retrieveAuthorizationRequests(status);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toRequestApiJsonSerializer.serialize(settings, requests, this.AUTHORIZATION_REQUEST_RESPONSE_DATA_PARAMETERS);

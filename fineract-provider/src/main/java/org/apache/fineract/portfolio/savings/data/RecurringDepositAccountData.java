@@ -594,8 +594,8 @@ public class RecurringDepositAccountData extends DepositAccountData {
         this.onAccountClosureOptions = onAccountClosureOptions;
         this.paymentTypeOptions = paymentTypeOptions;
         
-        BigDecimal totalDeposits = this.summary.getTotalDeposits() == null ? BigDecimal.ZERO : this.summary.getTotalDeposits();
-        BigDecimal interestedEarned = this.summary.getTotalInterestEarned() == null ? BigDecimal.ZERO : this.summary.getTotalInterestEarned();
+        BigDecimal totalDeposits = this.summary == null  || this.summary.getTotalDeposits() == null ? BigDecimal.ZERO : this.summary.getTotalDeposits();
+        BigDecimal interestedEarned = this.summary == null  || this.summary.getTotalInterestEarned() == null ? BigDecimal.ZERO : this.summary.getTotalInterestEarned();
         this.currentMaturityAmount = totalDeposits.add(interestedEarned);
     }
 

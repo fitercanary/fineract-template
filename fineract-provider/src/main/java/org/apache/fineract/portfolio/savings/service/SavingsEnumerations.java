@@ -120,8 +120,7 @@ public class SavingsEnumerations {
 
     public static SavingsAccountTransactionEnumData transactionType(final SavingsAccountTransactionType type) {
 
-        SavingsAccountTransactionEnumData optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.INVALID
-                .getValue().longValue(), SavingsAccountTransactionType.INVALID.getCode(), "Invalid");
+        SavingsAccountTransactionEnumData optionData;
 
         switch (type) {
             case INVALID:
@@ -481,6 +480,10 @@ public class SavingsEnumerations {
         switch (type) {
             case INVALID:
             break;
+            case ACTUAL:
+                optionData = new EnumOptionData(SavingsInterestCalculationDaysInYearType.ACTUAL.getValue().longValue(),
+                        SavingsInterestCalculationDaysInYearType.ACTUAL.getCode(), "Actual Days");
+            break; 
             case DAYS_360:
                 optionData = new EnumOptionData(SavingsInterestCalculationDaysInYearType.DAYS_360.getValue().longValue(),
                         SavingsInterestCalculationDaysInYearType.DAYS_360.getCode(), "360 Days");

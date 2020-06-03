@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.domain;
 
 import com.google.gson.JsonArray;
+import java.time.Year;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
@@ -339,7 +340,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "original_interest_rate", scale = 6, precision = 19)
     protected BigDecimal originalInterestRate;
-    
+
     @ManyToOne
     @JoinColumn(name = "block_narration_id")
     private CodeValue blockNarration;
@@ -517,11 +518,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 }
             }
             interestPostingsInPeriod.clear();
-            if(PositiveInterest != Money.zero(getCurrency())) {
-            interestPostingsInPeriod.add(PositiveInterest);
+            if (PositiveInterest != Money.zero(getCurrency())) {
+                interestPostingsInPeriod.add(PositiveInterest);
             }
-            if(negativeInterest != Money.zero(getCurrency())) {
-            interestPostingsInPeriod.add(negativeInterest);
+            if (negativeInterest != Money.zero(getCurrency())) {
+                interestPostingsInPeriod.add(negativeInterest);
             }
             for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
@@ -770,8 +771,20 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
 
-        final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
+        SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
+        
+        if (daysInYearType.equals(SavingsInterestCalculationDaysInYearType.ACTUAL)) {
+            Year year;
+            if(postInterestOnDate != null) {
+                 year = Year.of(postInterestOnDate.getYear());  
+            }else {
+                 year = Year.of(upToInterestCalculationDate.getYear());
+            }
+            if (daysInYearType.isActual()) {
+                daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+            }
+        }
         List<LocalDate> postedAsOnDates = getManualPostingDates();
         if (postInterestOnDate != null) {
             postedAsOnDates.add(postInterestOnDate);
@@ -3151,10 +3164,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_CREDIT.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
-        
+
         // set narration
         this.blockNarration = blockNarration;
-        if(blockNarration != null) {
+        if (blockNarration != null) {
 
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
@@ -3188,19 +3201,19 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
-        
+
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
 
         // set narration
         this.blockNarration = blockNarration;
-        if(blockNarration != null) {
+        if (blockNarration != null) {
 
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
         return actualChanges;
     }
 
-    public Map<String, Object> blockDebits(Integer currentSubstatus,final CodeValue blockNarration) {
+    public Map<String, Object> blockDebits(Integer currentSubstatus, final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
@@ -3225,13 +3238,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         } else {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_DEBIT.getValue();
         }
-        
+
         // set narration
         this.blockNarration = blockNarration;
-        
+
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
-        
-        if(blockNarration != null) {
+
+        if (blockNarration != null) {
 
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
@@ -3268,10 +3281,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
-        
+
         // set narration
         this.blockNarration = blockNarration;
-        if(blockNarration != null) {
+        if (blockNarration != null) {
 
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
@@ -3439,8 +3452,20 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
 
-        final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
+        SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
+        if (daysInYearType.equals(SavingsInterestCalculationDaysInYearType.ACTUAL)) {
+            Year year;
+            if(postInterestOnDate != null) {
+                 year = Year.of(postInterestOnDate.getYear());  
+            }else {
+                 year = Year.of(interestPostingUpToDate.getYear());
+            }
+            if (daysInYearType.isActual()) {
+                daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+            }
+        }
+
         List<LocalDate> postedAsOnDates = getAccrualPostingDates();
         if (postInterestOnDate != null) {
             postedAsOnDates.add(postInterestOnDate);
@@ -3609,7 +3634,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public void setMinRequiredBalance(BigDecimal minRequiredBalance) {
         this.minRequiredBalance = minRequiredBalance;
     }
-    
+
     public void update(final CodeValue blockNarration) {
         this.blockNarration = blockNarration;
     }
@@ -3698,6 +3723,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     public Integer getInterestCalculationDaysInYearType() {
         return this.interestCalculationDaysInYearType;
+    }
+
+    public Integer setInterestCalculationDaysInYearType(Integer interestCalculationDaysInYearType) {
+        return this.interestCalculationDaysInYearType = interestCalculationDaysInYearType;
     }
 
     public Integer getLockinPeriodFrequency() {

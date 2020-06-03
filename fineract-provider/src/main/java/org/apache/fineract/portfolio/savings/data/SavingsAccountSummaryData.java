@@ -66,4 +66,19 @@ public class SavingsAccountSummaryData {
         this.lastInterestCalculationDate = lastInterestCalculationDate;
         this.availableBalance = availableBalance;
     }
+
+    
+    public BigDecimal getTotalInterestEarned() {
+        return this.totalInterestEarned;
+    }
+
+
+    
+    public BigDecimal getTotalDeposits() {
+        return this.totalDeposits;
+    }
+    
+    
+    
+    
 }

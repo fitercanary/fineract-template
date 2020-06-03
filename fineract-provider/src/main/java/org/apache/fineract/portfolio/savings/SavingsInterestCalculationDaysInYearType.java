@@ -21,6 +21,8 @@ package org.apache.fineract.portfolio.savings;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.fineract.portfolio.common.domain.DaysInYearType;
+
 /**
  * 
  * People typically use either of the following settings when calculating there
@@ -33,8 +35,8 @@ import java.util.List;
 public enum SavingsInterestCalculationDaysInYearType {
 
     INVALID(0, "savingsInterestCalculationDaysInYearType.invalid"), //
-    DAYS_360(360, "savingsInterestCalculationDaysInYearType.days360"), //
-    DAYS_365(365, "savingsInterestCalculationDaysInYearType.days365");
+    ACTUAL(1, "savingsInterestCalculationDaysInYearType.actual"), DAYS_360(360, "savingsInterestCalculationDaysInYearType.days360"), //
+    DAYS_365(365, "savingsInterestCalculationDaysInYearType.days365"), DAYS_366(366, "savingsInterestCalculationDaysInYearType.days366");
 
     private final Integer value;
     private final String code;
@@ -67,14 +69,24 @@ public enum SavingsInterestCalculationDaysInYearType {
         SavingsInterestCalculationDaysInYearType repaymentFrequencyType = SavingsInterestCalculationDaysInYearType.INVALID;
         if (type != null) {
             switch (type) {
+                case 1:
+                    repaymentFrequencyType = SavingsInterestCalculationDaysInYearType.ACTUAL;
+                break;
                 case 360:
                     repaymentFrequencyType = SavingsInterestCalculationDaysInYearType.DAYS_360;
                 break;
                 case 365:
                     repaymentFrequencyType = SavingsInterestCalculationDaysInYearType.DAYS_365;
                 break;
+                case 366:
+                    repaymentFrequencyType = SavingsInterestCalculationDaysInYearType.DAYS_366;
+                break;
             }
         }
         return repaymentFrequencyType;
     }
+    
+    public boolean isActual() {
+        return SavingsInterestCalculationDaysInYearType.ACTUAL.getValue().equals(this.value);
+    } 
 }

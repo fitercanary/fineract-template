@@ -82,6 +82,8 @@ public class RecurringDepositAccountData extends DepositAccountData {
     private String locale;
     private LocalDate submittedOnDate;
     private Long depositPeriodFrequencyId;
+    
+    private final BigDecimal currentMaturityAmount;
 
     public static RecurringDepositAccountData importInstance(Long clientId,Long productId,Long fieldOfficerId,
             LocalDate submittedOnDate,
@@ -146,6 +148,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
         this.locale=locale;
         this.submittedOnDate=submittedOnDate;
         this.depositPeriodFrequencyId=depositPeriodFrequencyId;
+        this.currentMaturityAmount = null;
     }
 
     public Integer getRowIndex() {
@@ -379,6 +382,8 @@ public class RecurringDepositAccountData extends DepositAccountData {
         final boolean withHoldTax = false;
         final TaxGroupData taxGroup = null;
 
+        final BigDecimal currentMaturityAmount = null;
+
         return new RecurringDepositAccountData(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
                 fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -470,6 +475,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
         final EnumOptionData recurringFrequencyType = null;
         final boolean withHoldTax = false;
         final TaxGroupData taxGroup = null;
+        final BigDecimal currentMaturityAmount = null;
 
         return new RecurringDepositAccountData(accountId, accountNo, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestPeriodType,
@@ -587,6 +593,10 @@ public class RecurringDepositAccountData extends DepositAccountData {
         // account close template options
         this.onAccountClosureOptions = onAccountClosureOptions;
         this.paymentTypeOptions = paymentTypeOptions;
+        
+        BigDecimal totalDeposits = this.summary == null  || this.summary.getTotalDeposits() == null ? BigDecimal.ZERO : this.summary.getTotalDeposits();
+        BigDecimal interestedEarned = this.summary == null  || this.summary.getTotalInterestEarned() == null ? BigDecimal.ZERO : this.summary.getTotalInterestEarned();
+        this.currentMaturityAmount = totalDeposits.add(interestedEarned);
     }
 
     @Override

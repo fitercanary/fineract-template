@@ -184,4 +184,39 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
         return !this.client.identifiedBy(clientId);
     }
 
+    public Client getClient() {
+        return client;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public Loan getLoan() {
+        return loan;
+    }
+
+    public LoanTransaction getLoanTransaction() {
+        return loanTransaction;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public Integer getNoteTypeId() {
+        return noteTypeId;
+    }
+
+    public SavingsAccount getSavingsAccount() {
+        return savingsAccount;
+    }
+
+    public SavingsAccountTransaction getSavingsTransaction() {
+        return savingsTransaction;
+    }
+
+    public ShareAccount getShareAccount() {
+        return shareAccount;
+    }
 }

@@ -120,8 +120,7 @@ public class SavingsEnumerations {
 
     public static SavingsAccountTransactionEnumData transactionType(final SavingsAccountTransactionType type) {
 
-        SavingsAccountTransactionEnumData optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.INVALID
-                .getValue().longValue(), SavingsAccountTransactionType.INVALID.getCode(), "Invalid");
+        SavingsAccountTransactionEnumData optionData;
 
         switch (type) {
             case INVALID:

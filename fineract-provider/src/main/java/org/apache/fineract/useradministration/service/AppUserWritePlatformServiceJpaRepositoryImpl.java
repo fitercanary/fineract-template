@@ -20,12 +20,13 @@ package org.apache.fineract.useradministration.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.EntityExistsException;
 import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -36,6 +37,8 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.PlatformEmailSendException;
 import org.apache.fineract.infrastructure.security.service.PlatformPasswordEncoder;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -44,6 +47,7 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.office.domain.OfficeRepositoryWrapper;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.organisation.staff.domain.StaffRepositoryWrapper;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.useradministration.api.AppUserApiConstant;
@@ -51,12 +55,25 @@ import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserPreviousPassword;
 import org.apache.fineract.useradministration.domain.AppUserPreviousPasswordRepository;
 import org.apache.fineract.useradministration.domain.AppUserRepository;
+import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.ClientUser;
+import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.DurationType;
+import org.apache.fineract.useradministration.domain.AuthorizationRequest;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestRepository;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestStatusType;
 import org.apache.fineract.useradministration.domain.Role;
 import org.apache.fineract.useradministration.domain.RoleRepository;
 import org.apache.fineract.useradministration.domain.UserDomainService;
+import org.apache.fineract.useradministration.exception.AuthorizationRequestException;
 import org.apache.fineract.useradministration.exception.PasswordPreviouslyUsedException;
 import org.apache.fineract.useradministration.exception.RoleNotFoundException;
 import org.apache.fineract.useradministration.exception.UserNotFoundException;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,13 +106,20 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     private final StaffRepositoryWrapper staffRepositoryWrapper;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final TopicDomainService topicDomainService;
+    private final FromJsonHelper fromApiJsonHelper;
+    private final AppUserRepositoryWrapper appUserRepositoryWrapper;
+    private final ClientUserRepositoryWrapper clientUserRepositoryWrapper;
+    private final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper;
 
     @Autowired
     public AppUserWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final AppUserRepository appUserRepository,
             final UserDomainService userDomainService, final OfficeRepositoryWrapper officeRepositoryWrapper, final RoleRepository roleRepository,
             final PlatformPasswordEncoder platformPasswordEncoder, final UserDataValidator fromApiJsonDeserializer,
             final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository, final StaffRepositoryWrapper staffRepositoryWrapper,
-            final ClientRepositoryWrapper clientRepositoryWrapper, final TopicDomainService topicDomainService) {
+            final ClientRepositoryWrapper clientRepositoryWrapper, final TopicDomainService topicDomainService,
+            final FromJsonHelper fromApiJsonHelper,
+            final AppUserRepositoryWrapper appUserRepositoryWrapper,final ClientUserRepositoryWrapper clientUserRepositoryWrapper,
+            final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper) {
         this.context = context;
         this.appUserRepository = appUserRepository;
         this.userDomainService = userDomainService;
@@ -107,6 +131,10 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         this.staffRepositoryWrapper = staffRepositoryWrapper;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
         this.topicDomainService = topicDomainService;
+        this.fromApiJsonHelper = fromApiJsonHelper;
+        this.appUserRepositoryWrapper = appUserRepositoryWrapper;
+        this.clientUserRepositoryWrapper = clientUserRepositoryWrapper;
+        this.authorizationRequestRepositoryWrapper = authorizationRequestRepositoryWrapper;
     }
 
     @Transactional
@@ -352,4 +380,191 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         logger.error(dve.getMessage(), dve);
         throw new PlatformDataIntegrityException("error.msg.unknown.data.integrity.issue", "Unknown data integrity issue with resource.");
     }
+
+    @Override
+    public CommandProcessingResult requestToViewClient(Long userId, JsonCommand command) {
+        
+        try {
+
+            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(userId);
+            
+            this.fromApiJsonDeserializer.validateAuthorizationRequestToViewClient(command);
+            
+            final JsonElement element = command.parsedJson();
+            
+            final Long clientId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.clientIdParamName, element);
+            
+            final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+            
+            // validate client requires authorization
+            if( !client.doesRequireAuthorizationToView()) {
+                throw new AuthorizationRequestException(client.getId(), user.getId(), 
+                        "Client with identifier " + client.getId() + " does not require authorization to view");
+            }
+            
+            // validate no other authorization request pending approval
+            List<AuthorizationRequest> pendingRequests = this.authorizationRequestRepositoryWrapper.findUserClientRequestsByStatus(clientId, userId, 
+                    AuthorizationRequestStatusType.SUBMITTED_AND_PENDING_APPROVAL.getValue());
+            
+            if(!pendingRequests.isEmpty()) {
+                throw new AuthorizationRequestException(client.getId(), user.getId(), 
+                        "Cannot create authorization request. Request pending approval already exists",
+                        "error.msg.user.authorization.request.already.exists");
+            }
+            
+            // validate no other authorization request has already been approved and approval is not expired
+            ClientUser clientUser = this.clientUserRepositoryWrapper.findByIdClientIdAndIdUserIdAndEndTimeAfter(userId, clientId, 
+                    DateUtils.getLocalDateTimeOfTenant().toDate());
+            if( clientUser != null ) {
+                throw new AuthorizationRequestException(client.getId(), user.getId(), 
+                        "Cannot create authorization request. Approved and running request already exists",
+                        "error.msg.user.authorization.request.approved.already.exists");
+            }
+
+            final Date requestedDate = DateUtils.getLocalDateTimeOfTenant().toDate();
+            
+            final AuthorizationRequestStatusType status = AuthorizationRequestStatusType.SUBMITTED_AND_PENDING_APPROVAL;
+            
+            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
+    
+            AuthorizationRequest request = new AuthorizationRequest(user, client, status, requestedDate, comment);
+
+            this.authorizationRequestRepositoryWrapper.save(request);
+            
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withOfficeId(client.officeId()) //
+                    .withClientId(clientId) //
+                    .withEntityId(request.getId()) //
+                    .build();
+            
+        }catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
+        }
+    }
+
+
+    @Override
+    public CommandProcessingResult approveRequestToViewClient(Long authorizationRequestId, JsonCommand command) {
+        
+        try {
+            final AppUser currentUser = this.context.authenticatedUser();
+            
+            final AuthorizationRequest authorizationRequest = this.authorizationRequestRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequestId);
+            
+            if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.APPROVED)) {
+                throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved",
+                        "error.msg.user.authorization.request.already.approved");
+            }
+            
+            if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.REJECTED)) {
+                throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                        "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected",
+                        "error.msg.user.authorization.request.already.rejected");
+            }
+           
+            final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getUser().getId());
+              
+            this.fromApiJsonDeserializer.validateForApproveAuthorizationRequest(command);
+            
+            final JsonElement element = command.parsedJson();
+            
+            final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getClient().getId());
+    
+            final LocalDateTime startTimeDate = DateUtils.getLocalDateTimeOfTenant();
+            
+            final Integer durationType = command.integerValueOfParameterNamed(AppUserConstants.durationTypeParamName);
+            
+            final Integer duration = command.integerValueOfParameterNamed(AppUserConstants.durationParamName);
+
+            LocalDateTime endTimeDate = startTimeDate;
+            if(DurationType.fromInt(durationType).equals(DurationType.HOURS)) {
+                endTimeDate = startTimeDate.plusHours(duration);
+            }else if(DurationType.fromInt(durationType).equals(DurationType.DAYS)) {
+                endTimeDate = startTimeDate.plusDays(duration);
+            }else if(DurationType.fromInt(durationType).equals(DurationType.WEEKS)) {
+                endTimeDate = startTimeDate.plusWeeks(duration);
+            }else if(DurationType.fromInt(durationType).equals(DurationType.MONTHS)) {
+                endTimeDate = startTimeDate.plusMonths(duration);
+            }else if(DurationType.fromInt(durationType).equals(DurationType.YEARS)) {
+                endTimeDate = startTimeDate.plusYears(duration);
+            }
+            
+            Date startDate =  startTimeDate.toDate();
+            Date endDate =  endTimeDate.toDate();
+             
+            boolean isExpired = false;
+            
+            final String comment = this.fromApiJsonHelper.extractStringNamed(AppUserConstants.commentParamName, element);
+            
+            ClientUser clientUser  = new ClientUser(client, user, durationType, duration, startDate, endDate, 
+                    isExpired, currentUser, comment, authorizationRequest);
+           
+            this.clientUserRepositoryWrapper.save(clientUser);
+            
+            authorizationRequest.approveRequest(startDate, currentUser);
+            
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withOfficeId(client.officeId()) //
+                    .withClientId(client.getId()) //
+                    .withEntityId(authorizationRequest.getId()) //
+                    .build();
+            
+        } catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
+        }
+   }
+
+    @Override
+    public CommandProcessingResult rejectRequestToViewClient(Long authorizationRequestId, JsonCommand command) {
+            try {
+                final AppUser currentUser = this.context.authenticatedUser();
+                
+                final AuthorizationRequest authorizationRequest = this.authorizationRequestRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequestId);
+
+                if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.APPROVED)) {
+                    throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been aproved",
+                            "error.msg.user.authorization.request.already.approved");
+                }
+                
+                if(AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.REJECTED)) {
+                    throw new AuthorizationRequestException(authorizationRequest.getId(), 
+                            "Authorization Request with identifier " + authorizationRequest.getId() + " has already been rejected",
+                            "error.msg.user.authorization.request.already.rejected");
+                }
+                
+                final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getClient().getId());
+                
+                authorizationRequest.rejectRequest(DateUtils.getLocalDateTimeOfTenant().toDate(), currentUser);
+                
+                return new CommandProcessingResultBuilder() //
+                        .withCommandId(command.commandId()) //
+                        .withOfficeId(client.officeId()) //
+                        .withClientId(client.getId()) //
+                        .withEntityId(authorizationRequest.getId()) //
+                        .build();
+            
+            } catch (final DataIntegrityViolationException dve) {
+                handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+                return CommandProcessingResult.empty();
+            } catch (final PersistenceException dve) {
+                Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+                handleDataIntegrityIssues(command, throwable, dve);
+                return CommandProcessingResult.empty();
+            }
+    }
+    
 }

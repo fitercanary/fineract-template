@@ -1594,7 +1594,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 baseDataValidator.reset().parameter(withHoldTaxParamName).failWithCode("not.supported.for.this.account");
             }
         }
-
+        
         validateLockinDetails(baseDataValidator);
         esnureOverdraftLimitsSetForOverdraftAccounts();
     }

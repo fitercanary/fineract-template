@@ -354,7 +354,8 @@ public class SavingsAccountData {
             final BigDecimal minOverdraftForInterestCalculation, final LocalDate overdraftStartedOnDate, final LocalDate overdraftClosedOnDate,
                                               final boolean withHoldTax, final TaxGroupData taxGroup,
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
-            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, final String nickname) {
+            final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold, final String nickname,
+            final boolean requireAuthorizationToViewAccount) {
 
         final Collection<SavingsProductData> productOptions = null;
         final Collection<StaffData> fieldOfficerOptions = null;
@@ -454,6 +455,7 @@ public class SavingsAccountData {
         final Integer daysToEscheat = null;
         final BigDecimal savingsAmountOnHold = null;
         final String nickname = null;
+        final boolean requireAuthorizationToViewAccount = false;
 
         return new SavingsAccountData(accountId, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
@@ -528,6 +530,7 @@ public class SavingsAccountData {
         final Integer daysToEscheat = null;
 		final BigDecimal savingsAmountOnHold = null;
 		final String nickname = null;
+		final boolean requireAuthorizationToViewAccount = false;
 
         return new SavingsAccountData(accountId, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
@@ -925,7 +928,7 @@ public class SavingsAccountData {
 	        
 	        this.blockNarrationOptions = blockNarrationOptions;
 	        this.blockNarration = blockNarration;
-            this.nickname = nickname;
+                this.nickname = nickname;
 	    }
 	
 	public static SavingsAccountData withTemplateOptions(final SavingsAccountData account,

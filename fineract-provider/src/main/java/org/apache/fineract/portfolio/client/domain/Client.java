@@ -34,6 +34,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -57,6 +58,7 @@ import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.ClientUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -255,6 +257,12 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     @Column(name = "max_transaction_limit")
     private BigDecimal singleWithdrawLimit;
+    
+    @Column(name = "require_authorization_to_view", nullable = false)
+    protected boolean requireAuthorizationToView;
+    
+    @OneToMany(mappedBy = "client")
+    protected Set<ClientUser> allowedUsers;
 
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
             final Long savingsProductId, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
@@ -299,10 +307,16 @@ public final class Client extends AbstractPersistableCustom<Long> {
         final Long savingsAccountId = null;
         final BigDecimal dailyWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.dailyWithdrawLimit);
         final BigDecimal singleWithdrawLimit = command.bigDecimalValueOfParameterNamed(ClientApiConstants.singleWithdrawLimit);
+        
+        boolean isRequireAuthorizationToView = false;
+        if (command.parameterExists(ClientApiConstants.requireAuthorizationToViewParamName)) {
+            isRequireAuthorizationToView = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName);
+        }
+        
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
                 activationDate, officeJoiningDate, externalId, mobileNo, mothersMaidenName, emailAddress, staff, submittedOnDate,
                 savingsProductId, savingsAccountId, dataOfBirth, gender, clientType, clientClassification, legalForm, isStaff, clientLevel,
-                dailyWithdrawLimit, singleWithdrawLimit);
+                dailyWithdrawLimit, singleWithdrawLimit, isRequireAuthorizationToView);
     }
 
     protected Client() {
@@ -315,7 +329,8 @@ public final class Client extends AbstractPersistableCustom<Long> {
             final String mothersMaidenName, final String emailAddress, final Staff staff, final LocalDate submittedOnDate,
             final Long savingsProductId, final Long savingsAccountId, final LocalDate dateOfBirth, final CodeValue gender,
             final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff,
-            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit) {
+            final CodeValue clientLevel, final BigDecimal dailyWithdrawLimit, final BigDecimal singleWithdrawLimit,
+            final boolean requireAuthorizationToView) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -405,6 +420,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
         this.dailyWithdrawLimit = dailyWithdrawLimit;
         this.singleWithdrawLimit = singleWithdrawLimit;
         this.setLegalForm(legalForm);
+        this.requireAuthorizationToView = requireAuthorizationToView;
 
         deriveDisplayName();
         validate();
@@ -1182,5 +1198,9 @@ public final class Client extends AbstractPersistableCustom<Long> {
 
     public BigDecimal getSingleWithdrawLimit() {
         return this.singleWithdrawLimit == null ? BigDecimal.ZERO : this.singleWithdrawLimit;
+    }
+    
+    public boolean doesRequireAuthorizationToView() {
+        return this.requireAuthorizationToView;
     }
 }

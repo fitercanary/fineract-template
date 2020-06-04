@@ -258,6 +258,7 @@ public class SavingsAccountAssembler {
                 throw new UnsupportedParameterException(Arrays.asList(withHoldTaxParamName));
             }
         }
+        
 
         final SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer, accountNo,
                 externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,

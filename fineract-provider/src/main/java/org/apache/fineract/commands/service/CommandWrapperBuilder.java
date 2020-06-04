@@ -3226,4 +3226,28 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?commad=updateNickName";
         return this;
     }
+    
+    public CommandWrapperBuilder approveAuthorizationRequest(final Long authorizationRequestId) {
+        this.actionName = "APPROVEREQUESTTOVIEWCLIENT";
+        this.entityName = "AUTHORIZATIONREQUEST";
+        this.entityId = authorizationRequestId;
+        this.href = "/users/requestauthorization/" + authorizationRequestId + "?commad=approve";
+        return this;
+    }
+    
+    public CommandWrapperBuilder rejectAuthorizationRequest(final Long authorizationRequestId) {
+        this.actionName = "REJECTREQUESTTOVIEWCLIENT";
+        this.entityName = "AUTHORIZATIONREQUEST";
+        this.entityId = authorizationRequestId;
+        this.href = "/users/requestauthorization/" + authorizationRequestId + "?commad=reject";
+        return this;
+    }
+    
+    public CommandWrapperBuilder requestAuthroization(final Long userId) {
+        this.actionName = "REQUESTTOVIEWCLIENT";
+        this.entityName = "AUTHORIZATIONREQUEST";
+        this.entityId = userId;
+        this.href = "/users/" + userId + "/requestauthorization";
+        return this;
+    }
 }

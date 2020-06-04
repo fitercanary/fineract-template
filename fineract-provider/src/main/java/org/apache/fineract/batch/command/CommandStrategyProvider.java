@@ -100,6 +100,11 @@ public class CommandStrategyProvider {
                 "disburseLoanCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("rescheduleloans\\/\\d+\\?command=approve").method("POST").build(),
                 "approveLoanRescheduleCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("users\\/requestauthorization\\/\\d+\\?command=approve").method("POST").build(),
+                "approveAuthorizationRequestToViewClientCommandStrategy");
+        
+        this.commandStrategies.put(CommandContext.resource("users\\/requestauthorization\\/\\d+\\?command=reject").method("POST").build(),
+                "rejectAuthorizationRequestToViewClientCommandStrategy");
     }
 
 }

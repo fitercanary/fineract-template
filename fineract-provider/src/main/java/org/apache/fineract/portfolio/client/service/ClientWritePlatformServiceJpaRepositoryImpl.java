@@ -85,6 +85,9 @@ import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWr
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.ClientUser;
+import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -96,6 +99,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.PersistenceException;
+
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -149,7 +154,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                                                        final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
                                                        final BusinessEventNotifierService businessEventNotifierService,
                                                        final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-                                                       ReferralStatusRepository referralStatusRepository, ValidationLimitRepository validationLimitRepository) {
+                                                       ReferralStatusRepository referralStatusRepository, ValidationLimitRepository validationLimitRepository,
+                                                       final ClientUserRepositoryWrapper clientUserRepositoryWrapper,
+                                                       final AppUserRepositoryWrapper appUserRepositoryWrapper) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -407,6 +414,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
             this.entityDatatableChecksWritePlatformService.runTheCheck(newClient.getId(), EntityTables.CLIENT.getName(),
                     StatusEnum.CREATE.getCode().longValue(), EntityTables.CLIENT.getForeignKeyColumnNameOnDatatable());
+            
+            
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withOfficeId(clientOffice.getId()) //

@@ -270,6 +270,13 @@ public final class ClientDataValidator {
             baseDataValidator.reset().parameter(ClientApiConstants.mainBusinessLineIdParamName).value(mainBusinessLine)
                     .integerGreaterThanZero();
         }
+        
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.requireAuthorizationToViewParamName, element)) {
+            final Boolean isRequireAuthorizationToView = this.fromApiJsonHelper.extractBooleanNamed(
+                    ClientApiConstants.requireAuthorizationToViewParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.requireAuthorizationToViewParamName).value(isRequireAuthorizationToView)
+                    .ignoreIfNull().validateForBooleanValue();
+        }
 
         return dataValidationErrors;
     }

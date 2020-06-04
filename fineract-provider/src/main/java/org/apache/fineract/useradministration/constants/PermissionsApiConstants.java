@@ -25,5 +25,9 @@ public class PermissionsApiConstants {
     
     // Clients
     public static final String READ_ALL_CLIENT_PERMISSION = "READ_ALL_CLIENT";
+    
+    // special 
+    public static final String ALL_FUNCTIONS = "ALL_FUNCTIONS";
+    public static final String ALL_FUNCTIONS_READ = "ALL_FUNCTIONS_READ";
 
 }

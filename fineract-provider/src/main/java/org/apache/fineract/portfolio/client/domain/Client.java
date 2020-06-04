@@ -1203,4 +1203,9 @@ public final class Client extends AbstractPersistableCustom<Long> {
     public boolean doesRequireAuthorizationToView() {
         return this.requireAuthorizationToView;
     }
+
+    public void resetClientSpecificLimits() {
+        this.dailyWithdrawLimit = null;
+        this.singleWithdrawLimit = null;
+    }
 }

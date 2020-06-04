@@ -556,6 +556,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     }
                 }
                 clientForUpdate.updateClientLevel(clientLevel);
+                clientForUpdate.resetClientSpecificLimits();
             }
 
             if (changes.containsKey(ClientApiConstants.savingsProductIdParamName)) {

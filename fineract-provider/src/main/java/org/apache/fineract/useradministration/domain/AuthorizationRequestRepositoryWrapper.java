@@ -18,48 +18,43 @@
  */
 package org.apache.fineract.useradministration.domain;
 
-import java.util.List;
-
 import org.apache.fineract.useradministration.exception.AuthorizationRequestNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class AuthorizationRequestRepositoryWrapper {
 
     private final AuthorizationRequestRepository authorizationRequestRepository;
-    
+
     @Autowired
     public AuthorizationRequestRepositoryWrapper(final AuthorizationRequestRepository authorizationRequestRepository) {
         this.authorizationRequestRepository = authorizationRequestRepository;
     }
-    
+
     public void save(AuthorizationRequest authorizationRequest) {
         this.authorizationRequestRepository.save(authorizationRequest);
     }
-    
+
     public void update(AuthorizationRequest authorizationRequest) {
         this.authorizationRequestRepository.saveAndFlush(authorizationRequest);
     }
     
     public AuthorizationRequest findOneWithNotFoundDetection(Long id) {
-        return this.findOneWithNotFoundDetection(id, false);
-    }
-    
-    @SuppressWarnings("unused")
-    @Transactional(readOnly=true)
-    public AuthorizationRequest findOneWithNotFoundDetection(final Long id, final boolean loadLazyCollections) {
         final AuthorizationRequest authorizationRequest = this.authorizationRequestRepository.findOne(id);
-        if (authorizationRequest == null) { throw new AuthorizationRequestNotFoundException(id); }
+        if (authorizationRequest == null) {
+            throw new AuthorizationRequestNotFoundException(id);
+        }
         return authorizationRequest;
     }
-    
-    public List<AuthorizationRequest> findAuthorizationRequestsByStatus(Integer status){
+
+    public List<AuthorizationRequest> findAuthorizationRequestsByStatus(Integer status) {
         return this.authorizationRequestRepository.findAllByStatus(status);
     }
-   
-    public List<AuthorizationRequest> findUserClientRequestsByStatus(Long clientId, Long userId, Integer status){
+
+    public List<AuthorizationRequest> findUserClientRequestsByStatus(Long clientId, Long userId, Integer status) {
         return this.authorizationRequestRepository.findAllByClientAndUserAndStatus(clientId, userId, status);
     }
 }

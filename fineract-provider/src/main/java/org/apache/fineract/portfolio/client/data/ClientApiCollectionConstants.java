@@ -44,7 +44,8 @@ public class ClientApiCollectionConstants extends ClientApiConstants{
             dateFormatParamName, accountNoParamName, externalIdParamName, mobileNoParamName, emailAddressParamName, firstnameParamName, middlenameParamName,
             lastnameParamName, fullnameParamName, activeParamName, activationDateParamName, staffIdParamName, savingsProductIdParamName,
             dateOfBirthParamName, genderIdParamName, clientTypeIdParamName, clientClassificationIdParamName, submittedOnDateParamName, clientNonPersonDetailsParamName,
-            displaynameParamName, legalFormIdParamName, isStaffParamName, mothersMaidenNameParamName, referralClientIdParamName, clientLevelIdParamName, dailyWithdrawLimit, singleWithdrawLimit));
+            displaynameParamName, legalFormIdParamName, isStaffParamName, mothersMaidenNameParamName, referralClientIdParamName, clientLevelIdParamName, dailyWithdrawLimit, singleWithdrawLimit,
+            requireAuthorizationToViewParamName));
 
     protected static final Set<String> CLIENT_NON_PERSON_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, incorpNumberParamName, remarksParamName, incorpValidityTillParamName,

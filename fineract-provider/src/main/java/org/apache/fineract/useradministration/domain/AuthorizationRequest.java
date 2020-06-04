@@ -18,7 +18,8 @@
  */
 package org.apache.fineract.useradministration.domain;
 
-import java.util.Date;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.portfolio.client.domain.Client;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -28,12 +29,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
-import org.apache.fineract.portfolio.client.api.ClientApiConstants;
-import org.apache.fineract.portfolio.client.domain.Client;
-import org.apache.fineract.useradministration.service.AppUserConstants;
+import java.util.Date;
 
 @Entity
 @Table(name = "m_user_client_authorization_request")
@@ -50,42 +46,28 @@ public class AuthorizationRequest extends AbstractPersistableCustom<Long>{
     @Column(name = "status_enum", nullable = false)
     private Integer status;
     
-    @Column(name = "requestedon_date", nullable = true)
+    @Column(name = "requestedon_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date requestedDate;
     
-    @Column(name = "aprovedon_date", nullable = true)
+    @Column(name = "aprovedon_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date approvedDate;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "approvedon_userid", nullable = true)
+    @JoinColumn(name = "approvedon_userid")
     private AppUser approvedBy;
     
-    @Column(name = "rejectedon_date", nullable = true)
+    @Column(name = "rejectedon_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date rejectionDate;
 
-    @ManyToOne(optional = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "rejectedon_userid", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rejectedon_userid")
     private AppUser rejectedBy;
     
-    @Column(name = "comment", nullable = true)
+    @Column(name = "comment")
     private String comment;
-    
-    
-    public AuthorizationRequest(AppUser user, Client client, AuthorizationRequestStatusType status, Date requestedDate, Date approvedDate, AppUser approvedBy,
-            Date rejectionDate, AppUser rejectedBy, String comment) {
-        this.user = user;
-        this.client = client;
-        this.status = status != null ?  status.getValue() : null;
-        this.requestedDate = requestedDate;
-        this.approvedDate = approvedDate;
-        this.approvedBy = approvedBy;
-        this.rejectionDate = rejectionDate;
-        this.rejectedBy = rejectedBy;
-        this.comment = comment;
-    }
     
     public AuthorizationRequest(AppUser user, Client client, AuthorizationRequestStatusType status, Date requestedDate, String comment) {
         this.user = user;

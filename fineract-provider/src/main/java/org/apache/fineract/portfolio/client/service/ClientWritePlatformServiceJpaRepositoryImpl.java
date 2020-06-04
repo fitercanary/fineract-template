@@ -86,7 +86,6 @@ import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
 import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
-import org.apache.fineract.useradministration.domain.ClientUser;
 import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -99,8 +98,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.PersistenceException;
-
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;

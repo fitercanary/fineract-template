@@ -36,7 +36,6 @@ public class RequestToViewClientCommandHandler implements NewCommandSourceHandle
     @Autowired
     public RequestToViewClientCommandHandler(final AppUserWritePlatformService appUserWritePlatformService) {
         this.appUserWritePlatformService = appUserWritePlatformService;
-        
     }
     
     @Transactional

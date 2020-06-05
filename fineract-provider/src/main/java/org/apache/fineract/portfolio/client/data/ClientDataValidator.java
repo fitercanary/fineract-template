@@ -550,6 +550,11 @@ public final class ClientDataValidator {
         List<ApiParameterError> dataValidationErrorsForClientNonPerson = (List<ApiParameterError>) parameterUpdateStatusDetails
                 .get("dataValidationErrors");
         dataValidationErrors.addAll(dataValidationErrorsForClientNonPerson);
+        
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.requireAuthorizationToViewParamName, element)) {
+            final Boolean requireAuthorizationToViewClient = this.fromApiJsonHelper.extractBooleanNamed(ClientApiConstants.requireAuthorizationToViewParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.requireAuthorizationToViewParamName).value(requireAuthorizationToViewClient).notNull();
+        }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

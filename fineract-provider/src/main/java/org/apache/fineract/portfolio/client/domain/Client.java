@@ -710,7 +710,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
             this.singleWithdrawLimit = newValue;
         }
         
-        if(command.isChangeInBooleanParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName, this.requireAuthorizationToView)) {
+        if (command.isChangeInBooleanParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName, this.requireAuthorizationToView)) {
             final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName);
             actualChanges.put(ClientApiConstants.requireAuthorizationToViewParamName, newValue);
             this.requireAuthorizationToView = newValue;

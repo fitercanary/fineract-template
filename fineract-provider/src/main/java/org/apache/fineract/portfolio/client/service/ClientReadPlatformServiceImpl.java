@@ -490,8 +490,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("cnp.incorp_validity_till as incorpValidityTill, ");
             sqlBuilder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
             sqlBuilder.append("cvMainBusinessLine.code_value as mainBusinessLineValue, ");
-            sqlBuilder.append("cnp.remarks as remarks ");
-            sqlBuilder.append("c.require_authorization_to_view as requireAuthorizationToView");
+            sqlBuilder.append("cnp.remarks as remarks, ");
+            sqlBuilder.append("c.require_authorization_to_view as requireAuthorizationToView ");
 
             sqlBuilder.append("from m_client c ");
             sqlBuilder.append("join m_office o on o.id = c.office_id ");
@@ -858,8 +858,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("cnp.incorp_no as incorpNo, ");
             builder.append("cnp.incorp_validity_till as incorpValidityTill, ");
             builder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
-            builder.append("cnp.remarks as remarks ");
-            builder.append("c.require_authorization_to_view as requireAuthorizationToView");//requireAuthorizationToView
+            builder.append("cnp.remarks as remarks, ");
+            builder.append("c.require_authorization_to_view as requireAuthorizationToView ");
 
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");

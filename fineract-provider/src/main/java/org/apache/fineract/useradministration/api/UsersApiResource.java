@@ -48,6 +48,7 @@ import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSer
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
+import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.apache.fineract.useradministration.data.AppUserData;
 import org.apache.fineract.useradministration.data.AuthorizationRequestData;
 import org.apache.fineract.useradministration.service.AppUserReadPlatformService;
@@ -255,7 +256,7 @@ public class UsersApiResource {
     }
 
     @GET
-    @Path("requestauthorization")
+    @Path("requestauthorization/client")
     @Consumes({MediaType.APPLICATION_JSON})
     @Produces({MediaType.APPLICATION_JSON})
     public String retrieveAllAuthorizationRequests(@DefaultValue("100") @QueryParam("status") final Integer status,
@@ -271,5 +272,23 @@ public class UsersApiResource {
 
     private boolean is(final String commandParam, final String commandValue) {
         return StringUtils.isNotBlank(commandParam) && commandParam.trim().equalsIgnoreCase(commandValue);
+    }
+
+    @GET
+    @Path("requestauthorization/client/{clientId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveUserAuthorizationRequestsOnClient(@PathParam("clientId") final Long clientId,
+            @DefaultValue("100") @QueryParam("status") final Integer status,
+            @Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasPermissionTo(PermissionsApiConstants.REQUEST_TO_VIEW_CLIENT_PERMISSION);
+        // this.resourceNameForPermissions
+
+        final Collection<AuthorizationRequestData> requests = this.readPlatformService
+                .retrieveUserAuthorizationRequestsOnClient(this.context.authenticatedUser().getId(), clientId, status);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toRequestApiJsonSerializer.serialize(settings, requests, this.AUTHORIZATION_REQUEST_RESPONSE_DATA_PARAMETERS);
     }
 }

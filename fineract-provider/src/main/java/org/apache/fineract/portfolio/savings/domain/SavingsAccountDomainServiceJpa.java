@@ -338,7 +338,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             }
                     
             return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), 
-                            cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate, null);
+                            cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate, null, null);
         }
         
         return null;

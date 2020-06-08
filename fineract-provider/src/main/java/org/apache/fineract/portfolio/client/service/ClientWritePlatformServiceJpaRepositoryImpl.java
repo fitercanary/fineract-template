@@ -247,7 +247,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final GlobalConfigurationPropertyData configuration = this.configurationReadPlatformService
                     .retrieveGlobalConfiguration("Enable-Address");
 
-            final Boolean isAddressEnabled = configuration.isEnabled();
+            boolean isAddressEnabled = configuration.isEnabled();
 
             final Long officeId = command.longValueOfParameterNamed(ClientApiConstants.officeIdParamName);
 
@@ -438,8 +438,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String errorCode = "daily.withdraw.limit.cannot.exceed.global.limit";
             final String defaultMessage = "Daily withdraw limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-            if (validationLimit != null && !validationLimit.isOverridable()) {
-                if (client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumDailyWithdrawLimit()) > 0) {
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificDailyWithdrawLimit() != null) {
+                if (client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumClientSpecificDailyWithdrawLimit()) > 0) {
                     this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.dailyWithdrawLimit,
                             client.getDailyWithdrawLimit());
                 }
@@ -452,8 +452,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String errorCode = "maximum.transaction.limit.cannot.exceed.global.limit";
             final String defaultMessage = "Maximum transaction limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-            if (validationLimit != null && !validationLimit.isOverridable()) {
-                if (client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumSingleWithdrawLimit()) > 0) {
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificSingleWithdrawLimit() != null) {
+                if (client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumClientSpecificSingleWithdrawLimit()) > 0) {
                     this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.singleWithdrawLimit,
                             client.getSingleWithdrawLimit());
                 }
@@ -479,9 +479,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final LocalDate incorpValidityTill = this.fromApiJsonHelper
                     .extractLocalDateNamed(ClientApiConstants.incorpValidityTillParamName, clientNonPersonElement);
 
-            // JsonCommand clientNonPersonCommand =
-            // JsonCommand.fromExistingCommand(command,
-            // command.arrayOfParameterNamed(ClientApiConstants.clientNonPersonDetailsParamName).getAsJsonObject());
             CodeValue clientNonPersonConstitution = null;
             final Long clientNonPersonConstitutionId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.constitutionIdParamName,
                     clientNonPersonElement);

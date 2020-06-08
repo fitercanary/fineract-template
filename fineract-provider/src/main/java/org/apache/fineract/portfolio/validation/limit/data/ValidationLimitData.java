@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.portfolio.validation.limit.data;
 
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
-
-import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 
 /**
  * Immutable data object for charge data.
@@ -35,39 +35,44 @@ public class ValidationLimitData implements Comparable<ValidationLimitData>, Ser
     private final BigDecimal maximumCumulativeBalance;
     private final BigDecimal maximumSingleWithdrawLimit;
     private final BigDecimal maximumDailyWithdrawLimit;
+    private final BigDecimal maximumClientSpecificDailyWithdrawLimit;
+    private final BigDecimal maximumClientSpecificSingleWithdrawLimit;
     private List<CodeValueData> clientLevelOptions;
-    private final Boolean overridable;
 
-    private ValidationLimitData(final Long id, final CodeValueData clientLevel, final BigDecimal maximumSingleDepositAmount,
-                                final BigDecimal maximumCumulativeBalance, final BigDecimal maximumSingleWithdrawLimit,
-                                final BigDecimal maximumDailyWithdrawLimit, List<CodeValueData> clientLevelOptions, Boolean overridable) {
+
+    private ValidationLimitData(Long id, CodeValueData clientLevel, BigDecimal maximumSingleDepositAmount,
+                                BigDecimal maximumCumulativeBalance, BigDecimal maximumSingleWithdrawLimit,
+                                BigDecimal maximumDailyWithdrawLimit, BigDecimal maximumClientSpecificDailyWithdrawLimit,
+                                BigDecimal maximumClientSpecificSingleWithdrawLimit, List<CodeValueData> clientLevelOptions) {
         this.id = id;
         this.clientLevel = clientLevel;
+        this.clientLevelOptions = clientLevelOptions;
         this.maximumSingleDepositAmount = maximumSingleDepositAmount;
         this.maximumCumulativeBalance = maximumCumulativeBalance;
         this.maximumSingleWithdrawLimit = maximumSingleWithdrawLimit;
         this.maximumDailyWithdrawLimit = maximumDailyWithdrawLimit;
-        this.clientLevelOptions = clientLevelOptions;
-        this.overridable = overridable;
+        this.maximumClientSpecificDailyWithdrawLimit = maximumClientSpecificDailyWithdrawLimit;
+        this.maximumClientSpecificSingleWithdrawLimit = maximumClientSpecificSingleWithdrawLimit;
 
     }
 
     public static ValidationLimitData template(final List<CodeValueData> clientLevelOptions) {
 
-        return new ValidationLimitData(null, null, null, null, null, null, clientLevelOptions, null);
+        return new ValidationLimitData(null, null, null, null, null, null, null, null, clientLevelOptions);
     }
 
     public static ValidationLimitData withTemplate(final ValidationLimitData limitData, final ValidationLimitData template) {
         return new ValidationLimitData(limitData.id, limitData.clientLevel, limitData.maximumSingleDepositAmount,
                 limitData.maximumCumulativeBalance, limitData.maximumSingleWithdrawLimit, limitData.maximumDailyWithdrawLimit,
-                template.clientLevelOptions, limitData.overridable);
+                limitData.maximumClientSpecificDailyWithdrawLimit, limitData.maximumClientSpecificSingleWithdrawLimit, template.clientLevelOptions);
     }
 
-    public static ValidationLimitData instance(final Long id, final CodeValueData clientLevel, final BigDecimal maximumSingleDepositAmount,
-                                               final BigDecimal maximumCumulativeBalance, final BigDecimal maximumSingleWithdrawLimit,
-                                               final BigDecimal maximumDailyWithdrawLimit, Boolean overridable) {
+    public static ValidationLimitData instance(Long id, CodeValueData clientLevel, BigDecimal maximumSingleDepositAmount,
+                                               BigDecimal maximumCumulativeBalance, BigDecimal maximumSingleWithdrawLimit,
+                                               BigDecimal maximumDailyWithdrawLimit, BigDecimal maximumClientSpecificDailyWithdrawLimit,
+                                               BigDecimal maximumClientSpecificSingleWithdrawLimit) {
         return new ValidationLimitData(id, clientLevel, maximumSingleDepositAmount, maximumCumulativeBalance, maximumSingleWithdrawLimit,
-                maximumDailyWithdrawLimit, null, overridable);
+                maximumDailyWithdrawLimit, maximumClientSpecificDailyWithdrawLimit, maximumClientSpecificSingleWithdrawLimit, null);
     }
 
     @Override

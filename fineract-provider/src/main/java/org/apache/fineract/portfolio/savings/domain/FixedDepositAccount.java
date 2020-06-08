@@ -57,6 +57,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -340,9 +341,22 @@ public class FixedDepositAccount extends SavingsAccount {
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
 
-        final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
+         SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
+        
         List<LocalDate> postedAsOnTransactionDates = getManualPostingDates();
+        
+        if (daysInYearType.equals(SavingsInterestCalculationDaysInYearType.ACTUAL)) {
+            Year year;
+            if(maturityDate != null) {
+                 year = Year.of(maturityDate.getYear());  
+            }else {
+                 year = Year.of(LocalDate.now().getYear());
+            }
+            if (daysInYearType.isActual()) {
+                daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+            }
+        }
 
         final List<LocalDateInterval> postingPeriodIntervals = postingPeriodType.equals(SavingsPostingInterestPeriodType.TENURE)
                 ? Arrays.asList(new Object[] { LocalDateInterval.create(accountSubmittedOrActivationDate(), maturityDate) })

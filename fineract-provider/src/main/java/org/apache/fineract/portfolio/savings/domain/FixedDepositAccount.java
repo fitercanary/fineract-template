@@ -345,13 +345,13 @@ public class FixedDepositAccount extends SavingsAccount {
                 .fromInt(this.interestCalculationDaysInYearType);
         
         List<LocalDate> postedAsOnTransactionDates = getManualPostingDates();
-        
+
         if (daysInYearType.equals(SavingsInterestCalculationDaysInYearType.ACTUAL)) {
             Year year;
-            if(maturityDate != null) {
-                 year = Year.of(maturityDate.getYear());  
-            }else {
-                 year = Year.of(LocalDate.now().getYear());
+            if (maturityDate != null) {
+                year = Year.of(maturityDate.getYear());
+            } else {
+                year = Year.of(LocalDate.now().getYear());
             }
             if (daysInYearType.isActual()) {
                 daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());

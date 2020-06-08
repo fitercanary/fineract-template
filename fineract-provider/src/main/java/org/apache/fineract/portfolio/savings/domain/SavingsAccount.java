@@ -924,17 +924,16 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 if (overdraftAmount.isZero() && runningBalance.isLessThanZero()) {
                     overdraftAmount = overdraftAmount.plus(runningBalance.getAmount().negate());
                 }
-                if (transaction.getId() == null && overdraftAmount.isGreaterThanZero()) {
+                if (transaction.getId() == null && (overdraftAmount.isGreaterThanZero()
+                        || overdraftAmount.isNotEqualTo(transaction.getOverdraftAmount(getCurrency())))) {
                     transaction.updateOverdraftAmount(overdraftAmount.getAmount());
                 } else if (overdraftAmount.isNotEqualTo(transaction.getOverdraftAmount(getCurrency()))) {
-                    this.transactions.remove(transaction);
                     SavingsAccountTransaction accountTransaction = SavingsAccountTransaction.copyTransaction(transaction);
                     transaction.reverse();
                     if (overdraftAmount.isGreaterThanZero()) {
                         accountTransaction.updateOverdraftAmount(overdraftAmount.getAmount());
                     }
                     accountTransaction.updateRunningBalance(runningBalance);
-                    addTransaction(transaction);
                     addTransaction(accountTransaction);
                     isTransactionsModified = true;
                 }

@@ -18,6 +18,25 @@
  */
 package org.apache.fineract.portfolio.client.data;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
+import org.apache.fineract.portfolio.client.domain.Client;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
+import org.joda.time.LocalDate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -28,31 +47,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.ApiParameterError;
-import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
-import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
-import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
-import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
-import org.apache.fineract.portfolio.client.api.ClientApiConstants;
-import org.joda.time.LocalDate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
-
 @Component
 public final class ClientDataValidator {
 
     private final FromJsonHelper fromApiJsonHelper;
+    private final ValidationLimitRepository validationLimitRepository;
 
     @Autowired
-    public ClientDataValidator(final FromJsonHelper fromApiJsonHelper) {
+    public ClientDataValidator(FromJsonHelper fromApiJsonHelper, ValidationLimitRepository validationLimitRepository) {
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.validationLimitRepository = validationLimitRepository;
     }
 
     public void validateForCreate(final String json) {
@@ -631,17 +635,41 @@ public final class ClientDataValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void throwValidationException(String code, String defaultMessage, String paramName, Object value) {
+    public void validateWithdrawLimits(Client client) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(ClientApiCollectionConstants.CLIENT_RESOURCE_NAME);
-        baseDataValidator.reset().parameter(paramName).value(value).failWithCode(code, defaultMessage);
-        this.throwExceptionIfValidationWarningsExist(dataValidationErrors);
+        this.validateDailyWithdrawLimit(client, baseDataValidator);
+        this.validateDailySingleWithdrawLimit(client, baseDataValidator);
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateDailyWithdrawLimit(Client client, DataValidatorBuilder baseDataValidator) {
+        if (client.getDailyWithdrawLimit() != null) {
+            final String errorCode = "daily.withdraw.limit.cannot.exceed.global.limit";
+            final String defaultMessage = "Daily withdraw limit cannot exceed global validation limit";
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificDailyWithdrawLimit() != null &&
+                    client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumClientSpecificDailyWithdrawLimit()) > 0) {
+                baseDataValidator.reset().parameter(ClientApiConstants.dailyWithdrawLimit).value(client.getDailyWithdrawLimit()).failWithCode(errorCode, defaultMessage);
+            }
+        }
+    }
+
+    private void validateDailySingleWithdrawLimit(Client client, DataValidatorBuilder baseDataValidator) {
+        if (client.getSingleWithdrawLimit() != null) {
+            final String errorCode = "maximum.transaction.limit.cannot.exceed.global.limit";
+            final String defaultMessage = "Maximum transaction limit cannot exceed global validation limit";
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificSingleWithdrawLimit() != null &&
+                    client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumClientSpecificSingleWithdrawLimit()) > 0) {
+                baseDataValidator.reset().parameter(ClientApiConstants.singleWithdrawLimit).value(client.getSingleWithdrawLimit()).failWithCode(errorCode, defaultMessage);
+            }
+        }
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
         if (!dataValidationErrors.isEmpty()) {
-            //
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
     }

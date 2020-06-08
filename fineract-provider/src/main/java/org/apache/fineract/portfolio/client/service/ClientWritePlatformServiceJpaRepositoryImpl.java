@@ -82,11 +82,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
-import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimit;
-import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
-import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
-import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -133,7 +129,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final BusinessEventNotifierService businessEventNotifierService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final ReferralStatusRepository referralStatusRepository;
-    private final ValidationLimitRepository validationLimitRepository;
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -151,9 +146,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                                                        final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
                                                        final BusinessEventNotifierService businessEventNotifierService,
                                                        final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-                                                       ReferralStatusRepository referralStatusRepository, ValidationLimitRepository validationLimitRepository,
-                                                       final ClientUserRepositoryWrapper clientUserRepositoryWrapper,
-                                                       final AppUserRepositoryWrapper appUserRepositoryWrapper) {
+                                                       ReferralStatusRepository referralStatusRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -178,7 +171,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.businessEventNotifierService = businessEventNotifierService;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.referralStatusRepository = referralStatusRepository;
-        this.validationLimitRepository = validationLimitRepository;
     }
 
     @Transactional
@@ -354,8 +346,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     }
                 }
             }
-            this.validateDailyWithdrawLimit(newClient);
-            this.validateDailyMaximumTransactionLimit(newClient);
+            this.fromApiJsonDeserializer.validateWithdrawLimits(newClient);
 
             this.clientRepository.save(newClient);
             if (referralStatus != null && newClient.getId() != null) {
@@ -430,34 +421,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             handleDataIntegrityIssues(command, throwable, dve);
             return CommandProcessingResult.empty();
-        }
-    }
-
-    private void validateDailyWithdrawLimit(Client client) {
-        if (client.getDailyWithdrawLimit() != null) {
-            final String errorCode = "daily.withdraw.limit.cannot.exceed.global.limit";
-            final String defaultMessage = "Daily withdraw limit cannot exceed global validation limit";
-            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-            if (validationLimit != null && validationLimit.getMaximumClientSpecificDailyWithdrawLimit() != null) {
-                if (client.getDailyWithdrawLimit().compareTo(validationLimit.getMaximumClientSpecificDailyWithdrawLimit()) > 0) {
-                    this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.dailyWithdrawLimit,
-                            client.getDailyWithdrawLimit());
-                }
-            }
-        }
-    }
-
-    private void validateDailyMaximumTransactionLimit(Client client) {
-        if (client.getSingleWithdrawLimit() != null) {
-            final String errorCode = "maximum.transaction.limit.cannot.exceed.global.limit";
-            final String defaultMessage = "Maximum transaction limit cannot exceed global validation limit";
-            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-            if (validationLimit != null && validationLimit.getMaximumClientSpecificSingleWithdrawLimit() != null) {
-                if (client.getSingleWithdrawLimit().compareTo(validationLimit.getMaximumClientSpecificSingleWithdrawLimit()) > 0) {
-                    this.fromApiJsonDeserializer.throwValidationException(errorCode, defaultMessage,ClientApiConstants.singleWithdrawLimit,
-                            client.getSingleWithdrawLimit());
-                }
-            }
         }
     }
 
@@ -598,12 +561,10 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 clientForUpdate.updateClientClassification(newCodeVal);
             }
 
-            if (changes.containsKey(ClientApiConstants.dailyWithdrawLimit) || changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
-                this.validateDailyWithdrawLimit(clientForUpdate);
-            }
-
-            if (changes.containsKey(ClientApiConstants.singleWithdrawLimit) || changes.containsKey(ClientApiConstants.clientLevelIdParamName)) {
-                this.validateDailyMaximumTransactionLimit(clientForUpdate);
+            if (changes.containsKey(ClientApiConstants.dailyWithdrawLimit) ||
+                    changes.containsKey(ClientApiConstants.clientLevelIdParamName) ||
+                    changes.containsKey(ClientApiConstants.singleWithdrawLimit)) {
+                this.fromApiJsonDeserializer.validateWithdrawLimits(clientForUpdate);
             }
 
             if (!changes.isEmpty()) {

@@ -221,7 +221,7 @@ public class SavingsProductsApiResource {
                 .interestCalculationType(SavingsInterestCalculationType.DAILY_BALANCE);
 
         final EnumOptionData interestCalculationDaysInYearType = SavingsEnumerations
-                .interestCalculationDaysInYearType(SavingsInterestCalculationDaysInYearType.DAYS_365);
+                .interestCalculationDaysInYearType(SavingsInterestCalculationDaysInYearType.ACTUAL);
 
         final EnumOptionData accountingRule = AccountingEnumerations.accountingRuleType(AccountingRuleType.NONE);
 

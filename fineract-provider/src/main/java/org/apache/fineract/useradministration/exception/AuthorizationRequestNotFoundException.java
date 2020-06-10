@@ -16,22 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.useradministration.service;
+package org.apache.fineract.useradministration.exception;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-public interface AppUserWritePlatformService {
+public class AuthorizationRequestNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-    CommandProcessingResult createUser(JsonCommand command);
+    public AuthorizationRequestNotFoundException(final Long id) {
+        super("error.msg.user.authorization.request.id.invalid", "AuthorizationRequest with identifier " + id + " does not exist", id);
+    }
 
-    CommandProcessingResult updateUser(Long userId, JsonCommand command);
-
-    CommandProcessingResult deleteUser(Long userId);
-    
-    CommandProcessingResult requestToViewClient(Long userId, JsonCommand command);
-    
-    CommandProcessingResult approveRequestToViewClient(Long authorizationRequestId, JsonCommand command);
-    
-    CommandProcessingResult rejectRequestToViewClient(Long authorizationRequestId, JsonCommand command);
 }

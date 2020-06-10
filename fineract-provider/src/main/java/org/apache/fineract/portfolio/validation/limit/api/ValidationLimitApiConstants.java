@@ -26,6 +26,7 @@ public class ValidationLimitApiConstants {
     public static final String MAXIMUM_CUMULATIVE_BALANCE = "maximumCumulativeBalance";
     public static final String MAXIMUM_DAILY_WITHDRAW_LIMIT = "maximumDailyWithdrawLimit";
     public static final String MAXIMUM_SINGLE_WITHDRAW_LIMIT = "maximumSingleWithdrawLimit";
+    public static final String MAXIMUM_CLIENT_SPECIFIC_DAILY_WITHDRAW_LIMIT = "maximumClientSpecificDailyWithdrawLimit";
+    public static final String MAXIMUM_CLIENT_SPECIFIC_SINGLE_WITHDRAW_LIMIT = "maximumClientSpecificSingleWithdrawLimit";
     public static final String LOCALE = "locale";
-    public static final String OVERRIDABLE = "overridable";
 }

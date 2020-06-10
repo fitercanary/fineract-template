@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
@@ -51,9 +52,13 @@ import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanAccountDomainService;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanDisbursementDetails;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidPaidInAdvanceAmountException;
+import org.apache.fineract.portfolio.loanaccount.exception.LoanForeclosureException;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
@@ -86,6 +91,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private final AccountTransferDetailRepository accountTransferDetailRepository;
     private final LoanReadPlatformService loanReadPlatformService;
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
+    private final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService;
 
     @Autowired
     public AccountTransfersWritePlatformServiceImpl(final AccountTransfersDataValidator accountTransfersDataValidator,
@@ -94,7 +100,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final LoanAssembler loanAssembler, final LoanAccountDomainService loanAccountDomainService,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final AccountTransferDetailRepository accountTransferDetailRepository, final LoanReadPlatformService loanReadPlatformService,
-            SavingsTransactionRequestRepository savingsTransactionRequestRepository) {
+            final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
+            final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService) {
         this.accountTransfersDataValidator = accountTransfersDataValidator;
         this.accountTransferAssembler = accountTransferAssembler;
         this.accountTransferRepository = accountTransferRepository;
@@ -106,6 +113,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         this.accountTransferDetailRepository = accountTransferDetailRepository;
         this.loanReadPlatformService = loanReadPlatformService;
         this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
+        this.loanScheduleHistoryWritePlatformService = loanScheduleHistoryWritePlatformService;
     }
 
     @Transactional
@@ -126,6 +134,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
         final Integer toAccountTypeId = command.integerValueSansLocaleOfParameterNamed(toAccountTypeParamName);
         final PortfolioAccountType toAccountType = PortfolioAccountType.fromInt(toAccountTypeId);
+        
+        final String noteText = command.stringValueOfParameterNamed(transferDescriptionParamName);
 
         final PaymentDetail paymentDetail = null;
         Long fromSavingsAccountId = null;
@@ -166,7 +176,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
             transferDetailId = accountTransferDetails.getId();
 
-        } else if (isSavingsToLoanAccountTransfer(fromAccountType, toAccountType)) {
+        } else if (isSavingsToLoanAccountTransfer(fromAccountType, toAccountType) && !isForeClosure(noteText)) {
             //
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
@@ -236,8 +246,47 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
             transferDetailId = accountTransferDetails.getId();
 
-        } else {
+        } else  if (isSavingsToLoanAccountTransferForeclosure(fromAccountType, toAccountType, noteText)){
+            
+            fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
+            final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
 
+            final Long toLoanAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
+            final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountId);
+            
+            LoanRescheduleRequest loanRescheduleRequest = null;
+            for (LoanDisbursementDetails loanDisbursementDetails : toLoanAccount.getDisbursementDetails()) {
+                if (!loanDisbursementDetails.expectedDisbursementDateAsLocalDate().isAfter(transactionDate)
+                        && loanDisbursementDetails.actualDisbursementDate() == null) {
+                    final String defaultUserMessage = "The loan with undisbursed tranche before foreclosure cannot be foreclosed.";
+                    throw new LoanForeclosureException("loan.with.undisbursed.tranche.before.foreclosure.cannot.be.foreclosured",
+                            defaultUserMessage, transactionDate);
+                }
+            }
+
+            this.loanScheduleHistoryWritePlatformService.createAndSaveLoanScheduleArchive(toLoanAccount.getRepaymentScheduleInstallments(), toLoanAccount,
+                    loanRescheduleRequest);
+
+            final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                    isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
+
+            if (toAccountType.isLoanAccount()) {
+                limitValidationSkip = true;
+            }
+
+            final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
+                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip);
+
+            LoanTransaction loanRepaymentTransaction = null;
+            
+            final Map<String, Object> modifications = this.loanAccountDomainService.foreCloseLoan(toLoanAccount, transactionDate, noteText, true);
+           
+             loanRepaymentTransaction = (LoanTransaction) modifications.get("transaction");
+
+            final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleSavingsToLoanTransfer(command,
+                    fromSavingsAccount, toLoanAccount, withdrawal, loanRepaymentTransaction);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            transferDetailId = accountTransferDetails.getId();
         }
 
         final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder().withEntityId(transferDetailId);
@@ -550,6 +599,14 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private boolean isSavingsToSavingsAccountTransfer(final PortfolioAccountType fromAccountType,
             final PortfolioAccountType toAccountType) {
         return fromAccountType.isSavingsAccount() && toAccountType.isSavingsAccount();
+    }
+    
+    private boolean isSavingsToLoanAccountTransferForeclosure(final PortfolioAccountType fromAccountType, final PortfolioAccountType toAccountType, final String noteText) {
+        return fromAccountType.isSavingsAccount() && toAccountType.isLoanAccount() && noteText.equalsIgnoreCase("Foreclosure"); 
+    }
+    
+    private boolean isForeClosure(String text) {
+        return text.equalsIgnoreCase("Foreclosure");
     }
 
     @Override

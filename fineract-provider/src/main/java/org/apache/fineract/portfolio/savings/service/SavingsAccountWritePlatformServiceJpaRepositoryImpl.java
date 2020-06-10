@@ -531,6 +531,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     this.noteRepository.save(Note.savingsTransactionNote(account, accountTransaction, noteText));
                 }
             }
+            this.savingAccountRepositoryWrapper.saveAndFlush(account);
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
     }

@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.configuration.service.ConfigurationRea
 import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
@@ -72,6 +73,8 @@ import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.apache.fineract.useradministration.constants.PermissionsApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.ClientUser;
+import org.apache.fineract.useradministration.domain.ClientUserRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -105,6 +108,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ColumnValidator columnValidator;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ReferralStatusRepository referralStatusRepository;
+    private final ClientUserRepositoryWrapper clientUserRepositoryWrapper;
     
 
     @Autowired
@@ -116,7 +120,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
             final ConfigurationReadPlatformService configurationReadPlatformService,
             final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator,
-            ClientRepositoryWrapper clientRepositoryWrapper, ReferralStatusRepository referralStatusRepository) {
+            ClientRepositoryWrapper clientRepositoryWrapper, ReferralStatusRepository referralStatusRepository,
+            final ClientUserRepositoryWrapper clientUserRepositoryWrapper) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -130,6 +135,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.columnValidator = columnValidator;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
         this.referralStatusRepository = referralStatusRepository;
+        this.clientUserRepositoryWrapper = clientUserRepositoryWrapper;
     }
 
     @Override
@@ -484,7 +490,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("cnp.incorp_validity_till as incorpValidityTill, ");
             sqlBuilder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
             sqlBuilder.append("cvMainBusinessLine.code_value as mainBusinessLineValue, ");
-            sqlBuilder.append("cnp.remarks as remarks ");
+            sqlBuilder.append("cnp.remarks as remarks, ");
+            sqlBuilder.append("c.require_authorization_to_view as requireAuthorizationToView ");
 
             sqlBuilder.append("from m_client c ");
             sqlBuilder.append("join m_office o on o.id = c.office_id ");
@@ -598,6 +605,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String mainBusinessLineValue = rs.getString("mainBusinessLineValue");
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
+            final boolean requireAuthorizationToView = rs.getBoolean("requireAuthorizationToView");
 
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
                     mainBusinessLine, remarks);
@@ -609,7 +617,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, null, null);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, null, null,
+                    requireAuthorizationToView);
 
         }
     }
@@ -683,7 +692,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
             builder.append("c.default_savings_product as savingsProductId, sp.name as savingsProductName, ");
-            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as singleWithdrawLimit ");
+            builder.append("c.default_savings_account as savingsAccountId, c.daily_withdraw_limit as dailyWithdrawLimit, c.max_transaction_limit as singleWithdrawLimit,  ");
+            builder.append("c.require_authorization_to_view as requireAuthorizationToView ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
             builder.append("left join m_client_non_person cnp on cnp.client_id = c.id ");
@@ -795,6 +805,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String remarks = rs.getString("remarks");
             final BigDecimal dailyWithdrawLimit = rs.getBigDecimal("dailyWithdrawLimit");
             final BigDecimal singleWithdrawLimit = rs.getBigDecimal("singleWithdrawLimit");
+            
+            final boolean requireAuthorizationToView = rs.getBoolean("requireAuthorizationToView");
 
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
                     mainBusinessLine, remarks);
@@ -806,7 +818,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, mothersMaidenName, emailAddress,
                     dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName,
-                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, singleWithdrawLimit);
+                    savingsAccountId, clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithdrawLimit, 
+                    singleWithdrawLimit, requireAuthorizationToView);
 
         }
     }
@@ -845,7 +858,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("cnp.incorp_no as incorpNo, ");
             builder.append("cnp.incorp_validity_till as incorpValidityTill, ");
             builder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
-            builder.append("cnp.remarks as remarks ");
+            builder.append("cnp.remarks as remarks, ");
+            builder.append("c.require_authorization_to_view as requireAuthorizationToView ");
 
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
@@ -870,11 +884,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Long id = JdbcSupport.getLong(rs, "id");
             final String displayName = rs.getString("displayName");
             final String externalId = rs.getString("externalId");
+            final boolean requireAuthorizationToView = rs.getBoolean("requireAuthorizationToView");
 
             return ClientData.instance(accountNo, null, null, null, null, null, null, id,
                     null, null, null, null, displayName, externalId, null, null, null,
                     null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, requireAuthorizationToView);
 
         }
     }
@@ -1035,10 +1050,25 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     @Override
     public void validateUserHasAuthorityToViewClient(Long clientId) {
-        if (this.isCurrentUserClientOfficer(clientId) ||
-                this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) {
+        
+        ClientUser clientUser = clientUserRepositoryWrapper.findByIdClientIdAndIdUserIdAndEndTimeAfter(this.context.authenticatedUser().getId(), 
+                clientId, DateUtils.getLocalDateTimeOfTenant().toDate());
+        
+        if (this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.ALL_FUNCTIONS) || 
+                this.isCurrentUserClientOfficer(clientId) ||
+                (!this.doesClientRequireAuthrorization(clientId) && 
+                        this.context.authenticatedUser().hasPermissionTo(PermissionsApiConstants.READ_ALL_CLIENT_PERMISSION)) || 
+                (this.doesClientRequireAuthrorization(clientId) && clientUser != null ) 
+                 ) {
             return;
         }
         throw new NoAuthorizationException("User has no authority to view client with identifier " + clientId);
+    }
+
+    @Override
+    public boolean doesClientRequireAuthrorization(Long clientId) {
+        Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
+        
+        return client.doesRequireAuthorizationToView();
     }
 }

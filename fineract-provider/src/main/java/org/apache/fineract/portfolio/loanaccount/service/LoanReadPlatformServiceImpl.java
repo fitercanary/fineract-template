@@ -1609,8 +1609,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" and (((ls.fee_charges_amount <> if(ls.accrual_fee_charges_derived is null,0, ls.accrual_fee_charges_derived))")
                 .append(" or ( ls.penalty_charges_amount <> if(ls.accrual_penalty_charges_derived is null,0,ls.accrual_penalty_charges_derived))")
                 .append(" or ( ls.interest_amount <> if(ls.accrual_interest_derived is null,0,ls.accrual_interest_derived)))")
-                .append(" and (loan.loan_status_id = 300 or ")
-                .append(" ((select max(mlt.transaction_date) from m_loan_transaction mlt where mlt.loan_id = loan.id and mlt.transaction_type_enum = 2 and mlt.is_reversed = 0) >= '2019-09-30' and loan.loan_status_id in (600))) ")
+                .append(" and loan.loan_status_id = 300 ")
                 .append(" and mpl.accounting_type=:type and ls.duedate <= CURDATE()) ");
         if(organisationStartDate != null){
             sqlBuilder.append(" and ls.duedate > :organisationstartdate ");
@@ -1636,8 +1635,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" and (((ls.fee_charges_amount <> if(ls.accrual_fee_charges_derived is null,0, ls.accrual_fee_charges_derived))")
                 .append(" or (ls.penalty_charges_amount <> if(ls.accrual_penalty_charges_derived is null,0,ls.accrual_penalty_charges_derived))")
                 .append(" or (ls.interest_amount <> if(ls.accrual_interest_derived is null,0,ls.accrual_interest_derived)))")
-                .append(" and (loan.loan_status_id = 300 or ")
-                .append(" ((select max(mlt.transaction_date) from m_loan_transaction mlt where mlt.loan_id = loan.id and mlt.transaction_type_enum = 2 and mlt.is_reversed = 0) >= '2019-09-30' and loan.loan_status_id in (600))) ")
+                .append(" and loan.loan_status_id = 300 ")
                 .append(" and mpl.accounting_type=:type and (loan.closedon_date <= :tilldate or loan.closedon_date is null) ")
                 .append(" and (ls.duedate <= :tilldate or (ls.duedate > :tilldate and ls.fromdate < :tilldate))) ");
         if(organisationStartDate != null){

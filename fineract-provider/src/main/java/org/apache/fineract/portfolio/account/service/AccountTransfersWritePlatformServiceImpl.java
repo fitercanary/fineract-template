@@ -258,7 +258,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             for (LoanDisbursementDetails loanDisbursementDetails : toLoanAccount.getDisbursementDetails()) {
                 if (!loanDisbursementDetails.expectedDisbursementDateAsLocalDate().isAfter(transactionDate)
                         && loanDisbursementDetails.actualDisbursementDate() == null) {
-                    final String defaultUserMessage = "The loan with undisbrsed tranche before foreclosure cannot be foreclosed.";
+                    final String defaultUserMessage = "The loan with undisbursed tranche before foreclosure cannot be foreclosed.";
                     throw new LoanForeclosureException("loan.with.undisbursed.tranche.before.foreclosure.cannot.be.foreclosured",
                             defaultUserMessage, transactionDate);
                 }

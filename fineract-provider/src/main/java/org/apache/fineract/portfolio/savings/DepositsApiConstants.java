@@ -44,6 +44,7 @@ public class DepositsApiConstants {
     public static final String COMMAND_UNDO_TRANSACTION = "undo";
     public static final String COMMAND_ADJUST_TRANSACTION = "modify";
     public static final String UPDATE_DEPOSIT_AMOUNT = "updateDepositAmount";
+    public static final String UPDATE_DEPOSIT_PERIOD = "updateDepositPeriod";
 
     // general
     public static final String localeParamName = "locale";

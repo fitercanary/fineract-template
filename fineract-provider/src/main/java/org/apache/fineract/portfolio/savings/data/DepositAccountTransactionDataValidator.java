@@ -97,6 +97,9 @@ public class DepositAccountTransactionDataValidator {
             DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName,
             DepositsApiConstants.depositAmountParamName));
 
+    private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.depositPeriodParamName));
+
 
     @Autowired
     public DepositAccountTransactionDataValidator(final FromJsonHelper fromApiJsonHelper) {
@@ -321,5 +324,27 @@ public class DepositAccountTransactionDataValidator {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     dataValidationErrors);
         }
+    }
+
+    public void validateDepositPeriodUpdate(final JsonCommand command) {
+        final String json = command.json();
+
+        validateJson(json);
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        final JsonElement element = command.parsedJson();
+
+        final Integer depositPeriod = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(DepositsApiConstants.depositPeriodParamName,
+                element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.depositPeriodParamName).value(depositPeriod).notNull().positiveAmount();
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 }

@@ -1307,4 +1307,9 @@ public class RecurringDepositAccount extends SavingsAccount {
         super.loadLazyCollections();
         this.chart.getId() ;
     }
+
+    public void updateDepositPeriod(final Integer depositPeriod) {
+        this.accountTermAndPreClosure.updateDepositPeriod(depositPeriod);
+    }
+
 }

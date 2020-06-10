@@ -253,7 +253,7 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.PENALTIES_RECEIVABLE.getValue());
 
-                if (!accountType.equals(DepositAccountType.RECURRING_DEPOSIT) && !accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
+                if (!accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToAssetAccountMapping(element,
                             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingProductId,
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue());
@@ -271,7 +271,7 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.getValue());
 
-                if (!accountType.equals(DepositAccountType.RECURRING_DEPOSIT) && !accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
+                if (!accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToIncomeAccountMapping(element,
                             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue(), savingProductId,
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST.getValue());
@@ -282,7 +282,7 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(), savingProductId,
                         ACCRUAL_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue());
 
-                if (!accountType.equals(DepositAccountType.RECURRING_DEPOSIT) && !accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
+                if (!accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToExpenseAccountMapping(element,
                             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(), savingProductId,
                             ACCRUAL_ACCOUNTS_FOR_SAVINGS.LOSSES_WRITTEN_OFF.getValue());

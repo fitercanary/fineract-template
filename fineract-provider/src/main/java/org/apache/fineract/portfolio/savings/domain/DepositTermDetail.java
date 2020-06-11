@@ -50,22 +50,22 @@ import org.joda.time.Years;
 @Embeddable
 public class DepositTermDetail {
 
-    @Column(name = "min_deposit_term", nullable = true)
+    @Column(name = "min_deposit_term")
     private Integer minDepositTerm;
 
-    @Column(name = "max_deposit_term", nullable = true)
+    @Column(name = "max_deposit_term")
     private Integer maxDepositTerm;
 
-    @Column(name = "min_deposit_term_type_enum", nullable = true)
+    @Column(name = "min_deposit_term_type_enum")
     private Integer minDepositTermType;
 
-    @Column(name = "max_deposit_term_type_enum", nullable = true)
+    @Column(name = "max_deposit_term_type_enum")
     private Integer maxDepositTermType;
 
-    @Column(name = "in_multiples_of_deposit_term", nullable = true)
+    @Column(name = "in_multiples_of_deposit_term")
     private Integer inMultiplesOfDepositTerm;
 
-    @Column(name = "in_multiples_of_deposit_term_type_enum", nullable = true)
+    @Column(name = "in_multiples_of_deposit_term_type_enum")
     private Integer inMultiplesOfDepositTermType;
 
     public static DepositTermDetail createFrom(final Integer minDepositTerm, final Integer maxDepositTerm,

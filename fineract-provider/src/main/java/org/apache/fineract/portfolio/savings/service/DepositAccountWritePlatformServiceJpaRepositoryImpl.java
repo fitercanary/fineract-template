@@ -1167,15 +1167,14 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         this.saveNote(command, changes, account);
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes)//
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
-
     }
 
     @Override

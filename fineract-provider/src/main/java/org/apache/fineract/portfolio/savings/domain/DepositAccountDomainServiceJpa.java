@@ -177,9 +177,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.updateMaturityDateAndAmount(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
         account.updateOverduePayments(DateUtils.getLocalDateOfTenant());
-        if (isAnyActivationChargesDue) {
-            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
-        }
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         return deposit;
     }
 

@@ -997,35 +997,33 @@ public class RecurringDepositAccount extends SavingsAccount {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
-		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
-		postingtoCompoundMap.put(
+		Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingToCompoundMap = new HashMap<>();
+		postingToCompoundMap.put(
 				SavingsPostingInterestPeriodType.MONTHLY,
-				Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY}));
+				Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY, SavingsCompoundingInterestPeriodType.MONTHLY));
 
-		postingtoCompoundMap.put(
+		postingToCompoundMap.put(
 				SavingsPostingInterestPeriodType.QUATERLY,
-				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
+				Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY, SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY));
 
-		postingtoCompoundMap.put(
+		postingToCompoundMap.put(
 				SavingsPostingInterestPeriodType.BIANNUAL,
-				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
+				Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL));
 
-		postingtoCompoundMap.put(
+		postingToCompoundMap.put(
 				SavingsPostingInterestPeriodType.ANNUAL,
-				Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-						SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-						SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+				Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY,
+                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL));
 
 		SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
 				.fromInt(interestPostingPeriodType);
 		SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
 				.fromInt(interestCompoundingPeriodType);
 
-		if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+		if (postingToCompoundMap.get(savingsPostingInterestPeriodType) == null) {
 			baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
 					savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
 

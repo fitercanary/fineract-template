@@ -1739,13 +1739,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             this.calendarInstanceRepository.save(calendarInstance);
         }
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(recurringDepositAccount.officeId()) //
-                .withClientId(recurringDepositAccount.clientId()) //
-                .withGroupId(recurringDepositAccount.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(actualChanges) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(recurringDepositAccount.officeId())
+                .withClientId(recurringDepositAccount.clientId())
+                .withGroupId(recurringDepositAccount.groupId())
+                .withSavingsId(savingsId)
+                .with(actualChanges)
                 .build();
     }
 

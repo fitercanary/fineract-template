@@ -61,6 +61,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.exception.ClientNotActiveException;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
@@ -106,6 +107,7 @@ import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationTermsReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositApprovalReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositPreClosureReq;
+import org.apache.fineract.portfolio.savings.request.SavingsAccountChargeReq;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -130,8 +132,6 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.deposit
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.liquidationAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.recurringFrequencyParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.recurringFrequencyTypeParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
@@ -166,6 +166,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final AccountAssociationsRepository accountAssociationsRepository;
     private final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService;
     private final SavingsAccountActionService savingsAccountActionService;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
     public DepositAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -185,7 +186,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                                                                final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
                                                                final DepositAccountReadPlatformService depositAccountReadPlatformService,
                                                                final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, AccountAssociationsRepository accountAssociationsRepository, DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService, SavingsAccountActionService savingsAccountActionService) {
+                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, AccountAssociationsRepository accountAssociationsRepository, DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService, SavingsAccountActionService savingsAccountActionService, SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -212,6 +213,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.accountAssociationsRepository = accountAssociationsRepository;
         this.depositApplicationProcessWritePlatformService = depositApplicationProcessWritePlatformService;
         this.savingsAccountActionService = savingsAccountActionService;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
     }
 
     @Transactional
@@ -647,6 +649,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         AccountAssociations accountAssociations = this.getLinkedSavingsAccount(accountId);
 
         this.checkClientOrGroupActive(account);
+        this.createPartialLiquidationCharge(account);
         this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations);
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         this.setDepositAmountForPartialLiquidation(fixedDepositApplicationReq, account, command);
@@ -659,6 +662,18 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .withGroupId(account.groupId())
                 .withSavingsId(accountAssociations.linkedSavingsAccount().getId())
                 .build();
+    }
+
+    private void createPartialLiquidationCharge(FixedDepositAccount account) {
+        Charge charge = this.chargeRepository.findPartialLiquidationFee();
+        if (charge != null) {
+            SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+            savingsAccountChargeReq.setAmount(charge.getAmount());
+            SavingsAccountCharge savingsAccountCharge =  SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
+            account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+            this.savingsAccountChargeRepository.save(savingsAccountCharge);
+            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+        }
     }
 
     private void autoCreateNewFD(JsonCommand command, FixedDepositAccount account, AccountAssociations accountAssociations, FixedDepositApplicationReq fixedDepositApplicationReq) {
@@ -1348,12 +1363,12 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final Locale locale = command.extractLocale();
         final String format = command.dateFormat();
         final DateTimeFormatter fmt = StringUtils.isNotBlank(format) ? DateTimeFormat.forPattern(format).withLocale(locale)
-                : DateTimeFormat.forPattern("dd MM yyyy");
+                : DateUtils.getDefaultFormatter();
 
         final Long chargeDefinitionId = command.longValueOfParameterNamed(chargeIdParamName);
         final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeDefinitionId);
 
-        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewFromJson(savingsAccount, chargeDefinition, command);
+        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, SavingsAccountChargeReq.instance(command));
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             // transaction date should not be on a holiday or non working day
@@ -1577,10 +1592,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository
                 .findOneWithNotFoundDetection(savingsAccountChargeId, accountId);
 
-        final DateTimeFormatter fmt = DateTimeFormat.forPattern("dd MM yyyy");
-
         while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate())) {
-            payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), fmt);
+            payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), DateUtils.getDefaultFormatter());
         }
     }
 

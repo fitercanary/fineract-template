@@ -111,4 +111,8 @@ public class DateUtils {
     public static boolean isDateInTheFuture(final LocalDate localDate) {
         return localDate.isAfter(getLocalDateOfTenant());
     }
+
+    public static DateTimeFormatter getDefaultFormatter() {
+        return DateTimeFormat.forPattern("dd MM yyyy");
+    }
 }

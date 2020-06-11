@@ -2289,6 +2289,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder updateDepositPeriodForRecurringDepositAccount(final Long accountId) {
+        this.actionName = DepositsApiConstants.UPDATE_DEPOSIT_PERIOD.toUpperCase();
+        this.entityName = "RECURRINGDEPOSITACCOUNT";
+        this.entityId = accountId;
+        this.savingsId = accountId;
+        this.href = "/recurringdepositaccounts/" + accountId + "?command=" + DepositsApiConstants.UPDATE_DEPOSIT_PERIOD;
+        return this;
+    }
+
     public CommandWrapperBuilder prematureCloseRecurringDepositAccount(final Long accountId) {
         this.actionName = "PREMATURECLOSE";
         this.entityName = "RECURRINGDEPOSITACCOUNT";

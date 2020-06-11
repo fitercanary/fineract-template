@@ -317,4 +317,8 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     public DepositPreClosureDetail getPreClosureDetail() {
         return preClosureDetail;
     }
+
+    public void updateDepositPeriod(final Integer depositPeriod) {
+        this.depositPeriod = depositPeriod;
+    }
 }

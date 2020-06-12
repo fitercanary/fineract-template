@@ -25,6 +25,7 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccou
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -364,7 +365,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
 
-        final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
+        SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
         List<LocalDate> PostedAsOnDates =  getManualPostingDates();
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(depositStartDate(),
@@ -383,6 +384,17 @@ public class RecurringDepositAccount extends SavingsAccount {
             boolean isUserPosting = false;
             if (PostedAsOnDates.contains(periodInterval.endDate())) {
                 isUserPosting = true;
+            }
+            if (daysInYearType.equals(SavingsInterestCalculationDaysInYearType.ACTUAL)) {
+                Year year;
+                if (maturityDate != null) {
+                    year = Year.of(maturityDate.getYear());
+                } else {
+                    year = Year.of(periodInterval.endDate().getYear());
+                }
+                if (daysInYearType.isActual()) {
+                    daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+                }
             }
             final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance, transactions,
                     this.currency, compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(),

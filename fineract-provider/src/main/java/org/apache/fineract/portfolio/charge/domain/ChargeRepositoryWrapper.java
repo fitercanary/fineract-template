@@ -23,6 +23,8 @@ import org.apache.fineract.portfolio.charge.exception.ChargeNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * <p>
  * Wrapper for {@link ChargeRepository} that is responsible for checking if
@@ -52,5 +54,14 @@ public class ChargeRepositoryWrapper {
         if (!chargeDefinition.isActive()) { throw new ChargeIsNotActiveException(id, chargeDefinition.getName()); }
 
         return chargeDefinition;
+    }
+
+    public Charge findPartialLiquidationFee() {
+        Charge charge = null;
+        List<Charge> charges = this.repository.findChargesByChargeTimeTypeAndActive(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue(), true);
+        if (!charges.isEmpty()) {
+            charge = charges.get(0);
+        }
+        return charge;
     }
 }

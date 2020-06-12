@@ -44,6 +44,7 @@ public class DepositsApiConstants {
     public static final String COMMAND_UNDO_TRANSACTION = "undo";
     public static final String COMMAND_ADJUST_TRANSACTION = "modify";
     public static final String UPDATE_DEPOSIT_AMOUNT = "updateDepositAmount";
+    public static final String UPDATE_DEPOSIT_PERIOD = "updateDepositPeriod";
     public static final String COMMAND_POST_ACCRUAL_INTEREST_AS_ON = "postAccrualInterestAsOn";
 
     // general

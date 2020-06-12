@@ -98,4 +98,6 @@ public interface DepositAccountWritePlatformService {
     CommandProcessingResult partiallyLiquidateAccount(Long accountId, JsonCommand command);
 
     CommandProcessingResult topUpAccount(Long accountId, JsonCommand command);
+
+    CommandProcessingResult updateDepositPeriodForRDAccount(Long savingsId, JsonCommand command);
 }

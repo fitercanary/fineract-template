@@ -56,27 +56,27 @@ import org.joda.time.Years;
 @Table(name = "m_deposit_account_term_and_preclosure")
 public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<Long> {
 
-    @Column(name = "deposit_amount", scale = 6, precision = 19, nullable = true)
+    @Column(name = "deposit_amount", scale = 6, precision = 19)
     private BigDecimal depositAmount;
 
-    @Column(name = "maturity_amount", scale = 6, precision = 19, nullable = true)
+    @Column(name = "maturity_amount", scale = 6, precision = 19)
     private BigDecimal maturityAmount;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "maturity_date", nullable = true)
+    @Column(name = "maturity_date")
     private Date maturityDate;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "expected_firstdepositon_date")
     private Date expectedFirstDepositOnDate;
 
-    @Column(name = "deposit_period", nullable = true)
+    @Column(name = "deposit_period")
     private Integer depositPeriod;
 
-    @Column(name = "deposit_period_frequency_enum", nullable = true)
+    @Column(name = "deposit_period_frequency_enum")
     private Integer depositPeriodFrequency;
 
-    @Column(name = "on_account_closure_enum", nullable = true)
+    @Column(name = "on_account_closure_enum")
     private Integer onAccountClosureType;
 
     @Embedded
@@ -316,5 +316,9 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
 
     public DepositPreClosureDetail getPreClosureDetail() {
         return preClosureDetail;
+    }
+
+    public void updateDepositPeriod(final Integer depositPeriod) {
+        this.depositPeriod = depositPeriod;
     }
 }

@@ -480,6 +480,32 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                         .append(" with message ").append(e.getLocalizedMessage());
             }
         }
+        final List<Long> activeRecurringDepositAccounts = this.savingsAccountReadPlatformService.retriveActiveSavingsAccrualAccounts(300l);
+        for (Long activeRecurringDepositAccount : activeRecurringDepositAccounts) {
+            try {
+                this.depositAccountWritePlatformService.postAccrualInterest(activeRecurringDepositAccount,
+                        DepositAccountType.RECURRING_DEPOSIT);
+            } catch (PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error(
+                            "Post Accruals to recurring deposit failed for savings Id: " + activeRecurringDepositAccount + " with message "
+                            + error.getDeveloperMessage());
+                    errorMsg.append("Post Accruals to savings failed for fixed deposit Id: ").append(activeRecurringDepositAccount)
+                            .append(" with message ").append(error.getDeveloperMessage());
+                }
+            } catch (JournalEntryInvalidException e) {
+                logger.error("Post Accruals to savings failed for savings Id: " + activeRecurringDepositAccount + " with message "
+                        + e.getDefaultUserMessage());
+                errorMsg.append("Post Accruals to savings failed for savings Id: ").append(activeRecurringDepositAccount)
+                        .append(" with message ").append(e.getDefaultUserMessage());
+            } catch (final Exception e) {
+                logger.error("Post Accruals to savings failed for savings Id: " + activeRecurringDepositAccount + " with message "
+                        + e.getLocalizedMessage());
+                errorMsg.append("Post Accruals to savings failed for savings Id: ").append(activeRecurringDepositAccount)
+                        .append(" with message ").append(e.getLocalizedMessage());
+            }
+        }
         if (errorMsg.length() > 0) { throw new JobExecutionException(errorMsg.toString()); }
     }
 

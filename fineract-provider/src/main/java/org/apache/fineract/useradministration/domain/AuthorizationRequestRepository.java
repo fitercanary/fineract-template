@@ -34,4 +34,8 @@ public interface AuthorizationRequestRepository extends JpaRepository<Authorizat
     
     @Query("SELECT ar FROM AuthorizationRequest ar WHERE ar.user.id = :userId AND ar.status = :status")
     List<AuthorizationRequest> findAllByUserAndStatus( @Param("userId") Long userId, @Param("status") Integer status);
+
+    @Query("SELECT ar FROM AuthorizationRequest ar WHERE ar.client.id = :clientId AND  ar.status = :status")
+    List<AuthorizationRequest> findAllByClientAndStatus(@Param("clientId") Long clientId, @Param("status") Integer status);
+
 }

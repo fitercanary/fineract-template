@@ -45,6 +45,7 @@ public class DepositsApiConstants {
     public static final String COMMAND_ADJUST_TRANSACTION = "modify";
     public static final String UPDATE_DEPOSIT_AMOUNT = "updateDepositAmount";
     public static final String UPDATE_DEPOSIT_PERIOD = "updateDepositPeriod";
+    public static final String COMMAND_POST_ACCRUAL_INTEREST_AS_ON = "postAccrualInterestAsOn";
 
     // general
     public static final String localeParamName = "locale";
@@ -193,7 +194,11 @@ public class DepositsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(), chartsParamName,
             SavingsApiConstants.withHoldTaxParamName, SavingsApiConstants.taxGroupIdParamName,
             SavingsApiConstants.withdrawalFeeForTransfersParamName, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_PAYABLE.getValue(),
-            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_RECIVABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue()));
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEES_RECIVABLE.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_RECIVABLE.getValue(),
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECIVABLE.getValue(),
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(),
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(),
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue()));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName));

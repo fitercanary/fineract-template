@@ -478,9 +478,11 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
                 Arrays.asList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue(), ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
         for (SavingsAccountCharge charge : preclosureCharges) {
+            BigDecimal interest = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+                    : account.getSummary().getTotalInterestEarned();
             charge.setPercentage(charge.getCharge().getAmount());
-            charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
-            charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
+            charge.setAmountPercentageAppliedTo(interest);
+            charge.setAmount(charge.percentageOf(interest, charge.getPercentage()));
             charge.setAmountOutstanding(charge.amount());
             this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateUtils.getDefaultFormatter(),
                     user);

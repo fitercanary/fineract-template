@@ -535,7 +535,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     }
 
     private boolean isGreaterThanZero(final BigDecimal value) {
-        return value.compareTo(BigDecimal.ZERO) == 1;
+        return BigDecimal.ZERO.compareTo(value) < 0;
     }
 
     public LocalDate getDueLocalDate() {

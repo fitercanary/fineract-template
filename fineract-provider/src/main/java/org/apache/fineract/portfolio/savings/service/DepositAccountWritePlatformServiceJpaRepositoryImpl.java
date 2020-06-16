@@ -677,11 +677,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
                 savingsAccountChargeReq.setAmount(charge.getAmount());
                 SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
-                if (!savingsAccountCharge.isPaid()) {
-                    account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
-                    this.savingsAccountChargeRepository.save(savingsAccountCharge);
-                    this.savingAccountRepositoryWrapper.saveAndFlush(account);
-                }
+                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+                this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                this.savingAccountRepositoryWrapper.saveAndFlush(account);
             }
         }
     }

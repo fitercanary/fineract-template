@@ -29,14 +29,17 @@ public class AccountSummaryCollectionData {
     private final Collection<LoanAccountSummaryData> loanAccounts;
     private final Collection<SavingsAccountSummaryData> savingsAccounts;
     private final Collection<ShareAccountSummaryData> shareAccounts ;
+    private final Collection<SavingsAccountSummaryData> jointSavingsAccounts;
     
     private final Collection<LoanAccountSummaryData> memberLoanAccounts;
     private final Collection<SavingsAccountSummaryData> memberSavingsAccounts;
 
     public AccountSummaryCollectionData(final Collection<LoanAccountSummaryData> loanAccounts,
-            final Collection<SavingsAccountSummaryData> savingsAccounts, final Collection<ShareAccountSummaryData> shareAccounts) {
+            final Collection<SavingsAccountSummaryData> savingsAccounts, final Collection<ShareAccountSummaryData> shareAccounts,
+            final Collection<SavingsAccountSummaryData> jointSavingsAccounts) {
         this.loanAccounts = defaultLoanAccountsIfEmpty(loanAccounts);
         this.savingsAccounts = defaultSavingsAccountsIfEmpty(savingsAccounts);
+        this.jointSavingsAccounts = defaultSavingsAccountsIfEmpty(jointSavingsAccounts);
         this.shareAccounts = defaultShareAccountsIfEmpty(shareAccounts) ;
         this.memberLoanAccounts = null;
         this.memberSavingsAccounts = null;
@@ -44,9 +47,11 @@ public class AccountSummaryCollectionData {
     
     public AccountSummaryCollectionData(final Collection<LoanAccountSummaryData> loanAccounts,
             final Collection<SavingsAccountSummaryData> savingsAccounts, final Collection<LoanAccountSummaryData> memberLoanAccounts,
-            final Collection<SavingsAccountSummaryData> memberSavingsAccounts) {
+            final Collection<SavingsAccountSummaryData> memberSavingsAccounts,
+            final Collection<SavingsAccountSummaryData> jointSavingsAccounts) {
         this.loanAccounts = defaultLoanAccountsIfEmpty(loanAccounts);
         this.savingsAccounts = defaultSavingsAccountsIfEmpty(savingsAccounts);
+        this.jointSavingsAccounts = defaultSavingsAccountsIfEmpty(jointSavingsAccounts);
         this.shareAccounts = null ;
         this.memberLoanAccounts = defaultLoanAccountsIfEmpty(memberLoanAccounts);
         this.memberSavingsAccounts = defaultSavingsAccountsIfEmpty(memberSavingsAccounts);

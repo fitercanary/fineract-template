@@ -312,39 +312,35 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         BigDecimal  cumulativeBalanceOnDate = account.getAccountBalance();
         
         ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-        
-        
-        if(validationLimit != null ) {
-            
+
+        if (validationLimit != null) {
+
             // Maximum Daily Withdraw Limit
-            BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit(); 
-            
-            if(BigDecimal.ZERO.equals(dailyWithdrawLimit)) {
+            BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit();
+
+            if (BigDecimal.ZERO.equals(dailyWithdrawLimit)) {
                 totalWithdrawOnDate = validationLimit.getMaximumDailyWithdrawLimit() != null ?
                         validationLimit.getMaximumDailyWithdrawLimit().subtract(totalWithdrawOnDate) : null;
-            }else {
+            } else {
                 totalWithdrawOnDate = dailyWithdrawLimit.subtract(totalWithdrawOnDate);
             }
-            
+
             // Cumulative Balance 
             cumulativeBalanceOnDate = validationLimit.getMaximumCumulativeBalance() != null ?
-                        validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
-            
+                    validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
+
             // Single Withdraw Limit
-            BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit(); 
-            
-            if( BigDecimal.ZERO.equals(singleWithdrawLimit)) {
+            BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit();
+
+            if (BigDecimal.ZERO.equals(singleWithdrawLimit)) {
                 singleWithdrawLimit = validationLimit.getMaximumSingleWithdrawLimit();
             }
-                    
-            return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), 
-                            cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate, 
-                            validationLimit.getMaximumClientSpecificDailyWithdrawLimit(), validationLimit.getMaximumClientSpecificSingleWithdrawLimit());
+
+            return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(),
+                    cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate,
+                    validationLimit.getMaximumClientSpecificDailyWithdrawLimit(), validationLimit.getMaximumClientSpecificSingleWithdrawLimit());
         }
-        
         return null;
-        
-        
     }
     
     @SuppressWarnings("unused")

@@ -725,8 +725,12 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     List<AuthorizationRequest> approvedRequests = this.authorizationRequestRepositoryWrapper
                             .findClientRequestsByStatus(clientId, AuthorizationRequestStatusType.APPROVED.getValue());
 
-                    pendingRequests.addAll(approvedRequests);
                     for (AuthorizationRequest request : pendingRequests) {
+                        request.closeRequest();
+                        this.authorizationRequestRepositoryWrapper.save(request);
+                    }
+
+                    for (AuthorizationRequest request : approvedRequests) {
                         request.closeRequest();
                         this.authorizationRequestRepositoryWrapper.save(request);
                     }

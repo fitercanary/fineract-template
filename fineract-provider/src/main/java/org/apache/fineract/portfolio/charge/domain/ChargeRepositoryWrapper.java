@@ -56,9 +56,9 @@ public class ChargeRepositoryWrapper {
         return chargeDefinition;
     }
 
-    public Charge findPartialLiquidationFee() {
+    public Charge findChargeByChargeTimeType(ChargeTimeType chargeTimeType) {
         Charge charge = null;
-        List<Charge> charges = this.repository.findChargesByChargeTimeTypeAndActive(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue(), true);
+        List<Charge> charges = this.repository.findChargesByChargeTimeTypeAndActive(chargeTimeType.getValue(), true);
         if (!charges.isEmpty()) {
             charge = charges.get(0);
         }

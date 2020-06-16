@@ -44,6 +44,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarInstance;
 import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.AccountNumberGenerator;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
@@ -478,11 +479,19 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
                 Arrays.asList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue(), ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
         for (SavingsAccountCharge charge : preclosureCharges) {
-            BigDecimal interest = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+            BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
                     : account.getSummary().getTotalInterestEarned();
-            charge.setPercentage(charge.getCharge().getAmount());
-            charge.setAmountPercentageAppliedTo(interest);
-            charge.setAmount(charge.percentageOf(interest, charge.getPercentage()));
+            ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
+            if (chargeCalculationType.isPercentageOfAmount()) {
+                amount = account.getAccountBalance();
+            }
+            if (chargeCalculationType.isPercentageBased()) {
+                charge.setPercentage(charge.getCharge().getAmount());
+                charge.setAmountPercentageAppliedTo(amount);
+                charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
+            } else {
+                charge.setAmount(charge.amount());
+            }
             charge.setAmountOutstanding(charge.amount());
             this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateUtils.getDefaultFormatter(),
                     user);

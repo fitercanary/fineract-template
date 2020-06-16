@@ -616,10 +616,13 @@ public class Charge extends AbstractPersistableCustom<Long> {
         return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSEMENT)
                 || ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.TRANCHE_DISBURSEMENT);
     }
-    
+
     public boolean isDisburseToSavingsCharge() {
-        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSE_TO_SAVINGS)
-               ;
+        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSE_TO_SAVINGS);
+    }
+
+    public boolean isPartialLiquidationCharge() {
+        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
     }
 
     public TaxGroup getTaxGroup() {

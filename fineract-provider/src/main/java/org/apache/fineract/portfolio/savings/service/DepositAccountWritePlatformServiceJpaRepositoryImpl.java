@@ -119,7 +119,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -166,7 +168,6 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final AccountAssociationsRepository accountAssociationsRepository;
     private final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService;
     private final SavingsAccountActionService savingsAccountActionService;
-    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
     public DepositAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -185,8 +186,12 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                                                                final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
                                                                final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
                                                                final DepositAccountReadPlatformService depositAccountReadPlatformService,
-                                                               final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, AccountAssociationsRepository accountAssociationsRepository, DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService, SavingsAccountActionService savingsAccountActionService, SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
+                                                               final CalendarInstanceRepository calendarInstanceRepository,
+                                                               final ConfigurationDomainService configurationDomainService,
+                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
+                                                               final AccountAssociationsRepository accountAssociationsRepository,
+                                                               final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService,
+                                                               final SavingsAccountActionService savingsAccountActionService) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -213,7 +218,6 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.accountAssociationsRepository = accountAssociationsRepository;
         this.depositApplicationProcessWritePlatformService = depositApplicationProcessWritePlatformService;
         this.savingsAccountActionService = savingsAccountActionService;
-        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
     }
 
     @Transactional
@@ -228,13 +232,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         final Map<String, Object> changes = this.activateAccount(account, FixedDepositActivationReq.instance(command));
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
     }
 
@@ -490,13 +494,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final SavingsAccountTransaction deposit = this.depositAccountDomainService.handleRDDeposit(account, fmt, transactionDate,
                 transactionAmount, paymentDetail, isRegularTransaction);
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(deposit.getId()) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(deposit.getId())
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
     }
 
@@ -599,7 +603,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final boolean postInterestAs = command.booleanPrimitiveValueOfParameterNamed("isPostInterestAsOn");
         LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         checkClientOrGroupActive(account);
-        if (postInterestAs == true) {
+        if (postInterestAs) {
 
             if (transactionDate == null) {
 
@@ -665,14 +669,20 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     }
 
     private void createPartialLiquidationCharge(FixedDepositAccount account) {
-        Charge charge = this.chargeRepository.findPartialLiquidationFee();
+        Charge charge = this.chargeRepository.findChargeByChargeTimeType(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
         if (charge != null) {
-            SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
-            savingsAccountChargeReq.setAmount(charge.getAmount());
-            SavingsAccountCharge savingsAccountCharge =  SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
-            account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
-            this.savingsAccountChargeRepository.save(savingsAccountCharge);
-            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                    Collections.singletonList(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+            if (preclosureCharges.isEmpty()) {
+                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+                savingsAccountChargeReq.setAmount(charge.getAmount());
+                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
+                if (!savingsAccountCharge.isPaid()) {
+                    account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+                    this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                    this.savingAccountRepositoryWrapper.saveAndFlush(account);
+                }
+            }
         }
     }
 
@@ -749,7 +759,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
     private Set<SavingsAccountCharge> generateCharges(FixedDepositAccount account) {
         final Set<SavingsAccountCharge> charges = new HashSet<>();
-        account.getCharges().forEach(charge -> charges.add(charge.copy()));
+        account.getCharges().stream().filter(charge -> !charge.getCharge().isPartialLiquidationCharge()).forEach(charge -> charges.add(charge.copy()));
         return charges;
     }
 

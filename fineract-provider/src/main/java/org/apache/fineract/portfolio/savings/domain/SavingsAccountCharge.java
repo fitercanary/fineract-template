@@ -579,8 +579,8 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         if (isGreaterThanZero(value)) {
             logger.info("inside percentageOf if condition");
             final MathContext mc = new MathContext(8, MoneyHelper.getRoundingMode());
-            final BigDecimal multiplicand = percentage.divide(BigDecimal.valueOf(100l), mc);
-            logger.info("inside percentageOf if condition multiplicand "+multiplicand);
+            final BigDecimal multiplicand = percentage.divide(BigDecimal.valueOf(100L), mc);
+            logger.info("inside percentageOf if condition multiplicand {}",  multiplicand);
             percentageOf = value.multiply(multiplicand, mc);
         }
 
@@ -917,4 +917,5 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 	public void setAmountOutstanding(BigDecimal amountOutstanding) {
 		this.amountOutstanding = amountOutstanding;
 	}
+
 }

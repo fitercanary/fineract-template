@@ -20,9 +20,9 @@ package org.apache.fineract.portfolio.savings.domain;
 
 import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -43,18 +43,22 @@ public class SavingsAccountChargeRepositoryWrapper {
 
     public SavingsAccountCharge findOneWithNotFoundDetection(final Long id) {
         final SavingsAccountCharge savingsAccountCharge = this.repository.findOne(id);
-        if (savingsAccountCharge == null) { throw new SavingsAccountChargeNotFoundException(id); }
+        if (savingsAccountCharge == null) {
+            throw new SavingsAccountChargeNotFoundException(id);
+        }
         return savingsAccountCharge;
     }
 
     public SavingsAccountCharge findOneWithNotFoundDetection(final Long id, final Long savingsAccountId) {
         final SavingsAccountCharge savingsAccountCharge = this.repository.findByIdAndSavingsAccountId(id, savingsAccountId);
-        if (savingsAccountCharge == null) { throw new SavingsAccountChargeNotFoundException(id); }
+        if (savingsAccountCharge == null) {
+            throw new SavingsAccountChargeNotFoundException(id);
+        }
         return savingsAccountCharge;
     }
 
-    public List<SavingsAccountCharge> findPendingCharges(final Date transactionDate) {
-        return this.repository.findPendingCharges(transactionDate);
+    public List<SavingsAccountCharge> findFdaPreclosureCharges(Long accountId, List<Integer> chargeTimeTypes) {
+        return this.repository.findFdaPreclosureCharges(accountId, chargeTimeTypes);
     }
 
     public void save(final SavingsAccountCharge savingsAccountCharge) {

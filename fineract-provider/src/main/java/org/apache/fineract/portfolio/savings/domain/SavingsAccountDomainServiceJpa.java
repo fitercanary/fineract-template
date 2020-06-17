@@ -27,6 +27,7 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepos
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
+import org.apache.fineract.portfolio.client.domain.LegalForm;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
@@ -114,7 +115,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotTransferToOtherAccount) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotTransferToOtherAccount && !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity()) {
             BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(account.clientId(), transactionDate, transactionAmount);
             this.savingsAccountTransactionDataValidator.validateWithdrawLimits(account.getClient(), transactionAmount, totalWithdrawOnDate);
         }
@@ -192,7 +193,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity()) {
             this.savingsAccountTransactionDataValidator.validateSingleDepositLimits(account.getClient(), transactionAmount);
         }
 
@@ -222,7 +223,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             account.calculateInterestUsing(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, null);
         }
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer ) {
+        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity() ) {
             this.savingsAccountTransactionDataValidator.validateCumulativeBalanceByLimit(account, transactionAmount);
         }
 

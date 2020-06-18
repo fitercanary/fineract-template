@@ -544,7 +544,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
             selectFieldsSqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
             selectFieldsSqlBuilder.append("sp.id as productId, sp.name as productName, ");
-            selectFieldsSqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, ");
+            selectFieldsSqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, sa.nickname as nickName, ");
             selectFieldsSqlBuilder.append("sa.status_enum as statusEnum, ");
             selectFieldsSqlBuilder.append("sa.submittedon_date as submittedOnDate,");
             selectFieldsSqlBuilder.append("sbu.username as submittedByUsername,");
@@ -629,6 +629,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long id = rs.getLong("id");
             final String accountNo = rs.getString("accountNo");
             final String externalId = rs.getString("externalId");
+            final String nickName = rs.getString("nickName");
 
             final Long groupId = JdbcSupport.getLong(rs, "groupId");
             final String groupName = rs.getString("groupName");
@@ -753,7 +754,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
-                    minBalanceForInterestCalculation, withHoldTax, taxGroupData);
+                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, nickName);
         }
     }
 
@@ -1128,6 +1129,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData depositType = (depositTypeId == null) ? null : SavingsEnumerations.depositType(depositTypeId);
             final Long productId = rs.getLong("productId");
             final String productName = rs.getString("productName");
+            //final String nickName = rs.getString("nickName");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -1200,7 +1202,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualIterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
-                    minBalanceForInterestCalculation, withHoldTax, taxGroupData);
+                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, null);
         }
     }
 

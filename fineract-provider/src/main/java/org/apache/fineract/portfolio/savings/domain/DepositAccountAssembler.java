@@ -118,6 +118,7 @@ public class DepositAccountAssembler {
         final AppUser submittedBy = this.context.authenticatedUser();
         final String accountNo = fixedDepositApplicationReq.getAccountNo();
         final String externalId = fixedDepositApplicationReq.getExternalId();
+        final String nickname = fixedDepositApplicationReq.getNickname();
 
         Client client = null;
         Group group = null;
@@ -250,7 +251,7 @@ public class DepositAccountAssembler {
                     accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, isWithdrawalFeeApplicableForTransfer, null,
-                    accountTermAndPreClosure, accountChart, withHoldTax);
+                    accountTermAndPreClosure, accountChart, withHoldTax, nickname);
             accountTermAndPreClosure.updateAccountReference(fdAccount);
             fdAccount.validateDomainRules();
             account = fdAccount;
@@ -268,7 +269,7 @@ public class DepositAccountAssembler {
                     fieldOfficer, accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate,
                     interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, isWithdrawalFeeApplicableForTransfer,
-                    null, accountTermAndPreClosure, accountRecurringDetail, accountChart, withHoldTax);
+                    null, accountTermAndPreClosure, accountRecurringDetail, accountChart, withHoldTax, nickname);
 
             accountTermAndPreClosure.updateAccountReference(rdAccount);
             accountRecurringDetail.updateAccountReference(rdAccount);

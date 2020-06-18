@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.portfolio.savings;
 
-import org.apache.fineract.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.fineract.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
 
 public class DepositsApiConstants {
 
@@ -273,14 +273,14 @@ public class DepositsApiConstants {
      * Depost Account parameters
      */
 
-    private static final Set<String> DEPOSIT_ACCOUNT_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(localeParamName, dateFormatParamName, monthDayFormatParamName, accountNoParamName, externalIdParamName,
-                    clientIdParamName, groupIdParamName, productIdParamName, fieldOfficerIdParamName, submittedOnDateParamName,
-                    nominalAnnualInterestRateParamName, interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName,
-                    interestCalculationTypeParamName, interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName,
-                    lockinPeriodFrequencyTypeParamName, chargesParamName, chartsParamName, depositAmountParamName, depositPeriodParamName,
-                    depositPeriodFrequencyIdParamName, savingsAccounts, expectedFirstDepositOnDateParamName,
-                    SavingsApiConstants.withHoldTaxParamName, SavingsApiConstants.withdrawalFeeForTransfersParamName));
+    private static final Set<String> DEPOSIT_ACCOUNT_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
+            dateFormatParamName, monthDayFormatParamName, accountNoParamName, externalIdParamName, clientIdParamName, groupIdParamName,
+            productIdParamName, fieldOfficerIdParamName, submittedOnDateParamName, nominalAnnualInterestRateParamName,
+            interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName, interestCalculationTypeParamName,
+            interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,
+            chargesParamName, chartsParamName, depositAmountParamName, depositPeriodParamName, depositPeriodFrequencyIdParamName,
+            savingsAccounts, expectedFirstDepositOnDateParamName, SavingsApiConstants.withHoldTaxParamName,
+            SavingsApiConstants.withdrawalFeeForTransfersParamName, SavingsApiConstants.nicknameParamName));
 
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_REQUEST_DATA_PARAMETERS = fixedDepositAccountRequestData();
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS = fixedDepositAccountResponseData();

@@ -98,7 +98,7 @@ public class FixedDepositAccount extends SavingsAccount {
                                                                         final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
                                                                         final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
                                                                         final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart,
-                                                                        boolean withHoldTax) {
+                                                                        boolean withHoldTax, final String nickname) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         final boolean allowOverdraft = false;
@@ -107,7 +107,7 @@ public class FixedDepositAccount extends SavingsAccount {
                 accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, accountTermAndPreClosure, chart,
-                allowOverdraft, overdraftLimit, withHoldTax);
+                allowOverdraft, overdraftLimit, withHoldTax, nickname);
     }
 
     private FixedDepositAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -119,12 +119,12 @@ public class FixedDepositAccount extends SavingsAccount {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final DepositAccountTermAndPreClosure accountTermAndPreClosure, DepositAccountInterestRateChart chart,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, boolean withHoldTax) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, boolean withHoldTax, final String nickname) {
 
         super(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
-                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, withHoldTax);
+                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, withHoldTax, nickname);
 
         this.accountTermAndPreClosure = accountTermAndPreClosure;
         this.chart = chart;
@@ -793,12 +793,13 @@ public class FixedDepositAccount extends SavingsAccount {
         final Integer lockinPeriodFrequency = this.lockinPeriodFrequency;
         final boolean withdrawalFeeApplicableForTransfer = false;
         final String accountNumber = null;
+        final String nickname = this.getNickname();
         final boolean withHoldTax = this.withHoldTax;
         final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmission(client, group, product,
                 savingsOfficer, accountNumber, externalId, accountType, getClosedOnDate(), closedBy, interestRate, compoundingPeriodType,
                 postingPeriodType, interestCalculationType, daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure, newChart,
-                withHoldTax);
+                withHoldTax, nickname);
 
         newAccountTermAndPreClosure.updateAccountReference(reInvestedAccount);
         newChart.updateDepositAccountReference(reInvestedAccount);

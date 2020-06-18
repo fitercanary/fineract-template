@@ -321,4 +321,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     public void updateDepositPeriod(final Integer depositPeriod) {
         this.depositPeriod = depositPeriod;
     }
+    public void updateDepositPeriodFrequencyType(final Integer depositPeriodFrequencyType) {
+        this.depositPeriodFrequency = depositPeriodFrequencyType;
+    }
 }

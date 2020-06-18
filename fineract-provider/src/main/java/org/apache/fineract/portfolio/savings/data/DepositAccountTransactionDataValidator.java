@@ -98,7 +98,7 @@ public class DepositAccountTransactionDataValidator {
             DepositsApiConstants.depositAmountParamName));
 
     private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.depositPeriodParamName));
+            Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName));
 
 
     @Autowired
@@ -345,6 +345,10 @@ public class DepositAccountTransactionDataValidator {
                 element);
         baseDataValidator.reset().parameter(DepositsApiConstants.depositPeriodParamName).value(depositPeriod).notNull().positiveAmount();
 
+        final Integer depositPeriodFrequencyId = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(DepositsApiConstants.depositPeriodFrequencyIdParamName,
+                element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.depositPeriodFrequencyIdParamName).value(depositPeriodFrequencyId)
+        .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 }

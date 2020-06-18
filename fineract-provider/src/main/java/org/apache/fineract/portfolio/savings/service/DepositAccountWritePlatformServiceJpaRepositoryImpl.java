@@ -1734,6 +1734,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         final Integer depositPeriod = command
                 .integerValueOfParameterNamed(DepositsApiConstants.depositPeriodParamName);
+        
+        final Integer depositPeriodFrequencyType = command
+                .integerValueOfParameterNamed(DepositsApiConstants.depositPeriodFrequencyIdParamName);
 
         final RecurringDepositAccount recurringDepositAccount = (RecurringDepositAccount) this.depositAccountAssembler
                 .assembleFrom(savingsId, DepositAccountType.RECURRING_DEPOSIT);
@@ -1742,6 +1745,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         actualChanges.put(DepositsApiConstants.depositPeriodParamName, depositPeriod);
 
         recurringDepositAccount.updateDepositPeriod(depositPeriod);
+        recurringDepositAccount.updateDepositPeriodFrequencyType(depositPeriodFrequencyType);
 
         final CalendarInstance calendarInstance = this.calendarInstanceRepository.findByEntityIdAndEntityTypeIdAndCalendarTypeId(savingsId,
                 CalendarEntityType.SAVINGS.getValue(), CalendarType.COLLECTION.getValue());

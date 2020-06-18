@@ -1322,5 +1322,9 @@ public class RecurringDepositAccount extends SavingsAccount {
     public void updateDepositPeriod(final Integer depositPeriod) {
         this.accountTermAndPreClosure.updateDepositPeriod(depositPeriod);
     }
+    
+    public void updateDepositPeriodFrequencyType(final Integer depositPeriodFrequencyType) {
+        this.accountTermAndPreClosure.updateDepositPeriodFrequencyType(depositPeriodFrequencyType);
+    }
 
 }

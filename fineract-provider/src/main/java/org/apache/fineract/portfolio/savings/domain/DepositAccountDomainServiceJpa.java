@@ -44,6 +44,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarInstance;
 import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.AccountNumberGenerator;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
@@ -68,6 +69,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -177,9 +179,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.updateMaturityDateAndAmount(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
         account.updateOverduePayments(DateUtils.getLocalDateOfTenant());
-        if (isAnyActivationChargesDue) {
-            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
-        }
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         return deposit;
     }
 
@@ -433,16 +433,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         boolean applyWithdrawalFeeForTransfer = account.withdrawalFeeApplicableForTransfer;
         if (account.shouldApplyPreclosureCharges()) {
             // Apply pre-closure charge
-            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findPreclosureFeeByAccountId(account.getId(),
-                    ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
-            for (SavingsAccountCharge charge : preclosureCharges) {
-                charge.setPercentage(charge.getCharge().getAmount());
-                charge.setAmountPercentageAppliedTo(account.getSummary().getTotalInterestPosted());
-                charge.setAmount(charge.percentageOf(account.getSummary().getTotalInterestPosted(), charge.getPercentage()));
-                charge.setAmountOutstanding(charge.amount());
-                this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateTimeFormat.forPattern("dd MM yyyy"),
-                        user);
-            }
+            this.applyPreclosureCharges(account, user, closedDate);
             if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
                 // Apply withdrawal charges
                 List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFeeByAccountId(account.getId(),
@@ -482,6 +473,31 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
 
         return savingsTransactionId;
+    }
+
+    private void applyPreclosureCharges(FixedDepositAccount account, AppUser user, LocalDate closedDate) {
+        List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                Arrays.asList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue(), ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+        for (SavingsAccountCharge charge : preclosureCharges) {
+            BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+                    : account.getSummary().getTotalInterestEarned();
+            ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
+            if (chargeCalculationType.isPercentageOfAmount()) {
+                amount = account.getAccountBalance();
+            }
+            if (chargeCalculationType.isPercentageBased()) {
+                charge.setPercentage(charge.getCharge().getAmount());
+                charge.setAmountPercentageAppliedTo(amount);
+                charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
+            } else {
+                charge.setAmount(charge.amount());
+            }
+            charge.setAmountOutstanding(charge.amount());
+            charge.setChargePaid();
+            if (!charge.isPaid()) {
+                this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(), DateUtils.getDefaultFormatter(), user);
+            }
+        }
     }
 
     private void prematurelyCloseFD(FixedDepositAccount account, FixedDepositPreClosureReq fixedDepositPreclosureReq, Map<String, Object> changes) {

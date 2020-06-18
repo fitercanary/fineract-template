@@ -293,6 +293,10 @@ public class RecurringDepositAccountsApiResource {
             final CommandWrapper commandRequest = builder.updateDepositAmountForRecurringDepositAccount(accountId)
                     .withJson(apiRequestBodyAsJson).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, DepositsApiConstants.UPDATE_DEPOSIT_PERIOD)) {
+            final CommandWrapper commandRequest = builder.updateDepositPeriodForRecurringDepositAccount(accountId)
+                    .withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "postInterest")) {
             final CommandWrapper commandRequest = builder.recurringDepositAccountInterestPosting(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
@@ -310,11 +314,15 @@ public class RecurringDepositAccountsApiResource {
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, account,
                     DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+        } else if (is(commandParam, DepositsApiConstants.COMMAND_POST_ACCRUAL_INTEREST_AS_ON)) {
+            final CommandWrapper commandRequest = builder.recurringDepositAccountAccrualInterestPosting(accountId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "reject",
                 "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest", "postInterest", "close",
-                "prematureClose", "calculatePrematureAmount" }); }
+                    "prematureClose", "calculatePrematureAmount", "postAccrualInterestAsOn" });
+        }
 
         return this.toApiJsonSerializer.serialize(result);
     }

@@ -7,7 +7,7 @@ Requirements
 ============
 * Java >= 1.8 (Oracle JVMS have been tested)
 * gradle-wrapper.jar version 2.10
-* MySQL 5.5
+* MySQL 5.6
 
 Instructions to download gradle wrapper
 ============

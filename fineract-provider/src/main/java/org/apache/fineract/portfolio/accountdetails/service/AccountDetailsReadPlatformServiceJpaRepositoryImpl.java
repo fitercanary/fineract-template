@@ -75,11 +75,13 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         this.clientReadPlatformService.retrieveOne(clientId);
         final String loanwhereClause = " where l.client_id = ?";
         final String savingswhereClause = " where sa.client_id = ? order by sa.status_enum ASC, sa.account_no ASC";
+        final String jointSavingswhereClause = " where cl.id = ? order by sa.status_enum ASC, sa.account_no ASC";
         
         final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[]{clientId});
         final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
         final List<ShareAccountSummaryData> shareAccounts = retrieveShareAccountDetails(clientId) ;
-        return new AccountSummaryCollectionData(loanAccounts, savingsAccounts, shareAccounts);
+        final List<SavingsAccountSummaryData> jointSavingsAccounts = retrieveAllGroupsAccountDetailsForClient(jointSavingswhereClause, new Object[]{clientId});
+        return new AccountSummaryCollectionData(loanAccounts, savingsAccounts, shareAccounts, jointSavingsAccounts);
     }
 
     @Override
@@ -97,7 +99,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                 new Object[] { groupId });
         final List<SavingsAccountSummaryData> memberSavingsAccounts = retrieveAccountDetails(savingswhereClauseForMembers,
                 new Object[] { groupId });
-        return new AccountSummaryCollectionData(groupLoanAccounts, groupSavingsAccounts, memberLoanAccounts, memberSavingsAccounts);
+        return new AccountSummaryCollectionData(groupLoanAccounts, groupSavingsAccounts, memberLoanAccounts, memberSavingsAccounts, null);
     }
 
     @Override
@@ -137,6 +139,13 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         final String savingsSql = "select distinct " + savingsAccountSummaryDataMapper.schema() + savingswhereClause;
         this.columnValidator.validateSqlInjection(savingsAccountSummaryDataMapper.schema() , savingswhereClause);
         return this.jdbcTemplate.query(savingsSql, savingsAccountSummaryDataMapper, inputs);
+    }
+    
+    private List<SavingsAccountSummaryData> retrieveAllGroupsAccountDetailsForClient(final String savingswhereClause, final Object[] inputs) {
+        final SavingsAccountSummaryDataMapper savingsAccountSummaryDataMapper = new SavingsAccountSummaryDataMapper();
+        final String savingsSqlForJointAccount = "select distinct " + savingsAccountSummaryDataMapper.schemaForJointAccount() + savingswhereClause;
+        this.columnValidator.validateSqlInjection(savingsAccountSummaryDataMapper.schemaForJointAccount() , savingswhereClause);
+        return this.jdbcTemplate.query(savingsSqlForJointAccount, savingsAccountSummaryDataMapper, inputs);
     }
 
     private List<ShareAccountSummaryData> retrieveShareAccountDetails(final Long clientId) {
@@ -244,6 +253,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     private static final class SavingsAccountSummaryDataMapper implements RowMapper<SavingsAccountSummaryData> {
 
         final String schemaSql;
+        final String schemaSqlForJointAccount;
 
         public SavingsAccountSummaryDataMapper() {
             final StringBuilder accountsSummary = new StringBuilder();
@@ -297,12 +307,74 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
             accountsSummary.append("left join m_appuser abu on abu.id = sa.approvedon_userid ");
             accountsSummary.append("left join m_appuser avbu on rbu.id = sa.activatedon_userid ");
             accountsSummary.append("left join m_appuser cbu on cbu.id = sa.closedon_userid ");
-
+            
             this.schemaSql = accountsSummary.toString();
+            
+            
+            final StringBuilder accountsSummaryForJointAccount = new StringBuilder();
+            accountsSummaryForJointAccount.append("sa.id as id, sa.account_no as accountNo, sa.external_id as externalId, sa.status_enum as statusEnum, ");
+            accountsSummaryForJointAccount.append("sa.account_type_enum as accountType, ");
+            accountsSummaryForJointAccount.append("sa.account_balance_derived as accountBalance, ");
+
+            accountsSummaryForJointAccount.append("sa.submittedon_date as submittedOnDate,");
+            accountsSummaryForJointAccount.append("sbu.username as submittedByUsername,");
+            accountsSummaryForJointAccount.append("sbu.firstname as submittedByFirstname, sbu.lastname as submittedByLastname,");
+
+            accountsSummaryForJointAccount.append("sa.rejectedon_date as rejectedOnDate,");
+            accountsSummaryForJointAccount.append("rbu.username as rejectedByUsername,");
+            accountsSummaryForJointAccount.append("rbu.firstname as rejectedByFirstname, rbu.lastname as rejectedByLastname,");
+
+            accountsSummaryForJointAccount.append("sa.withdrawnon_date as withdrawnOnDate,");
+            accountsSummaryForJointAccount.append("wbu.username as withdrawnByUsername,");
+            accountsSummaryForJointAccount.append("wbu.firstname as withdrawnByFirstname, wbu.lastname as withdrawnByLastname,");
+
+            accountsSummaryForJointAccount.append("sa.approvedon_date as approvedOnDate,");
+            accountsSummaryForJointAccount.append("abu.username as approvedByUsername,");
+            accountsSummaryForJointAccount.append("abu.firstname as approvedByFirstname, abu.lastname as approvedByLastname,");
+
+            accountsSummaryForJointAccount.append("sa.activatedon_date as activatedOnDate,");
+            accountsSummaryForJointAccount.append("avbu.username as activatedByUsername,");
+            accountsSummaryForJointAccount.append("avbu.firstname as activatedByFirstname, avbu.lastname as activatedByLastname,");
+
+            accountsSummaryForJointAccount.append("sa.sub_status_enum as subStatusEnum, ");
+            accountsSummaryForJointAccount.append("(select IFNULL(max(sat.transaction_date),sa.activatedon_date) ");
+            accountsSummaryForJointAccount.append("from m_savings_account_transaction as sat ");
+            accountsSummaryForJointAccount.append("where sat.is_reversed = 0 ");
+            accountsSummaryForJointAccount.append("and sat.transaction_type_enum in (1,2) ");
+            accountsSummaryForJointAccount.append("and sat.savings_account_id = sa.id) as lastActiveTransactionDate, ");
+
+            accountsSummaryForJointAccount.append("sa.closedon_date as closedOnDate,");
+            accountsSummaryForJointAccount.append("cbu.username as closedByUsername,");
+            accountsSummaryForJointAccount.append("cbu.firstname as closedByFirstname, cbu.lastname as closedByLastname,");
+
+            accountsSummaryForJointAccount
+                    .append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
+            accountsSummaryForJointAccount.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
+            accountsSummaryForJointAccount.append("curr.display_symbol as currencyDisplaySymbol, ");
+            accountsSummaryForJointAccount.append("sa.product_id as productId, p.name as productName, p.short_name as shortProductName, ");
+            accountsSummaryForJointAccount.append("sa.deposit_type_enum as depositType ");
+            accountsSummaryForJointAccount.append("from m_client cl ");
+            accountsSummaryForJointAccount.append("join m_group_client gc on cl.id = gc.client_id ");
+            accountsSummaryForJointAccount.append("join m_group gp on gp.id = gc.group_id ");
+            accountsSummaryForJointAccount.append("join m_savings_account sa on sa.group_id = gp.id ");
+            accountsSummaryForJointAccount.append("join m_savings_product as p on p.id = sa.product_id ");
+            accountsSummaryForJointAccount.append("join m_currency curr on curr.code = sa.currency_code ");
+            accountsSummaryForJointAccount.append("left join m_appuser sbu on sbu.id = sa.submittedon_userid ");
+            accountsSummaryForJointAccount.append("left join m_appuser rbu on rbu.id = sa.rejectedon_userid ");
+            accountsSummaryForJointAccount.append("left join m_appuser wbu on wbu.id = sa.withdrawnon_userid ");
+            accountsSummaryForJointAccount.append("left join m_appuser abu on abu.id = sa.approvedon_userid ");
+            accountsSummaryForJointAccount.append("left join m_appuser avbu on rbu.id = sa.activatedon_userid ");
+            accountsSummaryForJointAccount.append("left join m_appuser cbu on cbu.id = sa.closedon_userid ");
+            
+            this.schemaSqlForJointAccount = accountsSummaryForJointAccount.toString();
         }
 
         public String schema() {
             return this.schemaSql;
+        }
+        
+        public String schemaForJointAccount() {
+            return this.schemaSqlForJointAccount;
         }
 
         @Override

@@ -61,6 +61,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.exception.ClientNotActiveException;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
@@ -106,6 +107,7 @@ import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationTermsReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositApprovalReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositPreClosureReq;
+import org.apache.fineract.portfolio.savings.request.SavingsAccountChargeReq;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -117,7 +119,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -182,8 +186,12 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                                                                final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
                                                                final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
                                                                final DepositAccountReadPlatformService depositAccountReadPlatformService,
-                                                               final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, AccountAssociationsRepository accountAssociationsRepository, DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService, SavingsAccountActionService savingsAccountActionService) {
+                                                               final CalendarInstanceRepository calendarInstanceRepository,
+                                                               final ConfigurationDomainService configurationDomainService,
+                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
+                                                               final AccountAssociationsRepository accountAssociationsRepository,
+                                                               final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService,
+                                                               final SavingsAccountActionService savingsAccountActionService) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -224,13 +232,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         final Map<String, Object> changes = this.activateAccount(account, FixedDepositActivationReq.instance(command));
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
     }
 
@@ -486,13 +494,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final SavingsAccountTransaction deposit = this.depositAccountDomainService.handleRDDeposit(account, fmt, transactionDate,
                 transactionAmount, paymentDetail, isRegularTransaction);
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(deposit.getId()) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(deposit.getId())
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
     }
 
@@ -595,7 +603,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final boolean postInterestAs = command.booleanPrimitiveValueOfParameterNamed("isPostInterestAsOn");
         LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         checkClientOrGroupActive(account);
-        if (postInterestAs == true) {
+        if (postInterestAs) {
 
             if (transactionDate == null) {
 
@@ -645,6 +653,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         AccountAssociations accountAssociations = this.getLinkedSavingsAccount(accountId);
 
         this.checkClientOrGroupActive(account);
+        this.createPartialLiquidationCharge(account);
         this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations);
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         this.setDepositAmountForPartialLiquidation(fixedDepositApplicationReq, account, command);
@@ -657,6 +666,22 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .withGroupId(account.groupId())
                 .withSavingsId(accountAssociations.linkedSavingsAccount().getId())
                 .build();
+    }
+
+    private void createPartialLiquidationCharge(FixedDepositAccount account) {
+        Charge charge = this.chargeRepository.findChargeByChargeTimeType(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
+        if (charge != null) {
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                    Collections.singletonList(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+            if (preclosureCharges.isEmpty()) {
+                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+                savingsAccountChargeReq.setAmount(charge.getAmount());
+                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
+                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+                this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            }
+        }
     }
 
     private void autoCreateNewFD(JsonCommand command, FixedDepositAccount account, AccountAssociations accountAssociations, FixedDepositApplicationReq fixedDepositApplicationReq) {
@@ -732,7 +757,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
     private Set<SavingsAccountCharge> generateCharges(FixedDepositAccount account) {
         final Set<SavingsAccountCharge> charges = new HashSet<>();
-        account.getCharges().forEach(charge -> charges.add(charge.copy()));
+        account.getCharges().stream().filter(charge -> !charge.getCharge().isPartialLiquidationCharge()).forEach(charge -> charges.add(charge.copy()));
         return charges;
     }
 
@@ -1167,15 +1192,14 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         this.saveNote(command, changes, account);
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes)//
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
+                .with(changes)
                 .build();
-
     }
 
     @Override
@@ -1347,12 +1371,12 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final Locale locale = command.extractLocale();
         final String format = command.dateFormat();
         final DateTimeFormatter fmt = StringUtils.isNotBlank(format) ? DateTimeFormat.forPattern(format).withLocale(locale)
-                : DateTimeFormat.forPattern("dd MM yyyy");
+                : DateUtils.getDefaultFormatter();
 
         final Long chargeDefinitionId = command.longValueOfParameterNamed(chargeIdParamName);
         final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeDefinitionId);
 
-        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewFromJson(savingsAccount, chargeDefinition, command);
+        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, SavingsAccountChargeReq.instance(command));
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             // transaction date should not be on a holiday or non working day
@@ -1576,10 +1600,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository
                 .findOneWithNotFoundDetection(savingsAccountChargeId, accountId);
 
-        final DateTimeFormatter fmt = DateTimeFormat.forPattern("dd MM yyyy");
-
         while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate())) {
-            payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), fmt);
+            payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), DateUtils.getDefaultFormatter());
         }
     }
 
@@ -1704,6 +1726,64 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             user = this.context.getAuthenticatedUserIfPresent();
         }
         return user;
+    }
+
+    @Override
+    public CommandProcessingResult updateDepositPeriodForRDAccount(Long savingsId, JsonCommand command) {
+        this.depositAccountTransactionDataValidator.validateDepositPeriodUpdate(command);
+
+        final Integer depositPeriod = command
+                .integerValueOfParameterNamed(DepositsApiConstants.depositPeriodParamName);
+
+        final RecurringDepositAccount recurringDepositAccount = (RecurringDepositAccount) this.depositAccountAssembler
+                .assembleFrom(savingsId, DepositAccountType.RECURRING_DEPOSIT);
+
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
+        actualChanges.put(DepositsApiConstants.depositPeriodParamName, depositPeriod);
+
+        recurringDepositAccount.updateDepositPeriod(depositPeriod);
+
+        final CalendarInstance calendarInstance = this.calendarInstanceRepository.findByEntityIdAndEntityTypeIdAndCalendarTypeId(savingsId,
+                CalendarEntityType.SAVINGS.getValue(), CalendarType.COLLECTION.getValue());
+        this.saveCalendarDetails(recurringDepositAccount, calendarInstance);
+
+        // update calendar details
+        if (!recurringDepositAccount.isCalendarInherited()) {
+            final LocalDate calendarStartDate = recurringDepositAccount.depositStartDate();
+            Calendar calendar = calendarInstance.getCalendar();
+            PeriodFrequencyType frequencyType = CalendarFrequencyType.from(CalendarUtils.getFrequency(calendar.getRecurrence()));
+            Integer frequency = CalendarUtils.getInterval(calendar.getRecurrence());
+            final Integer repeatsOnDay = calendarStartDate.getDayOfWeek();
+
+            calendar.updateRepeatingCalendar(calendarStartDate, CalendarFrequencyType.from(frequencyType), frequency, repeatsOnDay,
+                    null);
+            this.calendarInstanceRepository.save(calendarInstance);
+        }
+
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(recurringDepositAccount.officeId())
+                .withClientId(recurringDepositAccount.clientId())
+                .withGroupId(recurringDepositAccount.groupId())
+                .withSavingsId(savingsId)
+                .with(actualChanges)
+                .build();
+    }
+
+    private void saveCalendarDetails(RecurringDepositAccount account, CalendarInstance calendarInstance) {
+
+        boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService.isSavingsInterestPostingAtCurrentPeriodEnd();
+        Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+        Calendar calendar = calendarInstance.getCalendar();
+        PeriodFrequencyType frequencyType = CalendarFrequencyType.from(CalendarUtils.getFrequency(calendar.getRecurrence()));
+        Integer frequency = CalendarUtils.getInterval(calendar.getRecurrence());
+
+        frequency = frequency == -1 ? 1 : frequency;
+        account.generateSchedule(frequencyType, frequency, calendar);
+        account.updateMaturityDateAndAmount(MathContext.DECIMAL64, false, isSavingsInterestPostingAtCurrentPeriodEnd,
+                financialYearBeginningMonth);
+        account.validateApplicableInterestRate();
+        this.savingAccountRepositoryWrapper.save(account);
     }
 
 }

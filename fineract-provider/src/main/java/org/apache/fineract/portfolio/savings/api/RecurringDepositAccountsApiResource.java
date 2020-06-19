@@ -297,7 +297,11 @@ public class RecurringDepositAccountsApiResource {
             final CommandWrapper commandRequest = builder.updateDepositPeriodForRecurringDepositAccount(accountId)
                     .withJson(apiRequestBodyAsJson).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        } else if (is(commandParam, "postInterest")) {
+        } else if (is(commandParam, DepositsApiConstants.UPDATE_DEPOSIT_PERIOD_FREQUENCY)) {
+            final CommandWrapper commandRequest = builder.updateDepositPeriodFrequencyForRecurringDepositAccount(accountId)
+                    .withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }else if (is(commandParam, "postInterest")) {
             final CommandWrapper commandRequest = builder.recurringDepositAccountInterestPosting(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "close")) {

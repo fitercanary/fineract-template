@@ -545,6 +545,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                 calendar.updateRepeatingCalendar(calendarStartDate, CalendarFrequencyType.from(periodFrequencyType), frequency,
                         repeatsOnDay, null);
                 this.calendarInstanceRepository.save(calendarInstance);
+                this.saveCalendarDetails(account, calendarInstance);
             }
 
             return new CommandProcessingResultBuilder() //

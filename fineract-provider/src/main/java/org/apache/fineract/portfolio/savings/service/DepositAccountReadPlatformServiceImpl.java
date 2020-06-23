@@ -866,7 +866,9 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("datp.maturity_date as maturityDate, ");
             sqlBuilder.append("datp.deposit_period as depositPeriod, ");
             sqlBuilder.append("datp.deposit_period_frequency_enum as depositPeriodFrequencyTypeId, ");
-            sqlBuilder.append("datp.on_account_closure_enum as onAccountClosureId ");
+            sqlBuilder.append("datp.on_account_closure_enum as onAccountClosureId, ");
+            sqlBuilder.append("datp.target_amount as targetAmount, ");
+            sqlBuilder.append("datp.target_maturity_amount as targetMaturityAmount ");
 
             sqlBuilder.append(this.selectTablesSql());
             sqlBuilder.append("left join m_deposit_account_recurring_detail dard on sa.id = dard.savings_account_id ");
@@ -922,13 +924,15 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = (onAccountClosureId == null) ? null : SavingsEnumerations
                     .depositAccountOnClosureType(onAccountClosureId);
             final LocalDate expectedFirstDepositOnDate = JdbcSupport.getLocalDate(rs, "expectedFirstDepositOnDate");
+            final BigDecimal targetAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "targetAmount");
+            final BigDecimal targetMaturityAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "targetMaturityAmount");
 
             return RecurringDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
                     depositPeriodFrequencyType, mandatoryRecommendedDepositAmount, onAccountClosureType, expectedFirstDepositOnDate,
                     totalOverdueAmount, noOfOverdueInstallments, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
-                    isCalendarInherited);
+                    isCalendarInherited, targetAmount, targetMaturityAmount);
 
         }
     }
@@ -1345,13 +1349,15 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = null;
             final BigDecimal totalOverdueAmount = null;
             final Integer noOfOverdueInstallments = null;
+            final BigDecimal targetAmount = null;
+            final BigDecimal targetMaturityAmount = null;
 
             return RecurringDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
                     depositPeriodFrequencyType, mandatoryRecommendedDepositAmount, onAccountClosureType, expectedFirstDepositOnDate,
                     totalOverdueAmount, noOfOverdueInstallments, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
-                    isCalendarInherited);
+                    isCalendarInherited, targetAmount, targetMaturityAmount);
         }
     }
 

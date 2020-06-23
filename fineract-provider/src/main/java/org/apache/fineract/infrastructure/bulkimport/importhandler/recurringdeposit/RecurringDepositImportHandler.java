@@ -246,12 +246,15 @@ public class RecurringDepositImportHandler implements ImportHandler {
         String status = ImportHandlerUtils.readAsString(RecurringDepositConstants.STATUS_COL, row);
         statuses.add(status);
         Long clientId = ImportHandlerUtils.getIdByName(workbook.getSheet(TemplatePopulateImportConstants.CLIENT_SHEET_NAME), clientName);
+        BigDecimal targetAmount = null;
+        BigDecimal targetMaturityAmount = null;
         return RecurringDepositAccountData.importInstance(clientId, productId, fieldOfficerId, submittedOnDate,
                 interestCompoundingPeriodTypeEnum,interestPostingPeriodTypeEnum,interestCalculationTypeEnum,
                 interestCalculationDaysInYearTypeEnum, lockinPeriodFrequency, lockinPeriodFrequencyTypeEnum,
                 depositAmount, depositPeriod, depositPeriodFrequencyId, depositStartDate,
                 recurringFrequency, recurringFrequencyTypeEnum, inheritCalendar, isMandatoryDeposit,
-                allowWithdrawal, adjustAdvancePayments, externalId,charges, row.getRowNum(),locale,dateFormat);
+                allowWithdrawal, adjustAdvancePayments, externalId, charges, row.getRowNum(), locale, dateFormat, targetAmount,
+                targetMaturityAmount);
     }
 
     public Count importEntity(String dateFormat) {

@@ -95,6 +95,9 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     @Column(name = "target_amount", scale = 6, precision = 19)
     private BigDecimal targetAmount;
 
+    @Column(name = "target_maturity_amount", scale = 6, precision = 19)
+    private BigDecimal targetMaturityAmount;
+
     protected DepositAccountTermAndPreClosure() {
         super();
     }
@@ -334,5 +337,13 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
 
     public BigDecimal getTargetAmount() {
         return targetAmount;
+    }
+
+    public void updateTargetMaturityAmount(final BigDecimal targetMaturityAmount) {
+        this.targetMaturityAmount = targetMaturityAmount;
+    }
+
+    public BigDecimal getTargetMaturityAmount() {
+        return targetMaturityAmount;
     }
 }

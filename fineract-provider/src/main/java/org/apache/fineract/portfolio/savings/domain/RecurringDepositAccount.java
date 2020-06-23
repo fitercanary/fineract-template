@@ -304,6 +304,9 @@ public class RecurringDepositAccount extends SavingsAccount {
             this.accountTermAndPreClosure.updateMaturityDetails(totalDepositAmount.getAmount(), totalInterestPayable.getAmount(),
                     maturityDate);
         }
+
+        // update target amounts
+        this.updateTargetAmounts(totalInterestPayable.getAmount());
     }
 
     public void updateMaturityStatus(final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth) {
@@ -1242,8 +1245,8 @@ public class RecurringDepositAccount extends SavingsAccount {
             installmentDate = DepositAccountUtils.calculateNextDepositDate(installmentDate, frequency, recurringEvery);
             installmentNumber += 1;
         }
-        updateDepositAmount();
-        updateTargetAmount();
+        this.updateDepositAmount();
+        this.updateTargetAmounts(null);
 
     }
 
@@ -1329,16 +1332,22 @@ public class RecurringDepositAccount extends SavingsAccount {
         this.accountTermAndPreClosure.updateDepositPeriodFrequencyType(depositPeriodFrequencyType);
     }
 
-    private void updateTargetAmount() {
+    private void updateTargetAmounts(BigDecimal totalInterestPayable) {
         BigDecimal recurringAmount = getRecurringDetail().mandatoryRecommendedDepositAmount();
         Integer numberOfDepositPeriods = depositScheduleInstallments().size();
-        if (this.accountTermAndPreClosure.depositPeriod() != null && recurringAmount != null && numberOfDepositPeriods != null) {
+        if (this.accountTermAndPreClosure.depositPeriod() != null && recurringAmount != null) {
             BigDecimal targetAmount = Money.of(product.currency(), recurringAmount).multipliedBy(numberOfDepositPeriods)
                     .plus(this.minRequiredOpeningBalance).getAmount();
             accountTermAndPreClosure.updateTargetAmount(targetAmount);
         } else if (accountTermAndPreClosure.getTargetAmount() == null) {
             accountTermAndPreClosure.updateTargetAmount(Money.zero(product.currency()).getAmount());
         }
+
+        BigDecimal targetMaturityAmount = null;
+        if (totalInterestPayable != null) {
+            targetMaturityAmount = accountTermAndPreClosure.getTargetAmount().add(totalInterestPayable);
+        }
+        accountTermAndPreClosure.updateTargetMaturityAmount(targetMaturityAmount);
     }
 
 }

@@ -18,16 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.data.PaginationParameters;
 import org.apache.fineract.infrastructure.core.data.PaginationParametersDataValidator;
@@ -65,7 +55,6 @@ import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
-import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
@@ -84,7 +73,12 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountNotFoundException;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -97,6 +91,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class DepositAccountReadPlatformServiceImpl implements DepositAccountReadPlatformService {
@@ -125,23 +130,26 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
     private final CalendarReadPlatformService calendarReadPlatformService;
     private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
+    private final SavingsAccountRepository savingsAccountRepository;
+    private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
     // allowed column names for sorting the query result
     private final static Set<String> supportedOrderByValues = new HashSet<>(Arrays.asList("id", "accountNumbr",
             "officeId", "officeName"));
 
     @Autowired
     public DepositAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-            final DepositAccountInterestRateChartReadPlatformService chartReadPlatformService,
-            final PaginationParametersDataValidator paginationParametersDataValidator,
-            final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
-            final DepositProductReadPlatformService depositProductReadPlatformService,
-            final SavingsDropdownReadPlatformService savingsDropdownReadPlatformService,
-            final ChargeReadPlatformService chargeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
-            final DepositsDropdownReadPlatformService depositsDropdownReadPlatformService,
-            final InterestRateChartReadPlatformService productChartReadPlatformService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final DropdownReadPlatformService dropdownReadPlatformService, final CalendarReadPlatformService calendarReadPlatformService,
-            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+                                                 final DepositAccountInterestRateChartReadPlatformService chartReadPlatformService,
+                                                 final PaginationParametersDataValidator paginationParametersDataValidator,
+                                                 final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
+                                                 final DepositProductReadPlatformService depositProductReadPlatformService,
+                                                 final SavingsDropdownReadPlatformService savingsDropdownReadPlatformService,
+                                                 final ChargeReadPlatformService chargeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+                                                 final DepositsDropdownReadPlatformService depositsDropdownReadPlatformService,
+                                                 final InterestRateChartReadPlatformService productChartReadPlatformService,
+                                                 final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+                                                 final DropdownReadPlatformService dropdownReadPlatformService, final CalendarReadPlatformService calendarReadPlatformService,
+                                                 PaymentTypeReadPlatformService paymentTypeReadPlatformService, SavingsAccountRepository savingsAccountRepository,
+                                                 SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.accountChartReadPlatformService = chartReadPlatformService;
@@ -160,6 +168,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.calendarReadPlatformService = calendarReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
+        this.savingsAccountRepository = savingsAccountRepository;
+        this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
     }
 
     @Override
@@ -177,7 +187,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         // always append at the end of a sql statement
         sqlBuilder.append(paginationParameters.paginationSql());
 
-        return this.jdbcTemplate.query(sqlBuilder.toString(), depositAccountMapper, new Object[] { depositAccountType.getValue() });
+        return this.jdbcTemplate.query(sqlBuilder.toString(), depositAccountMapper, depositAccountType.getValue());
     }
 
     @Override
@@ -227,8 +237,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         return this.jdbcTemplate.query(
                 sqlBuilder.toString(),
                 this.depositAccountForMaturityRowMapper,
-                new Object[] { formatter.print(today), DepositAccountType.FIXED_DEPOSIT.getValue(),
-                        DepositAccountType.RECURRING_DEPOSIT.getValue(), SavingsAccountStatusType.ACTIVE.getValue() });
+                formatter.print(today), DepositAccountType.FIXED_DEPOSIT.getValue(),
+                DepositAccountType.RECURRING_DEPOSIT.getValue(), SavingsAccountStatusType.ACTIVE.getValue());
     }
 
     @Override
@@ -244,9 +254,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append(depositAccountMapper.schema());
             sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? ");
 
-            return this.jdbcTemplate.queryForObject(sqlBuilder.toString(), depositAccountMapper, new Object[] { accountId,
-                    depositAccountType.getValue() });
-
+            return  this.jdbcTemplate.queryForObject(sqlBuilder.toString(), depositAccountMapper, accountId,
+                    depositAccountType.getValue());
         } catch (final EmptyResultDataAccessException e) {
             throw new DepositAccountNotFoundException(depositAccountType, accountId);
         }
@@ -564,8 +573,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.closedon_date as closedOnDate,");
             selectFieldsSqlBuilder.append("cbu.username as closedByUsername,");
             selectFieldsSqlBuilder.append("cbu.firstname as closedByFirstname, cbu.lastname as closedByLastname,");
-            selectFieldsSqlBuilder
-                    .append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
+            selectFieldsSqlBuilder.append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
             selectFieldsSqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             selectFieldsSqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             selectFieldsSqlBuilder.append("sa.nominal_annual_interest_rate as nominalAnnualInterestRate, ");
@@ -781,7 +789,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("datp.deposit_period as depositPeriod, ");
             sqlBuilder.append("datp.deposit_period_frequency_enum as depositPeriodFrequencyTypeId, ");
             sqlBuilder.append("datp.on_account_closure_enum as onAccountClosureId, ");
-            sqlBuilder.append("datp.transfer_interest_to_linked_account as transferInterestToSavings ");
+            sqlBuilder.append("datp.transfer_interest_to_linked_account as transferInterestToSavings, ");
+            sqlBuilder.append("datp.interest_carried_forward_on_top_up as interestCarriedForward ");
 
             sqlBuilder.append(super.selectTablesSql());
 
@@ -828,11 +837,14 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = (onAccountClosureId == null) ? null : SavingsEnumerations
                     .depositAccountOnClosureType(onAccountClosureId);
             final Boolean transferInterestToSavings = rs.getBoolean("transferInterestToSavings");
+            final BigDecimal interestCarriedForward = rs.getBigDecimal("interestCarriedForward");
 
-            return FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
+            FixedDepositAccountData fixedDepositAccountData =  FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
                     depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings);
+            fixedDepositAccountData.setAccruedInterestCarriedForward(interestCarriedForward);
+            return fixedDepositAccountData;
         }
     }
 

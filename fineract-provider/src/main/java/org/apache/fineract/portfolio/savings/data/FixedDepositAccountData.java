@@ -171,7 +171,7 @@ public class FixedDepositAccountData extends DepositAccountData {
 
     public static FixedDepositAccountData withInterestChart(final FixedDepositAccountData account,
             final DepositAccountInterestRateChartData accountChart) {
-        return new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+        FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -188,6 +188,8 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.depositPeriod, account.depositPeriodFrequency, account.periodFrequencyTypeOptions, account.depositType,
                 account.onAccountClosure, account.onAccountClosureOptions, account.paymentTypeOptions, account.savingsAccounts,
                 account.linkedAccount, account.transferInterestToSavings, account.withHoldTax, account.taxGroup, account.nickname);
+        fixedDepositAccountData.setAccruedInterestCarriedForward(account.accruedInterestCarriedForward);
+        return fixedDepositAccountData;
     }
 
     public static FixedDepositAccountData associationsAndTemplate(final FixedDepositAccountData account, FixedDepositAccountData template,
@@ -217,6 +219,7 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.paymentTypeOptions, template.savingsAccounts, linkedAccount, account.transferInterestToSavings, account.withHoldTax,
                 account.taxGroup, account.nickname);
         fixedDepositAccountData.withdrawalFeeForTransfers = account.withdrawalFeeForTransfers;
+        fixedDepositAccountData.accruedInterestCarriedForward = account.accruedInterestCarriedForward;
         return fixedDepositAccountData;
     }
 

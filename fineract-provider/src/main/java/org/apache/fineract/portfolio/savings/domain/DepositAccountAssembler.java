@@ -314,7 +314,7 @@ public class DepositAccountAssembler {
         // maturityAmount and maturityDate are calculated and updated in the account
         return DepositAccountTermAndPreClosure.createNew(updatedProductPreClosure, updatedProductTerm, null, depositAmount,
                 null, null, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, null,
-                transferInterest);
+                transferInterest, fixedDepositApplicationReq.getInterestCarriedForward());
     }
 
     public DepositAccountRecurringDetail assembleAccountRecurringDetail(RecurringAccountDetailReq recurringAccountDetailReq,

@@ -92,6 +92,9 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     @Column(name = "transfer_interest_to_linked_account", nullable = false)
     private boolean transferInterestToLinkedAccount;
 
+    @Column(name = "interest_carried_forward_on_top_up")
+    private BigDecimal interestCarriedForwardOnTopUp;
+
     protected DepositAccountTermAndPreClosure() {
         super();
     }
@@ -99,16 +102,16 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     public static DepositAccountTermAndPreClosure createNew(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
             SavingsAccount account, BigDecimal depositAmount, BigDecimal maturityAmount, final LocalDate maturityDate,
             Integer depositPeriod, final SavingsPeriodFrequencyType depositPeriodFrequency, final LocalDate expectedFirstDepositOnDate,
-            final DepositAccountOnClosureType accountOnClosureType, Boolean trasferInterest) {
+            final DepositAccountOnClosureType accountOnClosureType, Boolean transferInterest, BigDecimal interestCarriedForwardOnTopUp) {
 
         return new DepositAccountTermAndPreClosure(preClosureDetail, depositTermDetail, account, depositAmount, maturityAmount,
-                maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType, trasferInterest);
+                maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType, transferInterest, interestCarriedForwardOnTopUp);
     }
 
     private DepositAccountTermAndPreClosure(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
             SavingsAccount account, BigDecimal depositAmount, BigDecimal maturityAmount, final LocalDate maturityDate,
             Integer depositPeriod, final SavingsPeriodFrequencyType depositPeriodFrequency, final LocalDate expectedFirstDepositOnDate,
-            final DepositAccountOnClosureType accountOnClosureType, Boolean transferInterest) {
+            final DepositAccountOnClosureType accountOnClosureType, Boolean transferInterest, BigDecimal interestCarriedForwardOnTopUp) {
         this.depositAmount = depositAmount;
         this.maturityAmount = maturityAmount;
         this.maturityDate = (maturityDate == null) ? null : maturityDate.toDate();
@@ -120,6 +123,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         this.expectedFirstDepositOnDate = expectedFirstDepositOnDate == null ? null : expectedFirstDepositOnDate.toDate();
         this.onAccountClosureType = (accountOnClosureType == null) ? null : accountOnClosureType.getValue();
         this.transferInterestToLinkedAccount = transferInterest;
+        this.interestCarriedForwardOnTopUp = interestCarriedForwardOnTopUp;
     }
 
     public Map<String, Object> update(final JsonCommand command, final DataValidatorBuilder baseDataValidator) {
@@ -290,12 +294,11 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         final DepositPreClosureDetail preClosureDetail = this.preClosureDetail.copy();
         final DepositTermDetail depositTermDetail = this.depositTermDetail.copy();
         final LocalDate expectedFirstDepositOnDate = null;
-        final Boolean transferInterestToLinkedAccount = false;
 
         final DepositAccountOnClosureType accountOnClosureType = null;
         return DepositAccountTermAndPreClosure.createNew(preClosureDetail, depositTermDetail, account, actualDepositAmount, maturityAmount,
                 maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType,
-                transferInterestToLinkedAccount);
+                false, null);
     }
 
     public void updateExpectedFirstDepositDate(final LocalDate expectedFirstDepositOnDate) {
@@ -323,5 +326,13 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     }
     public void updateDepositPeriodFrequencyType(final Integer depositPeriodFrequencyType) {
         this.depositPeriodFrequency = depositPeriodFrequencyType;
+    }
+
+    public BigDecimal getInterestCarriedForwardOnTopUp() {
+        return interestCarriedForwardOnTopUp;
+    }
+
+    public void setInterestCarriedForwardOnTopUp(BigDecimal interestCarriedForwardOnTopUp) {
+        this.interestCarriedForwardOnTopUp = interestCarriedForwardOnTopUp;
     }
 }

@@ -475,7 +475,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         return savingsTransactionId;
     }
 
-    private void applyPreclosureCharges(FixedDepositAccount account, AppUser user, LocalDate closedDate) {
+    private void applyPreclosureCharges(SavingsAccount account, AppUser user, LocalDate closedDate) {
         List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
                 Arrays.asList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue(), ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
         for (SavingsAccountCharge charge : preclosureCharges) {
@@ -604,7 +604,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         // post interest
         account.postPreMaturityInterest(closedDate, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
-
+        this.applyPreclosureCharges(account, user, closedDate);
         final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
         DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
 

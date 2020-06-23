@@ -63,7 +63,7 @@ public class DepositAccountData {
     protected final BigDecimal minBalanceForInterestCalculation;
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
-    protected final String nickName;
+    protected final String nickname;
 
     // associations
     protected final SavingsAccountSummaryData summary;
@@ -139,7 +139,7 @@ public class DepositAccountData {
         this.annualFee = null;
         this.chartTemplate = null;
         this.productId = productId;
-        this.nickName = null;
+        this.nickname = null;
     }
 
     public static DepositAccountData instance(final Long id, final String accountNo, final String externalId, final Long groupId,
@@ -150,7 +150,7 @@ public class DepositAccountData {
             final EnumOptionData interestCalculationType, final EnumOptionData interestCalculationDaysInYearType,
             final BigDecimal minRequiredOpeningBalance, final Integer lockinPeriodFrequency, final EnumOptionData lockinPeriodFrequencyType,
             final boolean withdrawalFeeForTransfers, final SavingsAccountSummaryData summary, final EnumOptionData depositType,
-            final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, final String nickName) {
+            final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, final String nickname) {
 
         final Collection<DepositProductData> productOptions = null;
         final Collection<StaffData> fieldOfficerOptions = null;
@@ -173,7 +173,7 @@ public class DepositAccountData {
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, transactions, productOptions,
                 fieldOfficerOptions, interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges,
-                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickName);
+                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickname);
     }
 
     public static DepositAccountData lookup(final Long id, final String accountNo, final EnumOptionData depositType) {
@@ -217,7 +217,7 @@ public class DepositAccountData {
         final BigDecimal minBalanceForInterestCalculation = null;
         final boolean withHoldTax = false;
         final TaxGroupData taxGroup = null;
-        final String nickName = null;
+        final String nickname = null;
 
         return new DepositAccountData(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
                 fieldOfficerId, fieldOfficerName, status, timeline, currency, interestRate, interestCompoundingPeriodType,
@@ -225,7 +225,7 @@ public class DepositAccountData {
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, transactions, productOptions,
                 fieldOfficerOptions, interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges,
-                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickName);
+                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickname);
     }
 
     protected DepositAccountData(final Long id, final String accountNo, final String externalId, final Long groupId, final String groupName,
@@ -245,7 +245,7 @@ public class DepositAccountData {
             final Collection<SavingsAccountChargeData> charges, final Collection<ChargeData> chargeOptions,
             final DepositAccountInterestRateChartData accountChart, final DepositAccountInterestRateChartData chartTemplate,
             final EnumOptionData depositType, final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax,
-            final TaxGroupData taxGroup, final String nickName) {
+            final TaxGroupData taxGroup, final String nickname) {
         this.id = id;
         this.accountNo = accountNo;
         this.externalId = externalId;
@@ -294,7 +294,7 @@ public class DepositAccountData {
         this.minBalanceForInterestCalculation = minBalanceForInterestCalculation;
         this.taxGroup = taxGroup;
         this.withHoldTax = withHoldTax;
-        this.nickName = nickName;
+        this.nickname = nickname;
 
     }
 

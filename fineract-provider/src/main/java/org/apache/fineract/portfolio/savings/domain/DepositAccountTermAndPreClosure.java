@@ -92,6 +92,9 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     @Column(name = "transfer_interest_to_linked_account", nullable = false)
     private boolean transferInterestToLinkedAccount;
 
+    @Column(name = "target_amount", scale = 6, precision = 19)
+    private BigDecimal targetAmount;
+
     protected DepositAccountTermAndPreClosure() {
         super();
     }
@@ -323,5 +326,13 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     }
     public void updateDepositPeriodFrequencyType(final Integer depositPeriodFrequencyType) {
         this.depositPeriodFrequency = depositPeriodFrequencyType;
+    }
+
+    public void updateTargetAmount(final BigDecimal targetAmount) {
+        this.targetAmount = targetAmount;
+    }
+
+    public BigDecimal getTargetAmount() {
+        return targetAmount;
     }
 }

@@ -1243,6 +1243,8 @@ public class RecurringDepositAccount extends SavingsAccount {
             installmentNumber += 1;
         }
         updateDepositAmount();
+        updateTargetAmount();
+
     }
 
     private LocalDate calcualteScheduleTillDate(final PeriodFrequencyType frequency, final Integer recurringEvery) {
@@ -1325,6 +1327,18 @@ public class RecurringDepositAccount extends SavingsAccount {
     
     public void updateDepositPeriodFrequencyType(final Integer depositPeriodFrequencyType) {
         this.accountTermAndPreClosure.updateDepositPeriodFrequencyType(depositPeriodFrequencyType);
+    }
+
+    private void updateTargetAmount() {
+        BigDecimal recurringAmount = getRecurringDetail().mandatoryRecommendedDepositAmount();
+        Integer numberOfDepositPeriods = depositScheduleInstallments().size();
+        if (this.accountTermAndPreClosure.depositPeriod() != null && recurringAmount != null && numberOfDepositPeriods != null) {
+            BigDecimal targetAmount = Money.of(product.currency(), recurringAmount).multipliedBy(numberOfDepositPeriods)
+                    .plus(this.minRequiredOpeningBalance).getAmount();
+            accountTermAndPreClosure.updateTargetAmount(targetAmount);
+        } else if (accountTermAndPreClosure.getTargetAmount() == null) {
+            accountTermAndPreClosure.updateTargetAmount(Money.zero(product.currency()).getAmount());
+        }
     }
 
 }

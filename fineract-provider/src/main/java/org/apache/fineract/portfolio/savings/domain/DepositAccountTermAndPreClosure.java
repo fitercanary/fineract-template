@@ -92,8 +92,14 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     @Column(name = "transfer_interest_to_linked_account", nullable = false)
     private boolean transferInterestToLinkedAccount;
 
-    @Column(name = "interest_carried_forward_on_top_up")
+    @Column(name = "interest_carried_forward_on_top_up", scale = 6, precision = 19)
     private BigDecimal interestCarriedForwardOnTopUp;
+
+    @Column(name = "target_amount", scale = 6, precision = 19)
+    private BigDecimal targetAmount;
+
+    @Column(name = "target_maturity_amount", scale = 6, precision = 19)
+    private BigDecimal targetMaturityAmount;
 
     protected DepositAccountTermAndPreClosure() {
         super();
@@ -334,5 +340,21 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
 
     public void setInterestCarriedForwardOnTopUp(BigDecimal interestCarriedForwardOnTopUp) {
         this.interestCarriedForwardOnTopUp = interestCarriedForwardOnTopUp;
+    }
+
+    public void updateTargetAmount(final BigDecimal targetAmount) {
+        this.targetAmount = targetAmount;
+    }
+
+    public BigDecimal getTargetAmount() {
+        return targetAmount;
+    }
+
+    public void updateTargetMaturityAmount(final BigDecimal targetMaturityAmount) {
+        this.targetMaturityAmount = targetMaturityAmount;
+    }
+
+    public BigDecimal getTargetMaturityAmount() {
+        return targetMaturityAmount;
     }
 }

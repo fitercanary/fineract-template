@@ -115,7 +115,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotTransferToOtherAccount && !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity()) {
+        if (this.shouldValidateLimit(account, isNotTransferToOtherAccount, isClientLevelValidationEnabled)) {
             BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(account.clientId(), transactionDate, transactionAmount);
             this.savingsAccountTransactionDataValidator.validateWithdrawLimits(account.getClient(), transactionAmount, totalWithdrawOnDate);
         }
@@ -193,7 +193,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity()) {
+        if (this.shouldValidateLimit(account, isAccountTransfer, isClientLevelValidationEnabled)) {
             this.savingsAccountTransactionDataValidator.validateSingleDepositLimits(account.getClient(), transactionAmount);
         }
 
@@ -223,7 +223,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             account.calculateInterestUsing(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, null);
         }
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity() ) {
+        if (this.shouldValidateLimit(account, isAccountTransfer, isClientLevelValidationEnabled)) {
             this.savingsAccountTransactionDataValidator.validateCumulativeBalanceByLimit(account, transactionAmount);
         }
 
@@ -235,6 +235,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT,
                 constructEntityMap(deposit));
         return deposit;
+    }
+
+    private boolean shouldValidateLimit(SavingsAccount account, boolean isAccountTransfer, boolean isClientLevelValidationEnabled) {
+        return isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && (account.getClient().getLegalForm() == null || !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity());
     }
 
     @Override

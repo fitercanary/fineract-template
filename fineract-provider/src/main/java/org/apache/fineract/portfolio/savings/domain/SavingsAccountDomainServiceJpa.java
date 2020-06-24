@@ -238,7 +238,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     }
 
     private boolean shouldValidateLimit(SavingsAccount account, boolean isAccountTransfer, boolean isClientLevelValidationEnabled) {
-        return isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && (account.getClient().getLegalForm() == null || !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity());
+        return isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer && account.getClient() != null && (account.getClient().getLegalForm() == null || !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity());
     }
 
     @Override

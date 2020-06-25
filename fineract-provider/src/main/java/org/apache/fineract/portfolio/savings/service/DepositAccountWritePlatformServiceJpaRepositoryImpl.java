@@ -18,31 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.liquidationAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.recurringFrequencyParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.recurringFrequencyTypeParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
@@ -111,6 +86,7 @@ import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransact
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountRecurringDetail;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
 import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
@@ -141,6 +117,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.liquidationAmountParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
+
 @Service
 public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements DepositAccountWritePlatformService {
 
@@ -169,29 +169,30 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final AccountAssociationsRepository accountAssociationsRepository;
     private final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService;
     private final SavingsAccountActionService savingsAccountActionService;
+    private final FixedDepositAccountRepository fixedDepositAccountRepository;
 
     @Autowired
     public DepositAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
-            final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
-            final DepositAccountAssembler depositAccountAssembler,
-            final DepositAccountTransactionDataValidator depositAccountTransactionDataValidator,
-            final SavingsAccountChargeDataValidator savingsAccountChargeDataValidator,
-            final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
-            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
-            final JournalEntryWritePlatformService journalEntryWritePlatformService,
-            final DepositAccountDomainService depositAccountDomainService, final NoteRepository noteRepository,
-            final AccountTransfersReadPlatformService accountTransfersReadPlatformService, final ChargeRepositoryWrapper chargeRepository,
-            final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository, final HolidayRepositoryWrapper holidayRepository,
-            final WorkingDaysRepositoryWrapper workingDaysRepository,
-            final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
-            final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
-            final DepositAccountReadPlatformService depositAccountReadPlatformService,
-            final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
-            final AccountAssociationsRepository accountAssociationsRepository,
-            final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService,
-            final SavingsAccountActionService savingsAccountActionService) {
+                                                               final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
+                                                               final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
+                                                               final DepositAccountAssembler depositAccountAssembler,
+                                                               final DepositAccountTransactionDataValidator depositAccountTransactionDataValidator,
+                                                               final SavingsAccountChargeDataValidator savingsAccountChargeDataValidator,
+                                                               final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
+                                                               final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+                                                               final JournalEntryWritePlatformService journalEntryWritePlatformService,
+                                                               final DepositAccountDomainService depositAccountDomainService, final NoteRepository noteRepository,
+                                                               final AccountTransfersReadPlatformService accountTransfersReadPlatformService, final ChargeRepositoryWrapper chargeRepository,
+                                                               final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository, final HolidayRepositoryWrapper holidayRepository,
+                                                               final WorkingDaysRepositoryWrapper workingDaysRepository,
+                                                               final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
+                                                               final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+                                                               final DepositAccountReadPlatformService depositAccountReadPlatformService,
+                                                               final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
+                                                               final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
+                                                               final AccountAssociationsRepository accountAssociationsRepository,
+                                                               final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService,
+                                                               final SavingsAccountActionService savingsAccountActionService, FixedDepositAccountRepository fixedDepositAccountRepository) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -218,6 +219,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.accountAssociationsRepository = accountAssociationsRepository;
         this.depositApplicationProcessWritePlatformService = depositApplicationProcessWritePlatformService;
         this.savingsAccountActionService = savingsAccountActionService;
+        this.fixedDepositAccountRepository = fixedDepositAccountRepository;
     }
 
     @Transactional
@@ -557,12 +559,12 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         this.savingAccountRepositoryWrapper.save(account);
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsId)
+                .withOfficeId(account.officeId())
+                .withClientId(account.clientId())
+                .withGroupId(account.groupId())
+                .withSavingsId(savingsId)
                 .build();
     }
 
@@ -637,7 +639,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         this.checkClientOrGroupActive(account);
         this.createPartialLiquidationCharge(account);
-        this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations);
+        this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations, false);
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         this.setDepositAmountForPartialLiquidation(fixedDepositApplicationReq, account, command);
         this.autoCreateNewFD(command, account, accountAssociations, fixedDepositApplicationReq);
@@ -663,11 +665,11 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         }
     }
 
-    private void autoCreateNewFD(JsonCommand command, FixedDepositAccount account, AccountAssociations accountAssociations,
-            FixedDepositApplicationReq fixedDepositApplicationReq) {
+    private FixedDepositAccount autoCreateNewFD(JsonCommand command, FixedDepositAccount account, AccountAssociations accountAssociations, FixedDepositApplicationReq fixedDepositApplicationReq) {
         FixedDepositAccount newAccount = this.createNewAccount(fixedDepositApplicationReq, account, accountAssociations);
         this.autoApproveAccount(command, account, newAccount);
         this.autoActivateAccount(command, newAccount);
+        return account;
     }
 
     @Override
@@ -680,14 +682,30 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         this.checkClientOrGroupActive(account);
         account.setApplyPreclosureCharges(false);
-        this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations);
+        this.preCloseAccount(command, new LinkedHashMap<>(), account, accountAssociations, true);
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         fixedDepositApplicationReq.setDepositAmount(command.bigDecimalValueOfParameterNamed(depositAmountParamName));
+        fixedDepositApplicationReq.setInterestCarriedForward(this.calculateInterestCarriedForward(account));
         this.autoCreateNewFD(command, account, accountAssociations, fixedDepositApplicationReq);
 
         return new CommandProcessingResultBuilder().withEntityId(accountId).withOfficeId(account.officeId())
                 .withClientId(account.clientId()).withGroupId(account.groupId())
                 .withSavingsId(accountAssociations.linkedSavingsAccount().getId()).build();
+    }
+
+    private BigDecimal calculateInterestCarriedForward(FixedDepositAccount account) {
+        BigDecimal interestCarriedForward = null;
+        List<SavingsAccountTransaction> interestAccrualTrxns = account.getTransactions().stream()
+                .filter(t -> t.isNotReversed() && t.isAccrualInterestPosting()).collect(Collectors.toList());
+        if (!interestAccrualTrxns.isEmpty()) {
+            interestCarriedForward = interestAccrualTrxns.stream()
+                    .map(SavingsAccountTransaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        if (account.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp() != null) {
+            interestCarriedForward = interestCarriedForward != null ? interestCarriedForward.add(account.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp())
+            : account.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp();
+        }
+        return interestCarriedForward;
     }
 
     private void autoApproveAccount(JsonCommand command, FixedDepositAccount account, FixedDepositAccount newAccount) {
@@ -719,9 +737,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 account.savingsProduct(), charges);
     }
 
-    private void preCloseAccount(JsonCommand command, Map<String, Object> changes, FixedDepositAccount account,
-            AccountAssociations accountAssociations) {
-        FixedDepositPreClosureReq fixedDepositPreClosureReq = this.generateFixedDepositPreclosureRequest(accountAssociations, command);
+    private void preCloseAccount(JsonCommand command, Map<String, Object> changes, FixedDepositAccount account, AccountAssociations accountAssociations,
+                                 boolean topUp) {
+        FixedDepositPreClosureReq fixedDepositPreClosureReq = this.generateFixedDepositPreclosureRequest(accountAssociations, command, topUp);
         this.depositAccountDomainService.prematurelyCloseFDAccount(account, null, fixedDepositPreClosureReq, changes);
         this.saveNote(command, changes, account);
     }
@@ -809,7 +827,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         fixedDepositApplicationReq.setDepositAmount(account.getAccountTermAndPreClosure().maturityAmount().subtract(liquidationAmount));
     }
 
-    private FixedDepositPreClosureReq generateFixedDepositPreclosureRequest(AccountAssociations accountAssociations, JsonCommand command) {
+    private FixedDepositPreClosureReq generateFixedDepositPreclosureRequest(AccountAssociations accountAssociations, JsonCommand command,
+                                                                            boolean topUp) {
         FixedDepositPreClosureReq fixedDepositPreclosureReq = new FixedDepositPreClosureReq();
 
         fixedDepositPreclosureReq.setLocale(command.extractLocale());
@@ -820,6 +839,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         fixedDepositPreclosureReq.setClosureType(DepositAccountOnClosureType.TRANSFER_TO_SAVINGS);
         fixedDepositPreclosureReq.setToSavingsId(accountAssociations.linkedSavingsAccount().getId());
         fixedDepositPreclosureReq.setTransferDescription("Partial Liquidation");
+        fixedDepositPreclosureReq.setTopUp(topUp);
         return fixedDepositPreclosureReq;
     }
 

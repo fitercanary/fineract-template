@@ -90,6 +90,7 @@ public class FixedDepositApplicationReq {
     private LocalDate expectedFirstDepositOnDate;
     private Boolean transferInterest;
     private Long savingsAccountId;
+    private BigDecimal interestCarriedForward;
 
     private RecurringAccountDetailReq recurringAccountDetailReq;
     private FixedDepositApplicationTermsReq fixedDepositApplicationTermsReq;
@@ -297,10 +298,6 @@ public class FixedDepositApplicationReq {
         return minRequiredOpeningBalanceSet;
     }
 
-    public void setMinRequiredOpeningBalanceSet(boolean minRequiredOpeningBalanceSet) {
-        this.minRequiredOpeningBalanceSet = minRequiredOpeningBalanceSet;
-    }
-
     public Integer getLockinPeriodFrequency() {
         return lockinPeriodFrequency;
     }
@@ -353,10 +350,6 @@ public class FixedDepositApplicationReq {
         return chartIdSet;
     }
 
-    public void setChartIdSet(boolean chartIdSet) {
-        this.chartIdSet = chartIdSet;
-    }
-
     public boolean isWithHoldTax() {
         return withHoldTax;
     }
@@ -401,10 +394,6 @@ public class FixedDepositApplicationReq {
         return expectedFirstDepositOnDate;
     }
 
-    public void setExpectedFirstDepositOnDate(LocalDate expectedFirstDepositOnDate) {
-        this.expectedFirstDepositOnDate = expectedFirstDepositOnDate;
-    }
-
     public Boolean getTransferInterest() {
         return transferInterest;
     }
@@ -423,10 +412,6 @@ public class FixedDepositApplicationReq {
 
     public RecurringAccountDetailReq getRecurringAccountDetailReq() {
         return recurringAccountDetailReq;
-    }
-
-    public void setRecurringAccountDetailReq(RecurringAccountDetailReq recurringAccountDetailReq) {
-        this.recurringAccountDetailReq = recurringAccountDetailReq;
     }
 
     public FixedDepositApplicationTermsReq getFixedDepositApplicationTermsReq() {
@@ -453,4 +438,11 @@ public class FixedDepositApplicationReq {
         this.nickname = nickname;
     }
 
+    public BigDecimal getInterestCarriedForward() {
+        return interestCarriedForward;
+    }
+
+    public void setInterestCarriedForward(BigDecimal interestCarriedForward) {
+        this.interestCarriedForward = interestCarriedForward;
+    }
 }

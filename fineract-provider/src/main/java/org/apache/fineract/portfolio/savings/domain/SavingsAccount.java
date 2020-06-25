@@ -498,7 +498,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
         Money interestPostedToDate = Money.zero(this.currency);
 
-        boolean recalucateDailyBalanceDetails = false;
+        boolean recalculateDailyBalanceDetails = false;
         boolean applyWithHoldTax = isWithHoldTaxApplicableForInterestPosting();
         final List<SavingsAccountTransaction> withholdTransactions = new ArrayList<>();
         withholdTransactions.addAll(findWithHoldTransactions());
@@ -549,7 +549,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                         if (applyWithHoldTax) {
                             createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                         }
-                        recalucateDailyBalanceDetails = true;
+                        recalculateDailyBalanceDetails = true;
                     } else {
                         boolean correctionRequired = false;
                         for (SavingsAccountTransaction postingTransaction : postingTransactions) {
@@ -585,14 +585,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                             if (applyWithHoldTaxForOldTransaction) {
                                 createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                             }
-                            recalucateDailyBalanceDetails = true;
+                            recalculateDailyBalanceDetails = true;
                         }
                     }
                 }
             }
         }
 
-        if (recalucateDailyBalanceDetails) {
+        if (recalculateDailyBalanceDetails) {
             // no openingBalance concept supported yet but probably will to
             // allow
             // for migrations.

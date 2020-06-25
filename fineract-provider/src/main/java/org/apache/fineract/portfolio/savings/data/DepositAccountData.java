@@ -87,6 +87,7 @@ public class DepositAccountData {
     protected final SavingsAccountChargeData annualFee;
 
     protected final DepositAccountInterestRateChartData chartTemplate;
+    protected BigDecimal accruedInterestCarriedForward;
 
     // import fields
     private Long productId;
@@ -357,5 +358,9 @@ public class DepositAccountData {
 
     public String accountNo() {
         return accountNo;
+    }
+
+    public void setAccruedInterestCarriedForward(BigDecimal accruedInterestCarriedForward) {
+        this.accruedInterestCarriedForward = accruedInterestCarriedForward;
     }
 }

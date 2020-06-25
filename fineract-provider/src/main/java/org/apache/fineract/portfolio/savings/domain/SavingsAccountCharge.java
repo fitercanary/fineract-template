@@ -21,7 +21,6 @@ package org.apache.fineract.portfolio.savings.domain;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dateFormatParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.feeIntervalParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.feeOnMonthDayParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName;
 
@@ -40,7 +39,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
@@ -56,6 +54,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * @author dv6
  * 
@@ -129,12 +128,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     @Column(name = "inactivated_on_date")
     private Date inactivationDate;
 
-
     private final static Logger logger = LoggerFactory.getLogger(SavingsAccountCharge.class);
 
-
     public static SavingsAccountCharge createNew(SavingsAccount savingsAccount, Charge chargeDefinition,
-                                                 SavingsAccountChargeReq savingsAccountChargeReq) {
+            SavingsAccountChargeReq savingsAccountChargeReq) {
 
         BigDecimal amount = savingsAccountChargeReq.getAmount();
         final LocalDate dueDate = savingsAccountChargeReq.getDueDate();
@@ -182,7 +179,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             }
 
         }
-        
+
         if (isOnSpecifiedDueDate()) {
             if (savingsAccount.isDateBeforeLastTransaction(dueDate)) {
                 final String defaultUserMessage = "Savings Account charge due date can not be in past from last transaction date.";
@@ -236,11 +233,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
 
         final BigDecimal transactionAmount = new BigDecimal(0);
-        logger.info("Before populateDerivedFields chargeAmount "+chargeAmount);
+        logger.info("Before populateDerivedFields chargeAmount " + chargeAmount);
         populateDerivedFields(transactionAmount, chargeAmount);
 
-        if (this.isWithdrawalFee()
-        		|| this.isSavingsNoActivity()|| this.isOverdraftFee()) {
+        if (this.isWithdrawalFee() || this.isSavingsNoActivity() || this.isOverdraftFee()) {
             this.amountOutstanding = BigDecimal.ZERO;
         }
 
@@ -248,9 +244,9 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         this.status = status;
     }
 
-	public void setChargePaid() {
-		this.paid = determineIfFullyPaid();
-	}
+    public void setChargePaid() {
+        this.paid = determineIfFullyPaid();
+    }
 
     public void resetPropertiesForRecurringFees() {
         if (isMonthlyFee() || isAnnualFee() || isWeeklyFee()) {
@@ -288,13 +284,13 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             case PERCENT_OF_AMOUNT:
                 this.percentage = chargeAmount;
                 this.amountPercentageAppliedTo = transactionAmount;
-                logger.info("in side PERCENT_OF_AMOUNT percentage "+this.percentage+
-                        "  amountPercentageAppliedTo  "+this.amountPercentageAppliedTo);
+                logger.info("in side PERCENT_OF_AMOUNT percentage " + this.percentage + "  amountPercentageAppliedTo  "
+                        + this.amountPercentageAppliedTo);
                 this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
-                logger.info("in side PERCENT_OF_AMOUNT  calculated amount "+this.amount);
+                logger.info("in side PERCENT_OF_AMOUNT  calculated amount " + this.amount);
                 this.amountPaid = null;
                 this.amountOutstanding = calculateOutstanding();
-                logger.info("in side PERCENT_OF_AMOUNT  calculated amountOutstanding "+this.amountOutstanding);
+                logger.info("in side PERCENT_OF_AMOUNT  calculated amountOutstanding " + this.amountOutstanding);
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
@@ -309,8 +305,8 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             break;
             case PERCENT_OF_INTEREST:
                 this.percentage = chargeAmount;
-				this.amountPercentageAppliedTo = transactionAmount;
-				this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
+                this.amountPercentageAppliedTo = transactionAmount;
+                this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
                 this.amountPaid = null;
                 this.amountOutstanding = calculateOutstanding();
                 this.amountWaived = null;
@@ -580,7 +576,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             logger.info("inside percentageOf if condition");
             final MathContext mc = new MathContext(8, MoneyHelper.getRoundingMode());
             final BigDecimal multiplicand = percentage.divide(BigDecimal.valueOf(100L), mc);
-            logger.info("inside percentageOf if condition multiplicand {}",  multiplicand);
+            logger.info("inside percentageOf if condition multiplicand {}", multiplicand);
             percentageOf = value.multiply(multiplicand, mc);
         }
 
@@ -591,11 +587,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return this.amount;
     }
 
-	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
-	}
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
 
-	public BigDecimal amoutOutstanding() {
+    public BigDecimal amoutOutstanding() {
         return this.amountOutstanding;
     }
 
@@ -698,9 +694,9 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     public boolean isSavingsActivation() {
         return ChargeTimeType.fromInt(this.chargeTime).isSavingsActivation();
     }
-    
-    public boolean isSavingsNoActivity(){
-    	return ChargeTimeType.fromInt(this.chargeTime).isSavingsNoActivityFee();
+
+    public boolean isSavingsNoActivity() {
+        return ChargeTimeType.fromInt(this.chargeTime).isSavingsNoActivityFee();
     }
 
     public boolean isSavingsClosure() {
@@ -752,6 +748,8 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             amountPaybale = this.amount;
         } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfAmount()) {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
+        } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfInterest()) {
+            amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         }
         this.amountOutstanding = amountPaybale;
         return amountPaybale;
@@ -765,8 +763,8 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfAmount()) {
             amountPaybale = overdraftAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         }
-        this.amount = amountPaybale.add(this.amount,mc).abs();
-        this.amountOutstanding = amountPaybale.add(this.amountOutstanding,mc).abs();
+        this.amount = amountPaybale.add(this.amount, mc).abs();
+        this.amountOutstanding = amountPaybale.add(this.amountOutstanding, mc).abs();
         return amountPaybale;
     }
 
@@ -902,20 +900,24 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return !(this.isSavingsActivation() || this.isWithdrawalFee());
     }
 
-	public void setAmountPercentageAppliedTo(BigDecimal amountPercentageAppliedTo) {
-		this.amountPercentageAppliedTo = amountPercentageAppliedTo;
-	}
+    public void setAmountPercentageAppliedTo(BigDecimal amountPercentageAppliedTo) {
+        this.amountPercentageAppliedTo = amountPercentageAppliedTo;
+    }
 
-	public BigDecimal getPercentage() {
-		return percentage;
-	}
+    public BigDecimal getPercentage() {
+        return percentage;
+    }
 
-	public void setPercentage(BigDecimal percentage) {
-		this.percentage = percentage;
-	}
+    public void setPercentage(BigDecimal percentage) {
+        this.percentage = percentage;
+    }
 
-	public void setAmountOutstanding(BigDecimal amountOutstanding) {
-		this.amountOutstanding = amountOutstanding;
-	}
+    public void setAmountOutstanding(BigDecimal amountOutstanding) {
+        this.amountOutstanding = amountOutstanding;
+    }
+
+    public Integer getChargeCalculation() {
+        return this.chargeCalculation;
+    }
 
 }

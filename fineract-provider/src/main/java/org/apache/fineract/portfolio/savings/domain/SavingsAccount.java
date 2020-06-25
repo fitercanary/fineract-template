@@ -380,12 +380,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, boolean withHoldTax) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, boolean withHoldTax, final String nickname) {
         this(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null,
-                withHoldTax, null);
+                withHoldTax, nickname);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff savingsOfficer,
@@ -498,7 +498,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
         Money interestPostedToDate = Money.zero(this.currency);
 
-        boolean recalucateDailyBalanceDetails = false;
+        boolean recalculateDailyBalanceDetails = false;
         boolean applyWithHoldTax = isWithHoldTaxApplicableForInterestPosting();
         final List<SavingsAccountTransaction> withholdTransactions = new ArrayList<>();
         withholdTransactions.addAll(findWithHoldTransactions());
@@ -549,7 +549,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                         if (applyWithHoldTax) {
                             createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                         }
-                        recalucateDailyBalanceDetails = true;
+                        recalculateDailyBalanceDetails = true;
                     } else {
                         boolean correctionRequired = false;
                         for (SavingsAccountTransaction postingTransaction : postingTransactions) {
@@ -585,14 +585,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                             if (applyWithHoldTaxForOldTransaction) {
                                 createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                             }
-                            recalucateDailyBalanceDetails = true;
+                            recalculateDailyBalanceDetails = true;
                         }
                     }
                 }
             }
         }
 
-        if (recalucateDailyBalanceDetails) {
+        if (recalculateDailyBalanceDetails) {
             // no openingBalance concept supported yet but probably will to
             // allow
             // for migrations.

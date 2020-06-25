@@ -34,13 +34,14 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transfe
 
 public class FixedDepositPreClosureReq {
 
-    Locale locale;
-    String dateFormat;
-    LocalDate closedDate;
-    DepositAccountOnClosureType closureType;
-    DateTimeFormatter formatter;
-    Long toSavingsId;
-    String transferDescription;
+    private Locale locale;
+    private String dateFormat;
+    private LocalDate closedDate;
+    private DepositAccountOnClosureType closureType;
+    private DateTimeFormatter formatter;
+    private Long toSavingsId;
+    private String transferDescription;
+    private boolean topUp;
 
     public static FixedDepositPreClosureReq instance(JsonCommand command) {
         FixedDepositPreClosureReq instance = new FixedDepositPreClosureReq();
@@ -109,5 +110,13 @@ public class FixedDepositPreClosureReq {
 
     public void setTransferDescription(String transferDescription) {
         this.transferDescription = transferDescription;
+    }
+
+    public boolean isTopUp() {
+        return topUp;
+    }
+
+    public void setTopUp(boolean topUp) {
+        this.topUp = topUp;
     }
 }

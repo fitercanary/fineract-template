@@ -179,7 +179,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.updateMaturityDateAndAmount(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
         account.updateOverduePayments(DateUtils.getLocalDateOfTenant());
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         return deposit;
     }
 
@@ -188,13 +188,12 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     public SavingsAccountTransaction handleSavingDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final boolean isRegularTransaction) {
-        boolean isAccountTransfer = false;
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
-                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+                transactionAmount, paymentDetail, false, isRegularTransaction);
         final Set<Long> existingTransactionIds = new HashSet<>();
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         return deposit;
     }
 
@@ -278,7 +277,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.close(user, command, tenantsTodayDate, changes);
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
 
         return savingsTransactionId;
     }
@@ -354,7 +353,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
 
         return savingsTransactionId;
     }
@@ -411,7 +410,6 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
 
-        boolean isAccountTransfer = false;
         final boolean isPreMatureClosure = true;
         final Set<Long> existingTransactionIds = new HashSet<>();
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
@@ -470,7 +468,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.getSummary().setTotalInterestEarned(account.getSummary().getTotalInterestPosted());
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
 
         return savingsTransactionId;
     }
@@ -478,12 +476,17 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private void applyPreclosureCharges(SavingsAccount account, AppUser user, LocalDate closedDate) {
         List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
                 Arrays.asList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue(), ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+        SavingsAccountTransaction withholdTaxTransaction = account.getTransactions()
+                .stream().filter(SavingsAccountTransaction::isWithHoldTaxAndNotReversed).findFirst().orElse(null);
         for (SavingsAccountCharge charge : preclosureCharges) {
             BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
                     : account.getSummary().getTotalInterestEarned();
             ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
             if (chargeCalculationType.isPercentageOfAmount()) {
                 amount = account.getAccountBalance();
+            }
+            if (withholdTaxTransaction != null && charge.getCharge().getChargeTimeType().equals(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue())) {
+                amount = amount.subtract(withholdTaxTransaction.getAmount());
             }
             if (chargeCalculationType.isPercentageBased()) {
                 charge.setPercentage(charge.getCharge().getAmount());
@@ -628,7 +631,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
         account.prematureClosure(user, command, tenantsTodayDate, changes);
         this.savingsAccountRepository.save(account);
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         return savingsTransactionId;
     }
 
@@ -639,7 +642,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     }
 
     private void postJournalEntries(final SavingsAccount savingsAccount, final Set<Long> existingTransactionIds,
-            final Set<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
+            final Set<Long> existingReversedTransactionIds) {
 
         final MonetaryCurrency currency = savingsAccount.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);

@@ -824,7 +824,22 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private void setDepositAmountForPartialLiquidation(FixedDepositApplicationReq fixedDepositApplicationReq, FixedDepositAccount account,
             JsonCommand command) {
         BigDecimal liquidationAmount = command.bigDecimalValueOfParameterNamed(liquidationAmountParamName);
-        fixedDepositApplicationReq.setDepositAmount(account.getAccountTermAndPreClosure().maturityAmount().subtract(liquidationAmount));
+        SavingsAccountTransaction partialLiquidationChargeTrxn = account.getTransactions()
+                .stream().filter(this::isPartialLiquidationChargeTransaction).findFirst().orElse(null);
+        BigDecimal newDepositAmount = account.getAccountTermAndPreClosure().maturityAmount().subtract(liquidationAmount);
+        if (partialLiquidationChargeTrxn != null) {
+            newDepositAmount = newDepositAmount.subtract(partialLiquidationChargeTrxn.getAmount());
+        }
+        fixedDepositApplicationReq.setDepositAmount(newDepositAmount);
+    }
+
+    private boolean isPartialLiquidationChargeTransaction(SavingsAccountTransaction transaction) {
+        if (transaction.isPayCharge()) {
+            return transaction.getSavingsAccountChargesPaid().stream().allMatch(t ->
+                    t.getSavingsAccountCharge().getCharge().getChargeTimeType().equals(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue())
+            );
+        }
+        return false;
     }
 
     private FixedDepositPreClosureReq generateFixedDepositPreclosureRequest(AccountAssociations accountAssociations, JsonCommand command,

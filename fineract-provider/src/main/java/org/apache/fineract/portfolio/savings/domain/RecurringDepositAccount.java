@@ -1350,4 +1350,13 @@ public class RecurringDepositAccount extends SavingsAccount {
         accountTermAndPreClosure.updateTargetMaturityAmount(targetMaturityAmount);
     }
 
+    @Override
+    public void postAccrualInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
+            final LocalDate postInterestOnDate) {
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                financialYearBeginningMonth, postInterestOnDate);
+    }
+
 }

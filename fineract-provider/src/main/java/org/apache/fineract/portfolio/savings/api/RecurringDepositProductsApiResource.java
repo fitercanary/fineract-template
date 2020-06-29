@@ -284,6 +284,9 @@ public class RecurringDepositProductsApiResource {
         Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveSavingsProductApplicableCharges(feeChargesOnly);
         chargeOptions = CollectionUtils.isEmpty(chargeOptions) ? null : chargeOptions;
 
+        Collection<ChargeData> preClosureChargeOptions = this.chargeReadPlatformService.retrieveDepositPreClosureCharges();
+        preClosureChargeOptions = CollectionUtils.isEmpty(preClosureChargeOptions) ? null : preClosureChargeOptions;
+
         Collection<ChargeData> penaltyOptions = this.chargeReadPlatformService.retrieveSavingsApplicablePenalties();
         penaltyOptions = CollectionUtils.isEmpty(penaltyOptions) ? null : penaltyOptions;
 
@@ -308,7 +311,7 @@ public class RecurringDepositProductsApiResource {
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions);
         }
-
+        recurringDepositProductToReturn.setPreClosureCharges(preClosureChargeOptions);
         return recurringDepositProductToReturn;
     }
 

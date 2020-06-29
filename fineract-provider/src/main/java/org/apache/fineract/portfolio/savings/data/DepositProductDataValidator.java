@@ -36,6 +36,8 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepo
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeApplicableParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
@@ -119,7 +121,7 @@ public class DepositProductDataValidator {
 
         validatePreClosureDetailForCreate(element, baseDataValidator);
 
-        validateDepositTermDeatilForCreate(element, baseDataValidator);
+        validateDepositTermDetailForCreate(element, baseDataValidator);
 
         validateChartsData(element, baseDataValidator);
 
@@ -168,7 +170,7 @@ public class DepositProductDataValidator {
 
         validatePreClosureDetailForCreate(element, baseDataValidator);
 
-        validateDepositTermDeatilForCreate(element, baseDataValidator);
+        validateDepositTermDetailForCreate(element, baseDataValidator);
 
         validateRecurringDetailForCreate(element, baseDataValidator);
 
@@ -340,17 +342,34 @@ public class DepositProductDataValidator {
     }
 
     public void validatePreClosureDetailForCreate(JsonElement element, DataValidatorBuilder baseDataValidator) {
+        this.validatePreClosurePenalInterest(element, baseDataValidator);
+        this.validatePreClosureCharge(element, baseDataValidator);
+    }
+
+    private void validatePreClosureCharge(JsonElement element, DataValidatorBuilder baseDataValidator) {
+        if (fromApiJsonHelper.parameterExists(preClosureChargeApplicableParamName, element)) {
+            boolean preClosureChargeApplicable = fromApiJsonHelper.extractBooleanNamed(preClosureChargeApplicableParamName, element);
+            if (preClosureChargeApplicable) {
+                Long preClosureChargeId = fromApiJsonHelper.extractLongNamed(preClosureChargeIdParamName, element);
+                baseDataValidator.reset().parameter(preClosureChargeIdParamName).value(preClosureChargeId)
+                        .cantBeBlankWhenParameterProvidedIs(preClosureChargeApplicableParamName, preClosureChargeApplicable)
+                        .notNull().longGreaterThanZero();
+            }
+        }
+    }
+
+    private void validatePreClosurePenalInterest(JsonElement element, DataValidatorBuilder baseDataValidator) {
         if (fromApiJsonHelper.parameterExists(preClosurePenalApplicableParamName, element)) {
-            final boolean preClosurePenalApplicable = fromApiJsonHelper.extractBooleanNamed(preClosurePenalApplicableParamName, element);
+            boolean preClosurePenalApplicable = fromApiJsonHelper.extractBooleanNamed(preClosurePenalApplicableParamName, element);
 
             if (preClosurePenalApplicable) {
-                final BigDecimal penalInterestRate = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(preClosurePenalInterestParamName,
+                BigDecimal penalInterestRate = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(preClosurePenalInterestParamName,
                         element);
                 baseDataValidator.reset().parameter(preClosurePenalInterestParamName).value(penalInterestRate)
                         .cantBeBlankWhenParameterProvidedIs(preClosurePenalApplicableParamName, preClosurePenalApplicable)
                         .zeroOrPositiveAmount();
 
-                final Integer preClosurePenalInterestType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                Integer preClosurePenalInterestType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                         preClosurePenalInterestOnTypeIdParamName, element);
                 baseDataValidator.reset().parameter(preClosurePenalInterestOnTypeIdParamName).value(preClosurePenalInterestType)
                         .cantBeBlankWhenParameterProvidedIs(preClosurePenalApplicableParamName, preClosurePenalApplicable)
@@ -359,7 +378,7 @@ public class DepositProductDataValidator {
         }
     }
 
-    public void validateDepositTermDeatilForCreate(JsonElement element, DataValidatorBuilder baseDataValidator) {
+    public void validateDepositTermDetailForCreate(JsonElement element, DataValidatorBuilder baseDataValidator) {
 
         final Integer minTerm = fromApiJsonHelper.extractIntegerSansLocaleNamed(minDepositTermParamName, element);
         baseDataValidator.reset().parameter(minDepositTermParamName).value(minTerm).notNull().integerGreaterThanZero();
@@ -563,6 +582,15 @@ public class DepositProductDataValidator {
                     preClosurePenalInterestOnTypeIdParamName, element);
             baseDataValidator.reset().parameter(preClosurePenalInterestOnTypeIdParamName).value(preClosurePenalInterestType).notNull()
                     .isOneOfTheseValues(PreClosurePenalInterestOnType.integerValues());
+        }
+
+        if (fromApiJsonHelper.parameterExists(preClosureChargeApplicableParamName, element)) {
+            Boolean preClosureChargeApplicable = fromApiJsonHelper.extractBooleanNamed(preClosureChargeApplicableParamName, element);
+            baseDataValidator.reset().parameter(preClosureChargeApplicableParamName).value(preClosureChargeApplicable).notNull();
+            if (preClosureChargeApplicable != null && preClosureChargeApplicable) {
+                Long preClosureChargeId = this.fromApiJsonHelper.extractLongNamed(preClosureChargeIdParamName, element);
+                baseDataValidator.reset().parameter(preClosureChargeIdParamName).value(preClosureChargeId).notNull();
+            }
         }
     }
 

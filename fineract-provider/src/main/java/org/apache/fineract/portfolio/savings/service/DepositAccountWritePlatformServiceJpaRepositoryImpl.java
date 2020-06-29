@@ -810,11 +810,11 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private FixedDepositApplicationPreClosureReq generateFixedDepositApplicationPreClosureReq(FixedDepositAccount account) {
         FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq = new FixedDepositApplicationPreClosureReq();
         fixedDepositApplicationPreClosureReq
-                .setPreClosurePenalInterest(account.getAccountTermAndPreClosure().getPreClosureDetail().preClosurePenalInterest());
+                .setPreClosurePenalInterest(account.getAccountTermAndPreClosure().getPreClosureDetail().getPreClosurePenalInterest());
         fixedDepositApplicationPreClosureReq
                 .setPreClosurePenalApplicable(account.getAccountTermAndPreClosure().isPreClosurePenalApplicable());
         fixedDepositApplicationPreClosureReq.setPreClosurePenalInterestOnTypeId(
-                account.getAccountTermAndPreClosure().getPreClosureDetail().preClosurePenalInterestOnTypeId());
+                account.getAccountTermAndPreClosure().getPreClosureDetail().getPreClosurePenalInterestOnType());
         fixedDepositApplicationPreClosureReq.setPreClosurePenalInterestOnTypeIdPramSet(true);
         fixedDepositApplicationPreClosureReq.setPreClosurePenalInterestParamSet(true);
         fixedDepositApplicationPreClosureReq.setPreClosurePenalApplicableParamSet(true);

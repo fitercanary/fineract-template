@@ -97,6 +97,8 @@ public class DepositsApiConstants {
     public static final String preClosurePenalInterestParamName = "preClosurePenalInterest";
     public static final String preClosurePenalInterestOnTypeIdParamName = "preClosurePenalInterestOnTypeId";
     public static final String preClosurePenalInterestOnType = "preClosurePenalInterestOnType";
+    public static final String preClosureChargeApplicableParamName = "preClosureChargeApplicable";
+    public static final String preClosureChargeIdParamName = "preClosureChargeId";
 
     // term parameters
     public static final String minDepositTermParamName = "minDepositTerm";
@@ -204,7 +206,8 @@ public class DepositsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue()));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName));
+            Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName,
+                    preClosureChargeApplicableParamName, preClosureChargeIdParamName));
 
     private static final Set<String> PRECLOSURE_RESPONSE_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnType));

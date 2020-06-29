@@ -385,6 +385,18 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
     }
 
     @Override
+    public Collection<ChargeData> retrieveDepositPreClosureCharges() {
+        final ChargeMapper rm = new ChargeMapper();
+
+        String sql = "select " + rm.chargeSchema() + " where c.is_deleted = false and c.is_active = true and c.charge_applies_to_enum = ? " +
+                " and c.charge_time_enum = ?";
+        sql += addInClauseToSQL_toLimitChargesMappedToOffice_ifOfficeSpecificProductsEnabled();
+        sql += " order by c.name ";
+
+        return this.jdbcTemplate.query(sql, rm, ChargeAppliesTo.SAVINGS.getValue(), ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue());
+    }
+
+    @Override
     public Collection<ChargeData> retrieveSavingsApplicablePenalties() {
         final ChargeMapper rm = new ChargeMapper();
 

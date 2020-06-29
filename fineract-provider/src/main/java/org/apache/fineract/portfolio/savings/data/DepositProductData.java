@@ -49,7 +49,6 @@ public class DepositProductData {
     protected final EnumOptionData interestPostingPeriodType;
     protected final EnumOptionData interestCalculationType;
     protected final EnumOptionData interestCalculationDaysInYearType;
-    // protected final BigDecimal minRequiredOpeningBalance;
     protected final Integer lockinPeriodFrequency;
     protected final EnumOptionData lockinPeriodFrequencyType;
    	protected Boolean withdrawalFeeForTransfers;
@@ -66,6 +65,10 @@ public class DepositProductData {
 
     // charges
     protected final Collection<ChargeData> charges;
+    protected Collection<ChargeData> preClosureCharges;
+    protected boolean preClosureChargeApplicable;
+    protected ChargeData preClosureCharge;
+    protected Long preClosureChargeId;
 
     // interest rate charts
     protected final Collection<InterestRateChartData> interestRateCharts;
@@ -400,6 +403,13 @@ public class DepositProductData {
         return activeChart;
     }
 
+    protected static void setExtraProperties(DepositProductData existingProduct, DepositProductData fixedDepositProductData) {
+        fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
+        fixedDepositProductData.setPreClosureChargeApplicable(existingProduct.preClosureChargeApplicable);
+        fixedDepositProductData.setPreClosureCharge(existingProduct.preClosureCharge);
+        fixedDepositProductData.setPreClosureChargeId(existingProduct.preClosureChargeId);
+    }
+
     public boolean hasAccountingEnabled() {
         return this.accountingRule.getId() > AccountingRuleType.NONE.getValue();
     }
@@ -459,5 +469,25 @@ public class DepositProductData {
 	public void setWithdrawalFeeForTransfers(Boolean withdrawalFeeForTransfers) {
 		this.withdrawalFeeForTransfers = withdrawalFeeForTransfers;
 	}
+
+    public void setPreClosureChargeApplicable(boolean preClosureChargeApplicable) {
+        this.preClosureChargeApplicable = preClosureChargeApplicable;
+    }
+
+    public void setPreClosureCharges(Collection<ChargeData> preClosureCharges) {
+        this.preClosureCharges = preClosureCharges;
+    }
+
+    public void setPreClosureCharge(ChargeData preClosureCharge) {
+        this.preClosureCharge = preClosureCharge;
+    }
+
+    public Long getPreClosureChargeId() {
+        return preClosureChargeId;
+    }
+
+    public void setPreClosureChargeId(Long preClosureChargeId) {
+        this.preClosureChargeId = preClosureChargeId;
+    }
 }
 

@@ -23,17 +23,20 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 
 import java.math.BigDecimal;
 
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeApplicableParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
 
 public class FixedDepositApplicationPreClosureReq {
 
+    private boolean preClosureChargeApplicable = false;
     private boolean preClosurePenalApplicable = false;
     private BigDecimal preClosurePenalInterest = null;
     private Integer preClosurePenalInterestOnTypeId = null;
     private boolean preClosurePenalApplicableParamSet = false;
     private boolean preClosurePenalInterestParamSet = false;
+    private boolean preClosureChargeApplicableParamSet = false;
     private boolean preClosurePenalInterestOnTypeIdPramSet = false;
 
     public static FixedDepositApplicationPreClosureReq instance(JsonCommand command) {
@@ -52,6 +55,11 @@ public class FixedDepositApplicationPreClosureReq {
                     instance.preClosurePenalInterestOnTypeId = command.integerValueOfParameterNamed(preClosurePenalInterestOnTypeIdParamName);
                 }
             }
+        }
+
+        if (command.parameterExists(preClosurePenalApplicableParamName)) {
+            instance.preClosureChargeApplicableParamSet = true;
+            instance.preClosureChargeApplicable = command.booleanObjectValueOfParameterNamed(preClosureChargeApplicableParamName);
         }
 
         return instance;
@@ -104,4 +112,13 @@ public class FixedDepositApplicationPreClosureReq {
     public void setPreClosurePenalInterestOnTypeIdPramSet(boolean preClosurePenalInterestOnTypeIdPramSet) {
         this.preClosurePenalInterestOnTypeIdPramSet = preClosurePenalInterestOnTypeIdPramSet;
     }
+
+    public boolean isPreClosureChargeApplicable() {
+        return preClosureChargeApplicable;
+    }
+
+    public boolean isPreClosureChargeApplicableParamSet() {
+        return preClosureChargeApplicableParamSet;
+    }
+
 }

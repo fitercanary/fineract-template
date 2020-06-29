@@ -247,7 +247,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         if (isPreMatureClosure) {
             if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
                 applyPreMaturePenalty = true;
-                penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
+                penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().getPreClosurePenalInterest();
                 final PreClosurePenalInterestOnType preClosurePenalInterestOnType = this.accountTermAndPreClosure.depositPreClosureDetail()
                         .preClosurePenalInterestOnType();
                 if (preClosurePenalInterestOnType.isWholeTerm()) {

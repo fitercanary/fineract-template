@@ -111,6 +111,10 @@ public class DepositProductTermAndPreClosure extends AbstractPersistableCustom<L
         this.product = (FixedDepositProduct) product;
     }
 
+    public Charge getPreClosureCharge() {
+        return preClosureCharge;
+    }
+
     public void setPreClosureCharge(Charge preClosureCharge) {
         this.preClosureCharge = preClosureCharge;
     }

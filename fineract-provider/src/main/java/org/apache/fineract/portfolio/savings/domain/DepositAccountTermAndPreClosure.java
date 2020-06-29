@@ -245,6 +245,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         return false;
     }
 
+
     public Integer getActualDepositPeriod(final LocalDate interestPostingUpToDate, final SavingsPeriodFrequencyType periodFrequencyType) {
         LocalDate depositFromDate = getExpectedFirstDepositOnDate();
 

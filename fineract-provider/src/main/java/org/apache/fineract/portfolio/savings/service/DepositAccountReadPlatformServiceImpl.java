@@ -254,10 +254,19 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append(depositAccountMapper.schema());
             sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? ");
 
-            return  this.jdbcTemplate.queryForObject(sqlBuilder.toString(), depositAccountMapper, accountId,
+            DepositAccountData depositAccountData = this.jdbcTemplate.queryForObject(sqlBuilder.toString(), depositAccountMapper, accountId,
                     depositAccountType.getValue());
+            this.setPreClosureCharge(depositAccountType, depositAccountData);
+            return depositAccountData;
         } catch (final EmptyResultDataAccessException e) {
             throw new DepositAccountNotFoundException(depositAccountType, accountId);
+        }
+    }
+
+    private void setPreClosureCharge(DepositAccountType depositAccountType, DepositAccountData depositAccountData) {
+        if (depositAccountData.isPreClosureChargeApplicable()) {
+            DepositProductData depositProductData = this.depositProductReadPlatformService.retrieveOne(depositAccountType, depositAccountData.productId());
+            depositAccountData.setPreClosureCharge(depositProductData.getPreClosureCharge());
         }
     }
 
@@ -436,9 +445,10 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                         periodFrequencyTypeOptions);
                 template = RecurringDepositAccountData.withInterestChartAndRecurringDetails((RecurringDepositAccountData) template,
                         accountChart, null, null);
-
             }
-
+            DepositProductData depositProductData = this.depositProductReadPlatformService.retrieveOne(depositAccountType, productId);
+            template.setPreClosureChargeApplicable(depositProductData.isPreClosureChargeApplicable());
+            template.setPreClosureCharge(depositProductData.getPreClosureCharge());
         } else {
 
             String clientName = null;
@@ -598,7 +608,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId, ");
             selectFieldsSqlBuilder.append("sa.min_balance_for_interest_calculation as minBalanceForInterestCalculation, ");
             selectFieldsSqlBuilder.append("sa.withhold_tax as withHoldTax,");
-            selectFieldsSqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName ");
+            selectFieldsSqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName, ");
+            selectFieldsSqlBuilder.append("datp.pre_closure_charge_applicable as preClosureChargeApplicable ");
             
 
             this.selectFieldsSql = selectFieldsSqlBuilder.toString();
@@ -682,6 +693,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final String closedByUsername = rs.getString("closedByUsername");
             final String closedByFirstname = rs.getString("closedByFirstname");
             final String closedByLastname = rs.getString("closedByLastname");
+            final boolean preClosureChargeApplicable = rs.getBoolean("preClosureChargeApplicable");
 
             final SavingsAccountApplicationTimelineData timeline = new SavingsAccountApplicationTimelineData(submittedOnDate,
                     submittedByUsername, submittedByFirstname, submittedByLastname, rejectedOnDate, rejectedByUsername,
@@ -758,11 +770,13 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     totalWithdrawalFees, totalAnnualFees, totalInterestEarned, totalInterestPosted, accountBalance, totalFeeCharge,
                     totalPenaltyCharge, totalOverdraftInterestDerived, totalWithholdTax, null, null, availableBalance);
 
-            return DepositAccountData.instance(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
+            DepositAccountData depositAccountData = DepositAccountData.instance(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
                     minBalanceForInterestCalculation, withHoldTax, taxGroupData, nickName);
+            depositAccountData.setPreClosureChargeApplicable(preClosureChargeApplicable);
+            return depositAccountData;
         }
     }
 
@@ -945,7 +959,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     depositPeriodFrequencyType, mandatoryRecommendedDepositAmount, onAccountClosureType, expectedFirstDepositOnDate,
                     totalOverdueAmount, noOfOverdueInstallments, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
                     isCalendarInherited, targetAmount, targetMaturityAmount);
-
         }
     }
 

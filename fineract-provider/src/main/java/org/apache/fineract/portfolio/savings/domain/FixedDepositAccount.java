@@ -868,4 +868,8 @@ public class FixedDepositAccount extends SavingsAccount {
     public void setApplyPreclosureCharges(boolean applyPreclosureCharges) {
         this.applyPreclosureCharges = applyPreclosureCharges;
     }
+
+    public FixedDepositProduct getProduct() {
+        return (FixedDepositProduct) this.product;
+    }
 }

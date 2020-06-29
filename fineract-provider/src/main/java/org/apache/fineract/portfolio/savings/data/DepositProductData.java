@@ -470,12 +470,20 @@ public class DepositProductData {
 		this.withdrawalFeeForTransfers = withdrawalFeeForTransfers;
 	}
 
+    public boolean isPreClosureChargeApplicable() {
+        return preClosureChargeApplicable;
+    }
+
     public void setPreClosureChargeApplicable(boolean preClosureChargeApplicable) {
         this.preClosureChargeApplicable = preClosureChargeApplicable;
     }
 
     public void setPreClosureCharges(Collection<ChargeData> preClosureCharges) {
         this.preClosureCharges = preClosureCharges;
+    }
+
+    public ChargeData getPreClosureCharge() {
+        return preClosureCharge;
     }
 
     public void setPreClosureCharge(ChargeData preClosureCharge) {

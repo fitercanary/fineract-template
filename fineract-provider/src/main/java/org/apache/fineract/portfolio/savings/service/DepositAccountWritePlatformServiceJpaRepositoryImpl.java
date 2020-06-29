@@ -85,6 +85,8 @@ import org.apache.fineract.portfolio.savings.domain.DepositAccountDomainService;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountRecurringDetail;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountTermAndPreClosure;
+import org.apache.fineract.portfolio.savings.domain.DepositProductTermAndPreClosure;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
 import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
@@ -1209,7 +1211,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
                 DepositAccountType.FIXED_DEPOSIT);
         checkClientOrGroupActive(account);
-
+        this.createPreClosureCharge(account, account.getProduct().depositProductTermAndPreClosure(), account.getAccountTermAndPreClosure());
         this.depositAccountDomainService.prematurelyCloseFDAccount(account, paymentDetail, FixedDepositPreClosureReq.instance(command),
                 changes);
 
@@ -1217,6 +1219,23 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         return new CommandProcessingResultBuilder().withEntityId(savingsId).withOfficeId(account.officeId())
                 .withClientId(account.clientId()).withGroupId(account.groupId()).withSavingsId(savingsId).with(changes).build();
+    }
+
+    private void createPreClosureCharge(SavingsAccount account, DepositProductTermAndPreClosure productTermAndPreClosure,
+                                        DepositAccountTermAndPreClosure depositAccountTermAndPreClosure) {
+        Charge charge = productTermAndPreClosure.getPreClosureCharge();
+        if (depositAccountTermAndPreClosure.getPreClosureDetail().isPreClosureChargeApplicable() && charge != null) {
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                    Collections.singletonList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue()));
+            if (preclosureCharges.isEmpty()) {
+                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+                savingsAccountChargeReq.setAmount(charge.getAmount());
+                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
+                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+                this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            }
+        }
     }
 
     @Override
@@ -1231,6 +1250,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final RecurringDepositAccount account = (RecurringDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
                 DepositAccountType.RECURRING_DEPOSIT);
         checkClientOrGroupActive(account);
+        this.createPreClosureCharge(account, account.getProduct().depositProductTermAndPreClosure(), account.getAccountTermAndPreClosure());
         if (account.maturityDate() == null) {
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)

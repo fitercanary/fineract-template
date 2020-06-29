@@ -3746,4 +3746,5 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public boolean isWithHoldTax() {
         return this.withHoldTax;
     }
+
 }

@@ -147,7 +147,7 @@ public class FixedDepositAccountData extends DepositAccountData {
         final Collection<PaymentTypeData> paymentTypeOptions = null;
         final Collection<SavingsAccountData> savingsAccountDatas = null;
 
-        return new FixedDepositAccountData(depositAccountData.id, depositAccountData.accountNo, depositAccountData.externalId,
+        FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(depositAccountData.id, depositAccountData.accountNo, depositAccountData.externalId,
                 depositAccountData.groupId, depositAccountData.groupName, depositAccountData.clientId, depositAccountData.clientName,
                 depositAccountData.depositProductId, depositAccountData.depositProductName, depositAccountData.fieldOfficerId,
                 depositAccountData.fieldOfficerName, depositAccountData.status, depositAccountData.timeline, depositAccountData.currency,
@@ -167,6 +167,9 @@ public class FixedDepositAccountData extends DepositAccountData {
                 depositPeriod, depositPeriodFrequency, periodFrequencyTypeOptions, depositType, onAccountClosure, onAccountClosureOptions,
                 paymentTypeOptions, savingsAccountDatas, linkedAccount, transferInterestToSavings, depositAccountData.withHoldTax,
                 depositAccountData.taxGroup, depositAccountData.nickname);
+        fixedDepositAccountData.setPreClosureChargeApplicable(depositAccountData.preClosureChargeApplicable);
+        fixedDepositAccountData.setPreClosureCharge(depositAccountData.preClosureCharge);
+        return fixedDepositAccountData;
     }
 
     public static FixedDepositAccountData withInterestChart(final FixedDepositAccountData account,
@@ -189,6 +192,8 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.onAccountClosure, account.onAccountClosureOptions, account.paymentTypeOptions, account.savingsAccounts,
                 account.linkedAccount, account.transferInterestToSavings, account.withHoldTax, account.taxGroup, account.nickname);
         fixedDepositAccountData.setAccruedInterestCarriedForward(account.accruedInterestCarriedForward);
+        fixedDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        fixedDepositAccountData.setPreClosureCharge(account.preClosureCharge);
         return fixedDepositAccountData;
     }
 
@@ -220,6 +225,8 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.taxGroup, account.nickname);
         fixedDepositAccountData.withdrawalFeeForTransfers = account.withdrawalFeeForTransfers;
         fixedDepositAccountData.accruedInterestCarriedForward = account.accruedInterestCarriedForward;
+        fixedDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        fixedDepositAccountData.setPreClosureCharge(account.preClosureCharge);
         return fixedDepositAccountData;
     }
 

@@ -143,7 +143,7 @@ public class DepositProductDataValidator {
 
         validateDepositDetailForUpdate(element, fromApiJsonHelper, baseDataValidator);
 
-        validatePreClosureDetailForUpdate(element, baseDataValidator);
+        validatePreClosureDetailForUpdate(element, baseDataValidator, true);
 
         validateDepositTermDetailForUpdate(element, baseDataValidator);
 
@@ -194,7 +194,7 @@ public class DepositProductDataValidator {
 
         validateDepositDetailForUpdate(element, fromApiJsonHelper, baseDataValidator);
 
-        validatePreClosureDetailForUpdate(element, baseDataValidator);
+        validatePreClosureDetailForUpdate(element, baseDataValidator, true);
 
         validateDepositTermDetailForUpdate(element, baseDataValidator);
 
@@ -565,7 +565,7 @@ public class DepositProductDataValidator {
         validateTaxWithHoldingParams(baseDataValidator, element, false);
     }
 
-    public void validatePreClosureDetailForUpdate(JsonElement element, DataValidatorBuilder baseDataValidator) {
+    public void validatePreClosureDetailForUpdate(JsonElement element, DataValidatorBuilder baseDataValidator, boolean validateCharge) {
         if (fromApiJsonHelper.parameterExists(preClosurePenalApplicableParamName, element)) {
             final Boolean preClosurePenalApplicable = fromApiJsonHelper.extractBooleanNamed(preClosurePenalApplicableParamName, element);
             baseDataValidator.reset().parameter(preClosurePenalApplicableParamName).value(preClosurePenalApplicable).notNull();
@@ -587,7 +587,7 @@ public class DepositProductDataValidator {
         if (fromApiJsonHelper.parameterExists(preClosureChargeApplicableParamName, element)) {
             Boolean preClosureChargeApplicable = fromApiJsonHelper.extractBooleanNamed(preClosureChargeApplicableParamName, element);
             baseDataValidator.reset().parameter(preClosureChargeApplicableParamName).value(preClosureChargeApplicable).notNull();
-            if (preClosureChargeApplicable != null && preClosureChargeApplicable) {
+            if (preClosureChargeApplicable != null && preClosureChargeApplicable && validateCharge) {
                 Long preClosureChargeId = this.fromApiJsonHelper.extractLongNamed(preClosureChargeIdParamName, element);
                 baseDataValidator.reset().parameter(preClosureChargeIdParamName).value(preClosureChargeId).notNull();
             }

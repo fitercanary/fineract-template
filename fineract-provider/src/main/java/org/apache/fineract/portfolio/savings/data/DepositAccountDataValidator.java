@@ -18,6 +18,37 @@
  */
 package org.apache.fineract.portfolio.savings.data;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.DepositsApiConstants;
+import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
+import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
+import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
+import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
+import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.joda.time.LocalDate;
+import org.joda.time.MonthDay;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
@@ -61,38 +92,6 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.productI
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
 
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.fineract.infrastructure.core.data.ApiParameterError;
-import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
-import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
-import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
-import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
-import org.apache.fineract.portfolio.savings.DepositAccountType;
-import org.apache.fineract.portfolio.savings.DepositsApiConstants;
-import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
-import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
-import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
-import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
-import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
-import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.joda.time.LocalDate;
-import org.joda.time.MonthDay;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
-
 @Component
 public class DepositAccountDataValidator {
 
@@ -119,7 +118,7 @@ public class DepositAccountDataValidator {
 
         validateDepositDetailsForSubmit(element, baseDataValidator);
         validatePreClosureDetailForSubmit(element, baseDataValidator);
-        validateDepositTermDeatilForSubmit(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
+        validateDepositTermDetailForSubmit(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
         validateSavingsCharges(element, baseDataValidator);
         validateWithHoldTax(element, baseDataValidator);
 
@@ -141,7 +140,6 @@ public class DepositAccountDataValidator {
         validateDepositDetailsForUpdate(element, baseDataValidator);
         validatePreClosureDetailForUpdate(element, baseDataValidator);
         validateDepositTermDetailForUpdate(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
-        // validateSavingsCharges(element, baseDataValidator);
         validateWithHoldTax(element, baseDataValidator);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -161,7 +159,7 @@ public class DepositAccountDataValidator {
 
         validateDepositDetailsForSubmit(element, baseDataValidator);
         validatePreClosureDetailForSubmit(element, baseDataValidator);
-        validateDepositTermDeatilForSubmit(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
+        validateDepositTermDetailForSubmit(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
         validateRecurringDetailForSubmit(element, baseDataValidator);
         validateSavingsCharges(element, baseDataValidator);
         validateWithHoldTax(element, baseDataValidator);
@@ -185,7 +183,6 @@ public class DepositAccountDataValidator {
         validatePreClosureDetailForUpdate(element, baseDataValidator);
         validateDepositTermDetailForUpdate(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
         validateRecurringDetailForUpdate(element, baseDataValidator);
-        // validateSavingsCharges(element, baseDataValidator);
         validateWithHoldTax(element, baseDataValidator);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -465,11 +462,11 @@ public class DepositAccountDataValidator {
     }
 
     private void validatePreClosureDetailForUpdate(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
-        this.productDataValidator.validatePreClosureDetailForUpdate(element, baseDataValidator);
+        this.productDataValidator.validatePreClosureDetailForUpdate(element, baseDataValidator, false);
     }
 
-    private void validateDepositTermDeatilForSubmit(final JsonElement element, final DataValidatorBuilder baseDataValidator,
-            final DepositAccountType depositType) {
+    private void validateDepositTermDetailForSubmit(final JsonElement element, final DataValidatorBuilder baseDataValidator,
+                                                    final DepositAccountType depositType) {
 
         Integer minTerm = null;
         if (fromApiJsonHelper.parameterExists(minDepositTermParamName, element)) {

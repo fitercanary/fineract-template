@@ -64,6 +64,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
     private final boolean isCalendarInherited;
     private final Integer recurringFrequency;
     private final EnumOptionData recurringFrequencyType;
+    private Integer transactionCount;
 
     // used for account close
     private final EnumOptionData onAccountClosure;
@@ -632,6 +633,10 @@ public class RecurringDepositAccountData extends DepositAccountData {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37).append(this.id).append(this.accountNo).toHashCode();
+    }
+    
+    public void setTransactionCount(Integer transactionCount) {
+        this.transactionCount = transactionCount;
     }
 
 }

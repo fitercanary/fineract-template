@@ -814,10 +814,10 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         } else {
             sql += " and not tr.transaction_type_enum = ?  ";
         }
-        sql += " and tr.id not in (" + ids + ")" + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
+        sql += " and tr.id not in (" + ids + ")" + " and tr.is_reversed = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
 
         return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, savingsId, depositAccountType.getValue(),
-                SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue() });
+                SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(), false });
     }
 
     @Override
@@ -853,6 +853,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         paramList.add(accountId);
         paramList.add(DepositAccountType.SAVINGS_DEPOSIT.getValue());
         paramList.add(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue());
+        paramList.add(false);
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.transactionsMapper.schema());
@@ -865,7 +866,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         if (StringUtils.isNotBlank(transactionIds)) {
             sqlBuilder.append(" and tr.id not in (" + transactionIds + ") ");
         }
-        sqlBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+        sqlBuilder.append(" and tr.is_reversed = ? order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
 
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();

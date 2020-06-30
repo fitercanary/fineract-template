@@ -171,14 +171,19 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     }
 
     private BigDecimal getTotalAccruedInterest(Date transactionDate, Long savingsId) {
-        List<SavingsAccountTransaction> transactions = this.savingsAccountTransactionRepository.findByTransactionTypeAndSavingsAccountId(
-                SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(), savingsId, transactionDate);
+        List<SavingsAccountTransaction> transactions = this.savingsAccountTransactionRepository
+                .findByTransactionTypeAndSavingsAccountId(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(), SavingsAccountTransactionType.WITHDRAWAL_FEE.getValue(), savingsId, transactionDate);
         BigDecimal totalAccuredAmountTillDate = BigDecimal.ZERO;
+        BigDecimal totalWithdrawalFeeTillDate = BigDecimal.ZERO;
         if (transactions.size() > 0) {
             for (SavingsAccountTransaction transaction : transactions) {
-                totalAccuredAmountTillDate = totalAccuredAmountTillDate.add(transaction.getAmount());
+                if (transaction.isAccrualInterestPostingAndNotReversed()) {
+                    totalAccuredAmountTillDate = totalAccuredAmountTillDate.add(transaction.getAmount());
+                } else if (transaction.isWithdrawalFeeAndNotReversed()) {
+                    totalWithdrawalFeeTillDate = totalWithdrawalFeeTillDate.add(transaction.getAmount());
+                }
             }
-            return totalAccuredAmountTillDate;
+            return totalAccuredAmountTillDate.subtract(totalWithdrawalFeeTillDate);
         }
         return totalAccuredAmountTillDate;
 

@@ -18,6 +18,16 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
@@ -85,16 +95,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 @Service
 public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountReadPlatformService {
 
@@ -122,7 +122,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
-    
+
     private static CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
@@ -200,7 +200,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         sqlBuilder.append(" join m_staff st ON st.id = cl.staff_id ");
         sqlBuilder.append(" join m_appuser aus ON aus.staff_id = st.id ");
         sqlBuilder.append(" where o.hierarchy like ?");
-        
+
         final Boolean allowedToReadAllAccounts = currentUser.hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);
 
         final Object[] objectArray = new Object[2];
@@ -214,7 +214,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             objectArray[arrayPos] = currentUser.getId();
             arrayPos = arrayPos + 1;
         }
-        
+
         if (searchParameters != null) {
             String sqlQueryCriteria = searchParameters.getSqlSearch();
             if (StringUtils.isNotBlank(sqlQueryCriteria)) {
@@ -590,12 +590,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             if (taxGroupId != null) {
                 taxGroupData = TaxGroupData.lookup(taxGroupId, taxGroupName);
             }
-            
+
             final Long blockNarrationId = JdbcSupport.getLong(rs, "blockNarrationId");
             final String blockNarrationValue = rs.getString("blockNarrationValue");
-            
+
             final CodeValueData blockNarration = CodeValueData.instance(blockNarrationId, blockNarrationValue);
-            
+
             return SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                     interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -808,12 +808,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public Collection<SavingsAccountTransactionData> retrieveAllTransactionsWithoutAccural(final Long savingsId,
             DepositAccountType depositAccountType, SavingsAccountTransactionType savingsAccountTransactionType, String ids) {
 
-        final String sql = "select " + this.transactionsMapper.schema()
-                + " where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ?" + " and tr.id not in (" + ids + ")"
-                + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
+        String sql = "select " + this.transactionsMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ? ";
+        if (savingsAccountTransactionType != null) {
+            sql += " and tr.transaction_type_enum = ?  ";
+        } else {
+            sql += " and not tr.transaction_type_enum = ?  ";
+        }
+        sql += " and tr.id not in (" + ids + ")" + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC";
 
-        return this.jdbcTemplate.query(sql, this.transactionsMapper,
-                new Object[] { savingsId, savingsId, depositAccountType.getValue(), savingsAccountTransactionType.getValue() });
+        return this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { savingsId, savingsId, depositAccountType.getValue(),
+                SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue() });
     }
 
     @Override
@@ -843,7 +847,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     @Override
     public Page<SavingsAccountTransactionData> retrieveAllSavingAccTransactionsWithoutAccural(Long accountId,
-            SearchParameters searchParameters, String transactionIds) {
+            SearchParameters searchParameters, String transactionIds, SavingsAccountTransactionType type) {
         List<Object> paramList = new ArrayList<>();
         paramList.add(accountId);
         paramList.add(accountId);
@@ -852,11 +856,17 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.transactionsMapper.schema());
-        sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? and not tr.transaction_type_enum = ? ");
+        sqlBuilder.append(" where sa.id = ? and sa.deposit_type_enum = ? ");
+        if (type != null) {
+            sqlBuilder.append(" and tr.transaction_type_enum = ?  ");
+        } else {
+            sqlBuilder.append(" and not tr.transaction_type_enum = ?  ");
+        }
         if (StringUtils.isNotBlank(transactionIds)) {
             sqlBuilder.append(" and tr.id not in (" + transactionIds + ") ");
         }
         sqlBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC");
+
         if (searchParameters != null) {
             int offset = searchParameters.getOffset() < 2 ? 0 : (searchParameters.getOffset() - 1) * searchParameters.getLimit();
             if (searchParameters.isLimited()) {
@@ -1394,13 +1404,13 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         final StringBuilder sqlBuilder = new StringBuilder("select " + accountMapperForLookup.schema());
 
         sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 ");
-        
+
         Object[] queryParameters = null;
         if (overdraft == null) {
-            queryParameters = new Object[]{clientId};
+            queryParameters = new Object[] { clientId };
         } else {
             sqlBuilder.append(" and sa.allow_overdraft = ?");
-            queryParameters = new Object[]{clientId, overdraft};
+            queryParameters = new Object[] { clientId, overdraft };
         }
         return this.jdbcTemplate.query(sqlBuilder.toString(), accountMapperForLookup, queryParameters);
 
@@ -1633,10 +1643,10 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         String sql = " select id from m_savings_account where status_enum = 300 ";
         return this.jdbcTemplate.queryForList(sql, Long.class);
     }
-    
+
     private static CodeValueData getCodeValueDataById(Long codeValueId) {
         final CodeValueData codeValueData = codeValueReadPlatformService.retrieveCodeValue(codeValueId);
-        
+
         return codeValueData;
     }
 
@@ -1644,10 +1654,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public boolean isStaffAccountFieldOfficer(Long staffId, Long accountId) {
         try {
             final StringBuffer buff = new StringBuffer("select count(*) from m_savings_account sa ");
-            buff.append(
-                    " where sa.id = ? and sa.field_officer_id = ? and sa.status_enum = 300");
-            return this.jdbcTemplate.queryForObject(buff.toString(),
-                    new Object[]{accountId, staffId}, Integer.class) > 0;
+            buff.append(" where sa.id = ? and sa.field_officer_id = ? and sa.status_enum = 300");
+            return this.jdbcTemplate.queryForObject(buff.toString(), new Object[] { accountId, staffId }, Integer.class) > 0;
         } catch (final EmptyResultDataAccessException e) {
             throw new SavingsAccountNotFoundException(accountId);
         }
@@ -1656,16 +1664,14 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     @SuppressWarnings("deprecation")
     @Override
     public Long getClientIdFromSavingsAccountId(Long accountId) {
-        
+
         try {
             final StringBuffer buff = new StringBuffer("select sa.client_id from m_savings_account sa ");
-            buff.append(
-                    " where sa.id = ? ");
-            return jdbcTemplate.queryForLong(buff.toString(),   new Object[] { accountId });
+            buff.append(" where sa.id = ? ");
+            return jdbcTemplate.queryForLong(buff.toString(), new Object[] { accountId });
         } catch (final EmptyResultDataAccessException e) {
             throw new SavingsAccountNotFoundException(accountId);
         }
     }
-    
-    
+
 }

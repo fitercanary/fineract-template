@@ -154,7 +154,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final Long toSavingsId = command.longValueOfParameterNamed(toAccountIdParamName);
             final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsId);
             if (toSavingsAccount.depositAccountType().isFixedDeposit() || toSavingsAccount.depositAccountType().isCurrentDeposit()
-                    || toSavingsAccount.depositAccountType().isRecurringDeposit()) {
+                    || toSavingsAccount.depositAccountType().isRecurringDeposit() || fromSavingsAccount.clientId().equals(toSavingsAccount.clientId())) {
                 limitValidationSkip = true;
             }
 

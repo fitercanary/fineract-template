@@ -741,7 +741,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         }
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
+        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), this.maturityDate());
     }
 
     public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure,

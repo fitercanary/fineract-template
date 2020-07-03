@@ -28,6 +28,7 @@ import org.apache.fineract.portfolio.account.data.AccountTransferData;
 public class AccountTransfersApiConstants {
 
     public static final String ACCOUNT_TRANSFER_RESOURCE_NAME = "accounttransfer";
+    public static final String ACCOUNT_BALANCE_RESOURCE_NAME = "accountbalance";
 
     // transaction parameters
     public static final String transferDateParamName = "transferDate";

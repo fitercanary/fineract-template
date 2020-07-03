@@ -485,7 +485,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             if (chargeCalculationType.isPercentageOfAmount()) {
                 amount = account.getAccountBalance();
             }
-            if (withholdTaxTransaction != null && charge.getCharge().getChargeTimeType().equals(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue())) {
+            if (withholdTaxTransaction != null) {
                 amount = amount.subtract(withholdTaxTransaction.getAmount());
             }
             if (chargeCalculationType.isPercentageBased()) {

@@ -1236,6 +1236,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder backupBalance() {
+        this.actionName = "BACKUP";
+        this.entityName = "BALANCE";
+        this.entityId = null;
+        this.href = "/accountbalances";
+        return this;
+    }
+
     public CommandWrapperBuilder verifyBalance() {
         this.actionName = "VERIFY";
         this.entityName = "BALANCE";

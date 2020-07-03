@@ -22,6 +22,7 @@ package org.apache.fineract.portfolio.savings.service;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.account.service.BalanceVerificationService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -34,6 +35,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsBalanceHistoryReposit
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -57,11 +59,13 @@ public class SavingsBalanceVerificationService implements BalanceVerificationSer
     }
 
     @Override
-    public CommandProcessingResult verifyBalancesAsAt(JsonCommand command) {
+    @Transactional
+    public CommandProcessingResult backupBalancesAsAt(JsonCommand command) {
+        this.savingsBalanceHistoryRepository.deleteAll();
         LocalDate verificationDate = command.localDateValueOfParameterNamed(AccountDetailConstants.verificationDateParamName);
         List<SavingsAccount> savingsAccounts = this.savingsAccountRepository.findSavingsAccountsByStatusAndDepositType(SavingsAccountStatusType.ACTIVE.getValue(),
                 DepositAccountType.SAVINGS_DEPOSIT.getValue());
-        savingsAccounts.forEach(account -> this.backUpBalances(account, verificationDate));
+        savingsAccounts.forEach(account -> this.backupBalance(account, verificationDate));
         return this.buildCommandProcessingResult(verificationDate);
     }
 
@@ -71,7 +75,7 @@ public class SavingsBalanceVerificationService implements BalanceVerificationSer
         return new CommandProcessingResultBuilder().with(changes).build();
     }
 
-    private void backUpBalances(SavingsAccount savingsAccount, LocalDate verificationDate) {
+    private void backupBalance(SavingsAccount savingsAccount, LocalDate verificationDate) {
         SavingsAccountTransaction transaction = this.getLatestTransactionBy(savingsAccount, verificationDate);
         SavingsBalanceHistory balanceHistory = new SavingsBalanceHistory();
         balanceHistory.setSavingsAccount(savingsAccount);
@@ -86,11 +90,41 @@ public class SavingsBalanceVerificationService implements BalanceVerificationSer
 
     private SavingsAccountTransaction getLatestTransactionBy(SavingsAccount account, LocalDate verificationDate) {
         TreeSet<SavingsAccountTransaction> transactions = account.getTransactions()
-                .stream().filter(t->t.isNotReversed() && !t.transactionLocalDate().isAfter(verificationDate))
+                .stream()
+                .filter(t->t.isNotReversed() && !t.transactionLocalDate().isAfter(verificationDate) && t.getId() != null)
                 .collect(Collectors.toCollection(() -> new TreeSet<>(
                         Comparator.comparing(SavingsAccountTransaction::transactionLocalDate)
                                 .thenComparing(SavingsAccountTransaction::getId)
                 )));
         return transactions.pollLast();
+    }
+
+    @Override
+    public CommandProcessingResult verifyBalancesAsAt(JsonCommand command) {
+        Map<Long, SavingsBalanceHistory> balances = this.getBalancesMap();
+        LocalDate verificationDate = command.localDateValueOfParameterNamed(AccountDetailConstants.verificationDateParamName);
+        List<SavingsAccount> savingsAccounts = this.savingsAccountRepository.findSavingsAccountsByStatusAndDepositType(SavingsAccountStatusType.ACTIVE.getValue(),
+                DepositAccountType.SAVINGS_DEPOSIT.getValue());
+        savingsAccounts.forEach(account -> this.verifyBalance(balances.get(account.getId()), account, verificationDate));
+        return this.buildCommandProcessingResult(verificationDate);
+    }
+
+    private void verifyBalance(SavingsBalanceHistory balanceHistory, SavingsAccount savingsAccount, LocalDate verificationDate) {
+        savingsAccount.recalculateDailyBalances(Money.zero(savingsAccount.getCurrency()), verificationDate);
+        SavingsAccountTransaction transaction = this.getLatestTransactionBy(savingsAccount, verificationDate);
+        if (transaction != null) {
+            balanceHistory.setDerivedBalance(transaction.getRunningBalance(savingsAccount.getCurrency()).getAmount());
+            balanceHistory.setValid(balanceHistory.getBalance().compareTo(balanceHistory.getDerivedBalance()) == 0);
+        } else {
+            balanceHistory.setValid(false);
+        }
+        this.savingsBalanceHistoryRepository.save(balanceHistory);
+    }
+
+    private Map<Long, SavingsBalanceHistory> getBalancesMap() {
+        Map<Long, SavingsBalanceHistory> balances = new HashMap<>();
+        List<SavingsBalanceHistory> balanceList = this.savingsBalanceHistoryRepository.findAll();
+        balanceList.forEach(x -> balances.put(x.getSavingsAccount().getId(), x));
+        return balances;
     }
 }

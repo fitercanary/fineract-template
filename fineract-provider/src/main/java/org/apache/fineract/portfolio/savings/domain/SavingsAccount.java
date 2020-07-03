@@ -623,27 +623,27 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     protected List<SavingsAccountTransaction> findInterestPostingTransactionFor(final LocalDate postingDate) {
-        List<SavingsAccountTransaction> postingTransation = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> postingTransaction = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
             if ((transaction.isInterestPostingAndNotReversed() || transaction.isOverdraftInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
-                postingTransation.add(transaction);
+                postingTransaction.add(transaction);
             }
         }
-        return postingTransation;
+        return postingTransaction;
     }
 
     protected List<SavingsAccountTransaction> findAccrualInterestPostingTransactionFor(final LocalDate postingDate) {
-        List<SavingsAccountTransaction> postingTransation = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> postingTransaction = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
             if ((transaction.isAccrualInterestPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
-                postingTransation.add(transaction);
+                postingTransaction.add(transaction);
             }
         }
-        return postingTransation;
+        return postingTransaction;
     }
 
     protected SavingsAccountTransaction findTransactionFor(final LocalDate postingDate,
@@ -891,7 +891,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return listOfTransactionsSorted;
     }
 
-    protected void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
+    public void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
 
         Money runningBalance = openingAccountBalance.copy();
 

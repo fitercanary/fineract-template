@@ -164,4 +164,17 @@ public class AccountTransfersApiResource {
 
         return this.toApiJsonSerializer.serialize(result);
     }
+
+    @POST
+    @Path("queueTransfer")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String queueTransfer(final String apiRequestBodyAsJson) {
+
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().queueTransfer().withJson(apiRequestBodyAsJson).build();
+
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
+    }
 }

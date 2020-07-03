@@ -565,7 +565,7 @@ public class FixedDepositAccount extends SavingsAccount {
         }
         this.postAccrualInterest(MathContext.DECIMAL64, accountCloseDate, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
+        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), this.maturityDate());
     }
 
     public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure,

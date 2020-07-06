@@ -24,21 +24,19 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.account.data.BalanceVerificationDataValidator;
 import org.apache.fineract.portfolio.account.domain.BalanceAccountType;
-import org.apache.fineract.portfolio.loanaccount.service.LoanBalanceVerificationService;
-import org.apache.fineract.portfolio.savings.service.SavingsBalanceVerificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BalanceVerificationServiceFactory {
 
-    private final LoanBalanceVerificationService loanBalanceVerificationService;
-    private final SavingsBalanceVerificationService savingsBalanceVerificationService;
+    private final BalanceVerificationService loanBalanceVerificationService;
+    private final BalanceVerificationService savingsBalanceVerificationService;
     private final BalanceVerificationDataValidator balanceVerificationDataValidator;
 
     @Autowired
-    public BalanceVerificationServiceFactory(LoanBalanceVerificationService loanBalanceVerificationService,
-                                             SavingsBalanceVerificationService savingsBalanceVerificationService,
+    public BalanceVerificationServiceFactory(BalanceVerificationService loanBalanceVerificationService,
+                                             BalanceVerificationService savingsBalanceVerificationService,
                                              BalanceVerificationDataValidator balanceVerificationDataValidator) {
         this.loanBalanceVerificationService = loanBalanceVerificationService;
         this.savingsBalanceVerificationService = savingsBalanceVerificationService;
@@ -54,6 +52,12 @@ public class BalanceVerificationServiceFactory {
             default:
                 throw new IllegalArgumentException("unknown.balance.type");
         }
+    }
+
+    public CommandProcessingResult backupBalance(JsonCommand command) {
+        this.balanceVerificationDataValidator.validate(command);
+        String accountType = command.stringValueOfParameterNamed(AccountDetailConstants.accountTypeParamName);
+        return this.getService(BalanceAccountType.fromCode(accountType)).backupBalancesAsAt(command);
     }
 
     public CommandProcessingResult verifyBalance(JsonCommand command) {

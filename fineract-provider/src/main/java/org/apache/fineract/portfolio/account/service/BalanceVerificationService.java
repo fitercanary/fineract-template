@@ -23,5 +23,7 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
 public interface BalanceVerificationService {
+
+    CommandProcessingResult backupBalancesAsAt(JsonCommand command);
     CommandProcessingResult verifyBalancesAsAt(JsonCommand command);
 }

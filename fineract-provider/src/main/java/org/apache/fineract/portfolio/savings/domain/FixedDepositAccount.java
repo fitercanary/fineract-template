@@ -556,6 +556,15 @@ public class FixedDepositAccount extends SavingsAccount {
             recalculateDailyBalance = true;
         }
 
+        // post interest carried forward
+        if (postInterest && this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp() != null
+                && this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp().compareTo(BigDecimal.ZERO) > 0) {
+            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
+                    accountCloseDate, Money.of(this.currency, this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp()), false, false);
+            this.transactions.add(newPostingTransaction);
+            recalculateDailyBalance = true;
+        }
+
         recalculateDailyBalance = applyWithholdTaxForDepositAccounts(accountCloseDate, recalculateDailyBalance);
 
         if (recalculateDailyBalance) {

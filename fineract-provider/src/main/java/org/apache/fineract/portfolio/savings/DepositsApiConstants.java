@@ -119,6 +119,7 @@ public class DepositsApiConstants {
     public static final String depositPeriodFrequencyIdParamName = "depositPeriodFrequencyId";
     public static final String targetAmountParamName = "targetAmount";
     public static final String targetMaturityAmountParamName = "targetMaturityAmount";
+    public static final String changeTenureParamName = "changeTenure";
 
     // recurring parameters
     public static final String mandatoryRecommendedDepositAmountParamName = "mandatoryRecommendedDepositAmount";

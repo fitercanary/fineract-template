@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
@@ -76,6 +77,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
@@ -121,6 +123,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -133,6 +136,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.changeTenureParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
@@ -688,11 +692,59 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         fixedDepositApplicationReq.setDepositAmount(command.bigDecimalValueOfParameterNamed(depositAmountParamName));
         fixedDepositApplicationReq.setInterestCarriedForward(this.calculateInterestCarriedForward(account));
+        boolean changeTenure = command.booleanPrimitiveValueOfParameterNamed(changeTenureParamName);
+        if (!changeTenure) {
+            this.setEffectiveInterestRate(account, fixedDepositApplicationReq);
+        }
         this.autoCreateNewFD(command, account, accountAssociations, fixedDepositApplicationReq);
 
         return new CommandProcessingResultBuilder().withEntityId(accountId).withOfficeId(account.officeId())
                 .withClientId(account.clientId()).withGroupId(account.groupId())
                 .withSavingsId(accountAssociations.linkedSavingsAccount().getId()).build();
+    }
+
+    /**
+     * In order to make the interest earned by the customer accurate, an effective rate will be computed and used in the new topped up FD account.
+     * This will be achieved as follows:
+     * - Calculate interest to be earned by the existing principal (a) at the existing rate (c)
+     * - Calculate interest to be earned by the new principal (b) amount at the rate in the rate chart (d)
+     * - Add find the effective rate using this formula (c+d)/(a+b)*days in year/FD term
+     * - Use effective rate as interest rate in the topped up FD account
+     * @param account
+     * @param fixedDepositApplicationReq
+     */
+    private void setEffectiveInterestRate(FixedDepositAccount account, FixedDepositApplicationReq fixedDepositApplicationReq) {
+        SavingsInterestCalculationDaysInYearType daysInYearType = account.getProduct().interestCalculationDaysInYearType();
+        if (daysInYearType.isActual()) {
+            Year year;
+            if (account.getAccountTermAndPreClosure().getMaturityLocalDate() != null) {
+                year = Year.of(account.getAccountTermAndPreClosure().getMaturityLocalDate().getYear());
+            } else {
+                year = Year.of(LocalDate.now().getYear());
+            }
+            daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+        }
+        BigDecimal interestEarnedOnExisting = this.calculateInterest(account.getAccountTermAndPreClosure().depositAmount(),
+                account.getOriginalInterestRate(), fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
+        BigDecimal applicableInterestRate = account.getChart().getApplicableInterestRate(fixedDepositApplicationReq.getDepositAmount(), fixedDepositApplicationReq.getSubmittedOnDate(),
+                fixedDepositApplicationReq.getSubmittedOnDate().plusDays(fixedDepositApplicationReq.getDepositPeriod()), account.getClient());
+        BigDecimal interestEarnedOnNew = this.calculateInterest(fixedDepositApplicationReq.getDepositAmount(),
+                applicableInterestRate, fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
+        BigDecimal interestSum = interestEarnedOnExisting.add(interestEarnedOnNew);
+        BigDecimal principalSum = account.getAccountTermAndPreClosure().depositAmount().add(fixedDepositApplicationReq.getDepositAmount());
+        BigDecimal effectiveRate = interestSum.divide(principalSum, MathContext.DECIMAL64)
+                .multiply(BigDecimal.valueOf(daysInYearType.getValue()))
+                .divide(BigDecimal.valueOf(fixedDepositApplicationReq.getDepositPeriod()), MathContext.DECIMAL64)
+                .multiply(BigDecimal.valueOf(100));
+        fixedDepositApplicationReq.setInterestRateSet(true);
+        fixedDepositApplicationReq.setInterestRate(effectiveRate);
+    }
+
+    private BigDecimal calculateInterest(BigDecimal principal, BigDecimal interestRate, int depositPeriod, int daysInYear) {
+        return interestRate.divide(BigDecimal.valueOf(100L), MathContext.DECIMAL64)
+                .multiply(principal)
+                .multiply(BigDecimal.valueOf(depositPeriod))
+                .divide(BigDecimal.valueOf(daysInYear), MathContext.DECIMAL64);
     }
 
     private BigDecimal calculateInterestCarriedForward(FixedDepositAccount account) {

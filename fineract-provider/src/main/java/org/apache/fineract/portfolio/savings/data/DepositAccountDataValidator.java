@@ -295,18 +295,8 @@ public class DepositAccountDataValidator {
                         .integerZeroOrGreater();
             }
         }
-
-        boolean isLinkedAccRequired = false;
-        if (fromApiJsonHelper.parameterExists(transferInterestToSavingsParamName, element)) {
-            isLinkedAccRequired = fromApiJsonHelper.extractBooleanNamed(transferInterestToSavingsParamName, element);
-        }
-
         final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkedAccountParamName, element);
-        if (isLinkedAccRequired) {
-            baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).notNull().longGreaterThanZero();
-        } else {
-            baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).ignoreIfNull().longGreaterThanZero();
-        }
+        baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).notNull().longGreaterThanZero();
     }
 
     private void validateDepositDetailsForUpdate(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
@@ -328,9 +318,8 @@ public class DepositAccountDataValidator {
             }
         }
 
-        Long groupId = null;
         if (this.fromApiJsonHelper.parameterExists(groupIdParamName, element)) {
-            groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
+            Long groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
             baseDataValidator.reset().parameter(groupIdParamName).value(groupId).ignoreIfNull().longGreaterThanZero();
 
             if (this.fromApiJsonHelper.parameterExists(clientIdParamName, element)) {

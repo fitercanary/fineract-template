@@ -1997,6 +1997,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return this.nominalAnnualInterestRate;
     }
 
+    public BigDecimal getOriginalInterestRate() {
+        return this.originalInterestRate;
+    }
+
     public BigDecimal getNominalAnnualInterestRateOverdraft() {
         return this.nominalAnnualInterestRateOverdraft;
     }

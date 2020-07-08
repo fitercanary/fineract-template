@@ -238,17 +238,7 @@ public class FixedDepositAccount extends SavingsAccount {
         List<SavingsAccountTransaction> allTransactions = new ArrayList<>();
         final Money transactionAmountMoney = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
-                this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null, false); // TODO:
-        // verify
-        // if
-        // it
-        // is
-        // ok
-        // to
-        // pass
-        // null
-        // for
-        // AppUser
+        this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null, false);
         transaction.updateRunningBalance(transactionAmountMoney);
         transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto());
         allTransactions.add(transaction);
@@ -552,6 +542,15 @@ public class FixedDepositAccount extends SavingsAccount {
             final boolean postInterestAsOn = false;
             final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                     accountCloseDate, remainingInterestToBePosted, postInterestAsOn, false);
+            this.transactions.add(newPostingTransaction);
+            recalculateDailyBalance = true;
+        }
+
+        // post interest carried forward
+        if (postInterest && this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp() != null
+                && this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp().compareTo(BigDecimal.ZERO) > 0) {
+            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
+                    accountCloseDate, Money.of(this.currency, this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp()), false, false);
             this.transactions.add(newPostingTransaction);
             recalculateDailyBalance = true;
         }
@@ -871,5 +870,9 @@ public class FixedDepositAccount extends SavingsAccount {
 
     public FixedDepositProduct getProduct() {
         return (FixedDepositProduct) this.product;
+    }
+
+    public DepositAccountInterestRateChart getChart() {
+        return chart;
     }
 }

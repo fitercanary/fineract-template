@@ -82,13 +82,7 @@ public class AccountTransfersCommandStrategy implements CommandStrategy {
 
         // Try-catch blocks to map exceptions to appropriate status codes
         try {
-
-            // Calls 'queueTransfer' function from 'accountTransfersApiResource'
-            // to
-            // add transfer request to ActiveMQ for later processing
-            // this.accountTransfersDataValidator.validate(command);
-            // responseBody =
-            // accountTransfersApiResource.queueTransfer(batchRequest.getBody());
+            // send requests onto active mq messages
 
             this.messagingConfiguration.jmsTemplate().send("AccountTransferQueue", new MessageCreator() {
 

@@ -116,7 +116,7 @@ public class DepositAccountDataValidator {
                 .resource(DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        validateDepositDetailsForSubmit(element, baseDataValidator);
+        validateDepositDetailsForSubmit(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
         validatePreClosureDetailForSubmit(element, baseDataValidator);
         validateDepositTermDetailForSubmit(element, baseDataValidator, DepositAccountType.FIXED_DEPOSIT);
         validateSavingsCharges(element, baseDataValidator);
@@ -157,7 +157,7 @@ public class DepositAccountDataValidator {
                 .resource(DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        validateDepositDetailsForSubmit(element, baseDataValidator);
+        validateDepositDetailsForSubmit(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
         validatePreClosureDetailForSubmit(element, baseDataValidator);
         validateDepositTermDetailForSubmit(element, baseDataValidator, DepositAccountType.RECURRING_DEPOSIT);
         validateRecurringDetailForSubmit(element, baseDataValidator);
@@ -189,7 +189,8 @@ public class DepositAccountDataValidator {
 
     }
 
-    private void validateDepositDetailsForSubmit(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
+    private void validateDepositDetailsForSubmit(final JsonElement element, final DataValidatorBuilder baseDataValidator, 
+            DepositAccountType depositType) {
 
         final Long clientId = this.fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
         if (clientId != null) {
@@ -295,10 +296,14 @@ public class DepositAccountDataValidator {
                         .integerZeroOrGreater();
             }
         }
-        final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkedAccountParamName, element);
-        baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).notNull().longGreaterThanZero();
+        if(depositType.isFixedDeposit()) {
+            final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkedAccountParamName, element);
+            baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).notNull().longGreaterThanZero();
+        }
+       
     }
 
+    
     private void validateDepositDetailsForUpdate(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
         Long clientId = null;
         if (this.fromApiJsonHelper.parameterExists(clientIdParamName, element)) {

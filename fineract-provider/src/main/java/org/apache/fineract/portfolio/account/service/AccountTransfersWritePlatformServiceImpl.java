@@ -669,24 +669,4 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         return builder.build();
     }
 
-    @Override
-    public CommandProcessingResult queueTransfer(JsonCommand command) {
-
-        this.accountTransfersDataValidator.validate(command);
-
-        Long fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
-        final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder().withSavingsId(fromSavingsAccountId);
-
-        this.messagingConfiguration.jmsTemplate().send("AccountTransferQueue", new MessageCreator() {
-
-            @Override
-            public Message createMessage(Session session) throws JMSException {
-
-                return session.createTextMessage(command.json());
-            }
-        });
-
-        return builder.build();
-    }
-
 }

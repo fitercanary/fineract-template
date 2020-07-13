@@ -23,13 +23,17 @@ import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
-import org.apache.fineract.portfolio.account.data.AccountTransferData;
+import org.apache.fineract.portfolio.account.data.BalanceVerificationStatus;
+import org.apache.fineract.portfolio.account.domain.BalanceAccountType;
+import org.apache.fineract.portfolio.account.factory.BalanceVerificationServiceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -37,13 +41,15 @@ import javax.ws.rs.core.MediaType;
 @Component
 public class AccountBalancesApiResource {
 
-    private final DefaultToApiJsonSerializer<AccountTransferData> toApiJsonSerializer;
+    private final BalanceVerificationServiceFactory balanceVerificationServiceFactory;
+    private final DefaultToApiJsonSerializer<BalanceVerificationStatus> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
     @Autowired
-    public AccountBalancesApiResource(final DefaultToApiJsonSerializer<AccountTransferData> toApiJsonSerializer,
+    public AccountBalancesApiResource(BalanceVerificationServiceFactory balanceVerificationServiceFactory, final DefaultToApiJsonSerializer<BalanceVerificationStatus> toApiJsonSerializer,
                                       final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
         this.toApiJsonSerializer = toApiJsonSerializer;
+        this.balanceVerificationServiceFactory = balanceVerificationServiceFactory;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
     }
 
@@ -67,5 +73,14 @@ public class AccountBalancesApiResource {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().verifyBalance().withJson(apiRequestBodyAsJson).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @GET
+    @Path("{accountType}/status")
+    @Produces({MediaType.APPLICATION_JSON})
+    public String status(@PathParam("accountType") final String accountType) {
+        BalanceVerificationStatus balanceVerificationStatus = this.balanceVerificationServiceFactory
+                .getService(BalanceAccountType.fromCode(accountType)).getBalanceVerificationStatus();
+        return this.toApiJsonSerializer.serialize(balanceVerificationStatus);
     }
 }

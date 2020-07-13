@@ -401,7 +401,7 @@ public class JobRegisterServiceImpl implements JobRegisterService, ApplicationLi
 
     private String getStackTraceAsString(final Throwable throwable) {
         final StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-        final StringBuffer sb = new StringBuffer(throwable.toString());
+        final StringBuilder sb = new StringBuilder(throwable.toString());
         for (final StackTraceElement element : stackTraceElements) {
             sb.append("\n \t at ").append(element.getClassName()).append(".").append(element.getMethodName()).append("(")
                     .append(element.getLineNumber()).append(")");
@@ -415,7 +415,6 @@ public class JobRegisterServiceImpl implements JobRegisterService, ApplicationLi
 
     private JobKey constructJobKey(final String Key) {
         final String[] keyParams = Key.split(SchedulerServiceConstants.JOB_KEY_SEPERATOR);
-        final JobKey JobKey = new JobKey(keyParams[0], keyParams[1]);
-        return JobKey;
+        return new JobKey(keyParams[0], keyParams[1]);
     }
 }

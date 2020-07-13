@@ -17,19 +17,17 @@
  * under the License.
  */
 
-package org.apache.fineract.portfolio.account.service;
+package org.apache.fineract.portfolio.account.data;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.portfolio.account.data.BalanceVerificationStatus;
-import org.joda.time.LocalDate;
+public class BalanceVerificationStatus {
 
-public interface BalanceVerificationService {
+    private int index;
+    private String action;
+    private int numberOfAccounts;
 
-
-    void backupBalancesAsAt(LocalDate verificationDate);
-    void verifyBalancesAsAt(LocalDate verificationDate);
-    BalanceVerificationStatus getBalanceVerificationStatus();
-    CommandProcessingResult backupBalancesAsAt(JsonCommand command);
-    CommandProcessingResult verifyBalancesAsAt(JsonCommand command);
+    public BalanceVerificationStatus(int index, String action, int numberOfAccounts) {
+        this.index = index;
+        this.action = action;
+        this.numberOfAccounts = numberOfAccounts;
+    }
 }

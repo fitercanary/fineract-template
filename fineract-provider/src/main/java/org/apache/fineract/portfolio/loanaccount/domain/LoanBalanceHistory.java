@@ -51,4 +51,44 @@ public class LoanBalanceHistory extends AbstractPersistableCustom<Long>  {
 
     @Column
     private Boolean valid;
+
+    public Loan getLoan() {
+        return loan;
+    }
+
+    public void setLoan(Loan loan) {
+        this.loan = loan;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
+    public BigDecimal getDerivedBalance() {
+        return derivedBalance;
+    }
+
+    public void setDerivedBalance(BigDecimal derivedBalance) {
+        this.derivedBalance = derivedBalance;
+    }
+
+    public Date getBalanceDate() {
+        return balanceDate;
+    }
+
+    public void setBalanceDate(Date balanceDate) {
+        this.balanceDate = balanceDate;
+    }
+
+    public Boolean getValid() {
+        return valid;
+    }
+
+    public void setValid(Boolean valid) {
+        this.valid = valid;
+    }
 }

@@ -17,13 +17,14 @@
  * under the License.
  */
 
-package org.apache.fineract.portfolio.account.service;
+package org.apache.fineract.portfolio.account.factory;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.account.data.BalanceVerificationDataValidator;
 import org.apache.fineract.portfolio.account.domain.BalanceAccountType;
+import org.apache.fineract.portfolio.account.service.BalanceVerificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

@@ -67,7 +67,7 @@ public class VfdTransferNotification {
         this.beneficiaryAccountId = beneficiaryAccountId;
     }
 
-    public VfdTransferNotification fromRequest(String apiJsonRequestString) {
+    public static VfdTransferNotification fromRequest(String apiJsonRequestString) {
 
         Gson gson = new Gson();
         AccountTransferRequestBody request = gson.fromJson(apiJsonRequestString, AccountTransferRequestBody.class);

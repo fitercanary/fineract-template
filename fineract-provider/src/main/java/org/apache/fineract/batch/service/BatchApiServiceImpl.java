@@ -138,21 +138,6 @@ public class BatchApiServiceImpl implements BatchApiService {
         });
 
         checkList = responseList;
-        // if request is account transfers call job to process requests
-        // asynchronously
-        /*
-         * if
-         * (batchRequestNodes.get(0).getRequest().getRelativeUrl().contentEquals
-         * ("accounttransfers")) { final SecurityContext context =
-         * SecurityContextHolder.getContext();
-         * 
-         * final FineractPlatformTenant tenant =
-         * ThreadLocalContextUtil.getTenant();
-         * 
-         * this.callAccountTranferJob(context, tenant);
-         * 
-         * }
-         */
 
         return responseList;
 

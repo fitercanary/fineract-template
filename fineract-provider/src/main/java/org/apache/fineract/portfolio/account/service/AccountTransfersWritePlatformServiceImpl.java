@@ -156,14 +156,18 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         Long fromLoanAccountId = null;
         boolean isWithdrawBalance = false;
         boolean limitValidationSkip = false;
+        String fromSavingsAccountNumber = null;
+        String toSavingsAccountNumber = null;
 
         if (isSavingsToSavingsAccountTransfer(fromAccountType, toAccountType)) {
 
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
+            fromSavingsAccountNumber = fromSavingsAccount.getAccountNumber();
 
             final Long toSavingsId = command.longValueOfParameterNamed(toAccountIdParamName);
             final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsId);
+            toSavingsAccountNumber = toSavingsAccount.getAccountNumber();
             if (toSavingsAccount.depositAccountType().isFixedDeposit() || toSavingsAccount.depositAccountType().isCurrentDeposit()
                     || toSavingsAccount.depositAccountType().isRecurringDeposit() || fromSavingsAccount.clientId().equals(toSavingsAccount.clientId())) {
                 limitValidationSkip = true;
@@ -191,6 +195,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             //
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
+            fromSavingsAccountNumber = fromSavingsAccount.getAccountNumber();
 
             final Long toLoanAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
             final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountId);
@@ -248,6 +253,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final Long toSavingsAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
             final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsAccountId);
+            toSavingsAccountNumber = toSavingsAccount.getAccountNumber();
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt, transactionDate,
                     transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
@@ -261,6 +267,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
+            fromSavingsAccountNumber = fromSavingsAccount.getAccountNumber();
 
             final Long toLoanAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
             final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountId);
@@ -304,6 +311,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
         if (fromAccountType.isSavingsAccount()) {
             builder.withSavingsId(fromSavingsAccountId);
+            builder.withFromSavingsAccountNumber(fromSavingsAccountNumber);
+            builder.withToSavingsAccountNumber(toSavingsAccountNumber);
         }
         if (fromAccountType.isLoanAccount()) {
             builder.withLoanId(fromLoanAccountId);

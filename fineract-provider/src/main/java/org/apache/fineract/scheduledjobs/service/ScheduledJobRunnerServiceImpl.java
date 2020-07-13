@@ -20,8 +20,6 @@ package org.apache.fineract.scheduledjobs.service;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
@@ -52,7 +50,6 @@ import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.notification.config.MessagingConfiguration;
 import org.apache.fineract.notification.config.VfdNotificationApi;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
-import org.apache.fineract.portfolio.account.api.AccountTransfersApiResource;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
@@ -60,6 +57,8 @@ import org.apache.fineract.portfolio.savings.classification.data.TransactionClas
 import org.apache.fineract.portfolio.savings.classification.service.TransactionClassificationReadPlatformService;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
@@ -76,16 +75,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.JsonElement;
 
@@ -111,6 +106,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final FromJsonHelper fromApiJsonHelper;
     private final VfdNotificationApi vfdNotificationApi;
+    private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -125,7 +121,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService,
             final MessagingConfiguration messagingConfiguration,
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final FromJsonHelper fromApiJsonHelper,
-            final VfdNotificationApi vfdNotificationApi) {
+            final VfdNotificationApi vfdNotificationApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -140,6 +136,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.accountTransfersWritePlatformService = accountTransfersWritePlatformService;
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.vfdNotificationApi = vfdNotificationApi;
+        this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
     }
 
     @Transactional
@@ -592,13 +589,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @Override
     @CronTarget(jobName = JobName.PROCESS_ACCOUNT_TRANSFERS)
     public void processAccountTransfers() throws JobExecutionException {
-        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Transfers Processed: ");
         StringBuilder errorMsg = new StringBuilder();
 
         Session session;
-
-        List<VfdTransferNotification> vfdNotifications = new ArrayList<>();
-
         try {
             session = this.messagingConfiguration.connectionFactory().createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
             Queue queue = session.createQueue("AccountTransferQueue");
@@ -609,11 +602,12 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
             while (msgs.hasMoreElements()) {
                 MessageConsumer consumer = session.createConsumer(destination);
-                Message message = consumer.receive(5000);
+                Message message = consumer.receive(10000);
 
                 if (message instanceof TextMessage) {
                     TextMessage textMessage = (TextMessage) message;
-                    logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Incoming Message: '" + textMessage.getText() + "'");
+                    logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Message received from Active MQ, Incoming Message: '"
+                            + textMessage.getText() + "'");
 
                     String json = textMessage.getText();
                     final JsonElement parsedCommand = this.fromApiJsonHelper.parse(json);
@@ -624,21 +618,54 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     try {
                         result = accountTransfersWritePlatformService.create(command);
 
-                        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Successfully processed account transfer: '"
-                                + "resource id = "
+
+                        VfdTransferNotification notification = VfdTransferNotification.fromRequest(json);
+
+                        logger.info(ThreadLocalContextUtil.getTenant().getName()
+                                + ": Successfully processed account transfer from sender account id : '" + notification.getSenderAccountId()
+                                + " to beneficiary account id : " + notification.getBeneficiaryAccountId() + ", resource id = "
                                 + result.resourceId() + "'");
 
-                        vfdNotifications.add(VfdTransferNotification.fromQueueString(json));
+                        notification.setSenderAccountNumber(result.fromSavingsAccountNumber());
+                        notification.setBeneficiaryAccountNumber(result.toSavingsAccountNumber());
 
+                        this.sendNotificationToVfdService(notification, errorMsg);
+
+
+                    } catch (PlatformApiDataValidationException e) {
+                        final List<ApiParameterError> errors = e.getErrors();
+                        for (final ApiParameterError error : errors) {
+                            logger.error("Processing account transfer request failed : " + " with message " + error.getDeveloperMessage());
+                            errorMsg.append("Processing account transfer request failed : : ").append(" with message, ")
+                                    .append(error.getDeveloperMessage());
+                        }
                     } catch (Exception e) {
-                        logger.trace(ThreadLocalContextUtil.getTenant().getName()
-                                + "Processing batch account transfer request JobExecutionException: ", e);
-                        errorMsg.append("Processing account transfer request failed with Fineract Error: ").append(" with message ")
-                                .append(e.getMessage());
 
-                        VfdTransferNotification request = VfdTransferNotification.fromQueueString(json);
-                        vfdNotifications.add(new VfdTransferNotification(request.getSenderClientId(), null, request.getSenderNarration(),
-                                "failed", request.getAmount()));
+                        VfdTransferNotification request = VfdTransferNotification.fromRequest(json);
+
+                        logger.trace(ThreadLocalContextUtil.getTenant().getName()
+                                + ": Processing account transfer request failed for sender account id : " + request.getSenderAccountId()
+                                + " to beneficiary account id : " + request.getBeneficiaryAccountId(), e);
+                        errorMsg.append("Processing account transfer request failed for sender account id : " + request.getSenderAccountId()
+                                + " to beneficiary account id : " + request.getBeneficiaryAccountId()).append(" with message, ")
+                                .append(e.getLocalizedMessage());
+
+                        VfdTransferNotification notification = new VfdTransferNotification(request.getSenderClientId(), null,
+                                request.getSenderNarration(), "failed", request.getAmount());
+
+                        if (request.getSenderAccountId() != null) {
+                            SavingsAccount senderAccount = savingAccountRepositoryWrapper
+                                    .findOneWithNotFoundDetection(request.getSenderAccountId());
+                            notification.setSenderAccountNumber(senderAccount.getAccountNumber());
+                        }
+
+                        if (request.getBeneficiaryAccountId() != null) {
+                            SavingsAccount beneficiaryAccount = savingAccountRepositoryWrapper
+                                    .findOneWithNotFoundDetection(request.getBeneficiaryAccountId());
+                            notification.setBeneficiaryAccountNumber(beneficiaryAccount.getAccountNumber());
+                        }
+
+                        this.sendNotificationToVfdService(notification, errorMsg);
 
                     }
 
@@ -650,9 +677,6 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 consumer.close();
             }
             session.close();
-
-            // send notifications to external vfd service
-            this.sendMultipleNotifications(vfdNotifications, errorMsg);
 
         } catch (JMSException e) {
 
@@ -669,25 +693,25 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
     }
 
-    private void sendMultipleNotifications(List<VfdTransferNotification> notifications, StringBuilder errorMsg) {
+    private void sendNotificationToVfdService(VfdTransferNotification notification, StringBuilder errorMsg) {
+
+        errorMsg = errorMsg == null ? new StringBuilder() : errorMsg;
 
         try {
-            for (VfdTransferNotification notification : notifications) {
-                ResponseEntity<String> response = vfdNotificationApi.sendNotification(notification);
-                logger.info(ThreadLocalContextUtil.getTenant().getName() + "Notification sent : Status Code = " + response.getStatusCode()
-                        + ", message =  " + response.getBody());
 
-            }
+            ResponseEntity<String> response = vfdNotificationApi.sendNotification(notification);
+            logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Notification for successful transfer : Status Code = "
+                    + response.getStatusCode() + ", message = " +
+                response.getBody());
+
         } catch (HttpStatusCodeException e) {
-            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service ERROR: ", e);
-            errorMsg.append("VFD Notification service ERROR: ").append(" with message ").append(e.getMessage());
+            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service failure: ", e);
+            errorMsg.append("VFD Notification service failure: ").append(" with message ").append(e.getMessage());
         } catch (RestClientException e) {
-            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service ERROR: ", e);
-            errorMsg.append("VFD Notification service ERROR: ").append(" with message ").append(e.getMessage());
-        } catch (Exception e) {
-            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "Sending notification to VFD service FAILED: ", e);
-            errorMsg.append("Sending notification to VFD service FAILED: ").append(" with message ").append(e.getMessage());
+            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service failure: ", e);
+            errorMsg.append("VFD Notification service failure: ").append(" with message ").append(e.getMessage());
         }
+
     }
 
 }

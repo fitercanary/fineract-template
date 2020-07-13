@@ -19,11 +19,8 @@
 package org.apache.fineract.notification.config;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.fineract.notification.domain.VfdTransferNotification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
@@ -35,8 +32,6 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class VfdNotificationApi {
-
-    private final static Logger logger = LoggerFactory.getLogger(VfdNotificationApi.class);
     
     private final String DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook?alertType=both";
     private final String AUTH_TOKEN_FIELD = "VFDBankAuth";
@@ -62,6 +57,4 @@ public class VfdNotificationApi {
 
         return restTemplate.postForEntity(DEFAULT_URL, request, String.class);
     }
-
-
 }

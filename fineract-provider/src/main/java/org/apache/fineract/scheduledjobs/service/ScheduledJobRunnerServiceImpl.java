@@ -651,7 +651,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                 .append(e.getLocalizedMessage());
 
                         VfdTransferNotification notification = new VfdTransferNotification(request.getSenderClientId(), null,
-                                request.getSenderNarration(), "failed", request.getAmount());
+                                request.getSenderNarration(), "failed", request.getAmount(), e.getLocalizedMessage());
 
                         if (request.getSenderAccountId() != null) {
                             SavingsAccount senderAccount = savingAccountRepositoryWrapper

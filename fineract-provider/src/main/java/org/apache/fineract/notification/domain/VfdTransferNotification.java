@@ -39,16 +39,18 @@ public class VfdTransferNotification {
     private String beneficiaryAccountNumber;
     private String beneficiaryNarration;
     private Long beneficiaryAccountId;
+    private String reason;
 
     public VfdTransferNotification() {}
 
     public VfdTransferNotification(Long senderClientId, String senderAccountNumber, String senderNarration, String alertType,
-            BigDecimal amount) {
+            BigDecimal amount, String reason) {
         this.senderClientId = senderClientId;
         this.senderAccountNumber = senderAccountNumber;
         this.senderNarration = senderNarration;
         this.alertType = alertType;
         this.amount = amount;
+        this.reason = reason;
     }
 
     public VfdTransferNotification(Long senderClientId, String senderAccountNumber, String senderNarration, BigDecimal charge,
@@ -76,10 +78,6 @@ public class VfdTransferNotification {
                 request.getFromAccountId(), "both", request.getTransferAmount(), request.getToClientId(), null, request.getRemarks(),
                 request.getToAccountId());
 
-    }
-
-    public static VfdTransferNotification fromQueueString(String request) {
-        return null;
     }
 
     public Long getSenderClientId() {
@@ -170,13 +168,21 @@ public class VfdTransferNotification {
         this.beneficiaryAccountId = beneficiaryAccountId;
     }
 
+    public String getReason() {
+        return this.reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
     @Override
     public String toString() {
         return "VfdTransferNotification [senderClientId=" + this.senderClientId + ", senderAccountNumber=" + this.senderAccountNumber
                 + ", senderNarration=" + this.senderNarration + ", charge=" + this.charge + ", senderAccountId=" + this.senderAccountId
                 + ", alertType=" + this.alertType + ", amount=" + this.amount + ", beneficiaryClientId=" + this.beneficiaryClientId
                 + ", beneficiaryAccountNumber=" + this.beneficiaryAccountNumber + ", beneficiaryNarration=" + this.beneficiaryNarration
-                + ", beneficiaryAccountId=" + this.beneficiaryAccountId + "]";
+                + ", beneficiaryAccountId=" + this.beneficiaryAccountId + ", reason=" + this.reason + "]";
     }
 
 }

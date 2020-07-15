@@ -20,6 +20,8 @@ package org.apache.fineract.infrastructure.core.boot.db;
 
 import javax.sql.DataSource;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.apache.fineract.infrastructure.core.boot.JDBCDriverConfig;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.slf4j.Logger;
@@ -45,10 +47,22 @@ public class DataSourceConfiguration {
 
     @Bean
     public DataSource tenantDataSourceJndi() {
-	PoolConfiguration p = getProperties();
-        org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource(p);
-        logger.info("Created new DataSource; url=" + p.getUrl());
-        return ds;
+	    PoolConfiguration p = getProperties();
+        // org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource(p);
+        // logger.info("Created new DataSource; url=" + p.getUrl());
+        // return ds;
+
+        HikariConfig hikariConfig = new HikariConfig();
+
+        hikariConfig.setJdbcUrl( p.getUrl() );
+        hikariConfig.setUsername( p.getUsername() );
+        hikariConfig.setPassword( p.getPassword() );
+        // TODO: try to tweak the pool settings later for performance
+        hikariConfig.addDataSourceProperty( "cachePrepStmts" , "true" );
+        hikariConfig.addDataSourceProperty( "prepStmtCacheSize" , "250" );
+        hikariConfig.addDataSourceProperty( "prepStmtCacheSqlLimit" , "2048" );
+
+        return new HikariDataSource( hikariConfig );
     }
 
     protected DataSourceProperties getProperties() {

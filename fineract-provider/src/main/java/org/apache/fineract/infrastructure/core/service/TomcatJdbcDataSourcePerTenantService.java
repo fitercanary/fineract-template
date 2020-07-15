@@ -23,6 +23,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.apache.fineract.infrastructure.core.boot.JDBCDriverConfig;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
@@ -72,7 +74,7 @@ public class TomcatJdbcDataSourcePerTenantService implements RoutingDataSourceSe
                 if (this.tenantToDataSourceMap.containsKey(tenantConnection.getConnectionId())) {
                     tenantDataSource = this.tenantToDataSourceMap.get(tenantConnection.getConnectionId());
                 } else {
-                    tenantDataSource = createNewDataSourceFor(tenantConnection);
+                    tenantDataSource = createNewHikariDataSourceFor(tenantConnection);
                     this.tenantToDataSourceMap.put(tenantConnection.getConnectionId(), tenantDataSource);
                 }
             }
@@ -81,6 +83,53 @@ public class TomcatJdbcDataSourcePerTenantService implements RoutingDataSourceSe
         return tenantDataSource;
     }
 
+    private DataSource createNewHikariDataSourceFor(final FineractPlatformTenantConnection tenantConnectionObj) {
+        String jdbcUrl = this.driverConfig.constructProtocol(tenantConnectionObj.getSchemaServer(), tenantConnectionObj.getSchemaServerPort(), tenantConnectionObj.getSchemaName()) ;
+
+        HikariConfig hikariConfig = new HikariConfig();
+
+        hikariConfig.setPoolName(tenantConnectionObj.getSchemaName() + "_pool");
+        hikariConfig.setDriverClassName(this.driverConfig.getDriverClassName());
+        hikariConfig.setJdbcUrl(jdbcUrl);
+        hikariConfig.setUsername(tenantConnectionObj.getSchemaUsername());
+        hikariConfig.setPassword(tenantConnectionObj.getSchemaPassword());
+        // TODO: try to tweak the pool settings later for performance
+        hikariConfig.addDataSourceProperty( "cachePrepStmts" , "true" );
+        hikariConfig.addDataSourceProperty( "prepStmtCacheSize" , "250" );
+        hikariConfig.addDataSourceProperty( "prepStmtCacheSqlLimit" , "2048" );
+        // TODO: try to translate these legacy Tomcat JDBC Pool configurations to Hikari with the use of "hikariConfig.addDataSourceProperty()"; Hikari's other datasource properties are:
+        //       - autoCommit
+        //       - connectionTimeout
+        //       - idleTimeout
+        //       - maxLifetime
+        //       - connectionTestQuery
+        //       - connectionInitSql
+        //       - validationTimeout
+        //       - maximumPoolSize
+        //       - poolName
+        //       - allowPoolSuspension
+        //       - readOnly
+        //       - transactionIsolation
+        //       - leakDetectionThreshold
+
+        /*
+        NOTE: these are the Tomcat JDBC Pool properties
+
+        poolConfiguration.setInitialSize(tenantConnectionObj.getInitialSize());
+        poolConfiguration.setTestOnBorrow(tenantConnectionObj.isTestOnBorrow());
+        poolConfiguration.setValidationQuery("SELECT 1");
+        poolConfiguration.setValidationInterval(tenantConnectionObj.getValidationInterval());
+        poolConfiguration.setRemoveAbandoned(tenantConnectionObj.isRemoveAbandoned());
+        poolConfiguration.setRemoveAbandonedTimeout(tenantConnectionObj.getRemoveAbandonedTimeout());
+        poolConfiguration.setLogAbandoned(tenantConnectionObj.isLogAbandoned());
+        poolConfiguration.setAbandonWhenPercentageFull(tenantConnectionObj.getAbandonWhenPercentageFull());
+        poolConfiguration.setDefaultAutoCommit(true);
+        */
+
+        return new HikariDataSource( hikariConfig );
+    }
+
+    @Deprecated
     // creates the data source oltp and report databases
     private DataSource createNewDataSourceFor(final FineractPlatformTenantConnection tenantConnectionObj) {
         // see

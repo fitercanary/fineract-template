@@ -527,9 +527,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
             for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
-                if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
-                        && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
-                        && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
+                if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) ||
+                        ((this instanceof FixedDepositAccount && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType))
+                        || (this instanceof RecurringDepositAccount && SavingsPostingInterestPeriodType.MONTHLY.getValue().equals(this.interestPostingPeriodType))
+                             && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
                     interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
                     if (postingTransactions.isEmpty()) {
@@ -3568,10 +3569,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             if (postingTransactions.isEmpty()) {
                 for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
-                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate)
-                            || ((this instanceof FixedDepositAccount || this instanceof RecurringDepositAccount)
-                            && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
-                            && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
+                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) ||
+                       ((this instanceof FixedDepositAccount && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType))
+                       || (this instanceof RecurringDepositAccount && SavingsPostingInterestPeriodType.MONTHLY.getValue().equals(this.interestPostingPeriodType))
+                            && (interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate)))) {
+                        
                         interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
                         SavingsAccountTransaction newPostingTransaction = null;

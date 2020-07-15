@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.fineract.infrastructure.core.domain.LocalDateInterval;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
@@ -53,9 +54,18 @@ public final class SavingsHelper {
 
         while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
 
-            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue()
-                    && !periodEndDate.isBefore(interestPostingUpToDate)) {
-                break;
+//            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue()
+//                    && !periodEndDate.isBefore(interestPostingUpToDate)) {
+//                break;
+//            }
+            
+            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue())
+            {
+                if(interestPostingUpToDate.isEqual(DateUtils.getLocalDateOfTenant()) && (periodEndDate.plusDays(1)).isAfter(interestPostingUpToDate))
+                {
+                    break;
+                }
+                
             }
 
             final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,

@@ -41,4 +41,6 @@ public interface ScheduledJobRunnerService {
     void postAccrualInterestForSavings() throws JobExecutionException;
     
     void savingTransactionClassification() throws JobExecutionException;
+
+    void processAccountTransfers() throws JobExecutionException;
 }

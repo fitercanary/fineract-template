@@ -3293,4 +3293,12 @@ public class CommandWrapperBuilder {
         this.href = "/recurringdepositaccounts/" + accountId + "?command=postAccrualInterest";
         return this;
     }
+
+    public CommandWrapperBuilder queueTransfer() {
+        this.actionName = "QUEUE";
+        this.entityName = "ACCOUNTTRANSFER";
+        this.entityId = null;
+        this.href = "/accounttransfers/queueTransfer";
+        return this;
+    }
 }

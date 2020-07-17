@@ -755,4 +755,75 @@ final public class ClientData implements Comparable<ClientData> {
         this.singleDepositLimit = singleDepositLimit;
         this.requireAuthorizationToView = false;
     }
+    
+    public static ClientData clientDetailsWithAddressInfo(String mobileNo, String emailAddress, String displayName) {
+        return new ClientData(mobileNo, emailAddress, displayName);
+     }
+    
+    private ClientData(
+            String mobileNo, String emailAddress, String displayName) {
+        this.clientLevelOptions = null;
+        this.rowIndex = null;
+        this.dateFormat = null;
+        this.locale = null;
+        this.firstname = null;
+        this.lastname = null;
+        this.middlename = null;
+        this.fullname = null;
+        this.activationDate = null;
+        this.submittedOnDate = null;
+        this.active = null;
+        this.externalId = null;
+        this.officeId = null;
+        this.staffId = null;
+        this.legalFormId = null;
+        this.mobileNo = mobileNo;
+        this.mothersMaidenName = null;
+        this.dateOfBirth = null;
+        this.clientTypeId = null;
+        this.genderId = null;
+        this.clientClassificationId = null;
+        this.isStaff = null;
+        this.address = null;
+        this.id = null;
+        this.accountNo = null;
+        this.status = null;
+        this.subStatus = null;
+        this.displayName = displayName;
+        this.gender = null;
+        this.clientType = null;
+        this.clientClassification = null;
+        this.officeName = null;
+        this.transferToOfficeId = null;
+        this.transferToOfficeName = null;
+        this.imageId = null;
+        this.imagePresent = null;
+        this.staffName = null;
+        this.timeline = null;
+        this.savingsProductId = null;
+        this.savingsProductName = null;
+        this.savingsAccountId = null;
+        this.legalForm = null;
+        this.groups = null;
+        this.officeOptions = null;
+        this.staffOptions = null;
+        this.narrations = null;
+        this.savingProductOptions = null;
+        this.savingAccountOptions = null;
+        this.genderOptions = null;
+        this.clientTypeOptions = null;
+        this.clientClassificationOptions = null;
+        this.clientNonPersonConstitutionOptions = null;
+        this.clientNonPersonMainBusinessLineOptions = null;
+        this.clientLegalFormOptions = null;
+        this.clientNonPersonDetails = null;
+        this.isAddressEnabled = null;
+        this.datatables = null;
+        this.familyMemberOptions = null;
+        this.emailAddress = emailAddress ;
+        this.dailyWithdrawLimit = null;
+        this.singleWithdrawLimit = null;
+        this.singleDepositLimit  = null;
+        this.requireAuthorizationToView = false;
+    }
 }

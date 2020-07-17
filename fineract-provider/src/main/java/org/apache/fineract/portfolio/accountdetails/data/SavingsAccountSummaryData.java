@@ -19,9 +19,11 @@
 package org.apache.fineract.portfolio.accountdetails.data;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
+import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountApplicationTimelineData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumData;
@@ -42,6 +44,7 @@ public class SavingsAccountSummaryData {
     private final SavingsAccountStatusEnumData status;
     private final CurrencyData currency;
     private final BigDecimal accountBalance;
+    private final Long groupId;
     //differentiate Individual, JLG or Group account
     private final EnumOptionData accountType;
     private final SavingsAccountApplicationTimelineData timeline;
@@ -50,11 +53,15 @@ public class SavingsAccountSummaryData {
 
     //differentiate deposit accounts Savings, FD and RD accounts
     private final EnumOptionData depositType;
+    
+ // groupMember
+    private final Collection<ClientData> membersOfGroup;
 
     public SavingsAccountSummaryData(final Long id, final String accountNo, final String externalId, final Long productId,
             final String productName, final String shortProductName, final SavingsAccountStatusEnumData status, final CurrencyData currency,
             final BigDecimal accountBalance, final EnumOptionData accountType, final SavingsAccountApplicationTimelineData timeline, final EnumOptionData depositType, 
-            final SavingsAccountSubStatusEnumData subStatus, final LocalDate lastActiveTransactionDate) {
+            final SavingsAccountSubStatusEnumData subStatus, final LocalDate lastActiveTransactionDate,
+            final Long groupId, final Collection<ClientData> membersOfGroup) {
         this.id = id;
         this.accountNo = accountNo;
         this.externalId = externalId;
@@ -69,5 +76,19 @@ public class SavingsAccountSummaryData {
         this.depositType = depositType;
         this.subStatus = subStatus;
         this.lastActiveTransactionDate = lastActiveTransactionDate;
+        this.groupId = groupId;
+        this.membersOfGroup = membersOfGroup;
+    }
+    
+    public static SavingsAccountSummaryData withGroupMembers(SavingsAccountSummaryData account, Collection<ClientData> membersOfGroup) {
+
+        return new SavingsAccountSummaryData(account.id, account.accountNo, account.externalId, account.productId, account.productName,
+                account.shortProductName, account.status, account.currency, account.accountBalance, account.accountType, account.timeline,
+                account.depositType, account.subStatus, account.lastActiveTransactionDate, account.groupId, membersOfGroup);
+
+    }
+
+    public Long getGroupId() {
+        return this.groupId;
     }
 }

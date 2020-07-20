@@ -150,13 +150,21 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			String ownerPassword;
 			if ("PDF".equalsIgnoreCase(outputType)) {
 				PdfReportUtil.createPDF(masterReport, baos);
-				ByteArrayOutputStream protectedBaos = baos;
+				ByteArrayOutputStream signedBaos = baos;
+
+				// sign pdf
+				if( ApiParameterHelper.signPdf(queryParams) ){
+					signedBaos = this.signPdf(signedBaos,  reportName);
+				}
+
+				ByteArrayOutputStream protectedBaos = signedBaos;
 
 				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
 					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
 					ownerPassword = userPassword;
-					protectedBaos = this.protectPdf(baos, userPassword, ownerPassword);
+					protectedBaos = this.protectPdf(protectedBaos, userPassword, ownerPassword);
 				}
+
 				return Response.ok().entity(protectedBaos.toByteArray()).type("application/pdf").build();
 			}
 
@@ -352,21 +360,22 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 		return outputByteArray;
 	}
 
-	private ByteArrayOutputStream signPdf(ByteArrayOutputStream pdfByteArray, byte[] imageArray, String documentName) throws IOException {
+	private ByteArrayOutputStream signPdf(ByteArrayOutputStream pdfByteArray, String documentName) throws IOException {
 		if(pdfByteArray == null){
 			throw new IOException("Signing PDF Document : " + " Byte array cannot be NULL");
 		}
 
-		if(imageArray == null){
-			throw new IOException("Signing PDF Document : " + " Image Byte array cannot be NULL");
-		}
-
 		PDDocument document = PDDocument.load(pdfByteArray.toByteArray());
-		PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, imageArray, documentName);
+		String signaturePath = this.env.getProperty("VFD_PDF_SIGNATURE_PATH");
+
+		if(!StringUtils.isNotBlank(signaturePath)){
+			return pdfByteArray;
+		}
+		PDImageXObject pdImage = PDImageXObject.createFromFile(signaturePath, document);
 
 		for (PDPage page: document.getPages()){
-			PDPageContentStream contentStream = new PDPageContentStream(document, page);
-			contentStream.drawImage(pdImage, 0, 0);
+			PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true);
+			contentStream.drawImage(pdImage, 0, 30, 100, 50);
 			contentStream.close();
 		}
 
@@ -374,7 +383,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 		document.save(newPdfByteArray);
 		document.close();
 
-		return pdfByteArray;
+		return newPdfByteArray;
 	}
 
 }

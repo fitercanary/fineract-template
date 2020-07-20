@@ -26,10 +26,18 @@ import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityEx
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
 import org.apache.fineract.infrastructure.dataqueries.service.ReadReportingService;
+import org.apache.fineract.infrastructure.documentmanagement.contentrepository.FileSystemContentRepository;
 import org.apache.fineract.infrastructure.report.annotation.ReportService;
 import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
+import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.poi.hssf.record.crypto.Biff8EncryptionKey;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.util.StringUtil;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -47,13 +55,23 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.springframework.util.ResourceUtils;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.cert.CertificateException;
 import java.sql.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -73,6 +91,9 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 	private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
 	
 	private final ReadReportingService readReportingService;
+
+	@Autowired
+	private Environment env;
 
 	@Autowired
 	public PentahoReportingProcessServiceImpl(final PlatformSecurityContext context,final BasicAuthTenantDetailsService basicAuthTenantDetailsService,
@@ -125,21 +146,39 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			addParametersToReport(masterReport, reportParams, reportName);
 
 			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
+			String userPassword;
+			String ownerPassword;
 			if ("PDF".equalsIgnoreCase(outputType)) {
 				PdfReportUtil.createPDF(masterReport, baos);
-				return Response.ok().entity(baos.toByteArray()).type("application/pdf").build();
+				ByteArrayOutputStream protectedBaos = baos;
+
+				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
+					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
+					ownerPassword = userPassword;
+					protectedBaos = this.protectPdf(baos, userPassword, ownerPassword);
+				}
+				return Response.ok().entity(protectedBaos.toByteArray()).type("application/pdf").build();
 			}
 
 			if ("XLS".equalsIgnoreCase(outputType)) {
 				ExcelReportUtil.createXLS(masterReport, baos);
-				return Response.ok().entity(baos.toByteArray()).type("application/vnd.ms-excel")
+				ByteArrayOutputStream protectedBaos = baos;
+				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
+					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
+					protectedBaos = this.protectExcel(baos, userPassword);
+				}
+				return Response.ok().entity(protectedBaos.toByteArray()).type("application/vnd.ms-excel")
 						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xls").build();
 			}
 
 			if ("XLSX".equalsIgnoreCase(outputType)) {
 				ExcelReportUtil.createXLSX(masterReport, baos);
-				return Response.ok().entity(baos.toByteArray()).type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+				ByteArrayOutputStream protectedBaos = baos;
+				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
+					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
+					protectedBaos = this.protectExcel(baos, userPassword);
+				}
+				return Response.ok().entity(protectedBaos.toByteArray()).type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xlsx").build();
 			}
 
@@ -262,6 +301,80 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			}
 		}
 		return reportParams;
+	}
+
+	private ByteArrayOutputStream protectPdf(ByteArrayOutputStream pdfByteArray, String userPassword, String ownerPassword) throws IOException {
+
+		if(pdfByteArray == null){
+			throw new IOException("Password Protecting PDF: " + " Byte array cannot be NULL");
+		}
+		PDDocument document = PDDocument.load(pdfByteArray.toByteArray());
+
+		AccessPermission accessPermission = new AccessPermission();
+
+		StandardProtectionPolicy spp = new StandardProtectionPolicy(ownerPassword,userPassword,accessPermission);
+
+		//Setting the length of the encryption key
+		spp.setEncryptionKeyLength(128);
+
+		//Setting the access permissions
+		spp.setPermissions(accessPermission);
+
+		//Protecting the document
+		document.protect(spp);
+
+		ByteArrayOutputStream newBaos = new ByteArrayOutputStream();
+		document.save(newBaos);
+		document.close();
+		return newBaos;
+	}
+
+	private ByteArrayOutputStream protectExcel(ByteArrayOutputStream pdfByteArray, String userPassword) throws IOException {
+
+		if(pdfByteArray == null){
+			throw new IOException("Password Protecting EXCEL: " + " Byte array cannot be NULL");
+		}
+
+		//sets the password that will be used for protecting the workbook
+		Biff8EncryptionKey.setCurrentUserPassword(userPassword);
+		HSSFWorkbook wb = new HSSFWorkbook(new ByteArrayInputStream(pdfByteArray.toByteArray()), true);
+
+		//call the function that write protects the workbook
+		wb.writeProtectWorkbook(Biff8EncryptionKey.getCurrentUserPassword(), "");
+
+		ByteArrayOutputStream outputByteArray = new ByteArrayOutputStream();
+
+		wb.write(outputByteArray);
+
+		// VERY IMPORTANT, RESET THE ENCRYPTION KEY WHEN DONE
+		Biff8EncryptionKey.setCurrentUserPassword(null);
+
+		return outputByteArray;
+	}
+
+	private ByteArrayOutputStream signPdf(ByteArrayOutputStream pdfByteArray, byte[] imageArray, String documentName) throws IOException {
+		if(pdfByteArray == null){
+			throw new IOException("Signing PDF Document : " + " Byte array cannot be NULL");
+		}
+
+		if(imageArray == null){
+			throw new IOException("Signing PDF Document : " + " Image Byte array cannot be NULL");
+		}
+
+		PDDocument document = PDDocument.load(pdfByteArray.toByteArray());
+		PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, imageArray, documentName);
+
+		for (PDPage page: document.getPages()){
+			PDPageContentStream contentStream = new PDPageContentStream(document, page);
+			contentStream.drawImage(pdImage, 0, 0);
+			contentStream.close();
+		}
+
+		ByteArrayOutputStream newPdfByteArray = new ByteArrayOutputStream();
+		document.save(newPdfByteArray);
+		document.close();
+
+		return pdfByteArray;
 	}
 
 }

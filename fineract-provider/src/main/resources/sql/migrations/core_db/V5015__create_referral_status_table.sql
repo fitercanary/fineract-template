@@ -16,6 +16,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
+
 CREATE TABLE referral_status (
     id bigint(20) NOT NULL AUTO_INCREMENT,
     client_id bigint(20) NOT NULL,

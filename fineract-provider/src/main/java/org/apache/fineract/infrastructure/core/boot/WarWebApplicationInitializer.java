@@ -18,8 +18,10 @@
  */
 package org.apache.fineract.infrastructure.core.boot;
 
+import org.apache.fineract.infrastructure.core.boot.db.DataSourceConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.web.SpringBootServletInitializer;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 
 /**
@@ -40,6 +42,7 @@ import org.springframework.context.annotation.ImportResource;
 public class WarWebApplicationInitializer extends SpringBootServletInitializer {
 
 	// @ImportResource({ "classpath*:META-INF/spring/jndi.xml" })
+	@Import({DataSourceConfiguration.class})
 	private static class Configuration extends AbstractApplicationConfiguration {
 	}
 

@@ -55,6 +55,7 @@ public class DataSourceConfiguration {
         HikariConfig hikariConfig = new HikariConfig();
 
         hikariConfig.setJdbcUrl( p.getUrl() );
+        hikariConfig.setDriverClassName("com.mysql.jdbc.Driver");
         hikariConfig.setUsername( p.getUsername() );
         hikariConfig.setPassword( p.getPassword() );
         // TODO: try to tweak the pool settings later for performance

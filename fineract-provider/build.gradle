@@ -349,7 +349,7 @@ tomcatRun {
     stopPort = 8081
     stopKey=   'stopKey'
     enableSSL = true
-    configFile = file('src/test/resources/META-INF/context.xml')
+    // configFile = file('src/test/resources/META-INF/context.xml')
 }
 
 tomcatRunWar {
@@ -360,7 +360,7 @@ tomcatRunWar {
     enableSSL = true
     keystoreFile = file('src/main/resources/keystore.jks')
     keystorePass = 'openmf'
-    configFile = file('src/test/resources/META-INF/context.xml')
+    // configFile = file('src/test/resources/META-INF/context.xml')
 }
 
 /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */

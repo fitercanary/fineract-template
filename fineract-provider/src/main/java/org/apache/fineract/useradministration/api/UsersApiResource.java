@@ -283,7 +283,6 @@ public class UsersApiResource {
             @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasPermissionTo(PermissionsApiConstants.REQUEST_TO_VIEW_CLIENT_PERMISSION);
-        // this.resourceNameForPermissions
 
         final Collection<AuthorizationRequestData> requests = this.readPlatformService
                 .retrieveUserAuthorizationRequestsOnClient(this.context.authenticatedUser().getId(), clientId, status);

@@ -448,4 +448,16 @@ public class ClientsApiResource {
         
         return this.toApiJsonSerializer.serialize(limitData);
     }
+
+    @GET
+    @Path("{clientId}/requiresauthorization")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String checkClientRequiresAuthorization(@PathParam("clientId") final Long clientId) {
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        boolean requiresAuthorization = this.clientReadPlatformService.doesClientRequireAuthrorization(clientId);
+
+        return this.toApiJsonSerializer.serialize(new ClientData(clientId, requiresAuthorization));
+    }
 }

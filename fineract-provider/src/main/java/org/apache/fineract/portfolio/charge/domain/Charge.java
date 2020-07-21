@@ -184,8 +184,10 @@ public class Charge extends AbstractPersistableCustom<Long> {
                         .failWithCodeNoParameterAddedToErrorCode("not.allowed.charge.calculation.type.for.savings");
             }
 
-            if (!(ChargeTimeType.fromInt(getChargeTimeType()).isWithdrawalFee() || ChargeTimeType.fromInt(getChargeTimeType()).isSavingsNoActivityFee()
-                    || ChargeTimeType.fromInt(getChargeTimeType()).isOverdraftFee() || ChargeTimeType.fromInt(getChargeTimeType()).isFdaPreclosureFee())
+            ChargeTimeType chargeTimeType = ChargeTimeType.fromInt(getChargeTimeType());
+            if (!(chargeTimeType.isWithdrawalFee() || chargeTimeType.isSavingsNoActivityFee()
+                    || chargeTimeType.isOverdraftFee() || chargeTimeType.isFdaPreclosureFee()
+                    || chargeTimeType.isFdaPartialLiquidationFee())
                     && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfAmount()) {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(this.chargeCalculation)
                         .failWithCodeNoParameterAddedToErrorCode("savings.charge.calculation.type.percentage.allowed.only.for.withdrawal.overdraft.or.NoActivity");
@@ -614,10 +616,13 @@ public class Charge extends AbstractPersistableCustom<Long> {
         return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSEMENT)
                 || ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.TRANCHE_DISBURSEMENT);
     }
-    
+
     public boolean isDisburseToSavingsCharge() {
-        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSE_TO_SAVINGS)
-               ;
+        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.DISBURSE_TO_SAVINGS);
+    }
+
+    public boolean isPartialLiquidationCharge() {
+        return ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
     }
 
     public TaxGroup getTaxGroup() {

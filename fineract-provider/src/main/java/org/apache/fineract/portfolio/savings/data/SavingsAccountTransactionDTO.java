@@ -37,6 +37,7 @@ public class SavingsAccountTransactionDTO {
     private final AppUser appUser;
     private final Integer depositAccountType;
     private final Boolean isAccountTransfer;
+    private BigDecimal totalInterestAccrued;
 
     public SavingsAccountTransactionDTO(final DateTimeFormatter formatter, final LocalDate transactionDate,
             final BigDecimal transactionAmount, final PaymentDetail paymentDetail, final Date createdDate, final AppUser appUser,
@@ -115,5 +116,14 @@ public class SavingsAccountTransactionDTO {
     public Boolean getIsAccountTransfer() {
         return this.isAccountTransfer;
     }
+    
+    public BigDecimal getTotalInterestAccrued() {
+        return totalInterestAccrued;
+    }
+
+    public void setTotalInterestAccrued(BigDecimal totalInterestAccrued) {
+        this.totalInterestAccrued = totalInterestAccrued;
+    }
+
 
 }

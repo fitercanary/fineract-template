@@ -403,6 +403,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
         }
 
         this.staff = staff;
+        this.isStaff = isStaff;
         this.savingsProductId = savingsProductId;
         this.savingsAccountId = savingsAccountId;
 
@@ -714,6 +715,12 @@ public final class Client extends AbstractPersistableCustom<Long> {
             final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName);
             actualChanges.put(ClientApiConstants.requireAuthorizationToViewParamName, newValue);
             this.requireAuthorizationToView = newValue;
+        }
+        
+        if (command.isChangeInBooleanParameterNamed(ClientApiConstants.isStaffParamName, this.isStaff)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.isStaffParamName);
+            actualChanges.put(ClientApiConstants.isStaffParamName, newValue);
+            this.isStaff = newValue;
         }
 
 

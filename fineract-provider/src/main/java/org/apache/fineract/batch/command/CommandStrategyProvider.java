@@ -105,6 +105,7 @@ public class CommandStrategyProvider {
         
         this.commandStrategies.put(CommandContext.resource("users\\/requestauthorization\\/\\d+\\?command=reject").method("POST").build(),
                 "rejectAuthorizationRequestToViewClientCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("accounttransfers").method("POST").build(), "accountTransfersCommandStrategy");
     }
 
 }

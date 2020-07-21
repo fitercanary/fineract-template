@@ -23,8 +23,10 @@ import java.util.Map;
 
 import org.apache.fineract.infrastructure.core.data.PaginationParameters;
 import org.apache.fineract.infrastructure.core.service.Page;
+import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 
@@ -42,7 +44,8 @@ public interface DepositAccountReadPlatformService {
 
     DepositAccountData retrieveOneWithChartSlabs(final DepositAccountType depositAccountType, Long productId);
 
-    Collection<SavingsAccountTransactionData> retrieveAllTransactions(final DepositAccountType depositAccountType, Long accountId);
+    Collection<SavingsAccountTransactionData> retrieveAllTransactions(final DepositAccountType depositAccountType, Long accountId, 
+            SavingsAccountTransactionType savingsAccountTransactionType);
 
     DepositAccountData retrieveTemplate(final DepositAccountType depositAccountType, Long clientId, Long groupId, Long productId,
             boolean staffInSelectedOfficeOnly);
@@ -54,4 +57,7 @@ public interface DepositAccountReadPlatformService {
     Collection<AccountTransferDTO> retrieveDataForInterestTransfer();
 
     Collection<Map<String, Object>> retriveDataForRDScheduleCreation();
+
+    Page<SavingsAccountTransactionData> retrieveAllTransactionUsingPagination(Long accountId, SearchParameters searchParameters,
+            final DepositAccountType depositAccountType, SavingsAccountTransactionType type);
 }

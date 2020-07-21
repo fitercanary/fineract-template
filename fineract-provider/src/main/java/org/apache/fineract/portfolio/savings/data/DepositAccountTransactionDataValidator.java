@@ -95,7 +95,13 @@ public class DepositAccountTransactionDataValidator {
     private static final Set<String> DEPOSIT_ACCOUNT_TOP_UP_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, DepositsApiConstants.submittedOnDateParamName,
             DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName,
-            DepositsApiConstants.depositAmountParamName));
+            DepositsApiConstants.depositAmountParamName, DepositsApiConstants.changeTenureParamName));
+
+    private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName));
+
+    private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_FREQUENCY_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.recurringFrequencyParamName, DepositsApiConstants.recurringFrequencyTypeParamName));
 
 
     @Autowired
@@ -321,5 +327,57 @@ public class DepositAccountTransactionDataValidator {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     dataValidationErrors);
         }
+    }
+
+    public void validateDepositPeriodUpdate(final JsonCommand command) {
+        final String json = command.json();
+
+        validateJson(json);
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        final JsonElement element = command.parsedJson();
+
+        final Integer depositPeriod = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(DepositsApiConstants.depositPeriodParamName,
+                element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.depositPeriodParamName).value(depositPeriod).notNull().positiveAmount();
+
+        final Integer depositPeriodFrequencyId = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(DepositsApiConstants.depositPeriodFrequencyIdParamName,
+                element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.depositPeriodFrequencyIdParamName).value(depositPeriodFrequencyId)
+        .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+    
+    public void validateDepositPeriodFrequencyUpdate(final JsonCommand command) {
+        final String json = command.json();
+
+        validateJson(json);
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_FREQUENCY_UPDATE_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        final JsonElement element = command.parsedJson();
+
+        final Integer recurringFrequency = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(DepositsApiConstants.recurringFrequencyParamName,
+                element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.recurringFrequencyParamName).value(recurringFrequency).notNull().positiveAmount();
+
+        final Integer recurringFrequencyId = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(DepositsApiConstants.recurringFrequencyTypeParamName,
+                element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.recurringFrequencyTypeParamName).value(recurringFrequencyId)
+        .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 }

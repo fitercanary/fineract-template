@@ -175,7 +175,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
             final List<Long> existingReversedTransactionIds = new ArrayList<>();
             existingTransactionIds.addAll(loan.findExistingTransactionIds());
             existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
-			if (loan.status().isOverpaid()) {
+			if (loan.status().isOverpaid() || loan.status().isClosed()) {
 				LocalDate lastTransactionDate = loan.getDisbursementDate();
 				for (LoanTransaction tran : loan.getLoanTransactions()) {
 					if (tran.isRepayment() && !tran.isReversed()

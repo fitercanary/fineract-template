@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountingRuleParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargesParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
@@ -41,6 +42,7 @@ import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidati
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.data.DepositProductDataValidator;
@@ -66,17 +68,19 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
     private final DepositProductAssembler depositProductAssembler;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
     private final InterestRateChartAssembler chartAssembler;
+    private final ChargeRepositoryWrapper chargeRepository;
 
     @Autowired
     public RecurringDepositProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final RecurringDepositProductRepository recurringDepositProductRepository,
-            final DepositProductDataValidator fromApiJsonDataValidator, final DepositProductAssembler depositProductAssembler,
-            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
-            final InterestRateChartAssembler chartAssembler) {
+                                                                        final RecurringDepositProductRepository recurringDepositProductRepository,
+                                                                        final DepositProductDataValidator fromApiJsonDataValidator, final DepositProductAssembler depositProductAssembler,
+                                                                        final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
+                                                                        final InterestRateChartAssembler chartAssembler, ChargeRepositoryWrapper chargeRepository) {
         this.context = context;
         this.recurringDepositProductRepository = recurringDepositProductRepository;
         this.fromApiJsonDataValidator = fromApiJsonDataValidator;
         this.depositProductAssembler = depositProductAssembler;
+        this.chargeRepository = chargeRepository;
         this.logger = LoggerFactory.getLogger(RecurringDepositProductWritePlatformServiceJpaRepositoryImpl.class);
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.chartAssembler = chartAssembler;
@@ -103,10 +107,10 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
         } catch (final DataAccessException e) {
             handleDataIntegrityIssues(command, e.getMostSpecificCause(), e);
             return CommandProcessingResult.empty();
-        }catch (final PersistenceException dve) {
-            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
-        	handleDataIntegrityIssues(command, throwable, dve);
-        	return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
         }
     }
 
@@ -131,6 +135,11 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
                 if (!updated) {
                     changes.remove(chargesParamName);
                 }
+            }
+
+            if (changes.containsKey(preClosureChargeIdParamName)) {
+                Charge charge = this.chargeRepository.findOneWithNotFoundDetection(command.longValueOfParameterNamed(preClosureChargeIdParamName));
+                product.depositProductTermAndPreClosure().setPreClosureCharge(charge);
             }
 
             if (changes.containsKey(taxGroupIdParamName)) {
@@ -163,10 +172,10 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
         } catch (final DataAccessException e) {
             handleDataIntegrityIssues(command, e.getMostSpecificCause(), e);
             return CommandProcessingResult.empty();
-        }catch (final PersistenceException dve) {
-        	Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
-        	handleDataIntegrityIssues(command, throwable, dve);
-        	return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
         }
     }
 

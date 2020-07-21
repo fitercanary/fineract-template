@@ -100,6 +100,13 @@ public interface ChargeReadPlatformService {
     Collection<ChargeData> retrieveSavingsProductApplicableCharges(boolean feeChargesOnly);
 
     /**
+     * Returns deposit preclosure applicable charges
+     *
+     * @return
+     */
+    Collection<ChargeData> retrieveDepositPreClosureCharges();
+
+    /**
      * Returns all penalties applicable for savings
      * 
      * @return

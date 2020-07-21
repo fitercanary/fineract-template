@@ -72,7 +72,6 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValida
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDataValidator;
-import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
@@ -96,6 +95,7 @@ import org.apache.fineract.portfolio.savings.exception.SavingsOfficerAssignmentE
 import org.apache.fineract.portfolio.savings.exception.SavingsOfficerUnassignmentException;
 import org.apache.fineract.portfolio.savings.exception.TransactionUpdateNotAllowedException;
 import org.apache.fineract.portfolio.savings.request.FixedDepositActivationReq;
+import org.apache.fineract.portfolio.savings.request.SavingsAccountChargeReq;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.joda.time.LocalDate;
@@ -505,8 +505,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
-        if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
-                || account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0) {
+        if ((account.getNominalAnnualInterestRate() != null && account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0)
+                || (account.getNominalAnnualInterestRateOverdraft() != null && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
             final Set<Long> existingTransactionIds = new HashSet<>();
             final Set<Long> existingReversedTransactionIds = new HashSet<>();
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
@@ -531,6 +531,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     this.noteRepository.save(Note.savingsTransactionNote(account, accountTransaction, noteText));
                 }
             }
+            this.savingAccountRepositoryWrapper.saveAndFlush(account);
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
     }
@@ -972,7 +973,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                             "charge.due.date.is.invalid.for." + ChargeTimeType.fromInt(chargeTimeType).getCode());
         }
         // calculation is in this line
-        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewFromJson(savingsAccount, chargeDefinition, command);
+        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, SavingsAccountChargeReq.instance(command));
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             // transaction date should not be on a holiday or non working day
@@ -993,12 +994,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         savingsAccount.addCharge(fmt, savingsAccountCharge, chargeDefinition);
         this.savingsAccountChargeRepository.save(savingsAccountCharge);
         this.savingAccountRepositoryWrapper.saveAndFlush(savingsAccount);
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsAccountCharge.getId()) //
-                .withOfficeId(savingsAccount.officeId()) //
-                .withClientId(savingsAccount.clientId()) //
-                .withGroupId(savingsAccount.groupId()) //
-                .withSavingsId(savingsAccountId) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(savingsAccountCharge.getId())
+                .withOfficeId(savingsAccount.officeId())
+                .withClientId(savingsAccount.clientId())
+                .withGroupId(savingsAccount.groupId())
+                .withSavingsId(savingsAccountId)
                 .build();
     }
 
@@ -1741,7 +1742,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
-                || account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0) {
+                || (account.getNominalAnnualInterestRateOverdraft() != null && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
             final Set<Long> existingTransactionIds = new HashSet<>();
             final Set<Long> existingReversedTransactionIds = new HashSet<>();
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);

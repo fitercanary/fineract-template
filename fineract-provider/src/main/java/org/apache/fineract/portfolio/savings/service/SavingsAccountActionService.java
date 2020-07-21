@@ -20,7 +20,6 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;

@@ -52,7 +52,8 @@ public enum JobName {
     EXECUTE_EMAIL("Execute Email"),
     CHECK_VALIDITY_OF_OVERDRAFT("Check Validity Of Overdraft"),
     POSTACCRUALINTERESTFORSAVINGS("Post Accrual Interest for Savings"),
-    SAVINGSTRANSACTIONCLASSIFICATION("Savings Transaction Classification");
+    SAVINGSTRANSACTIONCLASSIFICATION("Savings Transaction Classification"), //
+    PROCESS_ACCOUNT_TRANSFERS("Process Account Transfers");
 
     private final String name;
 

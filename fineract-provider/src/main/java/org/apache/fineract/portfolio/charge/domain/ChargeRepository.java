@@ -21,6 +21,9 @@ package org.apache.fineract.portfolio.charge.domain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
+
 public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
-    // no added behaviour
+
+    List<Charge> findChargesByChargeTimeTypeAndActive(Integer chargeTimeType, boolean active);
 }

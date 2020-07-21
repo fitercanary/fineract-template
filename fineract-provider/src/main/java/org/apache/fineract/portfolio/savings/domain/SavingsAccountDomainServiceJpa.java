@@ -18,6 +18,15 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -27,6 +36,7 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepos
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
+import org.apache.fineract.portfolio.client.domain.LegalForm;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
@@ -48,15 +58,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 @Service
 public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainService {
 
@@ -76,15 +77,15 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
-                                          final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
-                                          final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
-                                          final JournalEntryWritePlatformService journalEntryWritePlatformService,
-                                          final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
-                                          final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
-                                          final BusinessEventNotifierService businessEventNotifierService,
-                                          final SavingsAccountAssembler savingAccountAssembler, SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
-                                          final ClientRepositoryWrapper clientRepositoryWrapper,
-                                          final ValidationLimitRepository validationLimitRepository, ClientReadPlatformService clientReadPlatformService) {
+            final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
+            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
+            final JournalEntryWritePlatformService journalEntryWritePlatformService,
+            final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
+            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
+            final BusinessEventNotifierService businessEventNotifierService, final SavingsAccountAssembler savingAccountAssembler,
+            SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
+            final ClientRepositoryWrapper clientRepositoryWrapper, final ValidationLimitRepository validationLimitRepository,
+            ClientReadPlatformService clientReadPlatformService) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -114,7 +115,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isNotTransferToOtherAccount) {
+        if (this.shouldValidateLimit(account, isNotTransferToOtherAccount, isClientLevelValidationEnabled)) {
             BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(account.clientId(), transactionDate, transactionAmount);
             this.savingsAccountTransactionDataValidator.validateWithdrawLimits(account.getClient(), transactionAmount, totalWithdrawOnDate);
         }
@@ -128,7 +129,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         Integer accountType = null;
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
                 paymentDetail, new Date(), user, accountType, transactionBooleanValues.isAccountTransfer());
-
+        transactionDTO.setTotalInterestAccrued(getTotalAccruedInterest(transactionDate.toDate(), account.getId()));
         final SavingsAccountTransaction withdrawal = account.withdraw(transactionDTO, transactionBooleanValues.isApplyWithdrawFee(),
                 transactionBooleanValues.isApplyOverdraftFee());
         final MathContext mc = MathContext.DECIMAL64;
@@ -169,6 +170,25 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         return user;
     }
 
+    private BigDecimal getTotalAccruedInterest(Date transactionDate, Long savingsId) {
+        List<SavingsAccountTransaction> transactions = this.savingsAccountTransactionRepository
+                .findByTransactionTypeAndSavingsAccountId(SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(), SavingsAccountTransactionType.WITHDRAWAL_FEE.getValue(), savingsId, transactionDate);
+        BigDecimal totalAccuredAmountTillDate = BigDecimal.ZERO;
+        BigDecimal totalWithdrawalFeeTillDate = BigDecimal.ZERO;
+        if (transactions.size() > 0) {
+            for (SavingsAccountTransaction transaction : transactions) {
+                if (transaction.isAccrualInterestPostingAndNotReversed()) {
+                    totalAccuredAmountTillDate = totalAccuredAmountTillDate.add(transaction.getAmount());
+                } else if (transaction.isWithdrawalFeeAndNotReversed()) {
+                    totalWithdrawalFeeTillDate = totalWithdrawalFeeTillDate.add(transaction.getAmount());
+                }
+            }
+            return totalAccuredAmountTillDate.subtract(totalWithdrawalFeeTillDate);
+        }
+        return totalAccuredAmountTillDate;
+
+    }
+
     @Transactional
     @Override
     public SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
@@ -192,7 +212,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         final boolean isClientLevelValidationEnabled = this.configurationDomainService.isClientLevelValidationEnabled();
 
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer) {
+        if (this.shouldValidateLimit(account, isAccountTransfer, isClientLevelValidationEnabled)) {
             this.savingsAccountTransactionDataValidator.validateSingleDepositLimits(account.getClient(), transactionAmount);
         }
 
@@ -210,19 +230,17 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
-            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), false,
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
+            account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), false, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth, null);
         }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
-            account.postInterest(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    null);
+            account.postInterest(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
-            account.calculateInterestUsing(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, null);
+            account.calculateInterestUsing(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
         }
-        if (isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer ) {
+        if (this.shouldValidateLimit(account, isAccountTransfer, isClientLevelValidationEnabled)) {
             this.savingsAccountTransactionDataValidator.validateCumulativeBalanceByLimit(account, transactionAmount);
         }
 
@@ -231,9 +249,14 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.savingsAccountRepository.saveAndFlush(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
-        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT,
-                constructEntityMap(deposit));
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT, constructEntityMap(deposit));
         return deposit;
+    }
+
+    private boolean shouldValidateLimit(SavingsAccount account, boolean isAccountTransfer, boolean isClientLevelValidationEnabled) {
+        return isClientLevelValidationEnabled && account.depositAccountType().isSavingsDeposit() && !isAccountTransfer
+                && account.getClient() != null
+                && (account.getClient().getLegalForm() == null || !LegalForm.fromInt(account.getClient().getLegalForm()).isEntity());
     }
 
     @Override
@@ -263,9 +286,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         for (SavingsAccount acc : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
             if (acc.depositAccountType().isSavingsDeposit()) {
                 for (SavingsAccountTransaction tran : acc.getTransactions()) {
-                    if (!tran.isReversed() && tran.isWithdrawal() &&
-                            tran.getTransactionLocalDate().isEqual(transactionDate) &&
-                            !tran.getIsAccountTransfer()) {
+                    if (!tran.isReversed() && tran.isWithdrawal() && tran.getTransactionLocalDate().isEqual(transactionDate)
+                            && !tran.getIsAccountTransfer()) {
                         totalWithdrawOnDate = totalWithdrawOnDate.add(tran.getAmount());
                     }
                 }
@@ -292,67 +314,67 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         map.put(BUSINESS_ENTITY.SAVINGS_TRANSACTION, entity);
         return map;
     }
-    
+
     @Transactional
     @Override
     public ValidationLimitData getCurrentValidationLimitsOnDate(Long clientId, LocalDate transactionDate, Long savingsAccountId) {
 
         this.clientReadPlatformService.validateUserHasAuthorityToViewClient(clientId);
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
-        
+
         SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsAccountId);
-        
+
         // verify account belongs to client
-        if(account.clientId().compareTo(client.getId()) != 0) {
+        if (account.clientId().compareTo(client.getId()) != 0) {
             throw new SavingsAccountDoesNotBelongToClientException(savingsAccountId, clientId);
         }
-               
+
         BigDecimal totalWithdrawOnDate = this.getTotalWithdrawAmountOnDate(clientId, transactionDate, BigDecimal.ZERO);
-        
-        BigDecimal  cumulativeBalanceOnDate = account.getAccountBalance();
-        
+
+        BigDecimal cumulativeBalanceOnDate = account.getAccountBalance();
+
         ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(client.clientLevelId());
-        
-        
-        if(validationLimit != null ) {
-            
+
+        if (validationLimit != null) {
+
             // Maximum Daily Withdraw Limit
-            BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit(); 
-            
-            if(BigDecimal.ZERO.equals(dailyWithdrawLimit)) {
-                totalWithdrawOnDate = validationLimit.getMaximumDailyWithdrawLimit() != null ?
-                        validationLimit.getMaximumDailyWithdrawLimit().subtract(totalWithdrawOnDate) : null;
-            }else {
+            BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit();
+
+            if (BigDecimal.ZERO.equals(dailyWithdrawLimit)) {
+                totalWithdrawOnDate = validationLimit.getMaximumDailyWithdrawLimit() != null
+                        ? validationLimit.getMaximumDailyWithdrawLimit().subtract(totalWithdrawOnDate)
+                        : null;
+            } else {
                 totalWithdrawOnDate = dailyWithdrawLimit.subtract(totalWithdrawOnDate);
             }
-            
-            // Cumulative Balance 
-            cumulativeBalanceOnDate = validationLimit.getMaximumCumulativeBalance() != null ?
-                        validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate) : null;
-            
+
+            // Cumulative Balance
+            cumulativeBalanceOnDate = validationLimit.getMaximumCumulativeBalance() != null
+                    ? validationLimit.getMaximumCumulativeBalance().subtract(cumulativeBalanceOnDate)
+                    : null;
+
             // Single Withdraw Limit
-            BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit(); 
-            
-            if( BigDecimal.ZERO.equals(singleWithdrawLimit)) {
+            BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit();
+
+            if (BigDecimal.ZERO.equals(singleWithdrawLimit)) {
                 singleWithdrawLimit = validationLimit.getMaximumSingleWithdrawLimit();
             }
-                    
-            return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), 
-                            cumulativeBalanceOnDate, singleWithdrawLimit, totalWithdrawOnDate, null, null);
+
+            return ValidationLimitData.instance(null, null, validationLimit.getMaximumSingleDepositAmount(), cumulativeBalanceOnDate,
+                    singleWithdrawLimit, totalWithdrawOnDate, validationLimit.getMaximumClientSpecificDailyWithdrawLimit(),
+                    validationLimit.getMaximumClientSpecificSingleWithdrawLimit());
         }
-        
         return null;
-        
-        
     }
-    
+
     @SuppressWarnings("unused")
     private BigDecimal getCumulativeBalanceOnDate(Long clientId) {
 
         BigDecimal balance = BigDecimal.ZERO;
         for (SavingsAccount account : this.savingAccountAssembler.findSavingAccountByClientId(clientId)) {
-            
-            BigDecimal accountBalance = account.getSummary().getAccountBalance() != null ? account.getSummary().getAccountBalance() : BigDecimal.ZERO;
+
+            BigDecimal accountBalance = account.getSummary().getAccountBalance() != null ? account.getSummary().getAccountBalance()
+                    : BigDecimal.ZERO;
             balance = balance.add(accountBalance);
         }
         return balance;

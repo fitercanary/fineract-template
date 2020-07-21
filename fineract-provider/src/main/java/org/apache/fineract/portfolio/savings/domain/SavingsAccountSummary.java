@@ -136,6 +136,10 @@ public final class SavingsAccountSummary {
         return this.totalInterestPosted;
     }
 
+    public BigDecimal getTotalInterestEarned() {
+        return totalInterestEarned;
+    }
+
     public void setTotalInterestEarned(BigDecimal totalInterestEarned) {
         this.totalInterestEarned = totalInterestEarned;
     }

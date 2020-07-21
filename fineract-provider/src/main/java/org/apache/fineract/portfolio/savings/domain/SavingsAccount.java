@@ -38,6 +38,7 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeNotFoundException;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
@@ -380,12 +381,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, boolean withHoldTax) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, boolean withHoldTax, final String nickname) {
         this(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null,
-                withHoldTax, null);
+                withHoldTax, nickname);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff savingsOfficer,
@@ -498,7 +499,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
         Money interestPostedToDate = Money.zero(this.currency);
 
-        boolean recalucateDailyBalanceDetails = false;
+        boolean recalculateDailyBalanceDetails = false;
         boolean applyWithHoldTax = isWithHoldTaxApplicableForInterestPosting();
         final List<SavingsAccountTransaction> withholdTransactions = new ArrayList<>();
         withholdTransactions.addAll(findWithHoldTransactions());
@@ -549,7 +550,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                         if (applyWithHoldTax) {
                             createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                         }
-                        recalucateDailyBalanceDetails = true;
+                        recalculateDailyBalanceDetails = true;
                     } else {
                         boolean correctionRequired = false;
                         for (SavingsAccountTransaction postingTransaction : postingTransactions) {
@@ -585,14 +586,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                             if (applyWithHoldTaxForOldTransaction) {
                                 createWithHoldTransaction(interestEarnedToBePostedForPeriod.getAmount(), interestPostingTransactionDate);
                             }
-                            recalucateDailyBalanceDetails = true;
+                            recalculateDailyBalanceDetails = true;
                         }
                     }
                 }
             }
         }
 
-        if (recalucateDailyBalanceDetails) {
+        if (recalculateDailyBalanceDetails) {
             // no openingBalance concept supported yet but probably will to
             // allow
             // for migrations.
@@ -622,27 +623,27 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     protected List<SavingsAccountTransaction> findInterestPostingTransactionFor(final LocalDate postingDate) {
-        List<SavingsAccountTransaction> postingTransation = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> postingTransaction = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
             if ((transaction.isInterestPostingAndNotReversed() || transaction.isOverdraftInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
-                postingTransation.add(transaction);
+                postingTransaction.add(transaction);
             }
         }
-        return postingTransation;
+        return postingTransaction;
     }
 
     protected List<SavingsAccountTransaction> findAccrualInterestPostingTransactionFor(final LocalDate postingDate) {
-        List<SavingsAccountTransaction> postingTransation = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> postingTransaction = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
             if ((transaction.isAccrualInterestPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
-                postingTransation.add(transaction);
+                postingTransaction.add(transaction);
             }
         }
-        return postingTransation;
+        return postingTransaction;
     }
 
     protected SavingsAccountTransaction findTransactionFor(final LocalDate postingDate,
@@ -890,7 +891,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return listOfTransactionsSorted;
     }
 
-    protected void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
+    public void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
 
         Money runningBalance = openingAccountBalance.copy();
 
@@ -924,7 +925,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 if (overdraftAmount.isZero() && runningBalance.isLessThanZero()) {
                     overdraftAmount = overdraftAmount.plus(runningBalance.getAmount().negate());
                 }
-                if (transaction.getId() == null && overdraftAmount.isGreaterThanZero()) {
+                if (transaction.getId() == null && (overdraftAmount.isGreaterThanZero()
+                        || overdraftAmount.isNotEqualTo(transaction.getOverdraftAmount(getCurrency())))) {
                     transaction.updateOverdraftAmount(overdraftAmount.getAmount());
                 } else if (overdraftAmount.isNotEqualTo(transaction.getOverdraftAmount(getCurrency()))) {
                     SavingsAccountTransaction accountTransaction = SavingsAccountTransaction.copyTransaction(transaction);
@@ -1158,7 +1160,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         addTransaction(transaction);
         if (applyWithdrawFee) {
             // auto pay withdrawal fee
-            payWithdrawalFee(transactionDTO.getTransactionAmount(), transactionDTO.getTransactionDate(), transactionDTO.getAppUser());
+            payWithdrawalFee(transactionDTO, transactionDTO.getTransactionDate(), transactionDTO.getAppUser());
         }
         if (this.sub_status.equals(SavingsAccountSubStatusEnum.INACTIVE.getValue())
                 || this.sub_status.equals(SavingsAccountSubStatusEnum.DORMANT.getValue())) {
@@ -1167,10 +1169,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return transaction;
     }
 
-    private void payWithdrawalFee(final BigDecimal transactionAmoount, final LocalDate transactionDate, final AppUser user) {
+    private void payWithdrawalFee(final SavingsAccountTransactionDTO transactionDTO, final LocalDate transactionDate, final AppUser user) {
+        BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
         for (SavingsAccountCharge charge : this.charges()) {
             if (charge.isWithdrawalFee() && charge.isActive()) {
-                charge.updateWithdralFeeAmount(transactionAmoount);
+                if(ChargeCalculationType.fromInt(charge.getChargeCalculation()).isPercentageOfInterest()) {
+                    transactionAmount = transactionDTO.getTotalInterestAccrued();
+                }
+                charge.updateWithdralFeeAmount(transactionAmount);
                 this.payCharge(charge, charge.getAmountOutstanding(this.getCurrency()), transactionDate, user);
             }
         }
@@ -1989,6 +1995,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     public BigDecimal getNominalAnnualInterestRate() {
         return this.nominalAnnualInterestRate;
+    }
+
+    public BigDecimal getOriginalInterestRate() {
+        return this.originalInterestRate;
     }
 
     public BigDecimal getNominalAnnualInterestRateOverdraft() {
@@ -3558,7 +3568,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             if (postingTransactions.isEmpty()) {
                 for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
-                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
+                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate)
+                            || ((this instanceof FixedDepositAccount || this instanceof RecurringDepositAccount)
                             && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
                             && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
                         interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
@@ -3740,4 +3751,5 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public boolean isWithHoldTax() {
         return this.withHoldTax;
     }
+
 }

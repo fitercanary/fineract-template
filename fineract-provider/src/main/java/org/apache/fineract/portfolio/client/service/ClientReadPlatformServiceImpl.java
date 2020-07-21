@@ -885,11 +885,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String displayName = rs.getString("displayName");
             final String externalId = rs.getString("externalId");
             final boolean requireAuthorizationToView = rs.getBoolean("requireAuthorizationToView");
+            final boolean isStaff = rs.getBoolean("isStaff"); 
 
             return ClientData.instance(accountNo, null, null, null, null, null, null, id,
                     null, null, null, null, displayName, externalId, null, null, null,
                     null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null, null, requireAuthorizationToView);
+                    null, null, null, null, null, isStaff, null, null, null, requireAuthorizationToView);
 
         }
     }

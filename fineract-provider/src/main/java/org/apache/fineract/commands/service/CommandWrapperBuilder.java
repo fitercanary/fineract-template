@@ -1236,6 +1236,22 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder backupBalance() {
+        this.actionName = "BACKUP";
+        this.entityName = "BALANCE";
+        this.entityId = null;
+        this.href = "/accountbalances";
+        return this;
+    }
+
+    public CommandWrapperBuilder verifyBalance() {
+        this.actionName = "VERIFY";
+        this.entityName = "BALANCE";
+        this.entityId = null;
+        this.href = "/accountbalances";
+        return this;
+    }
+
     public CommandWrapperBuilder createStandingInstruction() {
         this.actionName = "CREATE";
         this.entityName = "STANDINGINSTRUCTION";
@@ -2289,6 +2305,24 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder updateDepositPeriodForRecurringDepositAccount(final Long accountId) {
+        this.actionName = DepositsApiConstants.UPDATE_DEPOSIT_PERIOD.toUpperCase();
+        this.entityName = "RECURRINGDEPOSITACCOUNT";
+        this.entityId = accountId;
+        this.savingsId = accountId;
+        this.href = "/recurringdepositaccounts/" + accountId + "?command=" + DepositsApiConstants.UPDATE_DEPOSIT_PERIOD;
+        return this;
+    }
+    
+    public CommandWrapperBuilder updateDepositPeriodFrequencyForRecurringDepositAccount(final Long accountId) {
+        this.actionName = DepositsApiConstants.UPDATE_DEPOSIT_PERIOD_FREQUENCY.toUpperCase();
+        this.entityName = "RECURRINGDEPOSITACCOUNT";
+        this.entityId = accountId;
+        this.savingsId = accountId;
+        this.href = "/recurringdepositaccounts/" + accountId + "?command=" + DepositsApiConstants.UPDATE_DEPOSIT_PERIOD_FREQUENCY;
+        return this;
+    }
+
     public CommandWrapperBuilder prematureCloseRecurringDepositAccount(final Long accountId) {
         this.actionName = "PREMATURECLOSE";
         this.entityName = "RECURRINGDEPOSITACCOUNT";
@@ -3248,6 +3282,23 @@ public class CommandWrapperBuilder {
         this.entityName = "AUTHORIZATIONREQUEST";
         this.entityId = userId;
         this.href = "/users/" + userId + "/requestauthorization";
+        return this;
+    }
+
+    public CommandWrapperBuilder recurringDepositAccountAccrualInterestPosting(final Long accountId) {
+        this.actionName = "POSTACCRUALINTEREST";
+        this.entityName = "RECURRINGDEPOSITACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/recurringdepositaccounts/" + accountId + "?command=postAccrualInterest";
+        return this;
+    }
+
+    public CommandWrapperBuilder queueTransfer() {
+        this.actionName = "QUEUE";
+        this.entityName = "ACCOUNTTRANSFER";
+        this.entityId = null;
+        this.href = "/accounttransfers/queueTransfer";
         return this;
     }
 }

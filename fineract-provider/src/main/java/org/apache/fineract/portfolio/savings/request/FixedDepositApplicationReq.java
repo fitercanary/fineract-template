@@ -19,14 +19,6 @@
 
 package org.apache.fineract.portfolio.savings.request;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.portfolio.savings.DepositsApiConstants;
-import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
-import org.joda.time.LocalDate;
-
-import java.math.BigDecimal;
-import java.util.Locale;
-
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.chartIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
@@ -52,12 +44,23 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submitte
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
 
+import java.math.BigDecimal;
+import java.util.Locale;
+
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.portfolio.savings.DepositsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
+import org.joda.time.LocalDate;
+
 public class FixedDepositApplicationReq {
 
     private Locale locale;
     private String dateFormat;
     private LocalDate submittedOnDate;
     private String accountNo;
+    private String nickname;
+
     private String externalId;
     private Long productId;
     private Long clientId;
@@ -87,6 +90,7 @@ public class FixedDepositApplicationReq {
     private LocalDate expectedFirstDepositOnDate;
     private Boolean transferInterest;
     private Long savingsAccountId;
+    private BigDecimal interestCarriedForward;
 
     private RecurringAccountDetailReq recurringAccountDetailReq;
     private FixedDepositApplicationTermsReq fixedDepositApplicationTermsReq;
@@ -98,6 +102,7 @@ public class FixedDepositApplicationReq {
         instance.locale = command.extractLocale();
         instance.dateFormat = command.dateFormat();
         instance.accountNo = command.stringValueOfParameterNamed(accountNoParamName);
+        instance.nickname = command.stringValueOfParameterNamed(SavingsApiConstants.nicknameParamName);
         instance.externalId = command.stringValueOfParameterNamedAllowingNull(externalIdParamName);
         instance.productId = command.longValueOfParameterNamed(productIdParamName);
         instance.clientId = command.longValueOfParameterNamed(clientIdParamName);
@@ -128,7 +133,8 @@ public class FixedDepositApplicationReq {
             instance.lockinPeriodFrequencyTypeValue = command.integerValueOfParameterNamed(lockinPeriodFrequencyTypeParamName);
         }
         if (command.parameterExists(withdrawalFeeForTransfersParamName)) {
-            instance.isWithdrawalFeeApplicableForTransfer = command.booleanPrimitiveValueOfParameterNamed(withdrawalFeeForTransfersParamName);
+            instance.isWithdrawalFeeApplicableForTransfer = command
+                    .booleanPrimitiveValueOfParameterNamed(withdrawalFeeForTransfersParamName);
         }
         if (command.parameterExists(chartIdParamName)) {
             instance.chartIdSet = true;
@@ -141,7 +147,8 @@ public class FixedDepositApplicationReq {
 
         instance.depositAmount = command.bigDecimalValueOfParameterNamed(depositAmountParamName);
         instance.depositPeriod = command.integerValueOfParameterNamed(depositPeriodParamName);
-        instance.depositPeriodFrequency = SavingsPeriodFrequencyType.fromInt(command.integerValueOfParameterNamed(depositPeriodFrequencyIdParamName));
+        instance.depositPeriodFrequency = SavingsPeriodFrequencyType
+                .fromInt(command.integerValueOfParameterNamed(depositPeriodFrequencyIdParamName));
         instance.expectedFirstDepositOnDate = command.localDateValueOfParameterNamed(expectedFirstDepositOnDateParamName);
         instance.transferInterest = command.booleanPrimitiveValueOfParameterNamed(transferInterestToSavingsParamName);
 
@@ -291,10 +298,6 @@ public class FixedDepositApplicationReq {
         return minRequiredOpeningBalanceSet;
     }
 
-    public void setMinRequiredOpeningBalanceSet(boolean minRequiredOpeningBalanceSet) {
-        this.minRequiredOpeningBalanceSet = minRequiredOpeningBalanceSet;
-    }
-
     public Integer getLockinPeriodFrequency() {
         return lockinPeriodFrequency;
     }
@@ -347,10 +350,6 @@ public class FixedDepositApplicationReq {
         return chartIdSet;
     }
 
-    public void setChartIdSet(boolean chartIdSet) {
-        this.chartIdSet = chartIdSet;
-    }
-
     public boolean isWithHoldTax() {
         return withHoldTax;
     }
@@ -395,10 +394,6 @@ public class FixedDepositApplicationReq {
         return expectedFirstDepositOnDate;
     }
 
-    public void setExpectedFirstDepositOnDate(LocalDate expectedFirstDepositOnDate) {
-        this.expectedFirstDepositOnDate = expectedFirstDepositOnDate;
-    }
-
     public Boolean getTransferInterest() {
         return transferInterest;
     }
@@ -419,10 +414,6 @@ public class FixedDepositApplicationReq {
         return recurringAccountDetailReq;
     }
 
-    public void setRecurringAccountDetailReq(RecurringAccountDetailReq recurringAccountDetailReq) {
-        this.recurringAccountDetailReq = recurringAccountDetailReq;
-    }
-
     public FixedDepositApplicationTermsReq getFixedDepositApplicationTermsReq() {
         return fixedDepositApplicationTermsReq;
     }
@@ -437,5 +428,21 @@ public class FixedDepositApplicationReq {
 
     public void setFixedDepositApplicationPreClosureReq(FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq) {
         this.fixedDepositApplicationPreClosureReq = fixedDepositApplicationPreClosureReq;
+    }
+
+    public String getNickname() {
+        return this.nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public BigDecimal getInterestCarriedForward() {
+        return interestCarriedForward;
+    }
+
+    public void setInterestCarriedForward(BigDecimal interestCarriedForward) {
+        this.interestCarriedForward = interestCarriedForward;
     }
 }

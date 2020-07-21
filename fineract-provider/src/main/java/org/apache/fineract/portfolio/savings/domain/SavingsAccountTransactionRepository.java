@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,8 +30,9 @@ public interface SavingsAccountTransactionRepository
         extends JpaRepository<SavingsAccountTransaction, Long>, JpaSpecificationExecutor<SavingsAccountTransaction> {
 
     SavingsAccountTransaction findOneByIdAndSavingsAccountId(Long transactionId, Long savingsId);
+    
 
-    @Query("select sat from SavingsAccountTransaction sat where sat.transactionClassification = :transactionClassification")
-    List<SavingsAccountTransaction> findByTransactionClassification(@Param("transactionClassification") String transactionClassification);
-
+    @Query("select sat from SavingsAccountTransaction sat where (sat.typeOf = :typeOfWithdrawalFee or sat.typeOf = :typeOfAccrual) and sat.savingsAccount.id = :savingsId and sat.dateOf <= :transactionDate")
+    List<SavingsAccountTransaction> findByTransactionTypeAndSavingsAccountId(@Param("typeOfAccrual") Integer typeOfAccrual, @Param("typeOfWithdrawalFee") Integer typeOfWithdrawalFee, @Param("savingsId") Long savingsId,
+            @Param("transactionDate") Date transactionDate);
 }

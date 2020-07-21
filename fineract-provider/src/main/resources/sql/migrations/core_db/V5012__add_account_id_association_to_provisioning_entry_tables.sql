@@ -16,6 +16,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
+
 ALTER TABLE `m_loanproduct_provisioning_entry` ADD COLUMN `loan_id` BIGINT(20);
 ALTER TABLE `m_loanproduct_provisioning_entry` ADD CONSTRAINT `FK_m_loanproduct_provisioning_entry_m_loann` FOREIGN KEY (`loan_id`) REFERENCES `m_loan` (`id`) ON DELETE CASCADE;
 

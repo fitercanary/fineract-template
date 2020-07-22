@@ -793,7 +793,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
                 getStartInterestCalculationDate(), upToInterestCalculationDate, postingPeriodType, financialYearBeginningMonth,
-                postedAsOnDates);
+                postedAsOnDates, null);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -2394,7 +2394,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             LocalDate postInterestAsOnDate = null;
             if (this.isBeforeLastAccrualPostingPeriod(getActivationLocalDate())) {
                 this.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                        isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestAsOnDate);
+                        isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestAsOnDate, null);
             }
             if (this.isBeforeLastPostingPeriod(getActivationLocalDate())) {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -3444,7 +3444,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     public void postAccrualInterest(final MathContext mc, final LocalDate interestPostingUpToDate, final boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate postInterestOnDate) {
+            final LocalDate postInterestOnDate, LocalDate maturityDate) {
 
         // no openingBalance concept supported yet but probably will to allow
         // for migrations.
@@ -3483,7 +3483,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
                 getStartInterestCalculationDate(), interestPostingUpToDate, postingPeriodType, financialYearBeginningMonth,
-                postedAsOnDates);
+                postedAsOnDates, maturityDate);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 

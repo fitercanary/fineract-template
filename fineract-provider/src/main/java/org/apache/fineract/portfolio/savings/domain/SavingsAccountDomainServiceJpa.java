@@ -135,7 +135,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), transactionBooleanValues.isInterestTransfer(),
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null, null);
         }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -231,7 +231,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), false, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, null);
+                    financialYearBeginningMonth, null, null);
         }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();

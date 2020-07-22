@@ -45,7 +45,7 @@ public final class SavingsHelper {
 
     public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
             final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
-            final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn) {
+            final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn, LocalDate maturityDate) {
 
         final List<LocalDateInterval> postingPeriods = new ArrayList<>();
         LocalDate periodStartDate = startInterestCalculationLocalDate;
@@ -54,22 +54,19 @@ public final class SavingsHelper {
 
         while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
 
-//            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue()
-//                    && !periodEndDate.isBefore(interestPostingUpToDate)) {
-//                break;
-//            }
-            
-            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue())
-            {
-                if(interestPostingUpToDate.isEqual(DateUtils.getLocalDateOfTenant()) && (periodEndDate.plusDays(1)).isAfter(interestPostingUpToDate))
-                {
-                    break;
-                }
-                
+            if (postingPeriodType.getValue() == SavingsPostingInterestPeriodType.TENURE.getValue()
+                    && !periodEndDate.isBefore(interestPostingUpToDate)) {
+                break;
             }
 
-            final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
+            LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
                     interestPostingUpToDate, financialYearBeginningMonth);
+            
+            if(maturityDate != null) {
+                if(interestPostingLocalDate.isAfter(maturityDate)) {
+                    interestPostingLocalDate = maturityDate;
+                }
+            }
 
             periodEndDate = interestPostingLocalDate.minusDays(1);
 

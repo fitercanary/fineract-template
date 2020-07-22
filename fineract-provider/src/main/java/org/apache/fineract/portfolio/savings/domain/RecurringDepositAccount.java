@@ -371,7 +371,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                 .fromInt(this.interestCalculationDaysInYearType);
         List<LocalDate> PostedAsOnDates =  getManualPostingDates();
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(depositStartDate(),
-                maturityDate, postingPeriodType, financialYearBeginningMonth, PostedAsOnDates);
+                maturityDate, postingPeriodType, financialYearBeginningMonth, PostedAsOnDates, null);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -1360,10 +1360,10 @@ public class RecurringDepositAccount extends SavingsAccount {
     @Override
     public void postAccrualInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
                                     final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-                                    final LocalDate postInterestOnDate) {
+                                    final LocalDate postInterestOnDate, LocalDate maturityDate) {
         final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate, maturityDate);
     }
 
     public RecurringDepositProduct getProduct() {

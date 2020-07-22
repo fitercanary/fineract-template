@@ -20,7 +20,7 @@
 ext.pentahoRepoURL="http://nexus.pentaho.org/content/repositories/omni/"
 
 dependencies {
-        def tomcatVersion = '8.0.53'
+        def tomcatVersion = '7.0.54'
         tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
                "org.apache.tomcat.embed:tomcat-embed-logging-log4j:${tomcatVersion}" // NOT tomcat-embed-logging-juli (http://stackoverflow.com/questions/23963049/classcircularityerror-java-util-logging-logrecord-running-gradle-webapp-with-ja)
         tomcat("org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}") {

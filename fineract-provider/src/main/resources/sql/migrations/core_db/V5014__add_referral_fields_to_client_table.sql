@@ -16,6 +16,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
+
 ALTER TABLE `m_client`
 	ADD COLUMN `referral_id` VARCHAR(100);
 

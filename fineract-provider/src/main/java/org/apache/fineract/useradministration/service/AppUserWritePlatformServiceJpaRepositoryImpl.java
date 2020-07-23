@@ -461,6 +461,12 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                         "error.msg.user.authorization.request.already.rejected");
             }
 
+            if (AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.CLOSED)) {
+                throw new AuthorizationRequestException(authorizationRequest.getId(),
+                        AUTH_VALIDATION_MESSAGE_PREFIX + authorizationRequest.getId() + " has been CLOSED",
+                        "error.msg.user.authorization.request.already.closed");
+            }
+
             final AppUser user = this.appUserRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getUser().getId());
 
             this.fromApiJsonDeserializer.validateForApproveAuthorizationRequest(command);
@@ -534,6 +540,12 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                 throw new AuthorizationRequestException(authorizationRequest.getId(),
                         AUTH_VALIDATION_MESSAGE_PREFIX + authorizationRequest.getId() + " has already been rejected",
                         "error.msg.user.authorization.request.already.rejected");
+            }
+
+            if (AuthorizationRequestStatusType.fromInt(authorizationRequest.getStatus()).equals(AuthorizationRequestStatusType.CLOSED)) {
+                throw new AuthorizationRequestException(authorizationRequest.getId(),
+                        AUTH_VALIDATION_MESSAGE_PREFIX + authorizationRequest.getId() + " has been CLOSED",
+                        "error.msg.user.authorization.request.already.closed");
             }
 
             final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(authorizationRequest.getClient().getId());

@@ -30,4 +30,7 @@ public class PermissionsApiConstants {
     public static final String ALL_FUNCTIONS = "ALL_FUNCTIONS";
     public static final String ALL_FUNCTIONS_READ = "ALL_FUNCTIONS_READ";
 
+    // Users
+    public static final String REQUEST_TO_VIEW_CLIENT_PERMISSION = "REQUESTTOVIEWCLIENT_AUTHORIZATIONREQUEST";
+
 }

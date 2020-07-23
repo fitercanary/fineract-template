@@ -57,4 +57,13 @@ public class AuthorizationRequestRepositoryWrapper {
     public List<AuthorizationRequest> findUserClientRequestsByStatus(Long clientId, Long userId, Integer status) {
         return this.authorizationRequestRepository.findAllByClientAndUserAndStatus(clientId, userId, status);
     }
+    
+    public List<AuthorizationRequest> findUserRequestsByStatus(Long userId, Integer status) {
+        return this.authorizationRequestRepository.findAllByUserAndStatus(userId, status);
+    }
+
+    public List<AuthorizationRequest> findClientRequestsByStatus(Long clientId, Integer status) {
+        return this.authorizationRequestRepository.findAllByClientAndStatus(clientId, status);
+    }
+
 }

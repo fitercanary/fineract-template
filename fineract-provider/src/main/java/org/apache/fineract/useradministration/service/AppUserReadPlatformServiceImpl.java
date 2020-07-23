@@ -27,7 +27,6 @@ import java.util.Set;
 
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.office.data.OfficeData;
@@ -239,49 +238,62 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         
         Collection<AuthorizationRequest> requests = this.authorizationRequestRepositoryWrapper.findAuthorizationRequestsByStatus(status);
 
-        Collection<AuthorizationRequestData> requestsData = new ArrayList<>();
-        for(AuthorizationRequest request: requests) {
-            
-            AppUser user = request.getUser();
-            AppUserData retUser = AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
-                    user.getOffice().getName(), user.getFirstname(), user.getLastname(), null, null, null,
-                    user.getPasswordNeverExpires(), user.isSelfServiceUser());
-            
-            AppUser userApprovedBy = request.getApprovedBy();
-            AppUserData retUserApprovedBy = null;
-            if(userApprovedBy != null)
-                retUserApprovedBy = AppUserData.instance(userApprovedBy.getId(), userApprovedBy.getUsername(), userApprovedBy.getEmail(), 
-                    userApprovedBy.getOffice().getId(),userApprovedBy.getOffice().getName(), userApprovedBy.getFirstname(), userApprovedBy.getLastname(), 
-                    null, null, null,userApprovedBy.getPasswordNeverExpires(), userApprovedBy.isSelfServiceUser());
-            
-            AppUser userRejectedBy = request.getRejectedBy();
-            AppUserData retUserRejectedBy = null;
-            if(userRejectedBy != null)
-                retUserRejectedBy = AppUserData.instance(userRejectedBy.getId(), userRejectedBy.getUsername(), userRejectedBy.getEmail(), 
-                    userRejectedBy.getOffice().getId(),userRejectedBy.getOffice().getName(), userRejectedBy.getFirstname(), userRejectedBy.getLastname(), 
-                    null, null, null,userRejectedBy.getPasswordNeverExpires(), userRejectedBy.isSelfServiceUser());
-            
-            Client client = request.getClient();
-            ClientData retClient =  ClientData.instance(client.getId(), client.getDisplayName());
-            
-            LocalDate requestedDate = request.getRequestedDate() != null ? LocalDate.fromDateFields(request.getRequestedDate()) : null;
-            LocalDate approvedDate = request.getApprovedDate() != null ? LocalDate.fromDateFields(request.getApprovedDate()) : null;
-            LocalDate rejectedDate =  request.getRejectionDate() != null ? LocalDate.fromDateFields( request.getRejectionDate()) : null;
-            
-            EnumOptionData requestStatus = null;
-            AuthorizationRequestStatusType statusType = AuthorizationRequestStatusType.fromInt(request.getStatus());
-            if(statusType != null) {
-                requestStatus = new EnumOptionData(statusType.getValue().longValue(), statusType.getCode(), statusType.getName());
-            }
-            
-            AuthorizationRequestData data = new AuthorizationRequestData(request.getId(), retUser, 
-                    retClient, requestStatus, requestedDate, retUserApprovedBy, approvedDate, retUserRejectedBy, rejectedDate, request.getComment());
-            
-            requestsData.add(data);
-        }
-        
-        return requestsData;
+        return this.toData(requests);
+    }
+
+    @Override
+    public Collection<AuthorizationRequestData> retrieveUserAuthorizationRequestsOnClient(Long userId, Long clientId, Integer status) {
+
+        Collection<AuthorizationRequest> requests = this.authorizationRequestRepositoryWrapper.findUserClientRequestsByStatus(clientId,
+                userId, status);
+
+        return this.toData(requests);
     }
     
+    private Collection<AuthorizationRequestData> toData(Collection<AuthorizationRequest> requests) {
+
+        Collection<AuthorizationRequestData> requestsData = new ArrayList<>();
+        for (AuthorizationRequest request : requests) {
+
+            AppUser user = request.getUser();
+            AppUserData retUser = AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
+                    user.getOffice().getName(), user.getFirstname(), user.getLastname(), null, null, null, user.getPasswordNeverExpires(),
+                    user.isSelfServiceUser());
+
+            AppUser userApprovedBy = request.getApprovedBy();
+            AppUserData retUserApprovedBy = null;
+            if (userApprovedBy != null) retUserApprovedBy = AppUserData.instance(userApprovedBy.getId(), userApprovedBy.getUsername(),
+                    userApprovedBy.getEmail(), userApprovedBy.getOffice().getId(), userApprovedBy.getOffice().getName(),
+                    userApprovedBy.getFirstname(), userApprovedBy.getLastname(), null, null, null, userApprovedBy.getPasswordNeverExpires(),
+                    userApprovedBy.isSelfServiceUser());
+
+            AppUser userRejectedBy = request.getRejectedBy();
+            AppUserData retUserRejectedBy = null;
+            if (userRejectedBy != null) retUserRejectedBy = AppUserData.instance(userRejectedBy.getId(), userRejectedBy.getUsername(),
+                    userRejectedBy.getEmail(), userRejectedBy.getOffice().getId(), userRejectedBy.getOffice().getName(),
+                    userRejectedBy.getFirstname(), userRejectedBy.getLastname(), null, null, null, userRejectedBy.getPasswordNeverExpires(),
+                    userRejectedBy.isSelfServiceUser());
+
+            Client client = request.getClient();
+            ClientData retClient = ClientData.instance(client.getId(), client.getDisplayName());
+
+            LocalDate requestedDate = request.getRequestedDate() != null ? LocalDate.fromDateFields(request.getRequestedDate()) : null;
+            LocalDate approvedDate = request.getApprovedDate() != null ? LocalDate.fromDateFields(request.getApprovedDate()) : null;
+            LocalDate rejectedDate = request.getRejectionDate() != null ? LocalDate.fromDateFields(request.getRejectionDate()) : null;
+
+            EnumOptionData requestStatus = null;
+            AuthorizationRequestStatusType statusType = AuthorizationRequestStatusType.fromInt(request.getStatus());
+            if (statusType != null) {
+                requestStatus = new EnumOptionData(statusType.getValue().longValue(), statusType.getCode(), statusType.getName());
+            }
+
+            AuthorizationRequestData data = new AuthorizationRequestData(request.getId(), retUser, retClient, requestStatus, requestedDate,
+                    retUserApprovedBy, approvedDate, retUserRejectedBy, rejectedDate, request.getComment());
+
+            requestsData.add(data);
+        }
+
+        return requestsData;
+    }
     
 }

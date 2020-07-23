@@ -759,9 +759,8 @@ final public class ClientData implements Comparable<ClientData> {
     public static ClientData clientDetailsWithAddressInfo(String mobileNo, String emailAddress, String displayName) {
         return new ClientData(mobileNo, emailAddress, displayName);
      }
-    
-    private ClientData(
-            String mobileNo, String emailAddress, String displayName) {
+
+    private ClientData(String mobileNo, String emailAddress, String displayName) {
         this.clientLevelOptions = null;
         this.rowIndex = null;
         this.dateFormat = null;
@@ -820,10 +819,82 @@ final public class ClientData implements Comparable<ClientData> {
         this.isAddressEnabled = null;
         this.datatables = null;
         this.familyMemberOptions = null;
-        this.emailAddress = emailAddress ;
+        this.emailAddress = emailAddress;
         this.dailyWithdrawLimit = null;
         this.singleWithdrawLimit = null;
-        this.singleDepositLimit  = null;
+        this.singleDepositLimit = null;
         this.requireAuthorizationToView = false;
+    }
+
+    public ClientData(final Long id, final boolean requireAuthorizationToView) {
+        this.accountNo = null;
+        this.status = null;
+        if (status != null) {
+            this.active = status.getId().equals(300L);
+        } else {
+            this.active = null;
+        }
+        this.subStatus = null;
+        this.officeId = null;
+        this.officeName = null;
+        this.transferToOfficeId = null;
+        this.transferToOfficeName = null;
+        this.id = id;
+        this.firstname = null;
+        this.middlename = null;
+        this.lastname = null;
+        this.fullname = null;
+        this.displayName = null;
+        this.externalId = null;
+        this.mobileNo = null;
+        this.mothersMaidenName = null;
+        this.emailAddress = null;
+        this.activationDate = null;
+        this.dateOfBirth = null;
+        this.gender = null;
+        this.clientClassification = null;
+        this.clientType = null;
+        this.imageId = null;
+        this.imagePresent = null;
+        this.staffId = null;
+        this.staffName = null;
+
+        // associations
+        this.groups = null;
+
+        // template
+        this.officeOptions = null;
+        this.staffOptions = null;
+        this.narrations = null;
+
+        this.genderOptions = null;
+        this.clientClassificationOptions = null;
+        this.clientTypeOptions = null;
+
+        this.clientNonPersonConstitutionOptions = null;
+        this.clientNonPersonMainBusinessLineOptions = null;
+        this.clientLegalFormOptions = null;
+        this.clientLevelOptions = null;
+        this.familyMemberOptions = null;
+
+        this.timeline = null;
+        this.savingProductOptions = null;
+        this.savingsProductId = null;
+        this.savingsProductName = null;
+        this.savingsAccountId = null;
+        this.savingAccountOptions = null;
+        this.legalForm = null;
+        this.clientLevel = null;
+        this.isStaff = null;
+        this.clientNonPersonDetails = null;
+
+        this.address = null;
+        this.isAddressEnabled = null;
+        this.datatables = null;
+
+        this.dailyWithdrawLimit = null;
+        this.singleWithdrawLimit = null;
+        this.singleDepositLimit = null;
+        this.requireAuthorizationToView = requireAuthorizationToView;
     }
 }

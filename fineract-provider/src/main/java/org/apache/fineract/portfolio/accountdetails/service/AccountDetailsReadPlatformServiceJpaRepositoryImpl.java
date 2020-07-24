@@ -99,7 +99,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                 membersOfGroupWithAddressInfo = this.clientReadPlatformService.retrieveClientMembersOfGroup(groupSavingsAccount.getGroupId());
                 if(!membersOfGroupWithAddressInfo.isEmpty())
                 for(ClientData clientData : membersOfGroupWithAddressInfo) {
-                    final GenericResultsetData results =  readWriteNonCoreDataService.retrieveDataTableGenericResultSet("Address info", clientData.getId(), null, null);
+                    final GenericResultsetData results =  readWriteNonCoreDataService.retrieveDataTableGenericResultSet("Address Info", clientData.getId(), null, null);
                     if(!results.getData().isEmpty()) {
                         ClientData clientDetails = ClientData.clientDetailsWithAddressInfo(results.getData().get(0).getRow().get(10), results.getData().get(0).getRow().get(6), clientData.displayName());
                         membersOfGroup.add(clientDetails); 

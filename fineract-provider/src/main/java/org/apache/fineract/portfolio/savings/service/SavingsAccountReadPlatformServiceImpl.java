@@ -19,7 +19,6 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -1599,7 +1598,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         List<Map<String, Object>> request = jdbcTemplate.queryForList(sql, new Object[] { savingAccountId, "%Reversal Of transactionId%" });
         for (Map<String, Object> req : request) {
             String remarks = (String) req.get("remarks");
-            BigInteger contraId = (BigInteger) req.get("transaction_id");
+            Long contraId = (Long) req.get("transaction_id");
             if (remarks.contains("Reversal Of")) {
                 String value[];
                 value = remarks.split(" ");

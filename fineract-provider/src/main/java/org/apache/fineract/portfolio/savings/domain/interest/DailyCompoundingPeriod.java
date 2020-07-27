@@ -81,7 +81,7 @@ public class DailyCompoundingPeriod implements CompoundingPeriod {
             final BigDecimal interestFromPreviousPostingPeriod, final BigDecimal interestRateAsFraction, final long daysInYear,
             final BigDecimal minBalanceForInterestCalculation,
             final BigDecimal overdraftInterestRateAsFraction, final BigDecimal minOverdraftForInterestCalculation) {
-        List<BigDecimal> interestEarned = new ArrayList<BigDecimal>();
+        List<BigDecimal> interestEarned = new ArrayList<>();
 
         // for daily compounding - each interest calculated from previous daily
         // calculations is 'compounded'

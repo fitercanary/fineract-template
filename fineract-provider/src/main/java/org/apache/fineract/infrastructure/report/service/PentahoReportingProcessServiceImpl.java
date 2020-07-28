@@ -26,7 +26,6 @@ import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityEx
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
 import org.apache.fineract.infrastructure.dataqueries.service.ReadReportingService;
-import org.apache.fineract.infrastructure.documentmanagement.contentrepository.FileSystemContentRepository;
 import org.apache.fineract.infrastructure.report.annotation.ReportService;
 import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -36,8 +35,6 @@ import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.poi.hssf.record.crypto.Biff8EncryptionKey;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.util.StringUtil;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -56,22 +53,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.springframework.util.ResourceUtils;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.*;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.cert.CertificateException;
 import java.sql.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -385,5 +376,109 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 		return newPdfByteArray;
 	}
+
+	@Override
+	public void processAndSendStatement(String reportName, MultivaluedMap<String, String> queryParams) {
+		final String outputTypeParam = queryParams.getFirst("output-type");
+		final Map<String, String> reportParams = getReportParams(queryParams);
+		final Locale locale = ApiParameterHelper.extractLocale(queryParams);
+
+		String outputType = "HTML";
+		if (StringUtils.isNotBlank(outputTypeParam)) {
+			outputType = outputTypeParam;
+		}
+
+		if (!(outputType.equalsIgnoreCase("HTML") || outputType.equalsIgnoreCase("PDF") || outputType.equalsIgnoreCase("XLS")
+				|| outputType.equalsIgnoreCase("XLSX") || outputType.equalsIgnoreCase("CSV"))) {
+			throw new PlatformDataIntegrityException(
+					"error.msg.invalid.outputType", "No matching Output Type: " + outputType);
+		}
+
+		if (this.noPentaho) {
+			throw new PlatformDataIntegrityException("error.msg.no.pentaho", "Pentaho is not enabled",
+					"Pentaho is not enabled");
+		}
+
+		final String reportPath = MIFOS_BASE_DIR + File.separator + "pentahoReports" + File.separator + reportName + ".prpt";
+		LOGGER.info("Report path: {}", reportPath);
+
+		// load report definition
+		final ResourceManager manager = new ResourceManager();
+		manager.registerDefaults();
+		Resource res;
+
+		try {
+			res = manager.createDirectly(reportPath, MasterReport.class);
+			final MasterReport masterReport = (MasterReport) res.getResource();
+			final DefaultReportEnvironment reportEnvironment = (DefaultReportEnvironment) masterReport.getReportEnvironment();
+			if (locale != null) {
+				reportEnvironment.setLocale(locale);
+			}
+			addParametersToReport(masterReport, reportParams, reportName);
+
+			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			String userPassword;
+			String ownerPassword;
+			if ("PDF".equalsIgnoreCase(outputType)) {
+				PdfReportUtil.createPDF(masterReport, baos);
+				ByteArrayOutputStream signedBaos = baos;
+
+				// sign pdf
+				if( ApiParameterHelper.signPdf(queryParams) ){
+					signedBaos = this.signPdf(signedBaos,  reportName);
+				}
+
+				ByteArrayOutputStream protectedBaos = signedBaos;
+
+				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
+					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
+					ownerPassword = userPassword;
+					protectedBaos = this.protectPdf(protectedBaos, userPassword, ownerPassword);
+				}
+
+				//return Response.ok().entity(protectedBaos.toByteArray()).type("application/pdf").build();
+				LOGGER.info("Statement processed... send to VFD email service");
+				return;
+			}
+
+			if ("XLS".equalsIgnoreCase(outputType)) {
+				ExcelReportUtil.createXLS(masterReport, baos);
+				ByteArrayOutputStream protectedBaos = baos;
+				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
+					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
+					protectedBaos = this.protectExcel(baos, userPassword);
+				}
+				/*return Response.ok().entity(protectedBaos.toByteArray()).type("application/vnd.ms-excel")
+						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xls").build();*/
+			}
+
+			if ("XLSX".equalsIgnoreCase(outputType)) {
+				ExcelReportUtil.createXLSX(masterReport, baos);
+				ByteArrayOutputStream protectedBaos = baos;
+				if(ApiParameterHelper.addPassword(queryParams) && ApiParameterHelper.savingsAccountId(queryParams)){
+					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
+					protectedBaos = this.protectExcel(baos, userPassword);
+				}
+				/*return Response.ok().entity(protectedBaos.toByteArray()).type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xlsx").build();*/
+			}
+
+			if ("CSV".equalsIgnoreCase(outputType)) {
+				CSVReportUtil.createCSV(masterReport, baos, "UTF-8");
+				/*return Response.ok().entity(baos.toByteArray()).type("text/csv")
+						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".csv").build();*/
+			}
+
+			if ("HTML".equalsIgnoreCase(outputType)) {
+				HtmlReportUtil.createStreamHTML(masterReport, baos);
+				//return Response.ok().entity(baos.toByteArray()).type("text/html").build();
+			}
+		} catch (final ResourceException | ReportProcessingException | IOException e) {
+			throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+		}
+
+		throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
+	}
+
 
 }

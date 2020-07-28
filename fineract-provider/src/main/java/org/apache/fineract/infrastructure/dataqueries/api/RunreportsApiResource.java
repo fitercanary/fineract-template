@@ -47,8 +47,10 @@ import org.apache.fineract.infrastructure.report.service.ReportingProcessService
 import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Path("/runreports")
@@ -172,5 +174,37 @@ public class RunreportsApiResource {
             }
         }
         return reportParams;
+    }
+
+    @GET
+    @Path("{reportName}/statement")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public Response runAndSendStatement(@PathParam("reportName") final String reportName, @Context final UriInfo uriInfo) {
+        final MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+
+        final boolean parameterType = false;
+
+        checkUserPermissionForReport(reportName, parameterType);
+        runAsyncReport(parameterType, reportName, uriInfo, queryParams);
+
+        JSONObject object = new JSONObject();
+        object.put("message","Statement is being processed, will be sent to your email");
+
+        return Response.ok().entity(object.toString()).type(MediaType.APPLICATION_JSON).build();
+    }
+
+    @Async
+    public void runAsyncReport(final boolean parameterType, final String reportName, final UriInfo uriInfo,
+                               final MultivaluedMap<String, String> queryParams){
+        String parameterTypeValue = null;
+        if (!parameterType) {
+            parameterTypeValue = "report";
+            String reportType = this.readExtraDataAndReportingService.getReportType(reportName);
+            ReportingProcessService reportingProcessService = this.reportingProcessServiceProvider.findReportingProcessService(reportType);
+            if (reportingProcessService != null) {
+                reportingProcessService.processAndSendStatement(reportName, queryParams);
+            }
+        }
     }
 }

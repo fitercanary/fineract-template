@@ -756,11 +756,11 @@ final public class ClientData implements Comparable<ClientData> {
         this.requireAuthorizationToView = false;
     }
     
-    public static ClientData clientDetailsWithAddressInfo(String mobileNo, String emailAddress, String displayName) {
-        return new ClientData(mobileNo, emailAddress, displayName);
+    public static ClientData clientDetailsWithAddressInfo(String mobileNo, String emailAddress, String displayName, Long clientId) {
+        return new ClientData(mobileNo, emailAddress, displayName, clientId);
      }
 
-    private ClientData(String mobileNo, String emailAddress, String displayName) {
+    private ClientData(String mobileNo, String emailAddress, String displayName, Long clientId) {
         this.clientLevelOptions = null;
         this.rowIndex = null;
         this.dateFormat = null;
@@ -784,7 +784,7 @@ final public class ClientData implements Comparable<ClientData> {
         this.clientClassificationId = null;
         this.isStaff = null;
         this.address = null;
-        this.id = null;
+        this.id = clientId;
         this.accountNo = null;
         this.status = null;
         this.subStatus = null;

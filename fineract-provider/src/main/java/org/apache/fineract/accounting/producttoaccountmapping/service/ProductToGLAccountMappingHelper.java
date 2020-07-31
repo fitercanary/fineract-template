@@ -338,8 +338,19 @@ public class ProductToGLAccountMappingHelper {
                     if (inputPaymentChannelFundSourceMap.containsKey(currentPaymentChannelId)) {
                         final Long newGLAccountId = inputPaymentChannelFundSourceMap.get(currentPaymentChannelId);
                         if (newGLAccountId != existingPaymentChannelToFundSourceMapping.getGlAccount().getId()) {
-                            final GLAccount glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
-                                    GLAccountType.ASSET, newGLAccountId);
+                            final GLAccount glAccount;
+                             if(portfolioProductType.equals(PortfolioProductType.SAVING)) {
+                                 if(existingPaymentChannelToFundSourceMapping.getGlAccount().getType().equals(GLAccountType.LIABILITY.getValue())) {
+                                     glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
+                                             GLAccountType.LIABILITY, newGLAccountId);
+                                 }else {
+                                 glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
+                                         GLAccountType.ASSET, newGLAccountId);
+                                 }
+                             }else {
+                                 glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
+                                         GLAccountType.ASSET, newGLAccountId);
+                             }
                             existingPaymentChannelToFundSourceMapping.setGlAccount(glAccount);
                             this.accountMappingRepository.save(existingPaymentChannelToFundSourceMapping);
                         }
@@ -367,9 +378,22 @@ public class ProductToGLAccountMappingHelper {
      */
     private void savePaymentChannelToFundSourceMapping(final Long productId, final Long paymentTypeId,
             final Long paymentTypeSpecificFundAccountId, final PortfolioProductType portfolioProductType) {
+        final GLAccount glAccount;
         final PaymentType paymentType = this.paymentTypeRepositoryWrapper.findOneWithNotFoundDetection(paymentTypeId);
-        final GLAccount glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(), GLAccountType.ASSET,
-                paymentTypeSpecificFundAccountId);
+        final GLAccount account = this.accountRepositoryWrapper.findOneWithNotFoundDetection(paymentTypeSpecificFundAccountId);
+        if(portfolioProductType.equals(PortfolioProductType.SAVING)) {
+            if(account.getType().equals(GLAccountType.LIABILITY.getValue())) {
+                glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
+                        GLAccountType.LIABILITY, paymentTypeSpecificFundAccountId);
+            }else {
+            glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
+                    GLAccountType.ASSET, paymentTypeSpecificFundAccountId);
+            }
+        }else {
+            glAccount = getAccountByIdAndType(LOAN_PRODUCT_ACCOUNTING_PARAMS.FUND_SOURCE.getValue(),
+                    GLAccountType.ASSET, paymentTypeSpecificFundAccountId);
+        }
+        
         final ProductToGLAccountMapping accountMapping = new ProductToGLAccountMapping(glAccount, productId,
                 portfolioProductType.getValue(), CASH_ACCOUNTS_FOR_LOAN.FUND_SOURCE.getValue(), paymentType);
         this.accountMappingRepository.save(accountMapping);

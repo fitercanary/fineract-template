@@ -1026,8 +1026,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
         validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_DEPOSIT, transactionDTO.getTransactionDate());
-        
-        System.out.println("Transaction Date: "+transactionDTO.getTransactionDate());
 
         final Money amount = Money.of(this.currency, transactionDTO.getTransactionAmount());
 

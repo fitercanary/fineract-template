@@ -227,7 +227,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
                 paymentDetail, new Date(), user, accountType, isAccountTransfer);
         final SavingsAccountTransaction deposit = account.deposit(transactionDTO, savingsAccountTransactionType);
-
+        System.out.println("transaction date: "+deposit.getDateOf()+" transaction Date: "+ transactionDate);
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), false, isSavingsInterestPostingAtCurrentPeriodEnd,

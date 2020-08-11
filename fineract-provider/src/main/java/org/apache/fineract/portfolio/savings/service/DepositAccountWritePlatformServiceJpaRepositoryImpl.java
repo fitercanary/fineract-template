@@ -60,6 +60,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.Client;
@@ -123,15 +124,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.Year;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
@@ -1908,5 +1901,76 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         account.validateApplicableInterestRate();
         this.savingAccountRepositoryWrapper.save(account);
     }
+
+    @Override
+    public List<SavingsAccountCharge> generateFDAPreliquidationCharges(Long savingsId) {
+
+        FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+                DepositAccountType.FIXED_DEPOSIT);
+        List<SavingsAccountCharge> partialLiquidationCharges = new ArrayList<>();
+
+        // Generate Pre Liquidation Charges
+        Charge generalCharge = this.chargeRepository.findChargeByChargeTimeType(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
+        if (generalCharge != null) {
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                    Collections.singletonList(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+            if (preclosureCharges.isEmpty()) {
+                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+                savingsAccountChargeReq.setAmount(generalCharge.getAmount());
+                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, generalCharge, savingsAccountChargeReq);
+                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, generalCharge);
+                partialLiquidationCharges.add(savingsAccountCharge);
+            }
+            for(SavingsAccountCharge charge1: preclosureCharges){
+                partialLiquidationCharges.add(charge1);
+            }
+        }
+
+        // Generate Pre Closure Charges
+        List<SavingsAccountCharge> preclosureCharges = new ArrayList<>();
+        if(account.shouldApplyPreclosureCharges()){
+            SavingsAccountTransaction withholdTaxTransaction = account.getTransactions()
+                    .stream().filter(SavingsAccountTransaction::isWithHoldTaxAndNotReversed).findFirst().orElse(null);
+            for (SavingsAccountCharge charge : partialLiquidationCharges) {
+                BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+                        : account.getSummary().getTotalInterestEarned();
+                ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
+                if (chargeCalculationType.isPercentageOfAmount()) {
+                    amount = account.getSummary().getAccountBalance();
+                }
+                if (withholdTaxTransaction != null) {
+                    amount = amount.subtract(withholdTaxTransaction.getAmount());
+                }
+                if (chargeCalculationType.isPercentageBased()) {
+                    charge.setPercentage(charge.getCharge().getAmount());
+                    charge.setAmountPercentageAppliedTo(amount);
+                    charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
+                } else {
+                    charge.setAmount(charge.amount());
+                }
+                charge.setAmountOutstanding(charge.amount());
+                charge.setChargePaid();
+                preclosureCharges.add(charge);
+            }
+        }
+
+        // Generate withdraw charges
+        boolean applyWithdrawalFeeForTransfer = account.isWithdrawalFeeApplicableForTransfer();
+        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.TRANSFER_TO_SAVINGS;
+        if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
+            // Apply withdrawal charges
+            List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFee(account.getId(),
+                    ChargeTimeType.WITHDRAWAL_FEE.getValue());
+            for (SavingsAccountCharge charge : withdrawalCharges) {
+                charge.setAmountOutstanding(charge.amount());
+                //this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(),
+                        //DateTimeFormat.forPattern("dd MM yyyy"), user);
+                preclosureCharges.add(charge);
+            }
+        }
+
+        return preclosureCharges;
+    }
+
 
 }

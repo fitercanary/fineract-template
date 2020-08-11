@@ -625,7 +625,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return Money.of(currency, this.amount);
     }
 
-    private Money getAmountPaid(final MonetaryCurrency currency) {
+    public Money getAmountPaid(final MonetaryCurrency currency) {
         return Money.of(currency, this.amountPaid);
     }
 
@@ -918,6 +918,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 
     public Integer getChargeCalculation() {
         return this.chargeCalculation;
+    }
+
+    public BigDecimal getAmountPercentageAppliedTo(){
+        return this.amountPercentageAppliedTo;
     }
 
 }

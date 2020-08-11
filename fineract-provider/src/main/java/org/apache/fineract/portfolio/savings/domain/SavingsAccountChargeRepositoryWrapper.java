@@ -76,4 +76,8 @@ public class SavingsAccountChargeRepositoryWrapper {
     public void delete(final SavingsAccountCharge savingsAccountCharge) {
         this.repository.delete(savingsAccountCharge);
     }
+
+    public List<SavingsAccountCharge> findWithdrawalFee(Long accountId, Integer chargeTimeType) {
+        return this.repository.findWithdrawalFeeByAccountId(accountId, chargeTimeType);
+    }
 }

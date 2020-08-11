@@ -341,7 +341,7 @@ public class DepositsApiConstants {
     private static final Set<String> SAVINGS_ACCOUNT_ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(localeParamName, dateFormatParamName, activatedOnDateParamName));
 
-    private static final Set<String> SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(
+    public static final Set<String> SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(chargeIdParamName, savingsAccountChargeIdParamName, chargeNameParamName, penaltyParamName,
                     chargeTimeTypeParamName, dueAsOfDateParamName, chargeCalculationTypeParamName, percentageParamName,
                     amountPercentageAppliedToParamName, currencyParamName, amountWaivedParamName, amountWrittenOffParamName,
@@ -353,4 +353,5 @@ public class DepositsApiConstants {
 
     private static final Set<String> SAVINGS_ACCOUNT_CHARGES_PAY_CHARGE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(amountParamName, dueAsOfDateParamName, dateFormatParamName, localeParamName));
+
 }

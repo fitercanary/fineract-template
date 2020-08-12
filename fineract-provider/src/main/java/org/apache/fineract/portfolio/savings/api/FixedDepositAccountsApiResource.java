@@ -457,11 +457,10 @@ public class FixedDepositAccountsApiResource {
     }
 
     @GET
-    @Path("{accountId}/charges")
+    @Path("{accountId}/liquidationcharges")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String getAccountCharges(@PathParam("accountId") final Long accountId,
-                                    @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus,
                                          @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);

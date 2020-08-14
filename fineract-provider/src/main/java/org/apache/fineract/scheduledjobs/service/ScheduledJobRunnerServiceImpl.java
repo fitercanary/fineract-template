@@ -642,6 +642,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     } catch (Exception e) {
 
                         VfdTransferNotification request = VfdTransferNotification.fromRequest(json);
+                        request.setAlertType("failed");
 
                         logger.trace(ThreadLocalContextUtil.getTenant().getName()
                                 + ": Processing account transfer request failed for sender account id : " + request.getSenderAccountId()

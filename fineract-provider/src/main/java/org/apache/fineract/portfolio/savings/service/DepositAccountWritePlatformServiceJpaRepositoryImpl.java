@@ -82,23 +82,7 @@ import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountDomainService;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountRecurringDetail;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountTermAndPreClosure;
-import org.apache.fineract.portfolio.savings.domain.DepositProductTermAndPreClosure;
-import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
-import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
-import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeRepositoryWrapper;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.domain.*;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
@@ -155,7 +139,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final NoteRepository noteRepository;
     private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
     private final ChargeRepositoryWrapper chargeRepository;
-    private final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository;
+    private final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepositoryWrapper;
     private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final DepositAccountReadPlatformService depositAccountReadPlatformService;
@@ -168,6 +152,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService;
     private final SavingsAccountActionService savingsAccountActionService;
     private final FixedDepositAccountRepository fixedDepositAccountRepository;
+    private final SavingsAccountChargeRepository savingsAccountChargeRepository;
 
     @Autowired
     public DepositAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -181,7 +166,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                                                                final JournalEntryWritePlatformService journalEntryWritePlatformService,
                                                                final DepositAccountDomainService depositAccountDomainService, final NoteRepository noteRepository,
                                                                final AccountTransfersReadPlatformService accountTransfersReadPlatformService, final ChargeRepositoryWrapper chargeRepository,
-                                                               final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository, final HolidayRepositoryWrapper holidayRepository,
+                                                               final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepositoryWrapper, final HolidayRepositoryWrapper holidayRepository,
                                                                final WorkingDaysRepositoryWrapper workingDaysRepository,
                                                                final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
                                                                final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
@@ -190,7 +175,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                                                                final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
                                                                final AccountAssociationsRepository accountAssociationsRepository,
                                                                final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService,
-                                                               final SavingsAccountActionService savingsAccountActionService, FixedDepositAccountRepository fixedDepositAccountRepository) {
+                                                               final SavingsAccountActionService savingsAccountActionService, FixedDepositAccountRepository fixedDepositAccountRepository,
+                                                               final SavingsAccountChargeRepository savingsAccountChargeRepository) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -205,7 +191,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.noteRepository = noteRepository;
         this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
         this.chargeRepository = chargeRepository;
-        this.savingsAccountChargeRepository = savingsAccountChargeRepository;
+        this.savingsAccountChargeRepositoryWrapper = savingsAccountChargeRepositoryWrapper;
         this.holidayRepository = holidayRepository;
         this.workingDaysRepository = workingDaysRepository;
         this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
@@ -218,6 +204,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.depositApplicationProcessWritePlatformService = depositApplicationProcessWritePlatformService;
         this.savingsAccountActionService = savingsAccountActionService;
         this.fixedDepositAccountRepository = fixedDepositAccountRepository;
+        this.savingsAccountChargeRepository = savingsAccountChargeRepository;
     }
 
     @Transactional
@@ -650,14 +637,14 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private void createPartialLiquidationCharge(FixedDepositAccount account) {
         Charge charge = this.chargeRepository.findChargeByChargeTimeType(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
         if (charge != null) {
-            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepositoryWrapper.findFdaPreclosureCharges(account.getId(),
                     Collections.singletonList(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
             if (preclosureCharges.isEmpty()) {
                 SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
                 savingsAccountChargeReq.setAmount(charge.getAmount());
                 SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
                 account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
-                this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                this.savingsAccountChargeRepositoryWrapper.save(savingsAccountCharge);
                 this.savingAccountRepositoryWrapper.saveAndFlush(account);
             }
         }
@@ -1270,14 +1257,14 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                                         DepositAccountTermAndPreClosure depositAccountTermAndPreClosure) {
         Charge charge = productTermAndPreClosure.getPreClosureCharge();
         if (depositAccountTermAndPreClosure.getPreClosureDetail().isPreClosureChargeApplicable() && charge != null) {
-            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepositoryWrapper.findFdaPreclosureCharges(account.getId(),
                     Collections.singletonList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue()));
             if (preclosureCharges.isEmpty()) {
                 SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
                 savingsAccountChargeReq.setAmount(charge.getAmount());
                 SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
                 account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
-                this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                this.savingsAccountChargeRepositoryWrapper.save(savingsAccountCharge);
                 this.savingAccountRepositoryWrapper.saveAndFlush(account);
             }
         }
@@ -1508,7 +1495,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId, depositAccountType);
         checkClientOrGroupActive(savingsAccount);
 
-        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository.findOneWithNotFoundDetection(savingsChargeId,
+        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepositoryWrapper.findOneWithNotFoundDetection(savingsChargeId,
                 savingsAccountId);
 
         final Map<String, Object> changes = savingsAccountCharge.update(command);
@@ -1533,7 +1520,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             }
         }
 
-        this.savingsAccountChargeRepository.saveAndFlush(savingsAccountCharge);
+        this.savingsAccountChargeRepositoryWrapper.saveAndFlush(savingsAccountCharge);
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsAccountCharge.getId()) //
@@ -1556,7 +1543,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
 
-        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository
+        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepositoryWrapper
                 .findOneWithNotFoundDetection(savingsAccountChargeId, savingsAccountId);
 
         // Get Savings account from savings charge
@@ -1614,7 +1601,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId, depositAccountType);
         checkClientOrGroupActive(savingsAccount);
-        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository
+        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepositoryWrapper
                 .findOneWithNotFoundDetection(savingsAccountChargeId, savingsAccountId);
 
         savingsAccount.removeCharge(savingsAccountCharge);
@@ -1641,7 +1628,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final BigDecimal amountPaid = command.bigDecimalValueOfParameterNamed(amountParamName);
         final LocalDate transactionDate = command.localDateValueOfParameterNamed(dueAsOfDateParamName);
 
-        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository
+        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepositoryWrapper
                 .findOneWithNotFoundDetection(savingsAccountChargeId, savingsAccountId);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
@@ -1680,7 +1667,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             @SuppressWarnings("unused") final DepositAccountType depositAccountType) {
         // always use current date as transaction date for batch job
         final LocalDate transactionDate = DateUtils.getLocalDateOfTenant();
-        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository
+        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepositoryWrapper
                 .findOneWithNotFoundDetection(savingsAccountChargeId, accountId);
 
         while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate())) {
@@ -1903,73 +1890,79 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     }
 
     @Override
-    public List<SavingsAccountCharge> generateFDAPreliquidationCharges(Long savingsId) {
+    public List<SavingsAccountCharge> generateDepositAccountPreMatureClosureCharges(Long savingsId, DepositAccountType type) {
 
-        FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
-                DepositAccountType.FIXED_DEPOSIT);
-        List<SavingsAccountCharge> partialLiquidationCharges = new ArrayList<>();
+        List<SavingsAccountCharge> closureCharges =  new ArrayList<>();
 
-        // Generate Pre Liquidation Charges
-        Charge generalCharge = this.chargeRepository.findChargeByChargeTimeType(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
-        if (generalCharge != null) {
-            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
-                    Collections.singletonList(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
-            if (preclosureCharges.isEmpty()) {
-                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
-                savingsAccountChargeReq.setAmount(generalCharge.getAmount());
-                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, generalCharge, savingsAccountChargeReq);
-                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, generalCharge);
-                partialLiquidationCharges.add(savingsAccountCharge);
+        if(type.isFixedDeposit()){
+
+            FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+                    DepositAccountType.FIXED_DEPOSIT);
+            closureCharges = calculatePreClosureCharges(account, account.getProduct().depositProductTermAndPreClosure() ,
+                    account.getAccountTermAndPreClosure() );
+        }else if(type.isRecurringDeposit()){
+            RecurringDepositAccount account = (RecurringDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+                    DepositAccountType.RECURRING_DEPOSIT);
+            closureCharges = calculatePreClosureCharges(account, account.getProduct().depositProductTermAndPreClosure() ,
+                    account.getAccountTermAndPreClosure() );
+        }
+        return closureCharges;
+    }
+
+    private List<SavingsAccountCharge> calculatePreClosureCharges(SavingsAccount account, DepositProductTermAndPreClosure productTermAndPreClosure,
+                                        DepositAccountTermAndPreClosure depositAccountTermAndPreClosure) {
+        List<SavingsAccountCharge> closureCharges =  new ArrayList<>();
+
+        // Pre closure  and partial liquidation charges
+        List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                Arrays.asList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue(), ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+        SavingsAccountTransaction withholdTaxTransaction = account.getTransactions()
+                .stream().filter(SavingsAccountTransaction::isWithHoldTaxAndNotReversed).findFirst().orElse(null);
+        for (SavingsAccountCharge charge : preclosureCharges) {
+            BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+                    : account.getSummary().getTotalInterestEarned();
+            ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
+            if (chargeCalculationType.isPercentageOfAmount()) {
+                amount = account.getSummary().getAccountBalance();
             }
-            for(SavingsAccountCharge charge1: preclosureCharges){
-                partialLiquidationCharges.add(charge1);
+            if (withholdTaxTransaction != null) {
+                amount = amount.subtract(withholdTaxTransaction.getAmount());
+            }
+            if (chargeCalculationType.isPercentageBased()) {
+                charge.setPercentage(charge.getCharge().getAmount());
+                charge.setAmountPercentageAppliedTo(amount);
+                charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
+            } else {
+                charge.setAmount(charge.amount());
+            }
+            charge.setAmountOutstanding(charge.amount());
+            closureCharges.add(charge);
+        }
+
+        // Other charges
+        if(!account.charges().isEmpty()){
+            for(SavingsAccountCharge charge: account.charges()){
+                if(!(charge.isFdaPartialLiquidationFee() || charge.isFdaPreclosureFee())){
+                    BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+                            : account.getSummary().getTotalInterestEarned();
+                    ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
+                    if (chargeCalculationType.isPercentageOfAmount()) {
+                        amount = account.getSummary().getAccountBalance();
+                    }
+                    if (chargeCalculationType.isPercentageBased()) {
+                        charge.setPercentage(charge.getCharge().getAmount());
+                        charge.setAmountPercentageAppliedTo(amount);
+                        charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
+                    } else {
+                        charge.setAmount(charge.amount());
+                    }
+                    charge.setAmountOutstanding(charge.amount());
+                    closureCharges.add(charge);
+                }
             }
         }
 
-        // Generate Pre Closure Charges
-        List<SavingsAccountCharge> preclosureCharges = new ArrayList<>();
-        if(account.shouldApplyPreclosureCharges()){
-            SavingsAccountTransaction withholdTaxTransaction = account.getTransactions()
-                    .stream().filter(SavingsAccountTransaction::isWithHoldTaxAndNotReversed).findFirst().orElse(null);
-            for (SavingsAccountCharge charge : partialLiquidationCharges) {
-                BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
-                        : account.getSummary().getTotalInterestEarned();
-                ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
-                if (chargeCalculationType.isPercentageOfAmount()) {
-                    amount = account.getSummary().getAccountBalance();
-                }
-                if (withholdTaxTransaction != null) {
-                    amount = amount.subtract(withholdTaxTransaction.getAmount());
-                }
-                if (chargeCalculationType.isPercentageBased()) {
-                    charge.setPercentage(charge.getCharge().getAmount());
-                    charge.setAmountPercentageAppliedTo(amount);
-                    charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
-                } else {
-                    charge.setAmount(charge.amount());
-                }
-                charge.setAmountOutstanding(charge.amount());
-                charge.setChargePaid();
-                preclosureCharges.add(charge);
-            }
-        }
-
-        // Generate withdraw charges
-        boolean applyWithdrawalFeeForTransfer = account.isWithdrawalFeeApplicableForTransfer();
-        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.TRANSFER_TO_SAVINGS;
-        if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
-            // Apply withdrawal charges
-            List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFee(account.getId(),
-                    ChargeTimeType.WITHDRAWAL_FEE.getValue());
-            for (SavingsAccountCharge charge : withdrawalCharges) {
-                charge.setAmountOutstanding(charge.amount());
-                //this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(),
-                        //DateTimeFormat.forPattern("dd MM yyyy"), user);
-                preclosureCharges.add(charge);
-            }
-        }
-
-        return preclosureCharges;
+        return closureCharges.stream().filter(str -> str.getAmount(account.getCurrency()).isGreaterThanZero()).collect(Collectors.toList());
     }
 
 

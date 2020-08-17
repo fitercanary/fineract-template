@@ -106,5 +106,5 @@ public interface DepositAccountWritePlatformService {
     
     CommandProcessingResult updateDepositPeriodFrequencyForRDAccount(Long savingsId, JsonCommand command);
 
-    List<SavingsAccountCharge> generateFDAPreliquidationCharges(Long savingsId);
+    List<SavingsAccountCharge> generateDepositAccountPreMatureClosureCharges(Long savingsId, DepositAccountType type);
 }

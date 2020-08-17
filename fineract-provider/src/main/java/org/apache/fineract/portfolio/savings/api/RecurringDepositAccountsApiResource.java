@@ -44,12 +44,10 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
-import org.apache.fineract.portfolio.savings.data.DepositAccountData;
-import org.apache.fineract.portfolio.savings.data.RecurringDepositAccountData;
-import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeData;
-import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.data.*;
 import org.apache.fineract.portfolio.savings.service.DepositAccountPreMatureCalculationPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -92,6 +90,9 @@ public class RecurringDepositAccountsApiResource {
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
 
+    private final DefaultToApiJsonSerializer<DepositAccountPreClosureChargeData> toApiJsonSerializerCharges;
+    private final DepositAccountWritePlatformService depositAccountWritePlatformService;
+
     @Autowired
     public RecurringDepositAccountsApiResource(final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final PlatformSecurityContext context, final DefaultToApiJsonSerializer<DepositAccountData> toApiJsonSerializer,
@@ -100,7 +101,9 @@ public class RecurringDepositAccountsApiResource {
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService, final FromJsonHelper fromJsonHelper,
             final DepositAccountPreMatureCalculationPlatformService accountPreMatureCalculationPlatformService,
             final BulkImportWorkbookService bulkImportWorkbookService,
-            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService) {
+            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
+                                           final DefaultToApiJsonSerializer<DepositAccountPreClosureChargeData> toApiJsonSerializerCharges,
+                                               final DepositAccountWritePlatformService depositAccountWritePlatformService) {
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -111,6 +114,8 @@ public class RecurringDepositAccountsApiResource {
         this.accountPreMatureCalculationPlatformService = accountPreMatureCalculationPlatformService;
         this.bulkImportWorkbookService = bulkImportWorkbookService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
+        this.toApiJsonSerializerCharges = toApiJsonSerializerCharges;
+        this.depositAccountWritePlatformService = depositAccountWritePlatformService;
     }
 
     @GET
@@ -430,5 +435,21 @@ public class RecurringDepositAccountsApiResource {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(
                 GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS_TRANSACTIONS.toString(), uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+
+    @GET
+    @Path("{accountId}/liquidationcharges")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String getAccountCharges(@PathParam("accountId") final Long accountId,
+                                    @Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
+
+        Collection<DepositAccountPreClosureChargeData> charges = DepositAccountPreClosureChargeData.toDepositAccountPreClosureChargeData(
+                this.depositAccountWritePlatformService.generateDepositAccountPreMatureClosureCharges(accountId, DepositAccountType.RECURRING_DEPOSIT));
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializerCharges.serialize(settings, charges, DepositsApiConstants.SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS);
     }
 }

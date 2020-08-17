@@ -34,6 +34,7 @@ import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
@@ -206,11 +207,11 @@ public class FixedDepositAccount extends SavingsAccount {
                 }
                 if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
                     applyPreMaturePenalty = true;
-                    penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
+                    penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().getPreClosurePenalInterest();
                     final PreClosurePenalInterestOnType preClosurePenalInterestOnType = this.accountTermAndPreClosure
                             .depositPreClosureDetail().preClosurePenalInterestOnType();
                     if (preClosurePenalInterestOnType.isWholeTerm()) {
-                        depositCloseDate = interestCalculatedUpto();
+                        depositCloseDate = interestCalculatedUpto(false);
                     } else if (preClosurePenalInterestOnType.isTillPrematureWithdrawal()) {
                         depositCloseDate = interestPostingUpToDate;
                     }
@@ -238,19 +239,9 @@ public class FixedDepositAccount extends SavingsAccount {
         List<SavingsAccountTransaction> allTransactions = new ArrayList<>();
         final Money transactionAmountMoney = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
-                this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null, false); // TODO:
-        // verify
-        // if
-        // it
-        // is
-        // ok
-        // to
-        // pass
-        // null
-        // for
-        // AppUser
+        this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null, false);
         transaction.updateRunningBalance(transactionAmountMoney);
-        transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto());
+        transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto(false));
         allTransactions.add(transaction);
         updateMaturityDateAndAmount(mc, allTransactions, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
@@ -364,7 +355,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final List<LocalDateInterval> postingPeriodIntervals = postingPeriodType.equals(SavingsPostingInterestPeriodType.TENURE)
                 ? Arrays.asList(new Object[] { LocalDateInterval.create(accountSubmittedOrActivationDate(), maturityDate) })
                 : this.savingsHelper.determineInterestPostingPeriods(accountSubmittedOrActivationDate(), maturityDate, postingPeriodType,
-                        financialYearBeginningMonth, postedAsOnTransactionDates);
+                        financialYearBeginningMonth, postedAsOnTransactionDates, null);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -530,7 +521,7 @@ public class FixedDepositAccount extends SavingsAccount {
             // correct.
             recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
         }
-        postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+        postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, null);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
@@ -556,6 +547,15 @@ public class FixedDepositAccount extends SavingsAccount {
             recalculateDailyBalance = true;
         }
 
+        // post interest carried forward
+        if (postInterest && this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp() != null
+                && this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp().compareTo(BigDecimal.ZERO) > 0) {
+            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
+                    accountCloseDate, Money.of(this.currency, this.getAccountTermAndPreClosure().getInterestCarriedForwardOnTopUp()), false, false);
+            this.transactions.add(newPostingTransaction);
+            recalculateDailyBalance = true;
+        }
+
         recalculateDailyBalance = applyWithholdTaxForDepositAccounts(accountCloseDate, recalculateDailyBalance);
 
         if (recalculateDailyBalance) {
@@ -563,9 +563,9 @@ public class FixedDepositAccount extends SavingsAccount {
             // correct.
             recalculateDailyBalances(Money.zero(this.currency), accountCloseDate);
         }
-        this.postAccrualInterest(MathContext.DECIMAL64, accountCloseDate, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
+        this.postAccrualInterest(MathContext.DECIMAL64, accountCloseDate, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null, null);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
+        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), this.maturityDate());
     }
 
     public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure,
@@ -607,7 +607,7 @@ public class FixedDepositAccount extends SavingsAccount {
     public void postInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, false);
         super.postInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate);
         this.postCarriedForwardInterest(postInterestOnDate);
@@ -626,24 +626,25 @@ public class FixedDepositAccount extends SavingsAccount {
     @Override
     public void postAccrualInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate postInterestOnDate) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+            final LocalDate postInterestOnDate, LocalDate maturityDate) {
+        maturityDate = calculateMaturityDate();
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, true);
         super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate, maturityDate);
     }
 
     @Override
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postAsInterestOn) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, false);
         return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postAsInterestOn);
     }
 
-    private LocalDate interestPostingUpToDate(final LocalDate interestPostingDate) {
+    private LocalDate interestPostingUpToDate(final LocalDate interestPostingDate, Boolean isAccrualPosting) {
         LocalDate interestPostingUpToDate = interestPostingDate;
-        final LocalDate uptoMaturityDate = interestCalculatedUpto();
+        final LocalDate uptoMaturityDate = interestCalculatedUpto(isAccrualPosting);
         if (uptoMaturityDate != null && uptoMaturityDate.isBefore(interestPostingDate)) {
             interestPostingUpToDate = uptoMaturityDate;
         }
@@ -676,9 +677,9 @@ public class FixedDepositAccount extends SavingsAccount {
         return depositStartDate;
     }
 
-    private LocalDate interestCalculatedUpto() {
+    private LocalDate interestCalculatedUpto(Boolean isAccrualPosting) {
         LocalDate uptoMaturityDate = calculateMaturityDate();
-        if (uptoMaturityDate != null) {
+        if (uptoMaturityDate != null && !isAccrualPosting) {
             // interest should not be calculated for maturity day
             uptoMaturityDate = uptoMaturityDate.minusDays(1);
         }
@@ -867,5 +868,13 @@ public class FixedDepositAccount extends SavingsAccount {
 
     public void setApplyPreclosureCharges(boolean applyPreclosureCharges) {
         this.applyPreclosureCharges = applyPreclosureCharges;
+    }
+
+    public FixedDepositProduct getProduct() {
+        return (FixedDepositProduct) this.product;
+    }
+
+    public DepositAccountInterestRateChart getChart() {
+        return chart;
     }
 }

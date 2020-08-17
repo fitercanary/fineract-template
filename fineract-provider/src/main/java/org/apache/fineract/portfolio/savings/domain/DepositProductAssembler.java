@@ -32,7 +32,6 @@ import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeAppliedToExc
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.apache.fineract.portfolio.loanproduct.exception.InvalidCurrencyException;
-import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -66,6 +65,8 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepo
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeApplicableParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
@@ -158,6 +159,10 @@ public class DepositProductAssembler {
         final DepositProductAmountDetails depositProductAmountDetails = this.assembleDepositAmountDetails(command);
         final DepositProductTermAndPreClosure productTermAndPreClosure = DepositProductTermAndPreClosure.createNew(preClosureDetail,
                 depositTermDetail, depositProductAmountDetails, null);
+        if (preClosureDetail.isPreClosureChargeApplicable()) {
+            Long chargeId = command.longValueOfParameterNamed(preClosureChargeIdParamName);
+            productTermAndPreClosure.setPreClosureCharge(this.chargeRepository.findOneWithNotFoundDetection(chargeId));
+        }
 
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
@@ -285,32 +290,35 @@ public class DepositProductAssembler {
 
     public DepositPreClosureDetail assemblePreClosureDetail(final JsonCommand command) {
 
-        boolean preClosurePenalApplicable = false;
-        BigDecimal preClosurePenalInterest = null;
-        PreClosurePenalInterestOnType preClosurePenalInterestType = null;
+        DepositPreClosureDetail.DepositPreClosureDetailBuilder depositPreClosureDetailBuilder = new DepositPreClosureDetail.DepositPreClosureDetailBuilder();
 
         if (command.parameterExists(preClosurePenalApplicableParamName)) {
-            preClosurePenalApplicable = command.booleanObjectValueOfParameterNamed(preClosurePenalApplicableParamName);
+            boolean preClosurePenalApplicable = command.booleanObjectValueOfParameterNamed(preClosurePenalApplicableParamName);
             if (preClosurePenalApplicable) {
-                preClosurePenalInterest = command.bigDecimalValueOfParameterNamed(preClosurePenalInterestParamName);
-                final Integer preClosurePenalInterestOnTypeId = command
-                        .integerValueOfParameterNamed(preClosurePenalInterestOnTypeIdParamName);
-                preClosurePenalInterestType = preClosurePenalInterestOnTypeId == null ? null : PreClosurePenalInterestOnType
-                        .fromInt(preClosurePenalInterestOnTypeId);
+                BigDecimal preClosurePenalInterest = command.bigDecimalValueOfParameterNamed(preClosurePenalInterestParamName);
+                Integer preClosurePenalInterestOnTypeId = command.integerValueOfParameterNamed(preClosurePenalInterestOnTypeIdParamName);
+                depositPreClosureDetailBuilder.preClosurePenalInterest(preClosurePenalInterest);
+                depositPreClosureDetailBuilder.preClosurePenalInterestOnType(preClosurePenalInterestOnTypeId);
             }
+            depositPreClosureDetailBuilder.preClosurePenalApplicable(preClosurePenalApplicable);
         }
-
-        DepositPreClosureDetail preClosureDetail = DepositPreClosureDetail.createFrom(preClosurePenalApplicable, preClosurePenalInterest,
-                preClosurePenalInterestType);
-
-        return preClosureDetail;
+        if (command.parameterExists(preClosureChargeApplicableParamName)) {
+            depositPreClosureDetailBuilder.preClosureChargeApplicable(command.booleanObjectValueOfParameterNamed(preClosureChargeApplicableParamName));
+        }
+        return depositPreClosureDetailBuilder.build();
     }
 
     public DepositPreClosureDetail assemblePreClosureDetail(final FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq,
                                                             DepositPreClosureDetail productPreClosureDetail) {
+        DepositPreClosureDetail.DepositPreClosureDetailBuilder depositPreClosureDetailBuilder = new DepositPreClosureDetail.DepositPreClosureDetailBuilder();
+        this.setPreClosurePenalDetails(fixedDepositApplicationPreClosureReq, productPreClosureDetail, depositPreClosureDetailBuilder);
+        this.setPreClosureChargeDetails(fixedDepositApplicationPreClosureReq, depositPreClosureDetailBuilder);
+        return depositPreClosureDetailBuilder.build();
+    }
+
+    private void setPreClosurePenalDetails(FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq, DepositPreClosureDetail productPreClosureDetail, DepositPreClosureDetail.DepositPreClosureDetailBuilder depositPreClosureDetailBuilder) {
         boolean preClosurePenalApplicable;
         BigDecimal preClosurePenalInterest = null;
-        PreClosurePenalInterestOnType preClosurePenalInterestType;
         Integer preClosurePenalInterestOnTypeId = null;
         if (fixedDepositApplicationPreClosureReq.isPreClosurePenalApplicableParamSet()) {
             preClosurePenalApplicable = fixedDepositApplicationPreClosureReq.isPreClosurePenalApplicable();
@@ -318,26 +326,28 @@ public class DepositProductAssembler {
                 if (fixedDepositApplicationPreClosureReq.isPreClosurePenalInterestParamSet()) {
                     preClosurePenalInterest = fixedDepositApplicationPreClosureReq.getPreClosurePenalInterest();
                 } else {
-                    preClosurePenalInterest = productPreClosureDetail.preClosurePenalInterest();
+                    preClosurePenalInterest = productPreClosureDetail.getPreClosurePenalInterest();
                 }
-
                 if (fixedDepositApplicationPreClosureReq.isPreClosurePenalInterestOnTypeIdPramSet()) {
                     preClosurePenalInterestOnTypeId = fixedDepositApplicationPreClosureReq.getPreClosurePenalInterestOnTypeId();
                 } else {
-                    preClosurePenalInterestOnTypeId = productPreClosureDetail.preClosurePenalInterestOnTypeId();
+                    preClosurePenalInterestOnTypeId = productPreClosureDetail.getPreClosurePenalInterestOnType();
                 }
             }
         } else {
-            preClosurePenalApplicable = productPreClosureDetail.preClosurePenalApplicable();
-            preClosurePenalInterest = productPreClosureDetail.preClosurePenalInterest();
-            preClosurePenalInterestOnTypeId = productPreClosureDetail.preClosurePenalInterestOnTypeId();
+            preClosurePenalApplicable = productPreClosureDetail.isPreClosurePenalApplicable();
+            preClosurePenalInterest = productPreClosureDetail.getPreClosurePenalInterest();
+            preClosurePenalInterestOnTypeId = productPreClosureDetail.getPreClosurePenalInterestOnType();
         }
+        depositPreClosureDetailBuilder.preClosurePenalApplicable(preClosurePenalApplicable);
+        depositPreClosureDetailBuilder.preClosurePenalInterest(preClosurePenalInterest);
+        depositPreClosureDetailBuilder.preClosurePenalInterestOnType(preClosurePenalInterestOnTypeId);
+    }
 
-        preClosurePenalInterestType = preClosurePenalInterestOnTypeId == null ? null : PreClosurePenalInterestOnType
-                .fromInt(preClosurePenalInterestOnTypeId);
-
-        return DepositPreClosureDetail.createFrom(preClosurePenalApplicable, preClosurePenalInterest,
-                preClosurePenalInterestType);
+    private void setPreClosureChargeDetails(FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq, DepositPreClosureDetail.DepositPreClosureDetailBuilder depositPreClosureDetailBuilder) {
+        if (fixedDepositApplicationPreClosureReq.isPreClosureChargeApplicableParamSet()) {
+            depositPreClosureDetailBuilder.preClosureChargeApplicable(fixedDepositApplicationPreClosureReq.isPreClosureChargeApplicable());
+        }
     }
 
     public DepositTermDetail assembleDepositTermDetail(final JsonCommand command) {
@@ -355,10 +365,8 @@ public class DepositProductAssembler {
         final SavingsPeriodFrequencyType inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null
                 : SavingsPeriodFrequencyType.fromInt(inMultiplesOfDepositTermTypeId);
 
-        final DepositTermDetail depositTermDetail = DepositTermDetail.createFrom(minDepositTerm, maxDepositTerm, minDepositTermType,
+        return DepositTermDetail.createFrom(minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType);
-
-        return depositTermDetail;
     }
 
     public DepositTermDetail assembleDepositTermDetail(final FixedDepositApplicationTermsReq fixedDepositApplicationTermsReq, final DepositTermDetail prodDepositTermDetail) {

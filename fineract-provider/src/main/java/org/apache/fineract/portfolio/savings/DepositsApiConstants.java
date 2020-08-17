@@ -97,6 +97,8 @@ public class DepositsApiConstants {
     public static final String preClosurePenalInterestParamName = "preClosurePenalInterest";
     public static final String preClosurePenalInterestOnTypeIdParamName = "preClosurePenalInterestOnTypeId";
     public static final String preClosurePenalInterestOnType = "preClosurePenalInterestOnType";
+    public static final String preClosureChargeApplicableParamName = "preClosureChargeApplicable";
+    public static final String preClosureChargeIdParamName = "preClosureChargeId";
 
     // term parameters
     public static final String minDepositTermParamName = "minDepositTerm";
@@ -117,6 +119,7 @@ public class DepositsApiConstants {
     public static final String depositPeriodFrequencyIdParamName = "depositPeriodFrequencyId";
     public static final String targetAmountParamName = "targetAmount";
     public static final String targetMaturityAmountParamName = "targetMaturityAmount";
+    public static final String changeTenureParamName = "changeTenure";
 
     // recurring parameters
     public static final String mandatoryRecommendedDepositAmountParamName = "mandatoryRecommendedDepositAmount";
@@ -204,7 +207,8 @@ public class DepositsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue()));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName));
+            Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName,
+                    preClosureChargeApplicableParamName, preClosureChargeIdParamName));
 
     private static final Set<String> PRECLOSURE_RESPONSE_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnType));
@@ -337,7 +341,7 @@ public class DepositsApiConstants {
     private static final Set<String> SAVINGS_ACCOUNT_ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(localeParamName, dateFormatParamName, activatedOnDateParamName));
 
-    private static final Set<String> SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(
+    public static final Set<String> SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(chargeIdParamName, savingsAccountChargeIdParamName, chargeNameParamName, penaltyParamName,
                     chargeTimeTypeParamName, dueAsOfDateParamName, chargeCalculationTypeParamName, percentageParamName,
                     amountPercentageAppliedToParamName, currencyParamName, amountWaivedParamName, amountWrittenOffParamName,
@@ -349,4 +353,5 @@ public class DepositsApiConstants {
 
     private static final Set<String> SAVINGS_ACCOUNT_CHARGES_PAY_CHARGE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(amountParamName, dueAsOfDateParamName, dateFormatParamName, localeParamName));
+
 }

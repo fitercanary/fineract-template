@@ -572,7 +572,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
             // When a loan is disbursed and has charges due at disbursement, a
             // transaction is created to auto record
             // payment of the charges (user has no choice in saying they were or
-            // werent paid) - so its assumed they were paid.
+            // weren't paid) - so its assumed they were paid.
 
             final String defaultUserMessage = "This charge which is due at disbursement cannot be added as the loan is already disbursed.";
             throw new LoanChargeCannotBeAddedException("loanCharge", "due.at.disbursement.and.loan.is.disbursed", defaultUserMessage,
@@ -1304,7 +1304,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
             final Money principal = this.loanRepaymentScheduleDetail.getPrincipal();
             this.summary.updateSummary(loanCurrency(), principal, getRepaymentScheduleInstallments(), this.loanSummaryWrapper,
                     isDisbursed(), this.charges);
-            updateLoanOutstandingBalaces();
+            updateLoanOutstandingBalances();
         }
     }
 
@@ -2742,7 +2742,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
             chargesPayment.updateComponentsAndTotal(zero, zero, disbursentMoney, zero);
             chargesPayment.updateLoan(this);
             addLoanTransaction(chargesPayment);
-            updateLoanOutstandingBalaces();
+            updateLoanOutstandingBalances();
         }
 
         if (getApprovedOnDate() != null && disbursedOn.isBefore(getApprovedOnDate())) {
@@ -2789,7 +2789,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         chargesPayment.updateComponents(zero, zero, charge.getAmount(getCurrency()), zero);
         chargesPayment.updateLoan(this);
         addLoanTransaction(chargesPayment);
-        updateLoanOutstandingBalaces();
+        updateLoanOutstandingBalances();
         charge.markAsFullyPaid();
         return chargesPayment;
     }
@@ -3292,7 +3292,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
                 addLoanTransaction(finalAccrual);
             }
         }
-        updateLoanOutstandingBalaces();
+        updateLoanOutstandingBalances();
     }
 
     private void determineCumulativeIncomeFromInstallments(HashMap<String, BigDecimal> cumulativeIncomeFromInstallments) {
@@ -5276,7 +5276,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
                 addLoanTransaction(accrual);
             }
         }
-        updateLoanOutstandingBalaces();
+        updateLoanOutstandingBalances();
     }
 
     private void determineFeeDetails(LocalDate fromDate, LocalDate toDate, HashMap<String, Object> feeDetails) {
@@ -5501,15 +5501,15 @@ public class Loan extends AbstractPersistableCustom<Long> {
     }
 
     public LocalDate getAccruedTill() {
-        LocalDate accruedTill = null;
+        LocalDate accruedtill = null;
         if (this.accruedTill != null) {
-            accruedTill = new LocalDate(this.accruedTill);
+            accruedtill = new LocalDate(this.accruedTill);
         }
-        return accruedTill;
+        return accruedtill;
     }
 
     public LocalDate fetchInterestRecalculateFromDate() {
-        LocalDate interestRecalculatedOn = null;
+        LocalDate interestRecalculatedOn;
         if (this.interestRecalculatedOn == null) {
             interestRecalculatedOn = getDisbursementDate();
         } else {
@@ -5518,13 +5518,12 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return interestRecalculatedOn;
     }
 
-    private void updateLoanOutstandingBalaces() {
+    private void updateLoanOutstandingBalances() {
         Money outstanding = Money.zero(getCurrency());
         List<LoanTransaction> loanTransactions = retreiveListOfTransactionsExcludeAccruals();
         for (LoanTransaction loanTransaction : loanTransactions) {
             if (loanTransaction.isDisbursement() || loanTransaction.isIncomePosting()) {
                 outstanding = outstanding.plus(loanTransaction.getAmount(getCurrency()));
-                loanTransaction.updateOutstandingLoanBalance(outstanding.getAmount());
             } else {
                 if (this.loanInterestRecalculationDetails != null
                         && this.loanInterestRecalculationDetails.isCompoundingToBePostedAsTransaction()
@@ -5533,8 +5532,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
                 } else {
                     outstanding = outstanding.minus(loanTransaction.getPrincipalPortion(getCurrency()));
                 }
-                loanTransaction.updateOutstandingLoanBalance(outstanding.getAmount());
             }
+            loanTransaction.updateOutstandingLoanBalance(outstanding.getAmount());
         }
     }
 

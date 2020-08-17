@@ -518,7 +518,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 postInterestOnDate = transactionDate;
             }
             account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                     postInterestOnDate);
             // for generating transaction id's
@@ -586,7 +586,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastAccrualPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
             account.postAccrualInterest(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, null);
+                    financialYearBeginningMonth, null, null);
         }
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
@@ -690,7 +690,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)
                 || account.isBeforeLastAccrualPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
             account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null);
         }
         if (account.isBeforeLastPostingPeriod(transactionDate)
                 || account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
@@ -1084,7 +1084,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, null);
         }
         if (account.isBeforeLastPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -1222,7 +1222,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, null);
         }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -1742,7 +1742,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
         if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
-                || account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0) {
+                || (account.getNominalAnnualInterestRateOverdraft() != null && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
             final Set<Long> existingTransactionIds = new HashSet<>();
             final Set<Long> existingReversedTransactionIds = new HashSet<>();
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
@@ -1754,7 +1754,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 postInterestOnDate = transactionDate;
             }
             account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null);
 
             // for generating transaction id's
             List<SavingsAccountTransaction> transactions = account.getTransactions();

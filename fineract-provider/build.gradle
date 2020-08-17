@@ -349,7 +349,7 @@ tomcatRun {
     stopPort = 8081
     stopKey=   'stopKey'
     enableSSL = true
-    configFile = file('src/test/resources/META-INF/context.xml')
+    // configFile = file('src/test/resources/META-INF/context.xml')
 }
 
 tomcatRunWar {
@@ -360,7 +360,7 @@ tomcatRunWar {
     enableSSL = true
     keystoreFile = file('src/main/resources/keystore.jks')
     keystorePass = 'openmf'
-    configFile = file('src/test/resources/META-INF/context.xml')
+     configFile = file('src/test/resources/META-INF/context.xml')
 }
 
 /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
@@ -435,17 +435,17 @@ configurations.driver.each {File file ->
 
 task createDB<<{
     description= "Creates the Database. Needs database name to be passed (like: -PdbName=someDBname)"
-    sql = Sql.newInstance( 'jdbc:mysql:thin://localhost:3306/', mysqlUser, mysqlPassword, 'org.drizzle.jdbc.DrizzleDriver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'org.drizzle.jdbc.DrizzleDriver' )
     sql.execute( 'create database '+"`$dbName`" )
 }
 
 task dropDB<<{
     description= "Drops the specified database. The database name has to be passed (like: -PdbName=someDBname)"
-    sql = Sql.newInstance( 'jdbc:mysql:thin://localhost:3306/', mysqlUser, mysqlPassword, 'org.drizzle.jdbc.DrizzleDriver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'org.drizzle.jdbc.DrizzleDriver' )
     sql.execute( 'DROP DATABASE '+"`$dbName`")
 }
 task setBlankPassword<<{
-    sql = Sql.newInstance( 'jdbc:mysql:thin://localhost:3306/', mysqlUser, mysqlPassword, 'org.drizzle.jdbc.DrizzleDriver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'org.drizzle.jdbc.DrizzleDriver' )
     sql.execute('USE `mifosplatform-tenants`')
     sql.execute('UPDATE mifosplatform-tenants.tenants SET schema_server = \'localhost\', schema_server_port = \'3306\', schema_username = \'mifos\', schema_password = \'mysql\' WHERE id=1;')
 }
@@ -464,8 +464,8 @@ buildscript {
 
 
 flyway {
-    url = "jdbc:mysql:thin://localhost:3306/mifostenant-default"
-	driver = "org.drizzle.jdbc.DrizzleDriver"
+    url = "jdbc:mysql://localhost:3306/mifostenant-default"
+	driver = "com.mysql.jdbc.Driver"
     user = mysqlUser
     password = mysqlPassword
 }
@@ -479,8 +479,8 @@ task migrateTenantDB<<{
 		tenantDbName = rootProject.getProperty("dbName")
 	}
 	
-    flyway.url= "jdbc:mysql:thin://localhost:3306/$tenantDbName"
-	flyway.driver = "org.drizzle.jdbc.DrizzleDriver"
+    flyway.url= "jdbc:mysql://localhost:3306/$tenantDbName"
+	flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     /**We use ${ as the prefix for strecthy reporting, do not want them to be interpreted by Flyway**/
     flyway.placeholderPrefix = "\$\${"
@@ -496,8 +496,8 @@ task showTenantDBInfo<<{
 		tenantDbName = rootProject.getProperty("dbName")
 	}
 	
-    flyway.url= "jdbc:mysql:thin://localhost:3306/$tenantDbName"
-	flyway.driver = "org.drizzle.jdbc.DrizzleDriver"
+    flyway.url= "jdbc:mysql://localhost:3306/$tenantDbName"
+	flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     flywayInfo.execute()
 }
@@ -516,8 +516,8 @@ task migrateTenantListDB<<{
         filePath = "filesystem:$projectDir" + '/src/test/resources/sql/migrations/list_db'
     }
 	
-    flyway.url= "jdbc:mysql:thin://localhost:3306/$tenantsDbName"
-	flyway.driver = "org.drizzle.jdbc.DrizzleDriver"
+    flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
+	flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
 
     flywayMigrate.execute()
@@ -532,8 +532,8 @@ task showTenantListDBInfo<<{
 		tenantsDbName = rootProject.getProperty("dbName")
 	}
     
-    flyway.url= "jdbc:mysql:thin://localhost:3306/$tenantsDbName"
-	flyway.driver = "org.drizzle.jdbc.DrizzleDriver"
+    flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
+	flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     flywayInfo.execute()
 }
@@ -547,8 +547,8 @@ task repairTenantDB<<{
         tenantsDbName = rootProject.getProperty("dbName")
     }
     
-    flyway.url= "jdbc:mysql:thin://localhost:3306/$tenantsDbName"
-	flyway.driver = "org.drizzle.jdbc.DrizzleDriver"
+    flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
+	flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     flywayRepair.execute()
 }

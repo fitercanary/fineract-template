@@ -18,27 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.api;
 
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import com.google.gson.JsonElement;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.lang.StringUtils;
@@ -58,9 +38,11 @@ import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSeria
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.Page;
+import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.RecurringDepositAccountData;
@@ -74,7 +56,25 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import com.google.gson.JsonElement;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Path("/recurringdepositaccounts")
 @Component
@@ -91,7 +91,6 @@ public class RecurringDepositAccountsApiResource {
     private final DepositAccountPreMatureCalculationPlatformService accountPreMatureCalculationPlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
-
 
     @Autowired
     public RecurringDepositAccountsApiResource(final DepositAccountReadPlatformService depositAccountReadPlatformService,
@@ -110,8 +109,8 @@ public class RecurringDepositAccountsApiResource {
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
         this.fromJsonHelper = fromJsonHelper;
         this.accountPreMatureCalculationPlatformService = accountPreMatureCalculationPlatformService;
-        this.bulkImportWorkbookService=bulkImportWorkbookService;
-        this.bulkImportWorkbookPopulatorService=bulkImportWorkbookPopulatorService;
+        this.bulkImportWorkbookService = bulkImportWorkbookService;
+        this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
     }
 
     @GET
@@ -145,14 +144,14 @@ public class RecurringDepositAccountsApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         if (paginationParameters.isPaged()) {
-            final Page<DepositAccountData> account = this.depositAccountReadPlatformService.retrieveAllPaged(
-                    DepositAccountType.RECURRING_DEPOSIT, paginationParameters);
+            final Page<DepositAccountData> account = this.depositAccountReadPlatformService
+                    .retrieveAllPaged(DepositAccountType.RECURRING_DEPOSIT, paginationParameters);
             return this.toApiJsonSerializer.serialize(settings, account,
                     DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
         }
 
-        final Collection<DepositAccountData> account = this.depositAccountReadPlatformService.retrieveAll(
-                DepositAccountType.RECURRING_DEPOSIT, paginationParameters);
+        final Collection<DepositAccountData> account = this.depositAccountReadPlatformService
+                .retrieveAll(DepositAccountType.RECURRING_DEPOSIT, paginationParameters);
 
         return this.toApiJsonSerializer.serialize(settings, account,
                 DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
@@ -177,19 +176,22 @@ public class RecurringDepositAccountsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("accountId") final Long accountId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
-            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @Context final UriInfo uriInfo) {
+            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @QueryParam("pageNumber") final Integer pageNumber,
+            @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
 
-        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive"))) { throw new UnrecognizedQueryParamException(
-                "status", chargeStatus, "all", "active", "inactive"); }
+        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
+                || is(chargeStatus, "pageSize"))) {
+            throw new UnrecognizedQueryParamException("status", chargeStatus, "all", "active", "inactive", "pageNumber", "pageSize");
+        }
 
         final RecurringDepositAccountData account = (RecurringDepositAccountData) this.depositAccountReadPlatformService
                 .retrieveOneWithChartSlabs(DepositAccountType.RECURRING_DEPOSIT, accountId);
 
         final Set<String> mandatoryResponseParameters = new HashSet<>();
         final RecurringDepositAccountData accountTemplate = populateTemplateAndAssociations(accountId, account, staffInSelectedOfficeOnly,
-                chargeStatus, uriInfo, mandatoryResponseParameters);
+                chargeStatus, uriInfo, mandatoryResponseParameters, pageNumber, pageSize);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
@@ -199,10 +201,11 @@ public class RecurringDepositAccountsApiResource {
 
     private RecurringDepositAccountData populateTemplateAndAssociations(final Long accountId,
             final RecurringDepositAccountData savingsAccount, final boolean staffInSelectedOfficeOnly, final String chargeStatus,
-            final UriInfo uriInfo, final Set<String> mandatoryResponseParameters) {
+            final UriInfo uriInfo, final Set<String> mandatoryResponseParameters, Integer pageNumber, Integer pageSize) {
 
         Collection<SavingsAccountTransactionData> transactions = null;
         Collection<SavingsAccountChargeData> charges = null;
+        Integer transactionCount = null;
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
@@ -210,13 +213,32 @@ public class RecurringDepositAccountsApiResource {
             if (associationParameters.contains("all")) {
                 associationParameters.addAll(Arrays.asList(SavingsApiConstants.transactions, SavingsApiConstants.charges));
             }
+            SavingsAccountTransactionType type = null;
+            if (associationParameters.contains(SavingsApiConstants.accrualTransactions)) {
+                type = SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING;
+            }
 
-            if (associationParameters.contains(SavingsApiConstants.transactions)) {
+            if (associationParameters.contains(SavingsApiConstants.transactions)
+                    || associationParameters.contains(SavingsApiConstants.accrualTransactions)) {
                 mandatoryResponseParameters.add(SavingsApiConstants.transactions);
-                final Collection<SavingsAccountTransactionData> currentTransactions = this.depositAccountReadPlatformService
-                        .retrieveAllTransactions(DepositAccountType.RECURRING_DEPOSIT, accountId);
-                if (!CollectionUtils.isEmpty(currentTransactions)) {
-                    transactions = currentTransactions;
+                if (pageNumber != null && pageSize != null) {
+                    SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
+                    final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.depositAccountReadPlatformService
+                            .retrieveAllTransactionUsingPagination(accountId, searchParameters, DepositAccountType.RECURRING_DEPOSIT, type);
+                    final Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    }
+                    transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
+                } else {
+                    final Collection<SavingsAccountTransactionData> currentTransactions = this.depositAccountReadPlatformService
+                            .retrieveAllTransactions(DepositAccountType.RECURRING_DEPOSIT, accountId, type);
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    }
+                    if (transactions != null) {
+                        transactionCount = transactions.size();
+                    }
                 }
             }
 
@@ -238,8 +260,9 @@ public class RecurringDepositAccountsApiResource {
                     DepositAccountType.RECURRING_DEPOSIT, savingsAccount.clientId(), savingsAccount.groupId(), savingsAccount.productId(),
                     staffInSelectedOfficeOnly);
         }
-
-        return RecurringDepositAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
+        RecurringDepositAccountData recurringDepositAccountData = RecurringDepositAccountData.withTemplateOptions(savingsAccount, templateData, transactions, charges);
+        recurringDepositAccountData.setTransactionCount(transactionCount);
+        return recurringDepositAccountData;
     }
 
     @PUT
@@ -301,7 +324,7 @@ public class RecurringDepositAccountsApiResource {
             final CommandWrapper commandRequest = builder.updateDepositPeriodFrequencyForRecurringDepositAccount(accountId)
                     .withJson(apiRequestBodyAsJson).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        }else if (is(commandParam, "postInterest")) {
+        } else if (is(commandParam, "postInterest")) {
             final CommandWrapper commandRequest = builder.recurringDepositAccountInterestPosting(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "close")) {
@@ -323,9 +346,10 @@ public class RecurringDepositAccountsApiResource {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
-        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "reject",
-                "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest", "postInterest", "close",
-                    "prematureClose", "calculatePrematureAmount", "postAccrualInterestAsOn" });
+        if (result == null) {
+            throw new UnrecognizedQueryParamException("command", commandParam,
+                    new Object[] { "reject", "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest",
+                            "postInterest", "close", "prematureClose", "calculatePrematureAmount", "postAccrualInterestAsOn" });
         }
 
         return this.toApiJsonSerializer.serialize(result);
@@ -358,8 +382,8 @@ public class RecurringDepositAccountsApiResource {
         this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         DepositAccountData account = null;
         if (is(commandParam, "close")) {
-            account = this.depositAccountReadPlatformService
-                    .retrieveOneWithClosureTemplate(DepositAccountType.RECURRING_DEPOSIT, accountId);
+            account = this.depositAccountReadPlatformService.retrieveOneWithClosureTemplate(DepositAccountType.RECURRING_DEPOSIT,
+                    accountId);
 
         }
 
@@ -367,32 +391,34 @@ public class RecurringDepositAccountsApiResource {
         return this.toApiJsonSerializer.serialize(settings, account,
                 DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
+
     @GET
     @Path("downloadtemplate")
     @Produces("application/vnd.ms-excel")
-    public Response getRecurringDepositTemplate(@QueryParam("officeId")final Long officeId,
-            @QueryParam("staffId")final Long staffId,@QueryParam("dateFormat") final String dateFormat) {
-        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS.toString(),officeId,staffId,dateFormat);
+    public Response getRecurringDepositTemplate(@QueryParam("officeId") final Long officeId, @QueryParam("staffId") final Long staffId,
+            @QueryParam("dateFormat") final String dateFormat) {
+        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS.toString(), officeId, staffId,
+                dateFormat);
     }
 
     @POST
     @Path("uploadtemplate")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String postRecurringDepositTemplate(@FormDataParam("file") InputStream uploadedInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @FormDataParam("locale") final String locale, @FormDataParam("dateFormat") final String dateFormat){
+            @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
+            @FormDataParam("dateFormat") final String dateFormat) {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS.toString(),
-                uploadedInputStream,fileDetail,locale,dateFormat);
+                uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
 
     @GET
     @Path("transactions/downloadtemplate")
     @Produces("application/vnd.ms-excel")
-    public Response getRecurringDepositTransactionTemplate(@QueryParam("officeId")final Long officeId,
+    public Response getRecurringDepositTransactionTemplate(@QueryParam("officeId") final Long officeId,
             @QueryParam("dateFormat") final String dateFormat) {
-        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS_TRANSACTIONS.toString(),officeId,
-                null,dateFormat);
+        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS_TRANSACTIONS.toString(), officeId,
+                null, dateFormat);
     }
 
     @POST
@@ -400,9 +426,9 @@ public class RecurringDepositAccountsApiResource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String postRecurringDepositTransactionsTemplate(@FormDataParam("file") InputStream uploadedInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
-            @FormDataParam("dateFormat") final String dateFormat){
-        final Long importDocumentId = this. bulkImportWorkbookService.importWorkbook(GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS_TRANSACTIONS.toString(),
-                uploadedInputStream,fileDetail,locale,dateFormat);
+            @FormDataParam("dateFormat") final String dateFormat) {
+        final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(
+                GlobalEntityType.RECURRING_DEPOSIT_ACCOUNTS_TRANSACTIONS.toString(), uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
 }

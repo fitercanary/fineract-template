@@ -1236,6 +1236,22 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder backupBalance() {
+        this.actionName = "BACKUP";
+        this.entityName = "BALANCE";
+        this.entityId = null;
+        this.href = "/accountbalances";
+        return this;
+    }
+
+    public CommandWrapperBuilder verifyBalance() {
+        this.actionName = "VERIFY";
+        this.entityName = "BALANCE";
+        this.entityId = null;
+        this.href = "/accountbalances";
+        return this;
+    }
+
     public CommandWrapperBuilder createStandingInstruction() {
         this.actionName = "CREATE";
         this.entityName = "STANDINGINSTRUCTION";
@@ -3275,6 +3291,14 @@ public class CommandWrapperBuilder {
         this.savingsId = accountId;
         this.entityId = accountId;
         this.href = "/recurringdepositaccounts/" + accountId + "?command=postAccrualInterest";
+        return this;
+    }
+
+    public CommandWrapperBuilder queueTransfer() {
+        this.actionName = "QUEUE";
+        this.entityName = "ACCOUNTTRANSFER";
+        this.entityId = null;
+        this.href = "/accounttransfers/queueTransfer";
         return this;
     }
 }

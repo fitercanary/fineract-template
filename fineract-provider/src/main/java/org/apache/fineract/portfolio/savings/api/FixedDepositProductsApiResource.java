@@ -288,6 +288,9 @@ public class FixedDepositProductsApiResource {
         Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveSavingsProductApplicableCharges(feeChargesOnly);
         chargeOptions = CollectionUtils.isEmpty(chargeOptions) ? null : chargeOptions;
 
+        Collection<ChargeData> preClosureChargeOptions = this.chargeReadPlatformService.retrieveDepositPreClosureCharges();
+        preClosureChargeOptions = CollectionUtils.isEmpty(preClosureChargeOptions) ? null : preClosureChargeOptions;
+
         Collection<ChargeData> penaltyOptions = this.chargeReadPlatformService.retrieveSavingsApplicablePenalties();
         penaltyOptions = CollectionUtils.isEmpty(penaltyOptions) ? null : penaltyOptions;
 
@@ -296,7 +299,7 @@ public class FixedDepositProductsApiResource {
         // interest rate chart template
         final InterestRateChartData chartTemplate = this.interestRateChartReadPlatformService.template();
 
-        FixedDepositProductData fixedDepositProductToReturn = null;
+        FixedDepositProductData fixedDepositProductToReturn;
         if (savingsProduct != null) {
             fixedDepositProductToReturn = FixedDepositProductData.withTemplate(savingsProduct, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
@@ -311,7 +314,7 @@ public class FixedDepositProductsApiResource {
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions);
         }
-
+        fixedDepositProductToReturn.setPreClosureCharges(preClosureChargeOptions);
         return fixedDepositProductToReturn;
     }
 

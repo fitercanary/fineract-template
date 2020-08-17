@@ -133,8 +133,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions);
-		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
-		return fixedDepositProductData;
+        setExtraProperties(existingProduct, fixedDepositProductData);
+        return fixedDepositProductData;
     }
 
     /**
@@ -175,8 +175,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.inMultiplesOfDepositTermType, existingProduct.minDepositAmount, existingProduct.depositAmount,
                 existingProduct.maxDepositAmount, periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 taxGroupOptions);
-		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
-		return fixedDepositProductData;
+        setExtraProperties(existingProduct, fixedDepositProductData);
+        return fixedDepositProductData;
     }
 
     public static FixedDepositProductData withAccountingDetails(final FixedDepositProductData existingProduct,
@@ -216,8 +216,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions);
-		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
-		return fixedDepositProductData;
+        setExtraProperties(existingProduct, fixedDepositProductData);
+        return fixedDepositProductData;
     }
 
     public static FixedDepositProductData instance(final DepositProductData depositProductData, final boolean preClosurePenalApplicable,
@@ -264,7 +264,7 @@ public class FixedDepositProductData extends DepositProductData {
                 preClosurePenalInterestOnType, preClosurePenalInterestOnTypeOptions, minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount,
                 maxDepositAmount, periodFrequencyTypeOptions, depositProductData.withHoldTax, depositProductData.taxGroup, taxGroupOptions);
-		fixedDepositProductData.setWithdrawalFeeForTransfers(depositProductData.withdrawalFeeForTransfers);
+		setExtraProperties(depositProductData, fixedDepositProductData);
 		return fixedDepositProductData;
     }
 
@@ -355,8 +355,8 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions);
-		fixedDepositProductData.setWithdrawalFeeForTransfers(existingProduct.withdrawalFeeForTransfers);
-		return fixedDepositProductData;
+        setExtraProperties(existingProduct, fixedDepositProductData);
+        return fixedDepositProductData;
 
     }
 

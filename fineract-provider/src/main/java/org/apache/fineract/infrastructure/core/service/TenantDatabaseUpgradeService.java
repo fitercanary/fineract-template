@@ -28,6 +28,8 @@ import org.apache.fineract.infrastructure.core.boot.db.TenantDataSourcePortFixSe
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.security.service.TenantDetailsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ import com.googlecode.flyway.core.util.jdbc.DriverDataSource;
  */
 @Service
 public class TenantDatabaseUpgradeService {
+    private static final Logger logger = LoggerFactory.getLogger(TenantDatabaseUpgradeService.class);
 
     private final TenantDetailsService tenantDetailsService;
     protected final DataSource tenantDataSource;
@@ -75,7 +78,9 @@ public class TenantDatabaseUpgradeService {
                 } catch (FlywayException e) {
                     String betterMessage = e.getMessage() + "; for Tenant DB URL: " + connectionProtocol + ", username: "
                             + connection.getSchemaUsername();
-                    throw new FlywayException(betterMessage, e.getCause());
+                    // throw new FlywayException(betterMessage, e.getCause());
+                    logger.error(e.toString(), e);
+                    logger.error(betterMessage);
                 }
             }
         }

@@ -45,6 +45,7 @@ public class SavingsAccountTransactionEnumData {
     private final boolean escheat;
     private final boolean accrualInterestPosting;
     private final boolean overdraftAccrualInterest;
+    private String description;
 
     public SavingsAccountTransactionEnumData(final Long id, final String code, final String value) {
         this.id = id;
@@ -144,4 +145,11 @@ public class SavingsAccountTransactionEnumData {
         return this.overdraftAccrualInterest;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

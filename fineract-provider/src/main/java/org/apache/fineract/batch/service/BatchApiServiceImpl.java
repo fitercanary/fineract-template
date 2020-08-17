@@ -36,8 +36,20 @@ import org.apache.fineract.batch.exception.ClientDetailsNotFoundException;
 import org.apache.fineract.batch.exception.ErrorHandler;
 import org.apache.fineract.batch.exception.ErrorInfo;
 import org.apache.fineract.batch.service.ResolutionHelper.BatchRequestNode;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.apache.fineract.scheduledjobs.service.ScheduledJobRunnerService;
+import org.apache.fineract.scheduledjobs.service.ScheduledJobRunnerServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
@@ -64,6 +76,8 @@ public class BatchApiServiceImpl implements BatchApiService {
     private final ResolutionHelper resolutionHelper;
     private final TransactionTemplate transactionTemplate;
     private List<BatchResponse> checkList = new ArrayList<>();
+    private final ScheduledJobRunnerService scheduledJobRunnerService;
+    private final static Logger logger = LoggerFactory.getLogger(ScheduledJobRunnerServiceImpl.class);
 
     /**
      * Constructs a 'BatchApiServiceImpl' with an argument of
@@ -75,10 +89,11 @@ public class BatchApiServiceImpl implements BatchApiService {
      */
     @Autowired
     public BatchApiServiceImpl(final CommandStrategyProvider strategyProvider, final ResolutionHelper resolutionHelper,
-            final TransactionTemplate transactionTemplate) {
+            final TransactionTemplate transactionTemplate, final ScheduledJobRunnerService scheduledJobRunnerService) {
         this.strategyProvider = strategyProvider;
         this.resolutionHelper = resolutionHelper;
         this.transactionTemplate = transactionTemplate;
+        this.scheduledJobRunnerService = scheduledJobRunnerService;
     }
 
     /**
@@ -123,6 +138,7 @@ public class BatchApiServiceImpl implements BatchApiService {
         });
 
         checkList = responseList;
+
         return responseList;
 
     }
@@ -241,5 +257,23 @@ public class BatchApiServiceImpl implements BatchApiService {
 
              return errResponseList;
         }
+    }
+
+    //
+    @Async
+    private void callAccountTranferJob(final SecurityContext context, final FineractPlatformTenant tenant) {
+        ThreadLocalContextUtil.setTenant(tenant);
+
+        SecurityContextHolder.setContext(context);
+
+        try {
+            scheduledJobRunnerService.processAccountTransfers();
+        } catch (JobExecutionException e) {
+
+            logger.trace("Processing batch account transfer request JobExecutionException: ", e);
+
+            // handle failure notification by calling VFD notification service
+        }
+
     }
 }

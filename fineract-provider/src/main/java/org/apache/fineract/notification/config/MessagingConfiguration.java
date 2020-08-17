@@ -46,15 +46,16 @@ public class MessagingConfiguration {
 	@Bean
 	  public Logger loggerBean() { return LoggerFactory.getLogger(TenantDataSourcePortFixService.class); }
 
-	private static final String DEFAULT_BROKER_URL = "tcp://localhost:61616";
+    private static final String DEFAULT_BROKER_URL = "tcp://localhost:61616";
+    // "tcp://vfd.activemq.fineract:61616";// "tcp://localhost:61616"
 	
     @Bean
     public ActiveMQConnectionFactory amqConnectionFactory(){
         ActiveMQConnectionFactory amqConnectionFactory = new ActiveMQConnectionFactory();
         try {
-        	amqConnectionFactory.setBrokerURL(DEFAULT_BROKER_URL);
+            amqConnectionFactory.setBrokerURL(this.env.getProperty("brokerUrl"));
         } catch(Exception e) {
-        	amqConnectionFactory.setBrokerURL(this.env.getProperty("brokerUrl"));
+            amqConnectionFactory.setBrokerURL(DEFAULT_BROKER_URL);
         }
         return amqConnectionFactory;
     }

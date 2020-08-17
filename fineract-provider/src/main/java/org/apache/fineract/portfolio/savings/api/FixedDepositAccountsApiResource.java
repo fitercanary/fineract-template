@@ -20,10 +20,7 @@ package org.apache.fineract.portfolio.savings.api;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -40,8 +37,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
@@ -59,11 +54,13 @@ import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSeria
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.Page;
+import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.FixedDepositAccountData;
@@ -71,6 +68,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.DepositAccountPreMatureCalculationPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -78,6 +76,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import com.google.gson.JsonElement;
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
 
 @Path("/fixeddepositaccounts")
 @Component
@@ -95,7 +95,8 @@ public class FixedDepositAccountsApiResource {
     private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
-
+    private final DefaultToApiJsonSerializer<SavingsAccountChargeData> toApiJsonSerializerCharges;
+    private final DepositAccountWritePlatformService depositAccountWritePlatformService;
 
     @Autowired
     public FixedDepositAccountsApiResource(final DepositAccountReadPlatformService depositAccountReadPlatformService,
@@ -106,7 +107,9 @@ public class FixedDepositAccountsApiResource {
             final DepositAccountPreMatureCalculationPlatformService accountPreMatureCalculationPlatformService,
             final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
             final BulkImportWorkbookService bulkImportWorkbookService,
-            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService) {
+            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
+                                           final DefaultToApiJsonSerializer<SavingsAccountChargeData> toApiJsonSerializerCharges,
+                                           final DepositAccountWritePlatformService depositAccountWritePlatformService) {
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -116,8 +119,10 @@ public class FixedDepositAccountsApiResource {
         this.fromJsonHelper = fromJsonHelper;
         this.accountPreMatureCalculationPlatformService = accountPreMatureCalculationPlatformService;
         this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
-        this.bulkImportWorkbookService=bulkImportWorkbookService;
-        this.bulkImportWorkbookPopulatorService=bulkImportWorkbookPopulatorService;
+        this.bulkImportWorkbookService = bulkImportWorkbookService;
+        this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
+        this.toApiJsonSerializerCharges = toApiJsonSerializerCharges;
+        this.depositAccountWritePlatformService = depositAccountWritePlatformService;
     }
 
     @GET
@@ -150,8 +155,8 @@ public class FixedDepositAccountsApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         if (paginationParameters.isPaged()) {
-            final Page<DepositAccountData> account = this.depositAccountReadPlatformService.retrieveAllPaged(
-                    DepositAccountType.FIXED_DEPOSIT, paginationParameters);
+            final Page<DepositAccountData> account = this.depositAccountReadPlatformService
+                    .retrieveAllPaged(DepositAccountType.FIXED_DEPOSIT, paginationParameters);
             return this.toApiJsonSerializer.serialize(settings, account,
                     DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
         }
@@ -181,32 +186,35 @@ public class FixedDepositAccountsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("accountId") final Long accountId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
-            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @Context final UriInfo uriInfo) {
+            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @QueryParam("pageNumber") final Integer pageNumber,
+            @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
 
-        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive"))) {
-            throw new UnrecognizedQueryParamException("status", chargeStatus, "all", "active", "inactive");
+        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
+                || is(chargeStatus, "pageSize"))) {
+            throw new UnrecognizedQueryParamException("status", chargeStatus, "all", "active", "inactive", "pageNumber", "pageSize");
         }
 
-        final FixedDepositAccountData account = (FixedDepositAccountData) this.depositAccountReadPlatformService.retrieveOneWithChartSlabs(
-                DepositAccountType.FIXED_DEPOSIT, accountId);
-        
+        final FixedDepositAccountData account = (FixedDepositAccountData) this.depositAccountReadPlatformService
+                .retrieveOneWithChartSlabs(DepositAccountType.FIXED_DEPOSIT, accountId);
+
         final Set<String> mandatoryResponseParameters = new HashSet<>();
         final FixedDepositAccountData accountTemplate = populateTemplateAndAssociations(accountId, account, staffInSelectedOfficeOnly,
-                chargeStatus, uriInfo, mandatoryResponseParameters);
+                chargeStatus, uriInfo, mandatoryResponseParameters, pageNumber, pageSize);
         accountTemplate.setActivationCharge(getActivationCharge(accountId));
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
         return this.toApiJsonSerializer.serialize(settings, accountTemplate,
                 DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
-    
-    private BigDecimal getActivationCharge(Long accountId){
+
+    private BigDecimal getActivationCharge(Long accountId) {
         BigDecimal activationCharge = BigDecimal.ZERO;
-        Collection<SavingsAccountChargeData> savingCharges = this.savingsAccountChargeReadPlatformService.retrieveSavingsAccountCharges(accountId, "active");
+        Collection<SavingsAccountChargeData> savingCharges = this.savingsAccountChargeReadPlatformService
+                .retrieveSavingsAccountCharges(accountId, "active");
         for (SavingsAccountChargeData savingsAccountChargeData : savingCharges) {
-            if(savingsAccountChargeData.isSavingsActivation()){
+            if (savingsAccountChargeData.isSavingsActivation()) {
                 activationCharge = activationCharge.add(savingsAccountChargeData.getAmountOutstanding());
             }
         }
@@ -215,26 +223,47 @@ public class FixedDepositAccountsApiResource {
 
     private FixedDepositAccountData populateTemplateAndAssociations(final Long accountId, final FixedDepositAccountData savingsAccount,
             final boolean staffInSelectedOfficeOnly, final String chargeStatus, final UriInfo uriInfo,
-            final Set<String> mandatoryResponseParameters) {
+            final Set<String> mandatoryResponseParameters, Integer pageNumber, Integer pageSize) {
 
         Collection<SavingsAccountTransactionData> transactions = null;
         Collection<SavingsAccountChargeData> charges = null;
         PortfolioAccountData linkedAccount = null;
+        Integer transactionCount = null;
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
 
             if (associationParameters.contains("all")) {
-                associationParameters.addAll(Arrays.asList(SavingsApiConstants.transactions, SavingsApiConstants.charges,
-                        SavingsApiConstants.linkedAccount));
+                associationParameters.addAll(
+                        Arrays.asList(SavingsApiConstants.transactions, SavingsApiConstants.charges, SavingsApiConstants.linkedAccount));
             }
 
-            if (associationParameters.contains(SavingsApiConstants.transactions)) {
+            SavingsAccountTransactionType type = null;
+            if (associationParameters.contains(SavingsApiConstants.accrualTransactions)) {
+                type = SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING;
+            }
+
+            if (associationParameters.contains(SavingsApiConstants.transactions)
+                    || associationParameters.contains(SavingsApiConstants.accrualTransactions)) {
                 mandatoryResponseParameters.add(SavingsApiConstants.transactions);
-                final Collection<SavingsAccountTransactionData> currentTransactions = this.depositAccountReadPlatformService
-                        .retrieveAllTransactions(DepositAccountType.FIXED_DEPOSIT, accountId);
-                if (!CollectionUtils.isEmpty(currentTransactions)) {
-                    transactions = currentTransactions;
+                if (pageNumber != null && pageSize != null) {
+                    SearchParameters searchParameters = SearchParameters.forPagination(pageNumber, pageSize);
+                    final Page<SavingsAccountTransactionData> savingsAccountTransactionData = this.depositAccountReadPlatformService
+                            .retrieveAllTransactionUsingPagination(accountId, searchParameters, DepositAccountType.FIXED_DEPOSIT, type);
+                    final Collection<SavingsAccountTransactionData> currentTransactions = savingsAccountTransactionData.getPageItems();
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    }
+                    transactionCount = savingsAccountTransactionData.getTotalFilteredRecords();
+                } else {
+                    final Collection<SavingsAccountTransactionData> currentTransactions = this.depositAccountReadPlatformService
+                            .retrieveAllTransactions(DepositAccountType.FIXED_DEPOSIT, accountId, type);
+                    if (!CollectionUtils.isEmpty(currentTransactions)) {
+                        transactions = currentTransactions;
+                    }
+                    if (transactions != null) {
+                        transactionCount = transactions.size();
+                    }
                 }
             }
 
@@ -261,8 +290,9 @@ public class FixedDepositAccountsApiResource {
                     DepositAccountType.FIXED_DEPOSIT, savingsAccount.clientId(), savingsAccount.groupId(), savingsAccount.productId(),
                     staffInSelectedOfficeOnly);
         }
-
-        return FixedDepositAccountData.associationsAndTemplate(savingsAccount, templateData, transactions, charges, linkedAccount);
+        FixedDepositAccountData fixedDepositAccountData = FixedDepositAccountData.associationsAndTemplate(savingsAccount, templateData, transactions, charges, linkedAccount);
+        fixedDepositAccountData.setTransactionCount(transactionCount);
+        return fixedDepositAccountData;
     }
 
     @PUT
@@ -343,9 +373,11 @@ public class FixedDepositAccountsApiResource {
                     DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
         }
 
-        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, "reject",
-                "withdrawnByApplicant", "approve", "undoapproval", "activate", "calculateInterest", "postInterest", "close",
-                "prematureClose", "calculatePrematureAmount", "partialLiquidation", "topUp"); }
+        if (result == null) {
+            throw new UnrecognizedQueryParamException("command", commandParam, "reject", "withdrawnByApplicant", "approve", "undoapproval",
+                    "activate", "calculateInterest", "postInterest", "close", "prematureClose", "calculatePrematureAmount",
+                    "partialLiquidation", "topUp");
+        }
 
         return this.toApiJsonSerializer.serialize(result);
     }
@@ -387,37 +419,56 @@ public class FixedDepositAccountsApiResource {
     @GET
     @Path("downloadtemplate")
     @Produces("application/vnd.ms-excel")
-    public Response getFixedDepositTemplate(@QueryParam("officeId")final Long officeId,
-            @QueryParam("staffId")final Long staffId,@QueryParam("dateFormat") final String dateFormat) {
-        return bulkImportWorkbookPopulatorService.getTemplate
-                (GlobalEntityType.FIXED_DEPOSIT_ACCOUNTS.toString(),officeId,staffId,dateFormat);
+    public Response getFixedDepositTemplate(@QueryParam("officeId") final Long officeId, @QueryParam("staffId") final Long staffId,
+            @QueryParam("dateFormat") final String dateFormat) {
+        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.FIXED_DEPOSIT_ACCOUNTS.toString(), officeId, staffId,
+                dateFormat);
     }
+
     @POST
     @Path("uploadtemplate")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String postFixedDepositTemplate(@FormDataParam("file") InputStream uploadedInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,@FormDataParam("locale") final String locale,
-            @FormDataParam("dateFormat") final String dateFormat){
+            @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
+            @FormDataParam("dateFormat") final String dateFormat) {
         Long importDocumentId = bulkImportWorkbookService.importWorkbook(GlobalEntityType.FIXED_DEPOSIT_ACCOUNTS.toString(),
-                uploadedInputStream,fileDetail,locale,dateFormat);
+                uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
 
     @GET
     @Path("transaction/downloadtemplate")
     @Produces("application/vnd.ms-excel")
-    public Response getFixedDepositTransactionTemplate(@QueryParam("officeId")final Long officeId,@QueryParam("dateFormat") final String dateFormat) {
-        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.FIXED_DEPOSIT_TRANSACTIONS.toString(), officeId,null,dateFormat);
+    public Response getFixedDepositTransactionTemplate(@QueryParam("officeId") final Long officeId,
+            @QueryParam("dateFormat") final String dateFormat) {
+        return bulkImportWorkbookPopulatorService.getTemplate(GlobalEntityType.FIXED_DEPOSIT_TRANSACTIONS.toString(), officeId, null,
+                dateFormat);
     }
 
     @POST
     @Path("transaction/uploadtemplate")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String postFixedDepositTransactionTemplate(@FormDataParam("file") InputStream uploadedInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,@FormDataParam("locale") final String locale,
-            @FormDataParam("dateFormat") final String dateFormat){
+            @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
+            @FormDataParam("dateFormat") final String dateFormat) {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.FIXED_DEPOSIT_TRANSACTIONS.toString(),
-                uploadedInputStream,fileDetail,locale,dateFormat);
+                uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+
+    @GET
+    @Path("{accountId}/liquidationcharges")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String getAccountCharges(@PathParam("accountId") final Long accountId,
+                                         @Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
+
+        Collection<SavingsAccountChargeData> charges = SavingsAccountChargeData.toSavingsAccountChargeData(
+                this.depositAccountWritePlatformService.generateFDAPreliquidationCharges(accountId));
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializerCharges.serialize(settings, charges, DepositsApiConstants.SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS);
     }
 }

@@ -241,9 +241,10 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     }
 
     public boolean isPreClosurePenalApplicable() {
-        if (this.preClosureDetail != null) { return this.preClosureDetail.preClosurePenalApplicable(); }
+        if (this.preClosureDetail != null) { return this.preClosureDetail.isPreClosurePenalApplicable(); }
         return false;
     }
+
 
     public Integer getActualDepositPeriod(final LocalDate interestPostingUpToDate, final SavingsPeriodFrequencyType periodFrequencyType) {
         LocalDate depositFromDate = getExpectedFirstDepositOnDate();

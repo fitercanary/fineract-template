@@ -134,6 +134,9 @@ public class AuthorizationRequest extends AbstractPersistableCustom<Long>{
         this.status = AuthorizationRequestStatusType.REJECTED.getValue();
     }
     
+    public void closeRequest() {
+        this.status = AuthorizationRequestStatusType.CLOSED.getValue();
+    }
     
     
 }

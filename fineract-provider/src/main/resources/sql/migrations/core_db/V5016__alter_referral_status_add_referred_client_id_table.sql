@@ -16,6 +16,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
+
 ALTER TABLE `referral_status`
     ADD COLUMN `referred_client_id` BIGINT(20) AFTER device_id;
 

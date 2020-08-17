@@ -18,33 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.time.Year;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
-import javax.persistence.CascadeType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
@@ -78,6 +51,32 @@ import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
+import javax.persistence.CascadeType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.time.Year;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
 
 @Entity
 @DiscriminatorValue("300")
@@ -247,7 +246,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         if (isPreMatureClosure) {
             if (this.accountTermAndPreClosure.isPreClosurePenalApplicable()) {
                 applyPreMaturePenalty = true;
-                penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().preClosurePenalInterest();
+                penalInterest = this.accountTermAndPreClosure.depositPreClosureDetail().getPreClosurePenalInterest();
                 final PreClosurePenalInterestOnType preClosurePenalInterestOnType = this.accountTermAndPreClosure.depositPreClosureDetail()
                         .preClosurePenalInterestOnType();
                 if (preClosurePenalInterestOnType.isWholeTerm()) {
@@ -372,7 +371,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                 .fromInt(this.interestCalculationDaysInYearType);
         List<LocalDate> PostedAsOnDates =  getManualPostingDates();
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(depositStartDate(),
-                maturityDate, postingPeriodType, financialYearBeginningMonth, PostedAsOnDates);
+                maturityDate, postingPeriodType, financialYearBeginningMonth, PostedAsOnDates, null);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -667,8 +666,6 @@ public class RecurringDepositAccount extends SavingsAccount {
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate.minusDays(1), isInterestTransfer,
                 isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
 
-        Money interestPostedToDate = Money.zero(this.currency);
-
         boolean recalucateDailyBalanceDetails = false;
 
         for (final PostingPeriod interestPostingPeriod : postingPeriods) {
@@ -676,31 +673,27 @@ public class RecurringDepositAccount extends SavingsAccount {
             LocalDate interestPostingTransactionDate = interestPostingPeriod.dateOfPostingTransaction();
             interestPostingTransactionDate = interestPostingTransactionDate.isAfter(interestPostingUpToDate) ? interestPostingUpToDate
                     : interestPostingTransactionDate;
+
+            final List<SavingsAccountTransaction> postingTransactions = findInterestPostingTransactionFor(interestPostingTransactionDate);
+
+            Money interestPostedToPeriod = Money.zero(this.currency);
             for (final Money interestEarnedToBePostedForPeriod : interestPostingPeriod.getInterestEarned()) {
 
-                interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
-
-                final List<SavingsAccountTransaction> postingTransactions = findInterestPostingTransactionFor(
-                        interestPostingTransactionDate);
-                if (postingTransactions.isEmpty()) {
-                    final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                            interestPostingTransactionDate, interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting(), false);
-                    addTransaction(newPostingTransaction);
-                    recalucateDailyBalanceDetails = true;
-                } else {
-                    for (SavingsAccountTransaction postingTransaction : postingTransactions) {
-                        final boolean correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
-                        if (correctionRequired) {
-                            postingTransaction.reverse();
-                            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
-                                    office(), interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
-                                    interestPostingPeriod.isUserPosting(), false);
-                            addTransaction(newPostingTransaction);
-                            recalucateDailyBalanceDetails = true;
-                        }
+                if (interestEarnedToBePostedForPeriod.isGreaterThan(Money.zero(this.currency))) {
+                    if (postingTransactions.isEmpty()) {
+                        interestPostedToPeriod = interestPostedToPeriod.plus(interestEarnedToBePostedForPeriod);
+                        recalucateDailyBalanceDetails = true;
                     }
                 }
             }
+            if (postingTransactions.isEmpty()) {
+                final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
+                        interestPostingTransactionDate, interestPostedToPeriod, interestPostingPeriod.isUserPosting(), false);
+                addTransaction(newPostingTransaction);
+            } else {
+                postingTransactions.clear();
+            }
+
         }
         applyWithholdTaxForDepositAccounts(interestPostingUpToDate, recalucateDailyBalanceDetails);
         if (recalucateDailyBalanceDetails) {
@@ -742,7 +735,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         }
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
+        this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), this.maturityDate());
     }
 
     public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure,
@@ -801,7 +794,16 @@ public class RecurringDepositAccount extends SavingsAccount {
         }
         return interestPostingUpToDate;
     }
-
+    
+    private LocalDate interestPostingUpToMaturityDate(final LocalDate interestPostingDate) {
+        LocalDate interestPostingUpToDate = interestPostingDate;
+        final LocalDate uptoMaturityDate = interestCalculatedUptoMaturityDate();
+        if (uptoMaturityDate != null && uptoMaturityDate.isBefore(interestPostingDate)) {
+            interestPostingUpToDate = uptoMaturityDate;
+        }
+        return interestPostingUpToDate;
+    } 
+    
     public LocalDate maturityDate() {
         return this.accountTermAndPreClosure.getMaturityLocalDate();
     }
@@ -816,6 +818,11 @@ public class RecurringDepositAccount extends SavingsAccount {
             // interest should not be calculated for maturity day
             uptoMaturityDate = uptoMaturityDate.minusDays(1);
         }
+        return uptoMaturityDate;
+    }
+    private LocalDate interestCalculatedUptoMaturityDate() {
+        LocalDate uptoMaturityDate = calculateMaturityDate();
+        
         return uptoMaturityDate;
     }
 
@@ -1350,4 +1357,20 @@ public class RecurringDepositAccount extends SavingsAccount {
         accountTermAndPreClosure.updateTargetMaturityAmount(targetMaturityAmount);
     }
 
+    @Override
+    public void postAccrualInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
+                                    final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
+                                    final LocalDate postInterestOnDate, LocalDate maturityDate) {
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                financialYearBeginningMonth, postInterestOnDate, maturityDate);
+    }
+
+    public RecurringDepositProduct getProduct() {
+        return (RecurringDepositProduct) this.product;
+    }
+
+    public DepositAccountTermAndPreClosure getAccountTermAndPreClosure() {
+        return accountTermAndPreClosure;
+    }
 }

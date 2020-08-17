@@ -18,10 +18,10 @@
  */
 package org.apache.fineract.useradministration.service;
 
+import java.util.Collection;
+
 import org.apache.fineract.useradministration.data.AppUserData;
 import org.apache.fineract.useradministration.data.AuthorizationRequestData;
-
-import java.util.Collection;
 
 public interface AppUserReadPlatformService {
 
@@ -36,4 +36,6 @@ public interface AppUserReadPlatformService {
     boolean isUsernameExist(String username);
     
     Collection<AuthorizationRequestData> retrieveAuthorizationRequests(Integer status);
+
+    Collection<AuthorizationRequestData> retrieveUserAuthorizationRequestsOnClient(Long userId, Long clientId, Integer status);
 }

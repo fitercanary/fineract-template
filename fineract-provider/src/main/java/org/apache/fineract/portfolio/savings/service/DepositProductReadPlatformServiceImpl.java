@@ -29,6 +29,7 @@ import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
+import org.apache.fineract.portfolio.charge.service.ChargeReadPlatformService;
 import org.apache.fineract.portfolio.interestratechart.data.InterestRateChartData;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -52,13 +53,15 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
     private final FixedDepositProductMapper fixedDepositProductRowMapper = new FixedDepositProductMapper();
     private final RecurringDepositProductMapper recurringDepositProductRowMapper = new RecurringDepositProductMapper();
     private final DepositProductLookupMapper depositProductLookupsRowMapper = new DepositProductLookupMapper();
+    private final ChargeReadPlatformService chargeReadPlatformService;
 
     @Autowired
     public DepositProductReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-            final InterestRateChartReadPlatformService chartReadPlatformService) {
+                                                 final InterestRateChartReadPlatformService chartReadPlatformService, ChargeReadPlatformService chargeReadPlatformService) {
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.chartReadPlatformService = chartReadPlatformService;
+        this.chargeReadPlatformService = chargeReadPlatformService;
     }
 
     @Override
@@ -73,7 +76,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
         sqlBuilder.append(depositProductMapper.schema());
         sqlBuilder.append(" where sp.deposit_type_enum = ? ");
 
-        return this.jdbcTemplate.query(sqlBuilder.toString(), depositProductMapper, new Object[] { depositAccountType.getValue() });
+        return this.jdbcTemplate.query(sqlBuilder.toString(), depositProductMapper, depositAccountType.getValue());
     }
 
     @Override
@@ -85,7 +88,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
         sqlBuilder.append(" where sp.deposit_type_enum = ? ");
 
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.depositProductLookupsRowMapper,
-                new Object[] { depositAccountType.getValue() });
+                depositAccountType.getValue());
     }
 
     @Override
@@ -101,9 +104,10 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append(depositProductMapper.schema());
             sqlBuilder.append(" where sp.id = ? and sp.deposit_type_enum = ? ");
 
-            return this.jdbcTemplate.queryForObject(sqlBuilder.toString(), depositProductMapper, new Object[] { fixedDepositProductId,
-                    depositAccountType.getValue() });
-
+            DepositProductData depositProduct =  this.jdbcTemplate.queryForObject(sqlBuilder.toString(), depositProductMapper, fixedDepositProductId,
+                    depositAccountType.getValue());
+            this.appendPreClosureCharge(depositProduct);
+            return depositProduct;
         } catch (final EmptyResultDataAccessException e) {
             throw new FixedDepositProductNotFoundException(fixedDepositProductId);
         }
@@ -121,6 +125,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
         }
 
         return depositProduct;
+    }
+
+    private void appendPreClosureCharge(DepositProductData depositProductData) {
+        if (depositProductData.getPreClosureChargeId() != null && depositProductData.getPreClosureChargeId() > 0L) {
+            depositProductData.setPreClosureCharge(this.chargeReadPlatformService.retrieveCharge(depositProductData.getPreClosureChargeId()));
+        }
     }
 
     private static abstract class DepositProductMapper implements RowMapper<DepositProductData> {
@@ -148,7 +158,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("sp.min_balance_for_interest_calculation as minBalanceForInterestCalculation, ");
             sqlBuilder.append("sp.withhold_tax as withHoldTax,");
 			sqlBuilder.append("sp.withdrawal_fee_for_transfer as withdrawalFeeForTransfers,");
-            sqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName ");
+            sqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName, dptp.pre_closure_charge_applicable as preClosureChargeApplicable, ");
+            sqlBuilder.append("dptp.pre_closure_charge_id as preClosureChargeId ");
             this.schemaSql = sqlBuilder.toString();
         }
 
@@ -203,6 +214,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
 
             final boolean withHoldTax = rs.getBoolean("withHoldTax");
 			final Boolean withdrawalFeeForTransfers = rs.getBoolean("withdrawalFeeForTransfers");
+            final boolean preClosureChargeApplicable = rs.getBoolean("preClosureChargeApplicable");
+            final Long preClosureChargeId = rs.getLong("preClosureChargeId");
 
             final Long taxGroupId = JdbcSupport.getLong(rs, "taxGroupId");
             final String taxGroupName = rs.getString("taxGroupName");
@@ -216,6 +229,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
                     lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation, withHoldTax,
                     taxGroupData);
 			depositProductData.setWithdrawalFeeForTransfers(withdrawalFeeForTransfers);
+			depositProductData.setPreClosureChargeApplicable(preClosureChargeApplicable);
+			depositProductData.setPreClosureChargeId(preClosureChargeId);
 			return depositProductData;
         }
     }
@@ -237,11 +252,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("dptp.in_multiples_of_deposit_term as inMultiplesOfDepositTerm, ");
             sqlBuilder.append("dptp.in_multiples_of_deposit_term_type_enum as inMultiplesOfDepositTermTypeId, ");
             sqlBuilder.append("dptp.min_deposit_amount as minDepositAmount, dptp.deposit_amount as depositAmount, ");
-            sqlBuilder.append("dptp.max_deposit_amount as maxDepositAmount ");
+            sqlBuilder.append("dptp.max_deposit_amount as maxDepositAmount, dptp.pre_closure_charge_applicable as preClosureChargeApplicable, ");
+            sqlBuilder.append("dptp.pre_closure_charge_id as preClosureChargeId ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("left join m_deposit_product_term_and_preclosure dptp on sp.id=dptp.savings_product_id ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
-            sqlBuilder.append(" left join m_tax_group tg on tg.id = sp.tax_group_id  ");
+            sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id ");
 
             this.schemaSql = sqlBuilder.toString();
         }

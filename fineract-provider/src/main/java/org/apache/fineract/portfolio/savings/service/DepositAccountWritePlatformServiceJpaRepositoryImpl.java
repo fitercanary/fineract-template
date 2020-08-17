@@ -60,6 +60,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarType;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.Client;
@@ -76,6 +77,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
@@ -85,6 +87,8 @@ import org.apache.fineract.portfolio.savings.domain.DepositAccountDomainService;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountRecurringDetail;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountTermAndPreClosure;
+import org.apache.fineract.portfolio.savings.domain.DepositProductTermAndPreClosure;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
 import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
@@ -119,18 +123,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.time.Year;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.changeTenureParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
@@ -279,7 +277,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 }
                 if (account.isBeforeLastAccrualPostingPeriod(account.getActivationLocalDate())) {
                     account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                            isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                            isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, null);
                 }
                 if (account.isBeforeLastPostingPeriod(account.getActivationLocalDate())) {
                     final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -686,11 +684,60 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         FixedDepositApplicationReq fixedDepositApplicationReq = this.generateFixedDepositApplicationReq(account, command);
         fixedDepositApplicationReq.setDepositAmount(command.bigDecimalValueOfParameterNamed(depositAmountParamName));
         fixedDepositApplicationReq.setInterestCarriedForward(this.calculateInterestCarriedForward(account));
+        boolean changeTenure = command.booleanPrimitiveValueOfParameterNamed(changeTenureParamName);
+        if (!changeTenure) {
+            this.setEffectiveInterestRate(account, fixedDepositApplicationReq);
+        }
         this.autoCreateNewFD(command, account, accountAssociations, fixedDepositApplicationReq);
 
         return new CommandProcessingResultBuilder().withEntityId(accountId).withOfficeId(account.officeId())
                 .withClientId(account.clientId()).withGroupId(account.groupId())
                 .withSavingsId(accountAssociations.linkedSavingsAccount().getId()).build();
+    }
+
+    /**
+     * In order to make the interest earned by the customer accurate, an effective rate will be computed and used in the new topped up FD account.
+     * This will be achieved as follows:
+     * - Calculate interest to be earned by the existing principal (a) at the existing rate (c)
+     * - Calculate interest to be earned by the new principal (b) amount at the rate in the rate chart (d)
+     * - Add find the effective rate using this formula (c+d)/(a+b)*days in year/FD term
+     * - Use effective rate as interest rate in the topped up FD account
+     * @param account
+     * @param fixedDepositApplicationReq
+     */
+    private void setEffectiveInterestRate(FixedDepositAccount account, FixedDepositApplicationReq fixedDepositApplicationReq) {
+        SavingsInterestCalculationDaysInYearType daysInYearType = account.getProduct().interestCalculationDaysInYearType();
+        if (daysInYearType.isActual()) {
+            Year year;
+            if (account.getAccountTermAndPreClosure().getMaturityLocalDate() != null) {
+                year = Year.of(account.getAccountTermAndPreClosure().getMaturityLocalDate().getYear());
+            } else {
+                year = Year.of(LocalDate.now().getYear());
+            }
+            daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+        }
+        BigDecimal topUpAmount = fixedDepositApplicationReq.getDepositAmount().subtract(account.getAccountTermAndPreClosure().depositAmount());
+        BigDecimal interestEarnedOnExisting = this.calculateInterest(account.getAccountTermAndPreClosure().depositAmount(),
+                account.getOriginalInterestRate(), fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
+        BigDecimal applicableInterestRate = account.getChart().getApplicableInterestRate(fixedDepositApplicationReq.getDepositAmount(), fixedDepositApplicationReq.getSubmittedOnDate(),
+                fixedDepositApplicationReq.getSubmittedOnDate().plusDays(fixedDepositApplicationReq.getDepositPeriod()), account.getClient());
+        BigDecimal interestEarnedOnNew = this.calculateInterest(topUpAmount,
+                applicableInterestRate, fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
+        BigDecimal interestSum = interestEarnedOnExisting.add(interestEarnedOnNew);
+        BigDecimal principalSum = account.getAccountTermAndPreClosure().depositAmount().add(topUpAmount);
+        BigDecimal effectiveRate = interestSum.divide(principalSum, MathContext.DECIMAL64)
+                .multiply(BigDecimal.valueOf(daysInYearType.getValue()))
+                .divide(BigDecimal.valueOf(fixedDepositApplicationReq.getDepositPeriod()), MathContext.DECIMAL64)
+                .multiply(BigDecimal.valueOf(100));
+        fixedDepositApplicationReq.setInterestRateSet(true);
+        fixedDepositApplicationReq.setInterestRate(effectiveRate);
+    }
+
+    private BigDecimal calculateInterest(BigDecimal principal, BigDecimal interestRate, int depositPeriod, int daysInYear) {
+        return interestRate.divide(BigDecimal.valueOf(100L), MathContext.DECIMAL64)
+                .multiply(principal)
+                .multiply(BigDecimal.valueOf(depositPeriod))
+                .divide(BigDecimal.valueOf(daysInYear), MathContext.DECIMAL64);
     }
 
     private BigDecimal calculateInterestCarriedForward(FixedDepositAccount account) {
@@ -810,11 +857,11 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private FixedDepositApplicationPreClosureReq generateFixedDepositApplicationPreClosureReq(FixedDepositAccount account) {
         FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq = new FixedDepositApplicationPreClosureReq();
         fixedDepositApplicationPreClosureReq
-                .setPreClosurePenalInterest(account.getAccountTermAndPreClosure().getPreClosureDetail().preClosurePenalInterest());
+                .setPreClosurePenalInterest(account.getAccountTermAndPreClosure().getPreClosureDetail().getPreClosurePenalInterest());
         fixedDepositApplicationPreClosureReq
                 .setPreClosurePenalApplicable(account.getAccountTermAndPreClosure().isPreClosurePenalApplicable());
         fixedDepositApplicationPreClosureReq.setPreClosurePenalInterestOnTypeId(
-                account.getAccountTermAndPreClosure().getPreClosureDetail().preClosurePenalInterestOnTypeId());
+                account.getAccountTermAndPreClosure().getPreClosureDetail().getPreClosurePenalInterestOnType());
         fixedDepositApplicationPreClosureReq.setPreClosurePenalInterestOnTypeIdPramSet(true);
         fixedDepositApplicationPreClosureReq.setPreClosurePenalInterestParamSet(true);
         fixedDepositApplicationPreClosureReq.setPreClosurePenalApplicableParamSet(true);
@@ -882,7 +929,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         account.postAccrualInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                postInterestOnDate);
+                postInterestOnDate, null);
         account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                 postInterestOnDate);
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
@@ -903,7 +950,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
         boolean isInterestTransfer = false;
         account.postAccrualInterest(mc, transactionDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, transactionDate);
+                financialYearBeginningMonth, transactionDate, null);
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
@@ -1209,7 +1256,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
                 DepositAccountType.FIXED_DEPOSIT);
         checkClientOrGroupActive(account);
-
+        this.createPreClosureCharge(account, account.getProduct().depositProductTermAndPreClosure(), account.getAccountTermAndPreClosure());
         this.depositAccountDomainService.prematurelyCloseFDAccount(account, paymentDetail, FixedDepositPreClosureReq.instance(command),
                 changes);
 
@@ -1217,6 +1264,23 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         return new CommandProcessingResultBuilder().withEntityId(savingsId).withOfficeId(account.officeId())
                 .withClientId(account.clientId()).withGroupId(account.groupId()).withSavingsId(savingsId).with(changes).build();
+    }
+
+    private void createPreClosureCharge(SavingsAccount account, DepositProductTermAndPreClosure productTermAndPreClosure,
+                                        DepositAccountTermAndPreClosure depositAccountTermAndPreClosure) {
+        Charge charge = productTermAndPreClosure.getPreClosureCharge();
+        if (depositAccountTermAndPreClosure.getPreClosureDetail().isPreClosureChargeApplicable() && charge != null) {
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                    Collections.singletonList(ChargeTimeType.FDA_PRE_CLOSURE_FEE.getValue()));
+            if (preclosureCharges.isEmpty()) {
+                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+                savingsAccountChargeReq.setAmount(charge.getAmount());
+                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, charge, savingsAccountChargeReq);
+                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+                this.savingsAccountChargeRepository.save(savingsAccountCharge);
+                this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            }
+        }
     }
 
     @Override
@@ -1231,6 +1295,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final RecurringDepositAccount account = (RecurringDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
                 DepositAccountType.RECURRING_DEPOSIT);
         checkClientOrGroupActive(account);
+        this.createPreClosureCharge(account, account.getProduct().depositProductTermAndPreClosure(), account.getAccountTermAndPreClosure());
         if (account.maturityDate() == null) {
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
@@ -1508,7 +1573,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, null);
         }
         if (account.isBeforeLastPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -1645,7 +1710,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
+                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null, null);
         }
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -1836,5 +1901,76 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         account.validateApplicableInterestRate();
         this.savingAccountRepositoryWrapper.save(account);
     }
+
+    @Override
+    public List<SavingsAccountCharge> generateFDAPreliquidationCharges(Long savingsId) {
+
+        FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+                DepositAccountType.FIXED_DEPOSIT);
+        List<SavingsAccountCharge> partialLiquidationCharges = new ArrayList<>();
+
+        // Generate Pre Liquidation Charges
+        Charge generalCharge = this.chargeRepository.findChargeByChargeTimeType(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE);
+        if (generalCharge != null) {
+            List<SavingsAccountCharge> preclosureCharges = this.savingsAccountChargeRepository.findFdaPreclosureCharges(account.getId(),
+                    Collections.singletonList(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue()));
+            if (preclosureCharges.isEmpty()) {
+                SavingsAccountChargeReq savingsAccountChargeReq = new SavingsAccountChargeReq();
+                savingsAccountChargeReq.setAmount(generalCharge.getAmount());
+                SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(account, generalCharge, savingsAccountChargeReq);
+                account.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, generalCharge);
+                partialLiquidationCharges.add(savingsAccountCharge);
+            }
+            for(SavingsAccountCharge charge1: preclosureCharges){
+                partialLiquidationCharges.add(charge1);
+            }
+        }
+
+        // Generate Pre Closure Charges
+        List<SavingsAccountCharge> preclosureCharges = new ArrayList<>();
+        if(account.shouldApplyPreclosureCharges()){
+            SavingsAccountTransaction withholdTaxTransaction = account.getTransactions()
+                    .stream().filter(SavingsAccountTransaction::isWithHoldTaxAndNotReversed).findFirst().orElse(null);
+            for (SavingsAccountCharge charge : partialLiquidationCharges) {
+                BigDecimal amount = account.getSummary().getTotalInterestPosted() != null ? account.getSummary().getTotalInterestPosted()
+                        : account.getSummary().getTotalInterestEarned();
+                ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(charge.getCharge().getChargeCalculation());
+                if (chargeCalculationType.isPercentageOfAmount()) {
+                    amount = account.getSummary().getAccountBalance();
+                }
+                if (withholdTaxTransaction != null) {
+                    amount = amount.subtract(withholdTaxTransaction.getAmount());
+                }
+                if (chargeCalculationType.isPercentageBased()) {
+                    charge.setPercentage(charge.getCharge().getAmount());
+                    charge.setAmountPercentageAppliedTo(amount);
+                    charge.setAmount(charge.percentageOf(amount, charge.getPercentage()));
+                } else {
+                    charge.setAmount(charge.amount());
+                }
+                charge.setAmountOutstanding(charge.amount());
+                charge.setChargePaid();
+                preclosureCharges.add(charge);
+            }
+        }
+
+        // Generate withdraw charges
+        boolean applyWithdrawalFeeForTransfer = account.isWithdrawalFeeApplicableForTransfer();
+        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.TRANSFER_TO_SAVINGS;
+        if (applyWithdrawalFeeForTransfer || !closureType.isTransferToSavings()) {
+            // Apply withdrawal charges
+            List<SavingsAccountCharge> withdrawalCharges = this.savingsAccountChargeRepository.findWithdrawalFee(account.getId(),
+                    ChargeTimeType.WITHDRAWAL_FEE.getValue());
+            for (SavingsAccountCharge charge : withdrawalCharges) {
+                charge.setAmountOutstanding(charge.amount());
+                //this.savingsAccountWritePlatformService.payCharge(charge, closedDate, charge.amount(),
+                        //DateTimeFormat.forPattern("dd MM yyyy"), user);
+                preclosureCharges.add(charge);
+            }
+        }
+
+        return preclosureCharges;
+    }
+
 
 }

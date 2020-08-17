@@ -54,6 +54,7 @@ public class FixedDepositAccountData extends DepositAccountData {
     private Integer depositPeriod;
     private EnumOptionData depositPeriodFrequency;
     private BigDecimal activationCharge;
+    private Integer transactionCount;
 
     // used for account close
     private EnumOptionData onAccountClosure;
@@ -147,7 +148,7 @@ public class FixedDepositAccountData extends DepositAccountData {
         final Collection<PaymentTypeData> paymentTypeOptions = null;
         final Collection<SavingsAccountData> savingsAccountDatas = null;
 
-        return new FixedDepositAccountData(depositAccountData.id, depositAccountData.accountNo, depositAccountData.externalId,
+        FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(depositAccountData.id, depositAccountData.accountNo, depositAccountData.externalId,
                 depositAccountData.groupId, depositAccountData.groupName, depositAccountData.clientId, depositAccountData.clientName,
                 depositAccountData.depositProductId, depositAccountData.depositProductName, depositAccountData.fieldOfficerId,
                 depositAccountData.fieldOfficerName, depositAccountData.status, depositAccountData.timeline, depositAccountData.currency,
@@ -167,28 +168,34 @@ public class FixedDepositAccountData extends DepositAccountData {
                 depositPeriod, depositPeriodFrequency, periodFrequencyTypeOptions, depositType, onAccountClosure, onAccountClosureOptions,
                 paymentTypeOptions, savingsAccountDatas, linkedAccount, transferInterestToSavings, depositAccountData.withHoldTax,
                 depositAccountData.taxGroup, depositAccountData.nickname);
+        fixedDepositAccountData.setPreClosureChargeApplicable(depositAccountData.preClosureChargeApplicable);
+        fixedDepositAccountData.setPreClosureCharge(depositAccountData.preClosureCharge);
+        return fixedDepositAccountData;
     }
 
     public static FixedDepositAccountData withInterestChart(final FixedDepositAccountData account,
             final DepositAccountInterestRateChartData accountChart) {
-        FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
-                account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
-                account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
-                account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
-                account.interestCalculationDaysInYearType, account.minRequiredOpeningBalance, account.lockinPeriodFrequency,
-                account.lockinPeriodFrequencyType, account.withdrawalFeeForTransfers, account.minBalanceForInterestCalculation,
-                account.summary, account.transactions, account.productOptions, account.fieldOfficerOptions,
-                account.interestCompoundingPeriodTypeOptions, account.interestPostingPeriodTypeOptions,
-                account.interestCalculationTypeOptions, account.interestCalculationDaysInYearTypeOptions,
-                account.lockinPeriodFrequencyTypeOptions, account.withdrawalFeeTypeOptions, account.charges, account.chargeOptions,
-                accountChart, account.chartTemplate, account.preClosurePenalApplicable, account.preClosurePenalInterest,
-                account.preClosurePenalInterestOnType, account.preClosurePenalInterestOnTypeOptions, account.minDepositTerm,
-                account.maxDepositTerm, account.minDepositTermType, account.maxDepositTermType, account.inMultiplesOfDepositTerm,
-                account.inMultiplesOfDepositTermType, account.depositAmount, account.maturityAmount, account.maturityDate,
-                account.depositPeriod, account.depositPeriodFrequency, account.periodFrequencyTypeOptions, account.depositType,
-                account.onAccountClosure, account.onAccountClosureOptions, account.paymentTypeOptions, account.savingsAccounts,
-                account.linkedAccount, account.transferInterestToSavings, account.withHoldTax, account.taxGroup, account.nickname);
+        FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(account.id, account.accountNo, account.externalId,
+                account.groupId, account.groupName, account.clientId, account.clientName, account.depositProductId,
+                account.depositProductName, account.fieldOfficerId, account.fieldOfficerName, account.status, account.timeline,
+                account.currency, account.nominalAnnualInterestRate, account.interestCompoundingPeriodType,
+                account.interestPostingPeriodType, account.interestCalculationType, account.interestCalculationDaysInYearType,
+                account.minRequiredOpeningBalance, account.lockinPeriodFrequency, account.lockinPeriodFrequencyType,
+                account.withdrawalFeeForTransfers, account.minBalanceForInterestCalculation, account.summary, account.transactions,
+                account.productOptions, account.fieldOfficerOptions, account.interestCompoundingPeriodTypeOptions,
+                account.interestPostingPeriodTypeOptions, account.interestCalculationTypeOptions,
+                account.interestCalculationDaysInYearTypeOptions, account.lockinPeriodFrequencyTypeOptions,
+                account.withdrawalFeeTypeOptions, account.charges, account.chargeOptions, accountChart, account.chartTemplate,
+                account.preClosurePenalApplicable, account.preClosurePenalInterest, account.preClosurePenalInterestOnType,
+                account.preClosurePenalInterestOnTypeOptions, account.minDepositTerm, account.maxDepositTerm, account.minDepositTermType,
+                account.maxDepositTermType, account.inMultiplesOfDepositTerm, account.inMultiplesOfDepositTermType, account.depositAmount,
+                account.maturityAmount, account.maturityDate, account.depositPeriod, account.depositPeriodFrequency,
+                account.periodFrequencyTypeOptions, account.depositType, account.onAccountClosure, account.onAccountClosureOptions,
+                account.paymentTypeOptions, account.savingsAccounts, account.linkedAccount, account.transferInterestToSavings,
+                account.withHoldTax, account.taxGroup, account.nickname);
         fixedDepositAccountData.setAccruedInterestCarriedForward(account.accruedInterestCarriedForward);
+        fixedDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        fixedDepositAccountData.setPreClosureCharge(account.preClosureCharge);
         return fixedDepositAccountData;
     }
 
@@ -220,6 +227,8 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.taxGroup, account.nickname);
         fixedDepositAccountData.withdrawalFeeForTransfers = account.withdrawalFeeForTransfers;
         fixedDepositAccountData.accruedInterestCarriedForward = account.accruedInterestCarriedForward;
+        fixedDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        fixedDepositAccountData.setPreClosureCharge(account.preClosureCharge);
         return fixedDepositAccountData;
     }
 
@@ -526,5 +535,9 @@ public class FixedDepositAccountData extends DepositAccountData {
 
     public void setActivationCharge(BigDecimal activationCharge) {
         this.activationCharge = activationCharge;
+    }
+
+    public void setTransactionCount(Integer transactionCount) {
+        this.transactionCount = transactionCount;
     }
 }

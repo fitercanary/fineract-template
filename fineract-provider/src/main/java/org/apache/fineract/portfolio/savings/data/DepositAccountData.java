@@ -88,6 +88,8 @@ public class DepositAccountData {
 
     protected final DepositAccountInterestRateChartData chartTemplate;
     protected BigDecimal accruedInterestCarriedForward;
+    protected boolean preClosureChargeApplicable;
+    protected ChargeData preClosureCharge;
 
     // import fields
     private Long productId;
@@ -349,7 +351,7 @@ public class DepositAccountData {
     }
 
     public Collection<SavingsAccountChargeData> charges() {
-        return (this.charges == null) ? new HashSet<SavingsAccountChargeData>() : this.charges;
+        return (this.charges == null) ? new HashSet<>() : this.charges;
     }
 
     public EnumOptionData depositType() {
@@ -362,5 +364,17 @@ public class DepositAccountData {
 
     public void setAccruedInterestCarriedForward(BigDecimal accruedInterestCarriedForward) {
         this.accruedInterestCarriedForward = accruedInterestCarriedForward;
+    }
+
+    public boolean isPreClosureChargeApplicable() {
+        return preClosureChargeApplicable;
+    }
+
+    public void setPreClosureChargeApplicable(boolean preClosureChargeApplicable) {
+        this.preClosureChargeApplicable = preClosureChargeApplicable;
+    }
+
+    public void setPreClosureCharge(ChargeData preClosureCharge) {
+        this.preClosureCharge = preClosureCharge;
     }
 }

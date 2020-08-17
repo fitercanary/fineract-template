@@ -20,8 +20,9 @@
 
 -->
 
-
-<Context>
+<!--
 	<ResourceLink name="jdbc/mifosplatform-tenants" global="jdbc/mifosplatform-tenants"
 		type="javax.sql.DataSource" />
+-->
+<Context>
 </Context>

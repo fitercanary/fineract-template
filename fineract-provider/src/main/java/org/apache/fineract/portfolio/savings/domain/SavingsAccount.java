@@ -38,6 +38,7 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeNotFoundException;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
@@ -526,9 +527,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
             for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
-                if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
-                        && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
-                        && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
+                if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) ||
+                        ((this instanceof FixedDepositAccount && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType))
+                        || (this instanceof RecurringDepositAccount && SavingsPostingInterestPeriodType.MONTHLY.getValue().equals(this.interestPostingPeriodType))
+                             && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
                     interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
                     if (postingTransactions.isEmpty()) {
@@ -622,27 +624,27 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     protected List<SavingsAccountTransaction> findInterestPostingTransactionFor(final LocalDate postingDate) {
-        List<SavingsAccountTransaction> postingTransation = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> postingTransaction = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
             if ((transaction.isInterestPostingAndNotReversed() || transaction.isOverdraftInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
-                postingTransation.add(transaction);
+                postingTransaction.add(transaction);
             }
         }
-        return postingTransation;
+        return postingTransaction;
     }
 
     protected List<SavingsAccountTransaction> findAccrualInterestPostingTransactionFor(final LocalDate postingDate) {
-        List<SavingsAccountTransaction> postingTransation = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> postingTransaction = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
             if ((transaction.isAccrualInterestPostingAndNotReversed() || transaction.isOverdraftAccrualInterestAndNotReversed())
                     && transaction.occursOn(postingDate)) {
-                postingTransation.add(transaction);
+                postingTransaction.add(transaction);
             }
         }
-        return postingTransation;
+        return postingTransaction;
     }
 
     protected SavingsAccountTransaction findTransactionFor(final LocalDate postingDate,
@@ -791,7 +793,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
                 getStartInterestCalculationDate(), upToInterestCalculationDate, postingPeriodType, financialYearBeginningMonth,
-                postedAsOnDates);
+                postedAsOnDates, null);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -890,7 +892,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return listOfTransactionsSorted;
     }
 
-    protected void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
+    public void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate) {
 
         Money runningBalance = openingAccountBalance.copy();
 
@@ -1159,7 +1161,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         addTransaction(transaction);
         if (applyWithdrawFee) {
             // auto pay withdrawal fee
-            payWithdrawalFee(transactionDTO.getTransactionAmount(), transactionDTO.getTransactionDate(), transactionDTO.getAppUser());
+            payWithdrawalFee(transactionDTO, transactionDTO.getTransactionDate(), transactionDTO.getAppUser());
         }
         if (this.sub_status.equals(SavingsAccountSubStatusEnum.INACTIVE.getValue())
                 || this.sub_status.equals(SavingsAccountSubStatusEnum.DORMANT.getValue())) {
@@ -1168,10 +1170,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return transaction;
     }
 
-    private void payWithdrawalFee(final BigDecimal transactionAmoount, final LocalDate transactionDate, final AppUser user) {
+    private void payWithdrawalFee(final SavingsAccountTransactionDTO transactionDTO, final LocalDate transactionDate, final AppUser user) {
+        BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
         for (SavingsAccountCharge charge : this.charges()) {
             if (charge.isWithdrawalFee() && charge.isActive()) {
-                charge.updateWithdralFeeAmount(transactionAmoount);
+                if(ChargeCalculationType.fromInt(charge.getChargeCalculation()).isPercentageOfInterest()) {
+                    transactionAmount = transactionDTO.getTotalInterestAccrued();
+                }
+                charge.updateWithdralFeeAmount(transactionAmount);
                 this.payCharge(charge, charge.getAmountOutstanding(this.getCurrency()), transactionDate, user);
             }
         }
@@ -1992,6 +1998,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return this.nominalAnnualInterestRate;
     }
 
+    public BigDecimal getOriginalInterestRate() {
+        return this.originalInterestRate;
+    }
+
     public BigDecimal getNominalAnnualInterestRateOverdraft() {
         return this.nominalAnnualInterestRateOverdraft;
     }
@@ -2384,7 +2394,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             LocalDate postInterestAsOnDate = null;
             if (this.isBeforeLastAccrualPostingPeriod(getActivationLocalDate())) {
                 this.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), isInterestTransfer,
-                        isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestAsOnDate);
+                        isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestAsOnDate, null);
             }
             if (this.isBeforeLastPostingPeriod(getActivationLocalDate())) {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -3434,7 +3444,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     public void postAccrualInterest(final MathContext mc, final LocalDate interestPostingUpToDate, final boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate postInterestOnDate) {
+            final LocalDate postInterestOnDate, LocalDate maturityDate) {
 
         // no openingBalance concept supported yet but probably will to allow
         // for migrations.
@@ -3473,7 +3483,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
                 getStartInterestCalculationDate(), interestPostingUpToDate, postingPeriodType, financialYearBeginningMonth,
-                postedAsOnDates);
+                postedAsOnDates, maturityDate);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -3559,9 +3569,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             if (postingTransactions.isEmpty()) {
                 for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
-                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || (this instanceof FixedDepositAccount
-                            && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType)
-                            && interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))) {
+                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) ||
+                       ((this instanceof FixedDepositAccount && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType))
+                       || (this instanceof RecurringDepositAccount && SavingsPostingInterestPeriodType.MONTHLY.getValue().equals(this.interestPostingPeriodType))
+                            && (interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate)))) {
+                        
                         interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
                         SavingsAccountTransaction newPostingTransaction = null;
@@ -3741,4 +3753,5 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public boolean isWithHoldTax() {
         return this.withHoldTax;
     }
+
 }

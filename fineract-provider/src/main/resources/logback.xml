@@ -37,12 +37,13 @@
 		</encoder>
 	</appender>
 
+	<!--
 	<appender name="DB" class="ch.qos.logback.classic.db.DBAppender">
 		<connectionSource class="ch.qos.logback.core.db.JNDIConnectionSource">
-			<!-- please note the "java:comp/env/" prefix -->
 			<jndiLocation>java:comp/env/jdbc/mifosplatform-tenants</jndiLocation>
 		</connectionSource>
 	</appender>
+	-->
 	
 	<logger name="org.fineract.platform" level="debug" />
 	<logger name="org.apache.fineract.infrastructure.security.filter"
@@ -52,10 +53,14 @@
 	<logger name="org.springframework.beans" level="info" />
 	<logger name="net.sf.ehcache" level="error" />
 	<logger name="org.hibernate.cache" level="error" />
+	<logger name="org.hibernate.SQL" level="debug" />
+	<logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="trace" />
 
 	<root level="info">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
+		<!--
 		<appender-ref ref="DB" />
+		-->
 	</root>
 </configuration>

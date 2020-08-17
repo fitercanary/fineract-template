@@ -33,6 +33,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.account.domain.AccountTransferType;
@@ -485,7 +486,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             if (chargeCalculationType.isPercentageOfAmount()) {
                 amount = account.getAccountBalance();
             }
-            if (withholdTaxTransaction != null && charge.getCharge().getChargeTimeType().equals(ChargeTimeType.FDA_PARTIAL_LIQUIDATION_FEE.getValue())) {
+            if (withholdTaxTransaction != null) {
                 amount = amount.subtract(withholdTaxTransaction.getAmount());
             }
             if (chargeCalculationType.isPercentageBased()) {

@@ -18,12 +18,8 @@
  */
 package org.apache.fineract.portfolio.savings.data;
 
-import java.math.BigDecimal;
-import java.util.Collection;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.fineract.infrastructure.bulkimport.constants.TemplatePopulateImportConstants;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.staff.data.StaffData;
@@ -33,6 +29,9 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.joda.time.LocalDate;
+
+import java.math.BigDecimal;
+import java.util.Collection;
 
 /**
  * Immutable data object representing a Recurring Deposit account.
@@ -64,6 +63,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
     private final boolean isCalendarInherited;
     private final Integer recurringFrequency;
     private final EnumOptionData recurringFrequencyType;
+    private Integer transactionCount;
 
     // used for account close
     private final EnumOptionData onAccountClosure;
@@ -183,7 +183,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
         final Integer recurringFrequency = null;
         final EnumOptionData recurringFrequencyType = null;
 
-        return new RecurringDepositAccountData(depositAccountData.id, depositAccountData.accountNo, depositAccountData.externalId,
+        RecurringDepositAccountData recurringDepositAccountData = new RecurringDepositAccountData(depositAccountData.id, depositAccountData.accountNo, depositAccountData.externalId,
                 depositAccountData.groupId, depositAccountData.groupName, depositAccountData.clientId, depositAccountData.clientName,
                 depositAccountData.depositProductId, depositAccountData.depositProductName, depositAccountData.fieldOfficerId,
                 depositAccountData.fieldOfficerName, depositAccountData.status, depositAccountData.timeline, depositAccountData.currency,
@@ -205,12 +205,15 @@ public class RecurringDepositAccountData extends DepositAccountData {
                 totalOverdueAmount, noOfOverdueInstallments, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
                 isCalendarInherited, recurringFrequency, recurringFrequencyType, depositAccountData.withHoldTax,
                 depositAccountData.taxGroup, depositAccountData.nickname, targetAmount, targetMaturityAmount);
+        recurringDepositAccountData.setPreClosureChargeApplicable(depositAccountData.preClosureChargeApplicable);
+        recurringDepositAccountData.setPreClosureCharge(depositAccountData.preClosureCharge);
+        return recurringDepositAccountData;
     }
 
     public static RecurringDepositAccountData withInterestChartAndRecurringDetails(final RecurringDepositAccountData account,
             final DepositAccountInterestRateChartData accountChart, final Integer recurringFrequency,
             final EnumOptionData recurringFrequencyType) {
-        return new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+        RecurringDepositAccountData recurringDepositAccountData = new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -230,6 +233,9 @@ public class RecurringDepositAccountData extends DepositAccountData {
                 account.noOfOverdueInstallments, account.isMandatoryDeposit, account.allowWithdrawal,
                 account.adjustAdvanceTowardsFuturePayments, account.isCalendarInherited, recurringFrequency, recurringFrequencyType,
                 account.withHoldTax, account.taxGroup, account.nickname, account.targetAmount, account.targetMaturityAmount);
+        recurringDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        recurringDepositAccountData.setPreClosureCharge(account.preClosureCharge);
+        return recurringDepositAccountData;
     }
 
     public static RecurringDepositAccountData withTemplateOptions(final RecurringDepositAccountData account,
@@ -256,7 +262,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions);
         }
 
-        return new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+        RecurringDepositAccountData recurringDepositAccountData = new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -277,6 +283,9 @@ public class RecurringDepositAccountData extends DepositAccountData {
                 account.adjustAdvanceTowardsFuturePayments, account.isCalendarInherited, account.recurringFrequency,
                 account.recurringFrequencyType, account.withHoldTax, account.taxGroup, account.nickname, account.targetAmount,
                 account.targetMaturityAmount);
+        recurringDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        recurringDepositAccountData.setPreClosureCharge(account.preClosureCharge);
+        return recurringDepositAccountData;
 
     }
 
@@ -291,7 +300,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
             final Collection<ChargeData> chargeOptions, final Collection<EnumOptionData> preClosurePenalInterestOnTypeOptions,
             final Collection<EnumOptionData> periodFrequencyTypeOptions) {
 
-        return new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+        RecurringDepositAccountData recurringDepositAccountData = new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -311,6 +320,9 @@ public class RecurringDepositAccountData extends DepositAccountData {
                 account.adjustAdvanceTowardsFuturePayments, account.isCalendarInherited, account.recurringFrequency,
                 account.recurringFrequencyType, account.withHoldTax, account.taxGroup, account.nickname, account.targetAmount,
                 account.targetMaturityAmount);
+        recurringDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        recurringDepositAccountData.setPreClosureCharge(account.preClosureCharge);
+        return recurringDepositAccountData;
     }
 
     public static RecurringDepositAccountData withClientTemplate(final Long clientId, final String clientName, final Long groupId,
@@ -512,7 +524,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
             final Collection<EnumOptionData> onAccountClosureOptions, final Collection<PaymentTypeData> paymentTypeOptions,
             final Collection<SavingsAccountData> savingsAccountDatas) {
 
-        return new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+        RecurringDepositAccountData recurringDepositAccountData = new RecurringDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -533,6 +545,9 @@ public class RecurringDepositAccountData extends DepositAccountData {
                 account.adjustAdvanceTowardsFuturePayments, account.isCalendarInherited, account.recurringFrequency,
                 account.recurringFrequencyType, account.withHoldTax, account.taxGroup, account.nickname, account.targetAmount,
                 account.targetMaturityAmount);
+        recurringDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
+        recurringDepositAccountData.setPreClosureCharge(account.preClosureCharge);
+        return recurringDepositAccountData;
     }
 
     private RecurringDepositAccountData(final Long id, final String accountNo, final String externalId, final Long groupId,
@@ -616,7 +631,8 @@ public class RecurringDepositAccountData extends DepositAccountData {
 
         BigDecimal totalDeposits = this.summary == null  || this.summary.getTotalDeposits() == null ? BigDecimal.ZERO : this.summary.getTotalDeposits();
         BigDecimal interestedEarned = this.summary == null  || this.summary.getTotalInterestEarned() == null ? BigDecimal.ZERO : this.summary.getTotalInterestEarned();
-        this.currentMaturityAmount = totalDeposits.add(interestedEarned);
+        BigDecimal totalWithdrawals = this.summary == null  || this.summary.getTotalWithdrawals() == null ? BigDecimal.ZERO : this.summary.getTotalWithdrawals();
+        this.currentMaturityAmount = totalDeposits.add(interestedEarned).subtract(totalWithdrawals);
     }
 
     @Override
@@ -632,6 +648,10 @@ public class RecurringDepositAccountData extends DepositAccountData {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37).append(this.id).append(this.accountNo).toHashCode();
+    }
+
+    public void setTransactionCount(Integer transactionCount) {
+        this.transactionCount = transactionCount;
     }
 
 }

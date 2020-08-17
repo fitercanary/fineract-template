@@ -78,6 +78,10 @@ public class SavingsAccountSummaryData {
         return this.totalDeposits;
     }
     
+    public BigDecimal getTotalWithdrawals() {
+        return this.totalWithdrawals;
+    }
+    
     
     
     

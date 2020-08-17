@@ -18,18 +18,20 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.portfolio.charge.domain.Charge;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
-import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeIdParamName;
 
 @Entity
 @Table(name = "m_deposit_product_term_and_preclosure")
@@ -44,6 +46,10 @@ public class DepositProductTermAndPreClosure extends AbstractPersistableCustom<L
     @OneToOne
     @JoinColumn(name = "savings_product_id", nullable = false)
     private FixedDepositProduct product;
+
+    @OneToOne
+    @JoinColumn(name = "pre_closure_charge_id")
+    private Charge preClosureCharge;
 
     @Embedded
     private DepositProductAmountDetails depositProductAmountDetails;
@@ -70,16 +76,27 @@ public class DepositProductTermAndPreClosure extends AbstractPersistableCustom<L
         final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
         if (this.preClosureDetail != null) {
             actualChanges.putAll(this.preClosureDetail.update(command, baseDataValidator));
+            this.appendPreClosureChargeChanges(command, actualChanges);
         }
-
         if (this.depositTermDetail != null) {
             actualChanges.putAll(this.depositTermDetail.update(command, baseDataValidator));
         }
-
         if (this.depositProductAmountDetails != null) {
             actualChanges.putAll(this.depositProductAmountDetails.update(command));
         }
         return actualChanges;
+    }
+
+    private void appendPreClosureChargeChanges(JsonCommand command, Map<String, Object> actualChanges) {
+        if (preClosureDetail.isPreClosureChargeApplicable()) {
+            Long chargeId = this.preClosureCharge != null ? this.preClosureCharge.getId() : null;
+            if (command.isChangeInLongParameterNamed(preClosureChargeIdParamName, chargeId)) {
+                Long newValue = command.longValueOfParameterNamed(preClosureChargeIdParamName);
+                actualChanges.put(preClosureChargeIdParamName, newValue);
+            }
+        } else {
+            this.preClosureCharge = null;
+        }
     }
 
     public DepositPreClosureDetail depositPreClosureDetail() {
@@ -90,11 +107,15 @@ public class DepositProductTermAndPreClosure extends AbstractPersistableCustom<L
         return this.depositTermDetail;
     }
 
-    public DepositProductAmountDetails depositProductAmountDetails() {
-        return this.depositProductAmountDetails;
-    }
-
     public void updateProductReference(final SavingsProduct product) {
         this.product = (FixedDepositProduct) product;
+    }
+
+    public Charge getPreClosureCharge() {
+        return preClosureCharge;
+    }
+
+    public void setPreClosureCharge(Charge preClosureCharge) {
+        this.preClosureCharge = preClosureCharge;
     }
 }

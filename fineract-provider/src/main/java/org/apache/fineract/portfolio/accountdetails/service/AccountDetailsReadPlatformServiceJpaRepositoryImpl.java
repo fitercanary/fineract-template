@@ -21,18 +21,22 @@ package org.apache.fineract.portfolio.accountdetails.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
+import org.apache.fineract.infrastructure.dataqueries.data.GenericResultsetData;
+import org.apache.fineract.infrastructure.dataqueries.service.ReadWriteNonCoreDataService;
 import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.portfolio.accountdetails.data.AccountSummaryCollectionData;
 import org.apache.fineract.portfolio.accountdetails.data.LoanAccountSummaryData;
 import org.apache.fineract.portfolio.accountdetails.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.accountdetails.data.ShareAccountSummaryData;
+import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.data.LoanApplicationTimelineData;
@@ -58,19 +62,23 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     private final ClientReadPlatformService clientReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
     private final ColumnValidator columnValidator;
+    private final ReadWriteNonCoreDataService readWriteNonCoreDataService;
 
     @Autowired
     public AccountDetailsReadPlatformServiceJpaRepositoryImpl(final ClientReadPlatformService clientReadPlatformService,
             final RoutingDataSource dataSource, final GroupReadPlatformService groupReadPlatformService,
-            final ColumnValidator columnValidator) {
+            final ColumnValidator columnValidator, final ReadWriteNonCoreDataService readWriteNonCoreDataService) {
         this.clientReadPlatformService = clientReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.groupReadPlatformService = groupReadPlatformService;
         this.columnValidator = columnValidator;
+        this.readWriteNonCoreDataService = readWriteNonCoreDataService;
     }
+    
 
     @Override
     public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId) {
+        
         // Check if client exists
         this.clientReadPlatformService.retrieveOne(clientId);
         final String loanwhereClause = " where l.client_id = ?";
@@ -80,7 +88,32 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[]{clientId});
         final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
         final List<ShareAccountSummaryData> shareAccounts = retrieveShareAccountDetails(clientId) ;
-        final List<SavingsAccountSummaryData> jointSavingsAccounts = retrieveAllGroupsAccountDetailsForClient(jointSavingswhereClause, new Object[]{clientId});
+        final List<SavingsAccountSummaryData> groupSavingsAccounts = retrieveAllGroupsAccountDetailsForClient(jointSavingswhereClause, new Object[]{clientId});
+        final List<SavingsAccountSummaryData> jointSavingsAccounts = new ArrayList<>();
+        
+        
+        if(!groupSavingsAccounts.isEmpty()) {
+            for(SavingsAccountSummaryData groupSavingsAccount : groupSavingsAccounts) {
+                List<ClientData> membersOfGroup = new ArrayList<>();
+                Collection<ClientData> membersOfGroupWithAddressInfo = null;
+                membersOfGroupWithAddressInfo = this.clientReadPlatformService.retrieveClientMembersOfGroup(groupSavingsAccount.getGroupId());
+                if(!membersOfGroupWithAddressInfo.isEmpty())
+                for(ClientData clientData : membersOfGroupWithAddressInfo) {
+                    final GenericResultsetData results =  readWriteNonCoreDataService.retrieveDataTableGenericResultSet("Address Info", clientData.getId(), null, null);
+                    if(!results.getData().isEmpty()) {
+                        ClientData clientDetails = ClientData.clientDetailsWithAddressInfo(results.getData().get(0).getRow().get(10), results.getData().get(0).getRow().get(6), clientData.displayName()
+                                , clientData.getId());
+                        membersOfGroup.add(clientDetails); 
+                    }else {
+                        ClientData clientDetails = ClientData.clientDetailsWithAddressInfo(null, null, clientData.displayName(), clientData.getId());
+                        membersOfGroup.add(clientDetails);
+                    }
+                }
+                SavingsAccountSummaryData savingsAccountSummaryData = SavingsAccountSummaryData.withGroupMembers(groupSavingsAccount, membersOfGroup);
+                jointSavingsAccounts.add(savingsAccountSummaryData);
+                
+            }
+        }
         return new AccountSummaryCollectionData(loanAccounts, savingsAccounts, shareAccounts, jointSavingsAccounts);
     }
 
@@ -297,7 +330,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
             accountsSummary.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             accountsSummary.append("curr.display_symbol as currencyDisplaySymbol, ");
             accountsSummary.append("sa.product_id as productId, p.name as productName, p.short_name as shortProductName, ");
-            accountsSummary.append("sa.deposit_type_enum as depositType ");
+            accountsSummary.append("sa.deposit_type_enum as depositType, sa.group_id as groupId ");
             accountsSummary.append("from m_savings_account sa ");
             accountsSummary.append("join m_savings_product as p on p.id = sa.product_id ");
             accountsSummary.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -352,7 +385,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
             accountsSummaryForJointAccount.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             accountsSummaryForJointAccount.append("curr.display_symbol as currencyDisplaySymbol, ");
             accountsSummaryForJointAccount.append("sa.product_id as productId, p.name as productName, p.short_name as shortProductName, ");
-            accountsSummaryForJointAccount.append("sa.deposit_type_enum as depositType ");
+            accountsSummaryForJointAccount.append("sa.deposit_type_enum as depositType, gp.id as groupId ");
             accountsSummaryForJointAccount.append("from m_client cl ");
             accountsSummaryForJointAccount.append("join m_group_client gc on cl.id = gc.client_id ");
             accountsSummaryForJointAccount.append("join m_group gp on gp.id = gc.group_id ");
@@ -381,6 +414,11 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         public SavingsAccountSummaryData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
             final Long id = JdbcSupport.getLong(rs, "id");
+            
+             Long groupId = null;
+            if(JdbcSupport.getLong(rs, "groupId") != null) {
+                 groupId = JdbcSupport.getLong(rs, "groupId");
+            }
             final String accountNo = rs.getString("accountNo");
             final String externalId = rs.getString("externalId");
             final Long productId = JdbcSupport.getLong(rs, "productId");
@@ -445,7 +483,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                     closedByLastname);
 
             return new SavingsAccountSummaryData(id, accountNo, externalId, productId, productName, shortProductName, status, currency, accountBalance,
-                    accountTypeData, timeline, depositTypeData, subStatus, lastActiveTransactionDate);
+                    accountTypeData, timeline, depositTypeData, subStatus, lastActiveTransactionDate, groupId, null);
         }
     }
 

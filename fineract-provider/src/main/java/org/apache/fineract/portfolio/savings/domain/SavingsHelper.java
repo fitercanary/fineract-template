@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.fineract.infrastructure.core.domain.LocalDateInterval;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
@@ -44,7 +45,7 @@ public final class SavingsHelper {
 
     public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
             final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
-            final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn) {
+            final Integer financialYearBeginningMonth, List<LocalDate> postInterestAsOn, LocalDate maturityDate) {
 
         final List<LocalDateInterval> postingPeriods = new ArrayList<>();
         LocalDate periodStartDate = startInterestCalculationLocalDate;
@@ -58,8 +59,14 @@ public final class SavingsHelper {
                 break;
             }
 
-            final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
+            LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
                     interestPostingUpToDate, financialYearBeginningMonth);
+            
+            if(maturityDate != null) {
+                if(interestPostingLocalDate.isAfter(maturityDate)) {
+                    interestPostingLocalDate = maturityDate;
+                }
+            }
 
             periodEndDate = interestPostingLocalDate.minusDays(1);
 

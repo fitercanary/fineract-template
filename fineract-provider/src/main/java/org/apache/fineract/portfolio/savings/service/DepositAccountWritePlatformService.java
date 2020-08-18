@@ -25,8 +25,11 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.joda.time.LocalDate;
+
+import java.util.List;
 
 public interface DepositAccountWritePlatformService {
 
@@ -102,4 +105,6 @@ public interface DepositAccountWritePlatformService {
     CommandProcessingResult updateDepositPeriodForRDAccount(Long savingsId, JsonCommand command);
     
     CommandProcessingResult updateDepositPeriodFrequencyForRDAccount(Long savingsId, JsonCommand command);
+
+    List<SavingsAccountCharge> generateDepositAccountPreMatureClosureCharges(Long savingsId, DepositAccountType type);
 }

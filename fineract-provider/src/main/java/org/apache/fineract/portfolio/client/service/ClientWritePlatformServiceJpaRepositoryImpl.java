@@ -82,7 +82,11 @@ import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
+import org.apache.fineract.portfolio.validation.limit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.AuthorizationRequest;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestRepositoryWrapper;
+import org.apache.fineract.useradministration.domain.AuthorizationRequestStatusType;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -129,6 +133,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final BusinessEventNotifierService businessEventNotifierService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final ReferralStatusRepository referralStatusRepository;
+    private final ValidationLimitRepository validationLimitRepository;
+    private final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper;
+
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -146,7 +153,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                                                        final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
                                                        final BusinessEventNotifierService businessEventNotifierService,
                                                        final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-                                                       ReferralStatusRepository referralStatusRepository) {
+                                                       ReferralStatusRepository referralStatusRepository, ValidationLimitRepository validationLimitRepository,
+                                                       final AuthorizationRequestRepositoryWrapper authorizationRequestRepositoryWrapper) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -171,6 +179,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.businessEventNotifierService = businessEventNotifierService;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.referralStatusRepository = referralStatusRepository;
+        this.validationLimitRepository = validationLimitRepository;
+        this.authorizationRequestRepositoryWrapper = authorizationRequestRepositoryWrapper;
     }
 
     @Transactional
@@ -668,6 +678,29 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 }
                 if (isEntity) {
                     extractAndCreateClientNonPerson(clientForUpdate, command);
+                }
+            }
+
+            // clear client authorization requests
+            if (changes.containsKey(ClientApiConstants.requireAuthorizationToViewParamName)) {
+                final boolean requireAuthorization = command
+                        .booleanPrimitiveValueOfParameterNamed(ClientApiConstants.requireAuthorizationToViewParamName);
+                if (!requireAuthorization) {
+                    // clear existing requests
+                    List<AuthorizationRequest> pendingRequests = this.authorizationRequestRepositoryWrapper.findClientRequestsByStatus(
+                            clientId, AuthorizationRequestStatusType.SUBMITTED_AND_PENDING_APPROVAL.getValue());
+                    List<AuthorizationRequest> approvedRequests = this.authorizationRequestRepositoryWrapper
+                            .findClientRequestsByStatus(clientId, AuthorizationRequestStatusType.APPROVED.getValue());
+
+                    for (AuthorizationRequest request : pendingRequests) {
+                        request.closeRequest();
+                        this.authorizationRequestRepositoryWrapper.save(request);
+                    }
+
+                    for (AuthorizationRequest request : approvedRequests) {
+                        request.closeRequest();
+                        this.authorizationRequestRepositoryWrapper.save(request);
+                    }
                 }
             }
             return new CommandProcessingResultBuilder() //

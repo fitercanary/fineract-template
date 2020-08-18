@@ -16,6 +16,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
+
 ALTER TABLE `m_loan_transaction`
 	ADD COLUMN `is_account_transfer` TINYINT(1) NOT NULL DEFAULT 0;
 

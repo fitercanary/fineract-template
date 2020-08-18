@@ -625,7 +625,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return Money.of(currency, this.amount);
     }
 
-    private Money getAmountPaid(final MonetaryCurrency currency) {
+    public Money getAmountPaid(final MonetaryCurrency currency) {
         return Money.of(currency, this.amountPaid);
     }
 
@@ -920,4 +920,15 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return this.chargeCalculation;
     }
 
+    public BigDecimal getAmountPercentageAppliedTo(){
+        return this.amountPercentageAppliedTo;
+    }
+
+    public boolean isFdaPartialLiquidationFee() {
+        return ChargeTimeType.fromInt(this.chargeTime).isFdaPartialLiquidationFee();
+    }
+
+    public boolean isFdaPreclosureFee() {
+        return ChargeTimeType.fromInt(this.chargeTime).isFdaPreclosureFee();
+    }
 }

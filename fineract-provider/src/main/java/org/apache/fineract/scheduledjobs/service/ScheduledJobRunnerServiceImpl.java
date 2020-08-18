@@ -635,13 +635,18 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     } catch (PlatformApiDataValidationException e) {
                         final List<ApiParameterError> errors = e.getErrors();
                         for (final ApiParameterError error : errors) {
+                            VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
+
                             logger.error("Processing account transfer request failed : " + " with message " + error.getDeveloperMessage());
                             errorMsg.append("Processing account transfer request failed : : ").append(" with message, ")
                                     .append(error.getDeveloperMessage());
+                            request.setAlertType("failed");
+
+                            this.sendFailedNotificationToVfdService(json, errorMsg, e.getLocalizedMessage());
                         }
                     } catch (Exception e) {
 
-                        VfdTransferNotification request = VfdTransferNotification.fromRequest(json);
+                        VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
 
                         logger.trace(ThreadLocalContextUtil.getTenant().getName()
                                 + ": Processing account transfer request failed for sender account id : " + request.getSenderAccountId()
@@ -650,22 +655,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                 + " to beneficiary account id : " + request.getBeneficiaryAccountId()).append(" with message, ")
                                 .append(e.getLocalizedMessage());
 
-                        VfdTransferNotification notification = new VfdTransferNotification(request.getSenderClientId(), null,
-                                request.getSenderNarration(), "failed", request.getAmount(), e.getLocalizedMessage());
-
-                        if (request.getSenderAccountId() != null) {
-                            SavingsAccount senderAccount = savingAccountRepositoryWrapper
-                                    .findOneWithNotFoundDetection(request.getSenderAccountId());
-                            notification.setSenderAccountNumber(senderAccount.getAccountNumber());
-                        }
-
-                        if (request.getBeneficiaryAccountId() != null) {
-                            SavingsAccount beneficiaryAccount = savingAccountRepositoryWrapper
-                                    .findOneWithNotFoundDetection(request.getBeneficiaryAccountId());
-                            notification.setBeneficiaryAccountNumber(beneficiaryAccount.getAccountNumber());
-                        }
-
-                        this.sendNotificationToVfdService(notification, errorMsg);
+                        this.sendFailedNotificationToVfdService(json, errorMsg, e.getLocalizedMessage());
 
                     }
 
@@ -703,6 +693,43 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Notification for successful transfer : Status Code = "
                     + response.getStatusCode() + ", message = " +
                 response.getBody());
+
+        } catch (HttpStatusCodeException e) {
+            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service failure: ", e);
+            errorMsg.append("VFD Notification service failure: ").append(" with message ").append(e.getMessage());
+        } catch (RestClientException e) {
+            logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service failure: ", e);
+            errorMsg.append("VFD Notification service failure: ").append(" with message ").append(e.getMessage());
+        }
+
+    }
+
+    private void sendFailedNotificationToVfdService(String json, StringBuilder errorMsg, String errorLocalizedMessage) {
+        errorMsg = errorMsg == null ? new StringBuilder() : errorMsg;
+
+        VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
+
+        VfdTransferNotification notification = new VfdTransferNotification(request.getSenderClientId(), null,
+                request.getSenderNarration(), request.getAlertType(), request.getAmount(), errorLocalizedMessage);
+
+        if (request.getSenderAccountId() != null) {
+            SavingsAccount senderAccount = savingAccountRepositoryWrapper
+                    .findOneWithNotFoundDetection(request.getSenderAccountId());
+            notification.setSenderAccountNumber(senderAccount.getAccountNumber());
+        }
+
+        if (request.getBeneficiaryAccountId() != null) {
+            SavingsAccount beneficiaryAccount = savingAccountRepositoryWrapper
+                    .findOneWithNotFoundDetection(request.getBeneficiaryAccountId());
+            notification.setBeneficiaryAccountNumber(beneficiaryAccount.getAccountNumber());
+        }
+
+        try {
+
+            ResponseEntity<String> response = vfdNotificationApi.sendNotification(notification);
+            logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Notification for successful transfer : Status Code = "
+                    + response.getStatusCode() + ", message = " +
+                    response.getBody());
 
         } catch (HttpStatusCodeException e) {
             logger.trace(ThreadLocalContextUtil.getTenant().getName() + "VFD Notification service failure: ", e);

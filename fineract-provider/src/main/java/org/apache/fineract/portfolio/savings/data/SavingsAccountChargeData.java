@@ -19,12 +19,16 @@
 package org.apache.fineract.portfolio.savings.data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.portfolio.charge.data.ChargeData;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
+import org.apache.fineract.portfolio.charge.service.ChargeEnumerations;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
 
@@ -192,5 +196,37 @@ public class SavingsAccountChargeData {
         return this.amountOutstanding;
     } 
     
-    
+    private SavingsAccountChargeData(SavingsAccountCharge charge){
+        this.id = charge.getId();
+        this.chargeId = charge.getCharge().getId();
+        this.accountId = charge.savingsAccount().getId();
+        this.name = charge.name();
+        this.chargeTimeType = ChargeEnumerations.chargeTimeType(charge.getCharge().getChargeTimeType());
+        this.dueDate = charge.getDueLocalDate();
+        this.chargeCalculationType = ChargeEnumerations.chargeCalculationType(charge.getChargeCalculation());
+        this.percentage = charge.getPercentage();
+        this.amountPercentageAppliedTo = charge.getAmountPercentageAppliedTo();
+        this.currency = new CurrencyData(charge.currencyCode());
+        this.amount = charge.amount();
+        this.amountPaid = charge.getAmountPaid(charge.savingsAccount().getCurrency()).getAmount();
+        this.amountWaived = charge.getAmountWaived(charge.savingsAccount().getCurrency()).getAmount();
+        this.amountWrittenOff = charge.getAmountWrittenOff(charge.savingsAccount().getCurrency()).getAmount();
+        this.amountOutstanding = charge.getAmountOutstanding(charge.savingsAccount().getCurrency()).getAmount();
+        this.amountOrPercentage = getAmountOrPercentage();
+        this.chargeOptions = null;
+        this.penalty = charge.getCharge().isPenalty();
+        this.feeOnMonthDay = charge.getCharge().getFeeOnMonthDay();
+        this.feeInterval = charge.getCharge().getFeeInterval();
+        this.isActive = charge.isActive();
+        this.inactivationDate = null;
+    }
+
+    public static Collection<SavingsAccountChargeData> toSavingsAccountChargeData(List<SavingsAccountCharge> charges){
+        Collection<SavingsAccountChargeData> dataList = new ArrayList<>();
+        for(SavingsAccountCharge charge: charges){
+            dataList.add(new SavingsAccountChargeData(charge));
+        }
+
+        return dataList;
+    }
 }

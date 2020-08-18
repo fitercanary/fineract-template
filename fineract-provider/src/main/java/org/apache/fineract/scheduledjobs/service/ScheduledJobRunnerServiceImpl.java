@@ -726,7 +726,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         try {
 
-            ResponseEntity<String> response = vfdNotificationApi.sendNotification(notification);
+            ResponseEntity<String> response = vfdServiceApi.sendNotification(notification);
             logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Notification for successful transfer : Status Code = "
                     + response.getStatusCode() + ", message = " +
                     response.getBody());

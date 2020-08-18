@@ -18,18 +18,20 @@
  */
 package org.apache.fineract.notification.config;
 
+import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class VfdServiceApi {
@@ -38,7 +40,7 @@ public class VfdServiceApi {
     private final String NOTIFICATION_SERVICE_AUTH_TOKEN_FIELD = "VFDBankAuth";
     private final String NOTIFICATION_SERVICE_DEFAULT_AUTH_TOKEN = "Bearer 73d64eb6-15fd-35df-a543-4a5ae672c455";
 
-    private final String EMAIL_SERVICE_DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook?alertType=both";
+    private final String EMAIL_SERVICE_DEFAULT_URL = "http://172.31.11.10:9092/notification/attachment";
 
     @Autowired
     private Environment env;
@@ -61,17 +63,28 @@ public class VfdServiceApi {
         return restTemplate.postForEntity(NOTIFICATION_SERVICE_DEFAULT_URL, request, String.class);
     }
 
-    public ResponseEntity<String> sendEmail(MultiValueMap<String, Object> body){
+    public ResponseEntity<String> sendSavingsAccountStatementEmail( String toAddress, Long clientId, String attachmentName, File file){
 
         RestTemplate restTemplate = new RestTemplate();
 
+        LinkedMultiValueMap<String,Object> requestEntity = new LinkedMultiValueMap<>();
+        requestEntity.add("clientId", clientId);
+        requestEntity.add("toAddress", toAddress);
+        requestEntity.add("attachmentName", attachmentName);
+        requestEntity.add("file",new FileSystemResource(file));
+
         HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        //headers.add(AUTH_TOKEN_FIELD, DEFAULT_AUTH_TOKEN);
-        HttpEntity<MultiValueMap<String, Object>> requestEntity =
-                new HttpEntity<>(body, headers);
+        HttpEntity<LinkedMultiValueMap<String,Object>> request = new HttpEntity(requestEntity, headers);
 
-        return restTemplate.postForEntity(EMAIL_SERVICE_DEFAULT_URL, requestEntity, String.class);
+        String url = this.env.getProperty("VFD_EMAIL_SERVICE_URL");
+        url = url != null ? url : EMAIL_SERVICE_DEFAULT_URL;
+
+        final ResponseEntity<String> stringResponseEntity =
+                restTemplate.postForEntity(url,  request, String.class);
+
+        return stringResponseEntity;
     }
 }

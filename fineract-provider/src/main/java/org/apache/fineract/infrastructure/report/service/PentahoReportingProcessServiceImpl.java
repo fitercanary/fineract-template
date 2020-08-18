@@ -19,16 +19,24 @@
 package org.apache.fineract.infrastructure.report.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.campaigns.email.domain.EmailCampaign;
+import org.apache.fineract.infrastructure.campaigns.email.domain.ScheduledEmailAttachmentFileFormat;
 import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
 import org.apache.fineract.infrastructure.dataqueries.service.ReadReportingService;
+import org.apache.fineract.infrastructure.documentmanagement.contentrepository.FileSystemContentRepository;
 import org.apache.fineract.infrastructure.report.annotation.ReportService;
 import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.notification.config.VfdServiceApi;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
@@ -64,10 +72,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.sql.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @ReportService(type = "Pentaho")
@@ -83,17 +88,24 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 	
 	private final ReadReportingService readReportingService;
 
+	private final VfdServiceApi vfdServiceApi;
+
+	private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
+
 	@Autowired
 	private Environment env;
 
 	@Autowired
 	public PentahoReportingProcessServiceImpl(final PlatformSecurityContext context,final BasicAuthTenantDetailsService basicAuthTenantDetailsService,
-	        final ReadReportingService readReportingService) {
+	        final ReadReportingService readReportingService, final VfdServiceApi vfdServiceApi,
+											  final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
 		ClassicEngineBoot.getInstance().start();
 		this.noPentaho = false;
 		this.context = context;
 		this.basicAuthTenantDetailsService = basicAuthTenantDetailsService;
 		this.readReportingService = readReportingService;
+		this.vfdServiceApi = vfdServiceApi;
+		this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
 	}
 
 	@Override
@@ -382,6 +394,21 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 		final String outputTypeParam = queryParams.getFirst("output-type");
 		final Map<String, String> reportParams = getReportParams(queryParams);
 		final Locale locale = ApiParameterHelper.extractLocale(queryParams);
+		final String toAddress = queryParams.getFirst("toAddress");
+		final String startDate = reportParams.get("startDate");
+		final String endDate = reportParams.get("endDate");
+		String savingsAccountIdString = reportParams.get("savingsAccountId");
+
+		if(StringUtils.isBlank(savingsAccountIdString)){
+			List<ApiParameterError> errors = new ArrayList<>();
+			ApiParameterError error = ApiParameterError.parameterError("validation.msg.validation.errors.exist",
+					"Savings Account Id cannot be null","savingsAccountId");
+			errors.add(error);
+
+			throw new PlatformApiDataValidationException(errors);
+		}
+
+		final SavingsAccount account = this.savingAccountRepositoryWrapper.findByAccountNumber(savingsAccountIdString);
 
 		String outputType = "HTML";
 		if (StringUtils.isNotBlank(outputTypeParam)) {
@@ -419,6 +446,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			String userPassword;
 			String ownerPassword;
+			String statementName = "Vbank_Statement_" + startDate + " - " + endDate;
 			if ("PDF".equalsIgnoreCase(outputType)) {
 				PdfReportUtil.createPDF(masterReport, baos);
 				ByteArrayOutputStream signedBaos = baos;
@@ -438,6 +466,8 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 				//return Response.ok().entity(protectedBaos.toByteArray()).type("application/pdf").build();
 				LOGGER.info("Statement processed... send to VFD email service");
+				File file = this.generateReportFile(protectedBaos, statementName, outputType.toLowerCase());
+				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(), statementName, file);
 				return;
 			}
 
@@ -480,5 +510,35 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 		throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
 	}
 
+	private File generateReportFile(final ByteArrayOutputStream byteArrayOutputStream, final String reportName, final String fileFormat) {
+
+		try {
+
+			final String fileLocation = FileSystemContentRepository.FINERACT_BASE_DIR + File.separator + "";
+			final String fileNameWithoutExtension = fileLocation + File.separator + reportName;
+
+			// check if file directory exists, if not create directory
+			if (!new File(fileLocation).isDirectory()) {
+				new File(fileLocation).mkdirs();
+			}
+
+			if (byteArrayOutputStream.size() == 0) {
+				LOGGER.error("Pentaho report processing failed, empty output stream created");
+			} else if ((byteArrayOutputStream.size() > 0)) {
+				final String fileName = fileNameWithoutExtension + "." + fileFormat;
+
+				final File file = new File(fileName);
+				final FileOutputStream outputStream = new FileOutputStream(file);
+				byteArrayOutputStream.writeTo(outputStream);
+
+				return file;
+			}
+
+		} catch (IOException | PlatformDataIntegrityException e) {
+			LOGGER.error("error.msg.reporting.error:" + " PentahoReportingProcessServiceImpl.generateReportFile threw and Exception " + e.getMessage());
+			throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+		}
+		return null;
+	}
 
 }

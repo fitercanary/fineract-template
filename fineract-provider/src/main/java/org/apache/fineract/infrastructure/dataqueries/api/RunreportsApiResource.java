@@ -185,11 +185,11 @@ public class RunreportsApiResource {
 
         final boolean parameterType = false;
 
-        checkUserPermissionForReport(reportName, parameterType);
-        runAsyncReport(parameterType, reportName, uriInfo, queryParams);
+        this.checkUserPermissionForReport(reportName, parameterType);
+        this.runAsyncReport(parameterType, reportName, uriInfo, queryParams);
 
         JSONObject object = new JSONObject();
-        object.put("message","Statement is being processed, will be sent to your email");
+        object.put("message","Statement is being processed and will be sent to your email");
 
         return Response.ok().entity(object.toString()).type(MediaType.APPLICATION_JSON).build();
     }

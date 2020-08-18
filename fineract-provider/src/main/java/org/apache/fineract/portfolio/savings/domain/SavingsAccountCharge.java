@@ -924,4 +924,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return this.amountPercentageAppliedTo;
     }
 
+    public boolean isFdaPartialLiquidationFee() {
+        return ChargeTimeType.fromInt(this.chargeTime).isFdaPartialLiquidationFee();
+    }
+
+    public boolean isFdaPreclosureFee() {
+        return ChargeTimeType.fromInt(this.chargeTime).isFdaPreclosureFee();
+    }
 }

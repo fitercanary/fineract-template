@@ -55,7 +55,7 @@ public class VfdNotificationApi {
             HttpEntity<VfdTransferNotification> request = new HttpEntity<>(notification, headers);
 
             StringBuilder builder = new StringBuilder();
-            builder.append(url);
+            builder.append(url.trim());
             builder.append("?alertType=");
             builder.append(notification.getAlertType());
 

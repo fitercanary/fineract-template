@@ -619,7 +619,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                         result = accountTransfersWritePlatformService.create(command);
 
 
-                        VfdTransferNotification notification = VfdTransferNotification.fromRequest(json);
+                        VfdTransferNotification notification = VfdTransferNotification.fromRequest(json, "both");
 
                         logger.info(ThreadLocalContextUtil.getTenant().getName()
                                 + ": Successfully processed account transfer from sender account id : '" + notification.getSenderAccountId()

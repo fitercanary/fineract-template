@@ -44,7 +44,7 @@ public class VfdNotificationApi {
             String auth_token = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
 
             String url = this.env.getProperty("VFD_NOTIFICATION_SERVICE_URL");
-            
+
             url = url == null ? DEFAULT_URL : url;
 
             RestTemplate restTemplate = new RestTemplate();
@@ -54,6 +54,11 @@ public class VfdNotificationApi {
             headers.add(AUTH_TOKEN_FIELD, auth_token);
             HttpEntity<VfdTransferNotification> request = new HttpEntity<>(notification, headers);
 
-        return restTemplate.postForEntity(url + "?alertType=" + notification.getAlertType(), request, String.class);
+            StringBuilder builder = new StringBuilder();
+            builder.append(url);
+            builder.append("?alertType=");
+            builder.append(notification.getAlertType());
+
+        return restTemplate.postForEntity(builder.toString(), request, String.class);
     }
 }

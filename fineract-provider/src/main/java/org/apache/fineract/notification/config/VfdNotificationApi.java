@@ -44,6 +44,7 @@ public class VfdNotificationApi {
             String auth_token = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
 
             String url = this.env.getProperty("VFD_NOTIFICATION_SERVICE_URL");
+            
             url = url == null ? DEFAULT_URL : url;
 
             RestTemplate restTemplate = new RestTemplate();

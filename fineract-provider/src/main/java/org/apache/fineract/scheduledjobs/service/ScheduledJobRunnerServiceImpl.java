@@ -716,12 +716,14 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             SavingsAccount senderAccount = savingAccountRepositoryWrapper
                     .findOneWithNotFoundDetection(request.getSenderAccountId());
             notification.setSenderAccountNumber(senderAccount.getAccountNumber());
+            notification.setSenderAccountId(senderAccount.getId());
         }
 
         if (request.getBeneficiaryAccountId() != null) {
             SavingsAccount beneficiaryAccount = savingAccountRepositoryWrapper
                     .findOneWithNotFoundDetection(request.getBeneficiaryAccountId());
             notification.setBeneficiaryAccountNumber(beneficiaryAccount.getAccountNumber());
+            notification.setBeneficiaryAccountId(beneficiaryAccount.getId());
         }
 
         try {

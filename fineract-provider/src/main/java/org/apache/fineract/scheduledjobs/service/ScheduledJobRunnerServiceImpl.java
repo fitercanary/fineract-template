@@ -642,7 +642,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                     .append(error.getDeveloperMessage());
                             request.setAlertType("failed");
 
-                            this.sendFailedNotificationToVfdService(json, errorMsg, e.getLocalizedMessage());
+                            this.sendFailedNotificationToVfdService(json, errorMsg, error.getDeveloperMessage());
                         }
                     } catch (Exception e) {
 
@@ -653,9 +653,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                 + " to beneficiary account id : " + request.getBeneficiaryAccountId(), e);
                         errorMsg.append("Processing account transfer request failed for sender account id : " + request.getSenderAccountId()
                                 + " to beneficiary account id : " + request.getBeneficiaryAccountId()).append(" with message, ")
-                                .append(e.getLocalizedMessage());
+                                .append(e.getMessage());
 
-                        this.sendFailedNotificationToVfdService(json, errorMsg, e.getLocalizedMessage());
+                        this.sendFailedNotificationToVfdService(json, errorMsg, e.getMessage());
 
                     }
 

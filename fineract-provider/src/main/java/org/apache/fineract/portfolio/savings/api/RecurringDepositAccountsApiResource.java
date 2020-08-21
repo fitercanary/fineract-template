@@ -437,17 +437,19 @@ public class RecurringDepositAccountsApiResource {
         return this.toApiJsonSerializer.serialize(importDocumentId);
     }
 
-    @GET
+    @POST
     @Path("{accountId}/liquidationcharges")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String getAccountCharges(@PathParam("accountId") final Long accountId,
-                                    @Context final UriInfo uriInfo) {
+                                         @Context final UriInfo uriInfo, String apiRequestBodyAsJson) {
 
-        this.context.authenticatedUser().validateHasReadPermission(DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
+        final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
+        final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
 
         Collection<DepositAccountPreClosureChargeData> charges = DepositAccountPreClosureChargeData.toDepositAccountPreClosureChargeData(
-                this.depositAccountWritePlatformService.generateDepositAccountPreMatureClosureCharges(accountId, DepositAccountType.RECURRING_DEPOSIT));
+                this.depositAccountWritePlatformService.generateDepositAccountPreMatureClosureCharges(accountId, DepositAccountType.RECURRING_DEPOSIT, query),
+                this.depositAccountWritePlatformService.getTaxTransactions(accountId, DepositAccountType.RECURRING_DEPOSIT, query));
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializerCharges.serialize(settings, charges, DepositsApiConstants.SAVINGS_ACCOUNT_CHARGES_RESPONSE_DATA_PARAMETERS);

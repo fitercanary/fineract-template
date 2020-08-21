@@ -608,7 +608,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
-    protected List<SavingsAccountTransaction> findWithHoldTransactions() {
+    public List<SavingsAccountTransaction> findWithHoldTransactions() {
         final List<SavingsAccountTransaction> withholdTransactions = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions();
         for (final SavingsAccountTransaction transaction : trans) {
@@ -1162,6 +1162,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         if (applyWithdrawFee) {
             // auto pay withdrawal fee
             payWithdrawalFee(transactionDTO, transactionDTO.getTransactionDate(), transactionDTO.getAppUser());
+            
         }
         if (this.sub_status.equals(SavingsAccountSubStatusEnum.INACTIVE.getValue())
                 || this.sub_status.equals(SavingsAccountSubStatusEnum.DORMANT.getValue())) {
@@ -3224,6 +3225,18 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return actualChanges;
     }
 
+    public void validationAccountStatus() {
+        if(!isTransactionsAllowed()) {
+            final String defaultUserMessage = "Account is not active.";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.account.is.not.active",
+                    defaultUserMessage, defaultUserMessage, getId());
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            dataValidationErrors.add(error);
+
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
+    }
     public Map<String, Object> blockDebits(Integer currentSubstatus, final CodeValue blockNarration) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>();

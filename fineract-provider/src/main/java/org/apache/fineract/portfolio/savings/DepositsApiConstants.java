@@ -67,6 +67,7 @@ public class DepositsApiConstants {
     public static final String activatedOnDateParamName = "activatedOnDate";
     public static final String closedOnDateParamName = "closedOnDate";
     public static final String expectedFirstDepositOnDateParamName = "expectedFirstDepositOnDate";
+    public static final String accountTypeParamName = "accountType";
 
     public static final String activeParamName = "active";
     public static final String nameParamName = "name";
@@ -181,6 +182,15 @@ public class DepositsApiConstants {
 
     public static final String linkedAccountParamName = "linkAccountId";
     public static final String transferInterestToSavingsParamName = "transferInterestToSavings";
+    
+    //charge summary
+    public static final String preCloseParamName = "preclose";
+    public static final String liquidateParamName = "liquidate";
+    public static final String closureActionParamName = "action";
+    public static final String closureOnParamName = "closureOn";
+    public static final String transferParamName = "transfer";
+    public static final String withdrawParamName = "withdraw";
+    
 
     /**
      * Deposit Product Parameters

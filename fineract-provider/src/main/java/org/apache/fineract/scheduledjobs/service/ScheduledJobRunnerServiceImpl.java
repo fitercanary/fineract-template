@@ -39,6 +39,7 @@ import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalid
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -61,6 +62,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -644,7 +646,17 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
                             this.sendFailedNotificationToVfdService(json, errorMsg, error.getDeveloperMessage());
                         }
-                    } catch (Exception e) {
+                    } catch ( InsufficientAccountBalanceException e) {
+                            VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
+
+                            logger.error("Processing account transfer request failed : " + " with message " + e.getDefaultUserMessage());
+                            errorMsg.append("Processing account transfer request failed : : ").append(" with message, ")
+                                    .append(e.getDefaultUserMessage());
+                            request.setAlertType("failed");
+
+                            this.sendFailedNotificationToVfdService(json, errorMsg, e.getDefaultUserMessage());
+                    }
+                    catch (Exception e) {
 
                         VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
 

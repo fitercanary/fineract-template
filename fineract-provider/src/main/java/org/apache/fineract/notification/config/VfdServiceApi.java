@@ -18,20 +18,25 @@
  */
 package org.apache.fineract.notification.config;
 
-import java.io.File;
-import java.net.URI;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class VfdServiceApi {
@@ -44,6 +49,8 @@ public class VfdServiceApi {
 
     @Autowired
     private Environment env;
+
+    private final static Logger logger = LoggerFactory.getLogger(VfdServiceApi.class);
 
     public ResponseEntity<String> sendNotification(VfdTransferNotification notification) {
 
@@ -63,28 +70,47 @@ public class VfdServiceApi {
         return restTemplate.postForEntity(NOTIFICATION_SERVICE_DEFAULT_URL, request, String.class);
     }
 
-    public ResponseEntity<String> sendSavingsAccountStatementEmail( String toAddress, Long clientId, String attachmentName, File file){
+    public void sendSavingsAccountStatementEmail( String toAddress, Long clientId, String attachmentName,
+                                                                    ByteArrayOutputStream fileOutputStream){
 
         RestTemplate restTemplate = new RestTemplate();
 
-        LinkedMultiValueMap<String,Object> requestEntity = new LinkedMultiValueMap<>();
-        requestEntity.add("clientId", clientId);
-        requestEntity.add("toAddress", toAddress);
-        requestEntity.add("attachmentName", attachmentName);
-        requestEntity.add("file",new FileSystemResource(file));
+        List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
+        acceptableMediaTypes.add(MediaType.MULTIPART_FORM_DATA);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setAccept(acceptableMediaTypes);
 
-        HttpEntity<LinkedMultiValueMap<String,Object>> request = new HttpEntity(requestEntity, headers);
+        MultiValueMap<String, Object> valueMap = new LinkedMultiValueMap<String, Object>();
+
+        valueMap.add("clientId", clientId);
+        valueMap.add("toAddress", toAddress);
+        valueMap.add("attachmentName", attachmentName);
+
+        valueMap.add("file",new ByteArrayResource(fileOutputStream.toByteArray()));
+
+        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<MultiValueMap<String, Object>>(valueMap, headers);
 
         String url = this.env.getProperty("VFD_EMAIL_SERVICE_URL");
         url = url != null ? url : EMAIL_SERVICE_DEFAULT_URL;
 
-        final ResponseEntity<String> stringResponseEntity =
-                restTemplate.postForEntity(url,  request, String.class);
+        try{
 
-        return stringResponseEntity;
+            final ResponseEntity<Void> stringResponseEntity = restTemplate.postForEntity(url,  entity, Void.class);
+
+        }catch (RestClientException e) {
+            if(e instanceof HttpClientErrorException){
+                HttpClientErrorException message = (HttpClientErrorException) e;
+
+                logger.error("Rest Client Error sending account statement to email service: Status Code = " + message.getStatusCode().value() +
+                        ", Error Message = " + message.getMessage());
+            }
+            logger.error("Rest Client Error sending account statement to email service: "  , e);
+            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+        }catch (Exception e){
+            logger.error("General Error sending account statement to email service: " , e);
+            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+        }
+
     }
 }

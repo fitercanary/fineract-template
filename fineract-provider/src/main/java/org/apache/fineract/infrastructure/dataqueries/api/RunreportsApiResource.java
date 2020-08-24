@@ -38,8 +38,10 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.dataqueries.data.GenericResultsetData;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportData;
+import org.apache.fineract.infrastructure.dataqueries.runner.SavingsAccountStatementRunner;
 import org.apache.fineract.infrastructure.dataqueries.service.GenericDataService;
 import org.apache.fineract.infrastructure.dataqueries.service.ReadReportingService;
 import org.apache.fineract.infrastructure.report.provider.ReportingProcessServiceProvider;
@@ -50,7 +52,7 @@ import org.apache.fineract.useradministration.domain.AppUser;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Path("/runreports")
@@ -186,25 +188,15 @@ public class RunreportsApiResource {
         final boolean parameterType = false;
 
         this.checkUserPermissionForReport(reportName, parameterType);
-        this.runAsyncReport(parameterType, reportName, uriInfo, queryParams);
+
+        SavingsAccountStatementRunner savingsAccountStatementRunner = new SavingsAccountStatementRunner(ThreadLocalContextUtil.getTenant(),
+                SecurityContextHolder.getContext(),readExtraDataAndReportingService, reportingProcessServiceProvider, parameterType,
+                reportName, uriInfo, queryParams);
+        savingsAccountStatementRunner.start();
 
         JSONObject object = new JSONObject();
         object.put("message","Statement is being processed and will be sent to your email");
 
         return Response.ok().entity(object.toString()).type(MediaType.APPLICATION_JSON).build();
-    }
-
-    @Async
-    public void runAsyncReport(final boolean parameterType, final String reportName, final UriInfo uriInfo,
-                               final MultivaluedMap<String, String> queryParams){
-        String parameterTypeValue = null;
-        if (!parameterType) {
-            parameterTypeValue = "report";
-            String reportType = this.readExtraDataAndReportingService.getReportType(reportName);
-            ReportingProcessService reportingProcessService = this.reportingProcessServiceProvider.findReportingProcessService(reportType);
-            if (reportingProcessService != null) {
-                reportingProcessService.processAndSendStatement(reportName, queryParams);
-            }
-        }
     }
 }

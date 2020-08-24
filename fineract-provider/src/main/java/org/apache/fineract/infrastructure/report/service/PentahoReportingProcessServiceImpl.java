@@ -61,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -464,10 +465,12 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 					protectedBaos = this.protectPdf(protectedBaos, userPassword, ownerPassword);
 				}
 
-				//return Response.ok().entity(protectedBaos.toByteArray()).type("application/pdf").build();
 				LOGGER.info("Statement processed... send to VFD email service");
-				File file = this.generateReportFile(protectedBaos, statementName, outputType.toLowerCase());
-				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(), statementName, file);
+
+				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),
+						statementName, protectedBaos);
+
+				LOGGER.info("Statement processing and sending is done: ");
 				return;
 			}
 
@@ -478,8 +481,11 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
 					protectedBaos = this.protectExcel(baos, userPassword);
 				}
-				/*return Response.ok().entity(protectedBaos.toByteArray()).type("application/vnd.ms-excel")
-						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xls").build();*/
+				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),
+						statementName, protectedBaos);
+
+				LOGGER.info("Statement processing and sending is done: ");
+				return;
 			}
 
 			if ("XLSX".equalsIgnoreCase(outputType)) {
@@ -489,19 +495,19 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
 					protectedBaos = this.protectExcel(baos, userPassword);
 				}
-				/*return Response.ok().entity(protectedBaos.toByteArray()).type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xlsx").build();*/
+				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),
+						statementName, protectedBaos);
+
+				LOGGER.info("Statement processing and sending is done: ");
+				return;
 			}
 
 			if ("CSV".equalsIgnoreCase(outputType)) {
 				CSVReportUtil.createCSV(masterReport, baos, "UTF-8");
-				/*return Response.ok().entity(baos.toByteArray()).type("text/csv")
-						.header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".csv").build();*/
 			}
 
 			if ("HTML".equalsIgnoreCase(outputType)) {
 				HtmlReportUtil.createStreamHTML(masterReport, baos);
-				//return Response.ok().entity(baos.toByteArray()).type("text/html").build();
 			}
 		} catch (final ResourceException | ReportProcessingException | IOException e) {
 			throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
@@ -524,6 +530,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 			if (byteArrayOutputStream.size() == 0) {
 				LOGGER.error("Pentaho report processing failed, empty output stream created");
+				throw new PlatformDataIntegrityException("error.msg.reporting.error", "Pentaho report processing failed, empty output stream created");
 			} else if ((byteArrayOutputStream.size() > 0)) {
 				final String fileName = fileNameWithoutExtension + "." + fileFormat;
 
@@ -538,6 +545,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			LOGGER.error("error.msg.reporting.error:" + " PentahoReportingProcessServiceImpl.generateReportFile threw and Exception " + e.getMessage());
 			throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
 		}
+
 		return null;
 	}
 

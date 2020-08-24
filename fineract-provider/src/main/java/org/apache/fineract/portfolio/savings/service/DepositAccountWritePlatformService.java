@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.api.JsonQuery;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.organisation.office.domain.Office;
@@ -106,5 +107,8 @@ public interface DepositAccountWritePlatformService {
     
     CommandProcessingResult updateDepositPeriodFrequencyForRDAccount(Long savingsId, JsonCommand command);
 
-    List<SavingsAccountCharge> generateDepositAccountPreMatureClosureCharges(Long savingsId, DepositAccountType type);
+    List<SavingsAccountCharge> generateDepositAccountPreMatureClosureCharges(Long savingsId, DepositAccountType type, JsonQuery query);
+    
+    List<SavingsAccountTransaction> getTaxTransactions(Long savingsId, DepositAccountType type, JsonQuery query);
+
 }

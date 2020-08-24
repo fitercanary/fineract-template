@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.data;
 
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -42,10 +43,14 @@ public class DepositAccountPreClosureChargeData {
         this.amount = charge.amount();
     }
 
-    public static Collection<DepositAccountPreClosureChargeData> toDepositAccountPreClosureChargeData(List<SavingsAccountCharge> charges){
+    public static Collection<DepositAccountPreClosureChargeData> toDepositAccountPreClosureChargeData(List<SavingsAccountCharge> charges,
+                                                                                                      List<SavingsAccountTransaction> withHoldTransaction) {
         Collection<DepositAccountPreClosureChargeData> dataList = new ArrayList<>();
-        for(SavingsAccountCharge charge: charges){
+        for (SavingsAccountCharge charge : charges) {
             dataList.add(new DepositAccountPreClosureChargeData(charge));
+        }
+        for (SavingsAccountTransaction tran : withHoldTransaction) {
+            dataList.add(new DepositAccountPreClosureChargeData("WithHold Tax", tran.getAmount()));
         }
 
         return dataList;

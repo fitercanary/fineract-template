@@ -39,6 +39,7 @@ import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalid
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -61,6 +62,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -619,7 +621,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                         result = accountTransfersWritePlatformService.create(command);
 
 
-                        VfdTransferNotification notification = VfdTransferNotification.fromRequest(json);
+                        VfdTransferNotification notification = VfdTransferNotification.fromRequest(json, "both");
 
                         logger.info(ThreadLocalContextUtil.getTenant().getName()
                                 + ": Successfully processed account transfer from sender account id : '" + notification.getSenderAccountId()
@@ -642,9 +644,19 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                     .append(error.getDeveloperMessage());
                             request.setAlertType("failed");
 
-                            this.sendFailedNotificationToVfdService(json, errorMsg, e.getLocalizedMessage());
+                            this.sendFailedNotificationToVfdService(json, errorMsg, error.getDeveloperMessage());
                         }
-                    } catch (Exception e) {
+                    } catch ( InsufficientAccountBalanceException e) {
+                            VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
+
+                            logger.error("Processing account transfer request failed : " + " with message " + e.getDefaultUserMessage());
+                            errorMsg.append("Processing account transfer request failed : : ").append(" with message, ")
+                                    .append(e.getDefaultUserMessage());
+                            request.setAlertType("failed");
+
+                            this.sendFailedNotificationToVfdService(json, errorMsg, e.getDefaultUserMessage());
+                    }
+                    catch (Exception e) {
 
                         VfdTransferNotification request = VfdTransferNotification.fromRequest(json, "failed");
 
@@ -653,9 +665,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                 + " to beneficiary account id : " + request.getBeneficiaryAccountId(), e);
                         errorMsg.append("Processing account transfer request failed for sender account id : " + request.getSenderAccountId()
                                 + " to beneficiary account id : " + request.getBeneficiaryAccountId()).append(" with message, ")
-                                .append(e.getLocalizedMessage());
+                                .append(e.getMessage());
 
-                        this.sendFailedNotificationToVfdService(json, errorMsg, e.getLocalizedMessage());
+                        this.sendFailedNotificationToVfdService(json, errorMsg, e.getMessage());
 
                     }
 
@@ -716,12 +728,14 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             SavingsAccount senderAccount = savingAccountRepositoryWrapper
                     .findOneWithNotFoundDetection(request.getSenderAccountId());
             notification.setSenderAccountNumber(senderAccount.getAccountNumber());
+            notification.setSenderAccountId(senderAccount.getId());
         }
 
         if (request.getBeneficiaryAccountId() != null) {
             SavingsAccount beneficiaryAccount = savingAccountRepositoryWrapper
                     .findOneWithNotFoundDetection(request.getBeneficiaryAccountId());
             notification.setBeneficiaryAccountNumber(beneficiaryAccount.getAccountNumber());
+            notification.setBeneficiaryAccountId(beneficiaryAccount.getId());
         }
 
         try {

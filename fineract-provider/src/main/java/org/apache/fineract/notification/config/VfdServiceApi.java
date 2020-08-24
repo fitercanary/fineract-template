@@ -47,6 +47,9 @@ public class VfdServiceApi {
 
     private final String EMAIL_SERVICE_DEFAULT_URL = "http://172.31.11.10:9092/notification/attachment";
 
+    private final String DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook";
+    private final String AUTH_TOKEN_FIELD = "VFDBankAuth";
+
     @Autowired
     private Environment env;
 
@@ -54,20 +57,25 @@ public class VfdServiceApi {
 
     public ResponseEntity<String> sendNotification(VfdTransferNotification notification) {
 
-            String auth_token = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
-            auth_token = auth_token == null ? NOTIFICATION_SERVICE_DEFAULT_AUTH_TOKEN : auth_token;
+        String auth_token = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
 
-            String url = this.env.getProperty("VFD_NOTIFICATION_SERVICE_URL");
-            url = url == null ? NOTIFICATION_SERVICE_DEFAULT_URL : url;
+        String url = this.env.getProperty("VFD_NOTIFICATION_SERVICE_URL");
 
-            RestTemplate restTemplate = new RestTemplate();
+        url = url == null ? DEFAULT_URL : url;
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-            headers.add(NOTIFICATION_SERVICE_AUTH_TOKEN_FIELD, NOTIFICATION_SERVICE_DEFAULT_AUTH_TOKEN);
-            HttpEntity<VfdTransferNotification> request = new HttpEntity<>(notification, headers);
+        RestTemplate restTemplate = new RestTemplate();
 
-        return restTemplate.postForEntity(NOTIFICATION_SERVICE_DEFAULT_URL, request, String.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.add(AUTH_TOKEN_FIELD, auth_token);
+        HttpEntity<VfdTransferNotification> request = new HttpEntity<>(notification, headers);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(url.trim());
+        builder.append("?alertType=");
+        builder.append(notification.getAlertType());
+
+        return restTemplate.postForEntity(builder.toString(), request, String.class);
     }
 
     public void sendSavingsAccountStatementEmail( String toAddress, Long clientId, String attachmentName,

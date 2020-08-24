@@ -33,9 +33,8 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class VfdNotificationApi {
     
-    private final String DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook?alertType=both";
+    private final String DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook";
     private final String AUTH_TOKEN_FIELD = "VFDBankAuth";
-    private final String DEFAULT_AUTH_TOKEN = "Bearer 73d64eb6-15fd-35df-a543-4a5ae672c455";
 
     @Autowired
     private Environment env;
@@ -43,18 +42,23 @@ public class VfdNotificationApi {
     public ResponseEntity<String> sendNotification(VfdTransferNotification notification) {
 
             String auth_token = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
-            auth_token = auth_token == null ? DEFAULT_AUTH_TOKEN : auth_token;
 
             String url = this.env.getProperty("VFD_NOTIFICATION_SERVICE_URL");
+
             url = url == null ? DEFAULT_URL : url;
 
             RestTemplate restTemplate = new RestTemplate();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-            headers.add(AUTH_TOKEN_FIELD, DEFAULT_AUTH_TOKEN);
+            headers.add(AUTH_TOKEN_FIELD, auth_token);
             HttpEntity<VfdTransferNotification> request = new HttpEntity<>(notification, headers);
 
-        return restTemplate.postForEntity(DEFAULT_URL, request, String.class);
+            StringBuilder builder = new StringBuilder();
+            builder.append(url.trim());
+            builder.append("?alertType=");
+            builder.append(notification.getAlertType());
+
+        return restTemplate.postForEntity(builder.toString(), request, String.class);
     }
 }

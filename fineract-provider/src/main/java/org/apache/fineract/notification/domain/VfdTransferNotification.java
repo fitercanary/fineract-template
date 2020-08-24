@@ -80,6 +80,17 @@ public class VfdTransferNotification {
 
     }
 
+    public static VfdTransferNotification fromRequest(String apiJsonRequestString, String alertType) {
+
+        Gson gson = new Gson();
+        AccountTransferRequestBody request = gson.fromJson(apiJsonRequestString, AccountTransferRequestBody.class);
+
+        return new VfdTransferNotification(request.getFromClientId(), null, request.getTransferDescription(), null,
+                request.getFromAccountId(), alertType, request.getTransferAmount(), request.getToClientId(), null, request.getRemarks(),
+                request.getToAccountId());
+
+    }
+
     public Long getSenderClientId() {
         return this.senderClientId;
     }

@@ -53,8 +53,10 @@ public class MessagingConfiguration {
     public ActiveMQConnectionFactory amqConnectionFactory(){
         ActiveMQConnectionFactory amqConnectionFactory = new ActiveMQConnectionFactory();
         try {
+
             amqConnectionFactory.setBrokerURL(this.env.getProperty("brokerUrl"));
         } catch(Exception e) {
+            loggerBean().error("ActiveMQException: ", e);
             amqConnectionFactory.setBrokerURL(DEFAULT_BROKER_URL);
         }
         return amqConnectionFactory;

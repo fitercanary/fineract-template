@@ -19,7 +19,6 @@
 package org.apache.fineract.portfolio.savings.domain;
 
 import com.google.gson.JsonArray;
-import java.time.Year;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
@@ -97,6 +96,7 @@ import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -3226,7 +3226,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public void validationAccountStatus() {
-        if(!isTransactionsAllowed()) {
+        if (!isTransactionsAllowed()) {
             final String defaultUserMessage = "Account is not active.";
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.account.is.not.active",
                     defaultUserMessage, defaultUserMessage, getId());

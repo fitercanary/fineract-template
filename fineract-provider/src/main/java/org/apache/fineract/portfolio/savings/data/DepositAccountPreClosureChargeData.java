@@ -18,16 +18,12 @@
  */
 package org.apache.fineract.portfolio.savings.data;
 
-import org.apache.fineract.accounting.journalentry.data.TransactionTypeEnumData;
-import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
-import org.apache.fineract.portfolio.tax.domain.TaxGroup;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -48,12 +44,12 @@ public class DepositAccountPreClosureChargeData {
     }
 
     public static Collection<DepositAccountPreClosureChargeData> toDepositAccountPreClosureChargeData(List<SavingsAccountCharge> charges,
-            List<SavingsAccountTransaction> withHoldTransaction){
+                                                                                                      List<SavingsAccountTransaction> withHoldTransaction) {
         Collection<DepositAccountPreClosureChargeData> dataList = new ArrayList<>();
-        for(SavingsAccountCharge charge: charges){
+        for (SavingsAccountCharge charge : charges) {
             dataList.add(new DepositAccountPreClosureChargeData(charge));
         }
-        for(SavingsAccountTransaction tran : withHoldTransaction) {
+        for (SavingsAccountTransaction tran : withHoldTransaction) {
             dataList.add(new DepositAccountPreClosureChargeData("WithHold Tax", tran.getAmount()));
         }
 

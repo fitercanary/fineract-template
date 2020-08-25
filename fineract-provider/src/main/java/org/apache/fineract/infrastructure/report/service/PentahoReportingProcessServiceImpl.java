@@ -27,6 +27,7 @@ import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.dataqueries.data.ReportDatabaseTypeEnumData;
 import org.apache.fineract.infrastructure.dataqueries.service.ReadReportingService;
@@ -40,6 +41,8 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrap
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.poi.hssf.record.crypto.Biff8EncryptionKey;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -379,7 +382,16 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 		for (PDPage page: document.getPages()){
 			PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true);
-			contentStream.drawImage(pdImage, 0, 30, 100, 50);
+			contentStream.drawImage(pdImage, 100, 100, 100, 50);
+
+			PDFont pdfFont= PDType1Font.HELVETICA_BOLD;
+			int fontSize = 14;
+			contentStream.setFont(pdfFont, fontSize);
+			contentStream.beginText();
+			contentStream.newLineAtOffset(250,100);
+			contentStream.showText(DateUtils.getLocalDateTimeOfTenant().toString("dd MMMM yyyy"));
+			contentStream.endText();
+
 			contentStream.close();
 		}
 
@@ -466,9 +478,10 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 				}
 
 				LOGGER.info("Statement processed... send to VFD email service");
+				File file  = this.generateReportFile(protectedBaos, statementName, "pdf");
 
 				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),
-						statementName, protectedBaos);
+						statementName, "application/pdf", file);
 
 				LOGGER.info("Statement processing and sending is done: ");
 				return;
@@ -481,8 +494,10 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
 					protectedBaos = this.protectExcel(baos, userPassword);
 				}
+				File file  = this.generateReportFile(protectedBaos, statementName, "xls");
+
 				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),
-						statementName, protectedBaos);
+						statementName, "application/vnd.ms-excel",file);
 
 				LOGGER.info("Statement processing and sending is done: ");
 				return;
@@ -495,8 +510,10 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 					userPassword = StringUtils.substring(ApiParameterHelper.getSavingsAccountId(queryParams), -6);
 					protectedBaos = this.protectExcel(baos, userPassword);
 				}
+
+				File file  = this.generateReportFile(protectedBaos, statementName, "xlsx");
 				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),
-						statementName, protectedBaos);
+						statementName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",file);
 
 				LOGGER.info("Statement processing and sending is done: ");
 				return;

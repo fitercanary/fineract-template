@@ -19,10 +19,10 @@
 package org.apache.fineract.notification.config;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.slf4j.Logger;
@@ -30,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -79,32 +81,29 @@ public class VfdServiceApi {
     }
 
     public void sendSavingsAccountStatementEmail( String toAddress, Long clientId, String attachmentName,
-                                                                    ByteArrayOutputStream fileOutputStream){
+                                                                    String contentType,
+                                                                    File file){
 
         RestTemplate restTemplate = new RestTemplate();
+        LinkedMultiValueMap<String, Object> valueMap = new LinkedMultiValueMap<>();
 
-        List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
-        acceptableMediaTypes.add(MediaType.MULTIPART_FORM_DATA);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(acceptableMediaTypes);
-
-        MultiValueMap<String, Object> valueMap = new LinkedMultiValueMap<String, Object>();
-
-        valueMap.add("clientId", clientId);
+        valueMap.add("clientId", String.valueOf(clientId.longValue()));
         valueMap.add("toAddress", toAddress);
         valueMap.add("attachmentName", attachmentName);
+        valueMap.add("contentType", contentType);//"contentType": "application/pdf"
+        FileSystemResource value = new FileSystemResource(file);
+        valueMap.add("file", value);
 
-        valueMap.add("file",new ByteArrayResource(fileOutputStream.toByteArray()));
-
-        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<MultiValueMap<String, Object>>(valueMap, headers);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(valueMap, headers);
 
         String url = this.env.getProperty("VFD_EMAIL_SERVICE_URL");
         url = url != null ? url : EMAIL_SERVICE_DEFAULT_URL;
 
         try{
 
-            final ResponseEntity<Void> stringResponseEntity = restTemplate.postForEntity(url,  entity, Void.class);
+            final ResponseEntity<Void> stringResponseEntity = restTemplate.postForEntity(url, requestEntity, Void.class);
 
         }catch (RestClientException e) {
             if(e instanceof HttpClientErrorException){

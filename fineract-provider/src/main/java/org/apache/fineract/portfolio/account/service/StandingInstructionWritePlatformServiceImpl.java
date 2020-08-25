@@ -57,6 +57,9 @@ import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
@@ -82,6 +85,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final JdbcTemplate jdbcTemplate;
 	private final SavingsAccountAssembler savingsAccountAssembler;
+	private final DepositAccountAssembler depositAccountAssembler;
 
     @Autowired
     public StandingInstructionWritePlatformServiceImpl(final StandingInstructionDataValidator standingInstructionDataValidator,
@@ -89,7 +93,9 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
 													   final AccountTransferDetailRepository accountTransferDetailRepository,
 													   final StandingInstructionRepository standingInstructionRepository,
 													   final StandingInstructionReadPlatformService standingInstructionReadPlatformService,
-													   final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final RoutingDataSource dataSource, SavingsAccountAssembler savingsAccountAssembler) {
+													   final AccountTransfersWritePlatformService accountTransfersWritePlatformService, 
+													   final RoutingDataSource dataSource, SavingsAccountAssembler savingsAccountAssembler,
+													   final DepositAccountAssembler depositAccountAssembler) {
         this.standingInstructionDataValidator = standingInstructionDataValidator;
         this.standingInstructionAssembler = standingInstructionAssembler;
         this.accountTransferDetailRepository = accountTransferDetailRepository;
@@ -98,6 +104,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
         this.accountTransfersWritePlatformService = accountTransfersWritePlatformService;
 		this.savingsAccountAssembler = savingsAccountAssembler;
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
+		this.depositAccountAssembler = depositAccountAssembler;
     }
 
     @Transactional
@@ -238,15 +245,30 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
 
             if (isDueForTransfer && transactionAmount != null && transactionAmount.compareTo(BigDecimal.ZERO) > 0) {
                 SavingsAccount fromSavingsAccount = null;
+                boolean isTargetAccount = false;
                 final boolean isRegularTransaction = true;
                 final boolean isExceptionForBalanceCheck = false;
+                if(data.toAccountType().isSavingsAccount()) {
+                    try {
+                        SavingsAccount toTargetAccount =  this.depositAccountAssembler.assembleFrom(data.toAccount().accountId(),
+                                DepositAccountType.RECURRING_DEPOSIT);
+                        if(toTargetAccount.depositAccountType().isRecurringDeposit()) {
+                            isTargetAccount = true;
+                        }
+                    } catch (Exception e) {
+                        StringBuffer errorLog = new StringBuffer();
+                        errorLog.append(false);
+                    }
+                    
+                }
                 AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transactionDate, transactionAmount, data.fromAccountType(),
                         data.toAccountType(), data.fromAccount().accountId(), data.toAccount().accountId(), data.name()
                                 + " Standing instruction trasfer ", null, null, null, null, data.toTransferType(), null, null, data
                                 .transferType().getValue(), null, null, null, null, null, fromSavingsAccount,
                         isRegularTransaction, isExceptionForBalanceCheck);
 				//Check if the savings account has sufficient balance. If not, wipe it out partly repaying the loan
-				if (data.fromAccountType().isSavingsAccount() && data.toAccountType().isLoanAccount() && data.fromAccount().accountId() != null) {
+				if (data.fromAccountType().isSavingsAccount() && (data.toAccountType().isLoanAccount() || isTargetAccount) 
+				        && data.fromAccount().accountId() != null) {
 					fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(data.fromAccount().accountId());
 					if (fromSavingsAccount.getSummary().getAccountBalance().compareTo(transactionAmount) < 0 &&
 							fromSavingsAccount.getSummary().getAccountBalance().compareTo(BigDecimal.ZERO) > 0) {

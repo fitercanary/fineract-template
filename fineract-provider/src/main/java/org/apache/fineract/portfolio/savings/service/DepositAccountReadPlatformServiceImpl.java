@@ -82,6 +82,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountApplicationTimel
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
@@ -608,6 +609,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sp.id as productId, sp.name as productName, ");
             selectFieldsSqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, sa.nickname as nickName, ");
             selectFieldsSqlBuilder.append("sa.status_enum as statusEnum, ");
+            selectFieldsSqlBuilder.append("sa.sub_status_enum as subStatusEnum, ");
             selectFieldsSqlBuilder.append("sa.submittedon_date as submittedOnDate,");
             selectFieldsSqlBuilder.append("sbu.username as submittedByUsername,");
             selectFieldsSqlBuilder.append("sbu.firstname as submittedByFirstname, sbu.lastname as submittedByLastname,");
@@ -706,6 +708,9 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final SavingsAccountStatusEnumData status = SavingsEnumerations.status(statusEnum);
+            
+            final Integer subStatusEnum = JdbcSupport.getInteger(rs, "subStatusEnum");
+            final SavingsAccountSubStatusEnumData subStatus = SavingsEnumerations.subStatus(subStatusEnum);
 
             final LocalDate submittedOnDate = JdbcSupport.getLocalDate(rs, "submittedOnDate");
             final String submittedByUsername = rs.getString("submittedByUsername");
@@ -814,7 +819,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
-                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, nickName);
+                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, nickName, subStatus);
             depositAccountData.setPreClosureChargeApplicable(preClosureChargeApplicable);
             return depositAccountData;
         }
@@ -1260,6 +1265,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long fieldOfficerId = null;
             final String fieldOfficerName = null;
             final SavingsAccountStatusEnumData status = null;
+            final SavingsAccountSubStatusEnumData subStatus = null;
             final SavingsAccountSummaryData summary = null;
             final SavingsAccountApplicationTimelineData timeline = SavingsAccountApplicationTimelineData.templateDefault();
 
@@ -1275,7 +1281,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualIterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
-                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, null);
+                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, null, subStatus);
         }
     }
 

@@ -404,6 +404,8 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 	@Override
 	public void processAndSendStatement(String reportName, MultivaluedMap<String, String> queryParams) {
+		LOGGER.info("Starting processAndSendStatement, report processing started ");
+
 		final String outputTypeParam = queryParams.getFirst("output-type");
 		final Map<String, String> reportParams = getReportParams(queryParams);
 		final Locale locale = ApiParameterHelper.extractLocale(queryParams);
@@ -461,6 +463,8 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			String ownerPassword;
 			String statementName = "Vbank_Statement_" + startDate + " - " + endDate;
 			if ("PDF".equalsIgnoreCase(outputType)) {
+				LOGGER.info("PDF statement processing ");
+
 				PdfReportUtil.createPDF(masterReport, baos);
 				ByteArrayOutputStream signedBaos = baos;
 

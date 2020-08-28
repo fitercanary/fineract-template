@@ -61,6 +61,9 @@ public class SavingsAccountStatementRunner implements Runnable{
 
     @Override
     public void run() {
+
+        logger.info("Starting run, thread runner");
+
         ThreadLocalContextUtil.setTenant(this.tenant);
         SecurityContextHolder.setContext(this.context);
 

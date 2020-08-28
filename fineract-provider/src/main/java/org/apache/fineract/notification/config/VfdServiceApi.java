@@ -104,6 +104,7 @@ public class VfdServiceApi {
         try{
 
             final ResponseEntity<Void> stringResponseEntity = restTemplate.postForEntity(url, requestEntity, Void.class);
+            logger.info("Savings Account Statement has been sent to vfd email service");
 
         }catch (RestClientException e) {
             if(e instanceof HttpClientErrorException){

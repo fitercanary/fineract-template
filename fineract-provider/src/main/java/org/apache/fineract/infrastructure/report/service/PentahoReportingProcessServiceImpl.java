@@ -482,7 +482,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 					protectedBaos = this.protectPdf(protectedBaos, userPassword, ownerPassword);
 				}
 
-				LOGGER.info("Statement processed... send to VFD email service");
+				LOGGER.info("Statement processed... sending... to VFD email service");
 				File file  = this.generateReportFile(protectedBaos, statementName, "pdf");
 
 				this.vfdServiceApi.sendSavingsAccountStatementEmail(toAddress, account.clientId(),

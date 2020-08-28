@@ -68,12 +68,15 @@ public class SavingsAccountStatementRunner implements Runnable{
         SecurityContextHolder.setContext(this.context);
 
         if (!parameterType) {
+            logger.info("Check parameter type");
             String reportType = this.readExtraDataAndReportingService.getReportType(reportName);
             ReportingProcessService reportingProcessService = this.reportingProcessServiceProvider.findReportingProcessService(reportType);
             if (reportingProcessService != null) {
+                logger.info("Reporting service found");
                 reportingProcessService.processAndSendStatement(reportName, queryParams);
             }
         }
+        logger.info("Ending run, thread runner");
     }
 
     public void start() {

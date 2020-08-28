@@ -30,4 +30,8 @@ public class SavingsAccountNotFoundException extends AbstractPlatformResourceNot
                                            final Object... defaultUserMessageArgs) {
         super(globalisationMessageCode, defaultUserMessage, defaultUserMessageArgs);
     }
+
+    public SavingsAccountNotFoundException(final String accountNumber) {
+        super("error.msg.saving.account.id.invalid", "Savings account with account number " + accountNumber + " does not exist", accountNumber);
+    }
 }

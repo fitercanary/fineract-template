@@ -38,6 +38,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.notification.config.VfdServiceApi;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
@@ -423,7 +424,7 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 			throw new PlatformApiDataValidationException(errors);
 		}
 
-		final SavingsAccount account = this.savingAccountRepositoryWrapper.findByAccountNumber(savingsAccountIdString);
+		final SavingsAccount account = this.savingAccountRepositoryWrapper.findByAccountNumberWithNotFoundDetection(savingsAccountIdString);
 
 		String outputType = "HTML";
 		if (StringUtils.isNotBlank(outputTypeParam)) {

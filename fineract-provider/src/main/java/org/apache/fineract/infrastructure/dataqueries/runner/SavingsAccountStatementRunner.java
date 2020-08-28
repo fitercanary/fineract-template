@@ -62,7 +62,7 @@ public class SavingsAccountStatementRunner implements Runnable{
     @Override
     public void run() {
 
-        logger.info("Starting run, thread runner");
+        logger.info("Starting thread runner");
 
         ThreadLocalContextUtil.setTenant(this.tenant);
         SecurityContextHolder.setContext(this.context);
@@ -78,7 +78,7 @@ public class SavingsAccountStatementRunner implements Runnable{
                 reportingProcessService.processAndSendStatement(reportName, queryParams);
             }
         }
-        logger.info("Ending run, thread runner");
+        logger.info("Ending thread runner");
     }
 
     public void start() {

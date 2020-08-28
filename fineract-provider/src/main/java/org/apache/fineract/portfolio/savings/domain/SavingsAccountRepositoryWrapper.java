@@ -125,4 +125,11 @@ public class SavingsAccountRepositoryWrapper {
 	public List<SavingsAccount> findByAccountsDueForOverdraftClose(@Param("date") Date date){
 		return this.repository.findByAccountsDueForOverdraftClose(date);
 	}
+
+    public SavingsAccount findByAccountNumberWithNotFoundDetection(@Param("accountNumber") String accountNumber) {
+        final SavingsAccount account =  this.repository.findByAccountNumber(accountNumber) ;
+        if (account == null) { throw new SavingsAccountNotFoundException(accountNumber); }
+
+        return account;
+    }
 }

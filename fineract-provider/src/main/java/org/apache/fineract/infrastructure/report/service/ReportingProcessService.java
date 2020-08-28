@@ -25,4 +25,6 @@ public interface ReportingProcessService {
 
     Response processRequest(String reportName, MultivaluedMap<String, String> queryParams);
 
+    void processAndSendStatement(String reportName, MultivaluedMap<String, String> queryParams);
+
 }

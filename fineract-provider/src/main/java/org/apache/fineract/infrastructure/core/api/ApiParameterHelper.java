@@ -184,4 +184,35 @@ public class ApiParameterHelper {
 
         return map;
     }
+
+    public static boolean signPdf(final MultivaluedMap<String, String> queryParams) {
+        boolean signPDF = false;
+        if (queryParams.getFirst("signPDF") != null) {
+            final String signPDFValue = queryParams.getFirst("signPDF");
+            signPDF = "true".equalsIgnoreCase(signPDFValue);
+        }
+        return signPDF;
+    }
+
+    public static boolean addPassword(final MultivaluedMap<String, String> queryParams) {
+        boolean encrypt = false;
+        if (queryParams.getFirst("encrypt") != null) {
+            final String encryptValue = queryParams.getFirst("encrypt");
+            encrypt = "true".equalsIgnoreCase(encryptValue);
+        }
+        return encrypt;
+    }
+
+    public static boolean savingsAccountId(final MultivaluedMap<String, String> queryParams) {
+        boolean savingsAccountId = false;
+        if (queryParams.getFirst("R_savingsAccountId") != null) {
+            final String savingsAccountNumberValue = queryParams.getFirst("R_savingsAccountId");
+            savingsAccountId = !savingsAccountNumberValue.isEmpty();
+        }
+        return savingsAccountId;
+    }
+
+    public static String getSavingsAccountId(final MultivaluedMap<String, String> queryParams) {
+           return queryParams.getFirst("R_savingsAccountId");
+    }
 }

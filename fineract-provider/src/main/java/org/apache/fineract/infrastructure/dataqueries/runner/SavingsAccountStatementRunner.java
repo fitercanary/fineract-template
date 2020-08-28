@@ -70,7 +70,9 @@ public class SavingsAccountStatementRunner implements Runnable{
         if (!parameterType) {
             logger.info("Check parameter type");
             String reportType = this.readExtraDataAndReportingService.getReportType(reportName);
+            logger.info("Report Type: " + reportType);
             ReportingProcessService reportingProcessService = this.reportingProcessServiceProvider.findReportingProcessService(reportType);
+            logger.info("ReportingProcessService: " + reportingProcessService);
             if (reportingProcessService != null) {
                 logger.info("Reporting service found");
                 reportingProcessService.processAndSendStatement(reportName, queryParams);

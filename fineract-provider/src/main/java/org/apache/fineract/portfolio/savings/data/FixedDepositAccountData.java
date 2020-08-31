@@ -170,6 +170,7 @@ public class FixedDepositAccountData extends DepositAccountData {
                 depositAccountData.taxGroup, depositAccountData.nickname, depositAccountData.subStatus);
         fixedDepositAccountData.setPreClosureChargeApplicable(depositAccountData.preClosureChargeApplicable);
         fixedDepositAccountData.setPreClosureCharge(depositAccountData.preClosureCharge);
+        fixedDepositAccountData.setBlockNarration(depositAccountData.blockNarration);
         return fixedDepositAccountData;
     }
 
@@ -196,6 +197,7 @@ public class FixedDepositAccountData extends DepositAccountData {
         fixedDepositAccountData.setAccruedInterestCarriedForward(account.accruedInterestCarriedForward);
         fixedDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
         fixedDepositAccountData.setPreClosureCharge(account.preClosureCharge);
+        fixedDepositAccountData.setBlockNarration(account.blockNarration);
         return fixedDepositAccountData;
     }
 
@@ -229,6 +231,7 @@ public class FixedDepositAccountData extends DepositAccountData {
         fixedDepositAccountData.accruedInterestCarriedForward = account.accruedInterestCarriedForward;
         fixedDepositAccountData.setPreClosureChargeApplicable(account.preClosureChargeApplicable);
         fixedDepositAccountData.setPreClosureCharge(account.preClosureCharge);
+        fixedDepositAccountData.setBlockNarration(account.blockNarration);
         return fixedDepositAccountData;
     }
 

@@ -24,6 +24,7 @@ import java.util.HashSet;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.staff.data.StaffData;
@@ -65,6 +66,7 @@ public class DepositAccountData {
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
     protected final String nickname;
+    protected CodeValueData blockNarration;
 
     // associations
     protected final SavingsAccountSummaryData summary;
@@ -383,5 +385,9 @@ public class DepositAccountData {
 
     public void setPreClosureCharge(ChargeData preClosureCharge) {
         this.preClosureCharge = preClosureCharge;
+    }
+
+    public void setBlockNarration(CodeValueData blockNarration) {
+        this.blockNarration = blockNarration;
     }
 }

@@ -589,7 +589,7 @@ public class RecurringDepositAccountData extends DepositAccountData {
                 interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges,
                 chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup,
-                nickname);
+                nickname, null);
 
         this.preClosurePenalApplicable = preClosurePenalApplicable;
         this.preClosurePenalInterest = preClosurePenalInterest;

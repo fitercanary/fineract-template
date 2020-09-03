@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.data.PaginationParameters;
 import org.apache.fineract.infrastructure.core.data.PaginationParametersDataValidator;
@@ -82,6 +83,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountApplicationTimel
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
@@ -608,6 +610,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sp.id as productId, sp.name as productName, ");
             selectFieldsSqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, sa.nickname as nickName, ");
             selectFieldsSqlBuilder.append("sa.status_enum as statusEnum, ");
+            selectFieldsSqlBuilder.append("sa.sub_status_enum as subStatusEnum, ");
             selectFieldsSqlBuilder.append("sa.submittedon_date as submittedOnDate,");
             selectFieldsSqlBuilder.append("sbu.username as submittedByUsername,");
             selectFieldsSqlBuilder.append("sbu.firstname as submittedByFirstname, sbu.lastname as submittedByLastname,");
@@ -652,6 +655,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId, ");
             selectFieldsSqlBuilder.append("sa.min_balance_for_interest_calculation as minBalanceForInterestCalculation, ");
             selectFieldsSqlBuilder.append("sa.withhold_tax as withHoldTax,");
+            selectFieldsSqlBuilder.append("sa.block_narration_id as blockNarrationId, ");
+            selectFieldsSqlBuilder.append("cvn.code_value as blockNarrationValue, ");
             selectFieldsSqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName, ");
             selectFieldsSqlBuilder.append("datp.pre_closure_charge_applicable as preClosureChargeApplicable ");
 
@@ -672,6 +677,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectTablesSqlBuilder.append("left join m_appuser avbu on rbu.id = sa.activatedon_userid ");
             selectTablesSqlBuilder.append("left join m_appuser cbu on cbu.id = sa.closedon_userid ");
             selectTablesSqlBuilder.append("left join m_tax_group tg on tg.id = sa.tax_group_id  ");
+            selectTablesSqlBuilder.append("left join m_code_value cvn on cvn.id = sa.block_narration_id  ");
 
             this.selectTablesSql = selectTablesSqlBuilder.toString();
         }
@@ -706,6 +712,9 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final SavingsAccountStatusEnumData status = SavingsEnumerations.status(statusEnum);
+            
+            final Integer subStatusEnum = JdbcSupport.getInteger(rs, "subStatusEnum");
+            final SavingsAccountSubStatusEnumData subStatus = SavingsEnumerations.subStatus(subStatusEnum);
 
             final LocalDate submittedOnDate = JdbcSupport.getLocalDate(rs, "submittedOnDate");
             final String submittedByUsername = rs.getString("submittedByUsername");
@@ -810,12 +819,18 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     totalWithdrawalFees, totalAnnualFees, totalInterestEarned, totalInterestPosted, accountBalance, totalFeeCharge,
                     totalPenaltyCharge, totalOverdraftInterestDerived, totalWithholdTax, null, null, availableBalance);
 
+            final Long blockNarrationId = JdbcSupport.getLong(rs, "blockNarrationId");
+            final String blockNarrationValue = rs.getString("blockNarrationValue");
+
+            final CodeValueData blockNarration = CodeValueData.instance(blockNarrationId, blockNarrationValue);
+
             DepositAccountData depositAccountData = DepositAccountData.instance(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
-                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, nickName);
+                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, nickName, subStatus);
             depositAccountData.setPreClosureChargeApplicable(preClosureChargeApplicable);
+            depositAccountData.setBlockNarration(blockNarration);
             return depositAccountData;
         }
     }
@@ -1260,6 +1275,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long fieldOfficerId = null;
             final String fieldOfficerName = null;
             final SavingsAccountStatusEnumData status = null;
+            final SavingsAccountSubStatusEnumData subStatus = null;
             final SavingsAccountSummaryData summary = null;
             final SavingsAccountApplicationTimelineData timeline = SavingsAccountApplicationTimelineData.templateDefault();
 
@@ -1275,7 +1291,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualIterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
-                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, null);
+                    minBalanceForInterestCalculation, withHoldTax, taxGroupData, null, subStatus);
         }
     }
 

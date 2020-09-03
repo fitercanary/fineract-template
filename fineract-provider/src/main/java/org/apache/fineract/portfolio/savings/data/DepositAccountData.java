@@ -24,6 +24,7 @@ import java.util.HashSet;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.staff.data.StaffData;
@@ -48,6 +49,7 @@ public class DepositAccountData {
     protected final Long fieldOfficerId;
     protected final String fieldOfficerName;
     protected final SavingsAccountStatusEnumData status;
+    protected final SavingsAccountSubStatusEnumData subStatus;
     protected final SavingsAccountApplicationTimelineData timeline;
     protected final CurrencyData currency;
     protected BigDecimal nominalAnnualInterestRate;
@@ -64,6 +66,7 @@ public class DepositAccountData {
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
     protected final String nickname;
+    protected CodeValueData blockNarration;
 
     // associations
     protected final SavingsAccountSummaryData summary;
@@ -110,6 +113,7 @@ public class DepositAccountData {
         this.fieldOfficerId = fieldOfficerId;
         this.fieldOfficerName = null;
         this.status = null;
+        this.subStatus = null;
         this.timeline = null;
         this.currency = null;
         this.nominalAnnualInterestRate = null;
@@ -153,7 +157,8 @@ public class DepositAccountData {
             final EnumOptionData interestCalculationType, final EnumOptionData interestCalculationDaysInYearType,
             final BigDecimal minRequiredOpeningBalance, final Integer lockinPeriodFrequency, final EnumOptionData lockinPeriodFrequencyType,
             final boolean withdrawalFeeForTransfers, final SavingsAccountSummaryData summary, final EnumOptionData depositType,
-            final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, final String nickname) {
+            final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, final String nickname,
+            final SavingsAccountSubStatusEnumData subStatus) {
 
         final Collection<DepositProductData> productOptions = null;
         final Collection<StaffData> fieldOfficerOptions = null;
@@ -176,7 +181,8 @@ public class DepositAccountData {
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, transactions, productOptions,
                 fieldOfficerOptions, interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges,
-                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickname);
+                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickname,
+                subStatus);
     }
 
     public static DepositAccountData lookup(final Long id, final String accountNo, final EnumOptionData depositType) {
@@ -191,6 +197,7 @@ public class DepositAccountData {
         final Long fieldOfficerId = null;
         final String fieldOfficerName = null;
         final SavingsAccountStatusEnumData status = null;
+        final SavingsAccountSubStatusEnumData subStatus = null;
         final SavingsAccountApplicationTimelineData timeline = null;
         final CurrencyData currency = null;
         final BigDecimal interestRate = null;
@@ -228,7 +235,8 @@ public class DepositAccountData {
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, transactions, productOptions,
                 fieldOfficerOptions, interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges,
-                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickname);
+                chargeOptions, accountChart, chartTemplate, depositType, minBalanceForInterestCalculation, withHoldTax, taxGroup, nickname,
+                subStatus);
     }
 
     protected DepositAccountData(final Long id, final String accountNo, final String externalId, final Long groupId, final String groupName,
@@ -248,7 +256,7 @@ public class DepositAccountData {
             final Collection<SavingsAccountChargeData> charges, final Collection<ChargeData> chargeOptions,
             final DepositAccountInterestRateChartData accountChart, final DepositAccountInterestRateChartData chartTemplate,
             final EnumOptionData depositType, final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax,
-            final TaxGroupData taxGroup, final String nickname) {
+            final TaxGroupData taxGroup, final String nickname, final SavingsAccountSubStatusEnumData subStatus) {
         this.id = id;
         this.accountNo = accountNo;
         this.externalId = externalId;
@@ -261,6 +269,7 @@ public class DepositAccountData {
         this.fieldOfficerId = fieldofficerId;
         this.fieldOfficerName = fieldofficerName;
         this.status = status;
+        this.subStatus = subStatus;
         this.timeline = timeline;
         this.currency = currency;
         this.nominalAnnualInterestRate = nominalAnnualInterestRate;
@@ -376,5 +385,9 @@ public class DepositAccountData {
 
     public void setPreClosureCharge(ChargeData preClosureCharge) {
         this.preClosureCharge = preClosureCharge;
+    }
+
+    public void setBlockNarration(CodeValueData blockNarration) {
+        this.blockNarration = blockNarration;
     }
 }

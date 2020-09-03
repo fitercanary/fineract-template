@@ -49,7 +49,7 @@ import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.notification.config.MessagingConfiguration;
-import org.apache.fineract.notification.config.VfdNotificationApi;
+import org.apache.fineract.notification.config.VfdServiceApi;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -107,23 +107,23 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final MessagingConfiguration messagingConfiguration;
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final FromJsonHelper fromApiJsonHelper;
-    private final VfdNotificationApi vfdNotificationApi;
+    private final VfdServiceApi vfdServiceApi;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
-            final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
-            final DepositAccountReadPlatformService depositAccountReadPlatformService,
-            final DepositAccountWritePlatformService depositAccountWritePlatformService,
-            final ShareAccountDividendReadPlatformService shareAccountDividendReadPlatformService,
-            final ShareAccountSchedularService shareAccountSchedularService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
-            final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService,
-            final MessagingConfiguration messagingConfiguration,
-            final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final FromJsonHelper fromApiJsonHelper,
-            final VfdNotificationApi vfdNotificationApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
+                                         final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+                                         final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
+                                         final DepositAccountReadPlatformService depositAccountReadPlatformService,
+                                         final DepositAccountWritePlatformService depositAccountWritePlatformService,
+                                         final ShareAccountDividendReadPlatformService shareAccountDividendReadPlatformService,
+                                         final ShareAccountSchedularService shareAccountSchedularService,
+                                         final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+                                         final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
+                                         final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService,
+                                         final MessagingConfiguration messagingConfiguration,
+                                         final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final FromJsonHelper fromApiJsonHelper,
+                                         final VfdServiceApi vfdServiceApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -137,7 +137,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.messagingConfiguration = messagingConfiguration;
         this.accountTransfersWritePlatformService = accountTransfersWritePlatformService;
         this.fromApiJsonHelper = fromApiJsonHelper;
-        this.vfdNotificationApi = vfdNotificationApi;
+        this.vfdServiceApi = vfdServiceApi;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
     }
 
@@ -701,7 +701,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         try {
 
-            ResponseEntity<String> response = vfdNotificationApi.sendNotification(notification);
+            ResponseEntity<String> response = vfdServiceApi.sendNotification(notification);
             logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Notification for successful transfer : Status Code = "
                     + response.getStatusCode() + ", message = " +
                 response.getBody());
@@ -740,7 +740,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         try {
 
-            ResponseEntity<String> response = vfdNotificationApi.sendNotification(notification);
+            ResponseEntity<String> response = vfdServiceApi.sendNotification(notification);
             logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Notification for successful transfer : Status Code = "
                     + response.getStatusCode() + ", message = " +
                     response.getBody());

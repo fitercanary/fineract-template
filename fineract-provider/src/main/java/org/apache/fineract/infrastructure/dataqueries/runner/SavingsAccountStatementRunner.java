@@ -64,15 +64,20 @@ public class SavingsAccountStatementRunner implements Runnable{
 
         logger.info("Starting thread runner");
 
-        ThreadLocalContextUtil.setTenant(this.tenant);
-        SecurityContextHolder.setContext(this.context);
+        try {
 
-        if (!parameterType) {
-            String reportType = this.readExtraDataAndReportingService.getReportType(reportName);
-            ReportingProcessService reportingProcessService = this.reportingProcessServiceProvider.findReportingProcessService(reportType);
-            if (reportingProcessService != null) {
-                reportingProcessService.processAndSendStatement(reportName, queryParams);
+            ThreadLocalContextUtil.setTenant(this.tenant);
+            SecurityContextHolder.setContext(this.context);
+
+            if (!parameterType) {
+                String reportType = this.readExtraDataAndReportingService.getReportType(reportName);
+                ReportingProcessService reportingProcessService = this.reportingProcessServiceProvider.findReportingProcessService(reportType);
+                if (reportingProcessService != null) {
+                    reportingProcessService.processAndSendStatement(reportName, queryParams);
+                }
             }
+        }catch (Exception ex){
+            logger.error("Error processing savings account statement: ", ex);
         }
         logger.info("Ending thread runner");
     }

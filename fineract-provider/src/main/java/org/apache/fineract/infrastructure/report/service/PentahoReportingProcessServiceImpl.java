@@ -386,13 +386,13 @@ public class PentahoReportingProcessServiceImpl implements ReportingProcessServi
 
 		for (PDPage page: document.getPages()){
 			PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true);
-			contentStream.drawImage(pdImage, 80, 300, 100, 50);
+			contentStream.drawImage(pdImage, 80, 270, 100, 50);
 
 			PDFont pdfFont= PDType1Font.HELVETICA_BOLD;
 			int fontSize = 14;
 			contentStream.setFont(pdfFont, fontSize);
 			contentStream.beginText();
-			contentStream.newLineAtOffset(200,300);
+			contentStream.newLineAtOffset(200,270);
 			contentStream.showText(DateUtils.getLocalDateTimeOfTenant().toString("dd MMMM yyyy"));
 			contentStream.endText();
 

@@ -18,71 +18,59 @@
  */
 package org.apache.fineract.notification.config;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.util.*;
-
-import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
+import java.util.Collections;
+
 @Service
 public class VfdServiceApi {
-    
-    private final String NOTIFICATION_SERVICE_DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook?alertType=both";
-    private final String NOTIFICATION_SERVICE_AUTH_TOKEN_FIELD = "VFDBankAuth";
-    private final String NOTIFICATION_SERVICE_DEFAULT_AUTH_TOKEN = "Bearer 73d64eb6-15fd-35df-a543-4a5ae672c455";
 
-    private final String EMAIL_SERVICE_DEFAULT_URL = "http://172.31.11.10:9092/notification/attachment";
-
-    private final String DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook";
-    private final String AUTH_TOKEN_FIELD = "VFDBankAuth";
+    private static final String EMAIL_SERVICE_DEFAULT_URL = "http://172.31.11.10:9092/notification/attachment";
+    private static final String DEFAULT_URL = "https://devesb.vfdbank.systems:8263/vfdbank/0.2/webhooks/notificationhook";
+    private static final String AUTH_TOKEN_FIELD = "VFDBankAuth";
 
     @Autowired
     private Environment env;
 
-    private final static Logger logger = LoggerFactory.getLogger(VfdServiceApi.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VfdServiceApi.class);
 
     public ResponseEntity<String> sendNotification(VfdTransferNotification notification) {
 
-        String auth_token = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
-
+        String authToken = this.env.getProperty("VFD_NOTIFICATION_SERVICE_AUTH_TOKEN");
         String url = this.env.getProperty("VFD_NOTIFICATION_SERVICE_URL");
-
         url = url == null ? DEFAULT_URL : url;
-
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-        headers.add(AUTH_TOKEN_FIELD, auth_token);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.add(AUTH_TOKEN_FIELD, authToken);
         HttpEntity<VfdTransferNotification> request = new HttpEntity<>(notification, headers);
 
-        StringBuilder builder = new StringBuilder();
-        builder.append(url.trim());
-        builder.append("?alertType=");
-        builder.append(notification.getAlertType());
-
-        return restTemplate.postForEntity(builder.toString(), request, String.class);
+        String builder = url.trim() +
+                "?alertType=" +
+                notification.getAlertType();
+        return restTemplate.postForEntity(builder, request, String.class);
     }
 
-    public void sendSavingsAccountStatementEmail( String toAddress, Long clientId, String attachmentName,
-                                                                    String contentType,
-                                                                    File file){
+    public void sendSavingsAccountStatementEmail(String toAddress, Long clientId, String attachmentName,
+                                                 String contentType,
+                                                 File file) {
 
         RestTemplate restTemplate = new RestTemplate();
         LinkedMultiValueMap<String, Object> valueMap = new LinkedMultiValueMap<>();
@@ -90,7 +78,7 @@ public class VfdServiceApi {
         valueMap.add("clientId", String.valueOf(clientId.longValue()));
         valueMap.add("toAddress", toAddress);
         valueMap.add("attachmentName", attachmentName);
-        valueMap.add("contentType", contentType);//"contentType": "application/pdf"
+        valueMap.add("contentType", contentType);
         FileSystemResource value = new FileSystemResource(file);
         valueMap.add("file", value);
 
@@ -101,24 +89,20 @@ public class VfdServiceApi {
         String url = this.env.getProperty("VFD_EMAIL_SERVICE_URL");
         url = url != null ? url : EMAIL_SERVICE_DEFAULT_URL;
 
-        try{
+        try {
+            restTemplate.postForEntity(url, requestEntity, Void.class);
+            LOGGER.info("Savings Account Statement has been sent to vfd email service");
 
-            final ResponseEntity<Void> stringResponseEntity = restTemplate.postForEntity(url, requestEntity, Void.class);
-            logger.info("Savings Account Statement has been sent to vfd email service");
-
-        }catch (RestClientException e) {
-            if(e instanceof HttpClientErrorException){
+        } catch (RestClientException e) {
+            if (e instanceof HttpClientErrorException) {
                 HttpClientErrorException message = (HttpClientErrorException) e;
-
-                logger.error("Rest Client Error sending account statement to email service: Status Code = " + message.getStatusCode().value() +
-                        ", Error Message = " + message.getMessage());
+                LOGGER.error("Rest Client Error sending account statement to email service: Status Code = {}, Error Message = {}", message.getStatusCode().value(), message.getMessage());
             }
-            logger.error("Rest Client Error sending account statement to email service: "  , e);
+            LOGGER.error("Rest Client Error sending account statement to email service: ", e);
             throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
-        }catch (Exception e){
-            logger.error("General Error sending account statement to email service: " , e);
+        } catch (Exception e) {
+            LOGGER.error("General Error sending account statement to email service: ", e);
             throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
         }
-
     }
 }

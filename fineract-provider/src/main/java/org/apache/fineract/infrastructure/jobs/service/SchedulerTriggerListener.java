@@ -31,18 +31,25 @@ import org.quartz.TriggerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import javax.validation.constraints.NotNull;
 
 @Component
 public class SchedulerTriggerListener implements TriggerListener {
 
-    private final static Logger logger = LoggerFactory.getLogger(SchedulerTriggerListener.class);
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerTriggerListener.class);
+
     private final String name = "Global trigger Listner";
 
     private final SchedularWritePlatformService schedularService;
 
     private final TenantDetailsService tenantDetailsService;
+
+    @Value("${fineract.allowJobs:false}")
+    private volatile @NotNull
+    boolean allowJobs;
 
     @Autowired
     public SchedulerTriggerListener(final SchedularWritePlatformService schedularService, final TenantDetailsService tenantDetailsService) {
@@ -58,43 +65,45 @@ public class SchedulerTriggerListener implements TriggerListener {
 
     @Override
     public void triggerFired(@SuppressWarnings("unused") final Trigger trigger,
-            @SuppressWarnings("unused") final JobExecutionContext context) {
+                             @SuppressWarnings("unused") final JobExecutionContext context) {
 
     }
 
     @Override
     public boolean vetoJobExecution(final Trigger trigger, final JobExecutionContext context) {
-
-        final String tenantIdentifier = trigger.getJobDataMap().getString(SchedulerServiceConstants.TENANT_IDENTIFIER);
-        final FineractPlatformTenant tenant = this.tenantDetailsService.loadTenantById(tenantIdentifier);
-        ThreadLocalContextUtil.setTenant(tenant);
-        final JobKey key = trigger.getJobKey();
-        final String jobKey = key.getName() + SchedulerServiceConstants.JOB_KEY_SEPERATOR + key.getGroup();
-        String triggerType = SchedulerServiceConstants.TRIGGER_TYPE_CRON;
-        if (context.getMergedJobDataMap().containsKey(SchedulerServiceConstants.TRIGGER_TYPE_REFERENCE)) {
-            triggerType = context.getMergedJobDataMap().getString(SchedulerServiceConstants.TRIGGER_TYPE_REFERENCE);
-        }
-        Integer maxNumberOfRetries = ThreadLocalContextUtil.getTenant().getConnection().getMaxRetriesOnDeadlock();
-        Integer maxIntervalBetweenRetries = ThreadLocalContextUtil.getTenant().getConnection().getMaxIntervalBetweenRetries();
-        Integer numberOfRetries = 0;
-        boolean proceedJob = false;
-        while (numberOfRetries <= maxNumberOfRetries) {
-            try {
-                proceedJob = this.schedularService.processJobDetailForExecution(jobKey, triggerType);
-                numberOfRetries = maxNumberOfRetries + 1;
-            } catch (Exception exception) { //Adding generic exception as it depends on JPA provider
-                logger.debug("Not able to acquire the lock to update job running status for JobKey: " + jobKey);
+        if (allowJobs) {
+            final String tenantIdentifier = trigger.getJobDataMap().getString(SchedulerServiceConstants.TENANT_IDENTIFIER);
+            final FineractPlatformTenant tenant = this.tenantDetailsService.loadTenantById(tenantIdentifier);
+            ThreadLocalContextUtil.setTenant(tenant);
+            final JobKey key = trigger.getJobKey();
+            final String jobKey = key.getName() + SchedulerServiceConstants.JOB_KEY_SEPERATOR + key.getGroup();
+            String triggerType = SchedulerServiceConstants.TRIGGER_TYPE_CRON;
+            if (context.getMergedJobDataMap().containsKey(SchedulerServiceConstants.TRIGGER_TYPE_REFERENCE)) {
+                triggerType = context.getMergedJobDataMap().getString(SchedulerServiceConstants.TRIGGER_TYPE_REFERENCE);
+            }
+            int maxNumberOfRetries = ThreadLocalContextUtil.getTenant().getConnection().getMaxRetriesOnDeadlock();
+            int maxIntervalBetweenRetries = ThreadLocalContextUtil.getTenant().getConnection().getMaxIntervalBetweenRetries();
+            int numberOfRetries = 0;
+            boolean proceedJob = false;
+            while (numberOfRetries <= maxNumberOfRetries) {
                 try {
-                    Random random = new Random();
-                    int randomNum = random.nextInt(maxIntervalBetweenRetries + 1);
-                    Thread.sleep(1000 + (randomNum * 1000));
-                    numberOfRetries = numberOfRetries + 1;
-                } catch (InterruptedException e) {
-
+                    proceedJob = this.schedularService.processJobDetailForExecution(jobKey, triggerType);
+                    numberOfRetries = maxNumberOfRetries + 1;
+                } catch (Exception exception) { //Adding generic exception as it depends on JPA provider
+                    LOGGER.debug("Not able to acquire the lock to update job running status for JobKey: {}", jobKey);
+                    try {
+                        Random random = new Random();
+                        int randomNum = random.nextInt(maxIntervalBetweenRetries + 1);
+                        Thread.sleep(1000 + (randomNum * 1000));
+                        numberOfRetries = numberOfRetries + 1;
+                    } catch (InterruptedException e) {
+                        LOGGER.error(e.getMessage());
+                    }
                 }
             }
+            return proceedJob;
         }
-        return proceedJob;
+        return false;
     }
 
     @Override
@@ -104,9 +113,8 @@ public class SchedulerTriggerListener implements TriggerListener {
 
     @Override
     public void triggerComplete(@SuppressWarnings("unused") final Trigger trigger,
-            @SuppressWarnings("unused") final JobExecutionContext context,
-            @SuppressWarnings("unused") final CompletedExecutionInstruction triggerInstructionCode) {
+                                @SuppressWarnings("unused") final JobExecutionContext context,
+                                @SuppressWarnings("unused") final CompletedExecutionInstruction triggerInstructionCode) {
 
     }
-
 }

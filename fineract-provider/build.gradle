@@ -161,7 +161,15 @@ rat {
 	'**/assets/html5shiv.js',
 	
 	//BSD License
-	'**/assets/uglify.js'
+	'**/assets/uglify.js',
+
+    // GIT HUB
+    '**/.github/**',
+
+    // Docker files
+    '**/docker/**',
+    '**/Dockerfile'
+
 	]
 }
 

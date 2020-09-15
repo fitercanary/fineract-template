@@ -360,7 +360,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     @Override
     public ClientData retrieveOne(final Long clientId) {
         try {
-            this.validateUserHasAuthorityToViewClient(clientId);
+            //this.validateUserHasAuthorityToViewClient(clientId);
             final String hierarchy = this.context.officeHierarchy();
             final String hierarchySearchString = hierarchy + "%";
 

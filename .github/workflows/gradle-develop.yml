@@ -25,8 +25,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME_CANARY }}
           password: ${{ secrets.DOCKER_PASSWORD_CANARY }}
 
+      - name: Gradlew Validation
+        uses: gradle/wrapper-validation-action@v1
+
       - name: Build with Gradles
-        run: ./gradlew clean bootWar
+        run: ./gradlew clean war
 
       - name: Build Docker image
         uses: elgohr/Publish-Docker-Github-Action@master

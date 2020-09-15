@@ -25,6 +25,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME_CANARY }}
           password: ${{ secrets.DOCKER_PASSWORD_CANARY }}
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
       - name: Gradlew Validation
         uses: gradle/wrapper-validation-action@v1
 

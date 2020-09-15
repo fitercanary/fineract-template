@@ -437,7 +437,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
-        final LocalDate today = DateUtils.getLocalDateOfTenant();
+        final LocalDate today = DateUtils.getLocalDateOfTenant().minusDays(1);//DateUtils.getLocalDateOfTenant();
         final MathContext mc = new MathContext(15, MoneyHelper.getRoundingMode());
         boolean isInterestTransfer = false;
         final LocalDate postInterestOnDate = null;
@@ -1823,5 +1823,76 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .withSavingsId(savingsAccountId)
                 .with(actualChanges)
                 .build();
+    }
+
+    @Override
+    public CommandProcessingResult updateInterestRate(Long savingsAccountId, JsonCommand command) {
+
+        final Map<String, Object> actualChanges = new HashMap<>(1);
+
+        // Verify request
+        this.fromApiJsonDeserializer.validateForUpdatingNominalInterestRate(command.json());
+        final SavingsAccount savingsForUpdate = this.savingAccountAssembler.assembleFrom(savingsAccountId);
+        checkClientOrGroupActive(savingsForUpdate);
+
+        // Post Interest
+        final LocalDate updateDate = command.localDateValueOfParameterNamed("updatedOnDate");
+
+        this.postInterest(savingsForUpdate, true, updateDate, updateDate);
+
+        // Update rate
+
+        if (command.isChangeInBigDecimalParameterNamed(SavingsApiConstants.nominalAnnualInterestRateParamName,
+                savingsForUpdate.getNominalAnnualInterestRate())) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(SavingsApiConstants.nominalAnnualInterestRateParamName);
+            actualChanges.put(SavingsApiConstants.nominalAnnualInterestRateParamName, newValue);
+            savingsForUpdate.setNominalAnnualInterestRate(newValue);
+        }
+
+        // Update start interest calculation date
+        savingsForUpdate.setStartInterestCalculationDate(savingsForUpdate.retrieveLastTransactionDate().toDate());
+
+        this.savingAccountRepositoryWrapper.saveAndFlush(savingsForUpdate);;
+
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(savingsAccountId) //
+                .withSavingsId(savingsAccountId) //
+                .with(actualChanges) //
+                .build();
+    }
+
+    /* Post interest up to a specific date */
+    private void postInterest(final SavingsAccount account, final boolean postInterestAs, final LocalDate transactionDate, final LocalDate interestPostingUpToDate) {
+
+        final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                .isSavingsInterestPostingAtCurrentPeriodEnd();
+        final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+        if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
+                || (account.allowOverdraft() && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
+            final Set<Long> existingTransactionIds = new HashSet<>();
+            final Set<Long> existingReversedTransactionIds = new HashSet<>();
+            updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+            final LocalDate today = interestPostingUpToDate != null ? interestPostingUpToDate : DateUtils.getLocalDateOfTenant();
+            final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
+            boolean isInterestTransfer = false;
+            LocalDate postInterestOnDate = null;
+            if (postInterestAs) {
+                postInterestOnDate = transactionDate;
+            }
+            account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
+                    postInterestOnDate);
+            // for generating transaction id's
+            List<SavingsAccountTransaction> transactions = account.getTransactions();
+            for (SavingsAccountTransaction accountTransaction : transactions) {
+                if (accountTransaction.getId() == null) {
+                    this.savingsAccountTransactionRepository.save(accountTransaction);
+                }
+            }
+
+            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+
+            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        }
     }
 }

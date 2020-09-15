@@ -380,6 +380,11 @@ public class SavingsAccountsApiResource {
                     .build();
             final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
+        }else if (is(commandParam, "updateInterestRate")) {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson).updateInterestRate(accountId)
+                    .build();
+            final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            return this.toApiJsonSerializer.serialize(result);
         }
 
         final CommandWrapper commandRequest = new CommandWrapperBuilder().updateSavingsAccount(accountId).withJson(apiRequestBodyAsJson)

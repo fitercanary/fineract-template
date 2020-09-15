@@ -143,4 +143,24 @@ public final class SavingsAccountSummary {
     public void setTotalInterestEarned(BigDecimal totalInterestEarned) {
         this.totalInterestEarned = totalInterestEarned;
     }
+
+    public void updateFromInterestPeriodSummaries(final MonetaryCurrency currency, final List<PostingPeriod> allPostingPeriods, final LocalDate startInterestCalculationDate) {
+
+        Money totalEarned = Money.zero(currency);
+        LocalDate interestCalculationDate = DateUtils.getLocalDateOfTenant();
+        for (final PostingPeriod period : allPostingPeriods) {
+            for (Money interestEarned : period.interest()) {
+                interestEarned = interestEarned == null ? Money.zero(currency) : interestEarned;
+                totalEarned = totalEarned.plus(interestEarned);
+            }
+        }
+        this.lastInterestCalculationDate = interestCalculationDate.toDate();
+        if(startInterestCalculationDate != null){
+
+            this.totalInterestEarned = this.totalInterestPosted.add(totalEarned.getAmount());
+        }else{
+            this.totalInterestEarned = totalEarned.getAmount();
+        }
+
+    }
 }

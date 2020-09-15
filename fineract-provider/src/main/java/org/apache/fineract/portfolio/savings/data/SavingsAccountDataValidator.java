@@ -493,4 +493,36 @@ public class SavingsAccountDataValidator {
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }     
 }
+
+    public void validateForUpdatingNominalInterestRate(final String json) {
+        if (org.apache.commons.lang3.StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Set<String> supportedParameters = new HashSet<>(Arrays.asList("nominalAnnualInterestRate","locale","dateFormat","updatedOnDate"));
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final String updatedOnDateStr = this.fromApiJsonHelper.extractStringNamed("updatedOnDate", element);
+        baseDataValidator.reset().parameter("updatedOnDate").value(updatedOnDateStr).notBlank();
+
+        if (!org.apache.commons.lang3.StringUtils.isBlank(updatedOnDateStr)) {
+            final LocalDate unassignedDate = this.fromApiJsonHelper.extractLocalDateNamed("updatedOnDate", element);
+            baseDataValidator.reset().parameter("updatedOnDate").value(unassignedDate).notNull();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(nominalAnnualInterestRateParamName, element)) {
+            final BigDecimal interestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(nominalAnnualInterestRateParamName,
+                    element);
+            baseDataValidator.reset().parameter(nominalAnnualInterestRateParamName).value(interestRate).notNull().zeroOrPositiveAmount();
+        }
+
+
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                "Validation errors exist.", dataValidationErrors); }
+    }
 }

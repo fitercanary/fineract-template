@@ -3301,4 +3301,12 @@ public class CommandWrapperBuilder {
         this.href = "/accounttransfers/queueTransfer";
         return this;
     }
+
+    public CommandWrapperBuilder updateInterestRate(final Long accountId) {
+        this.actionName = "UPDATEINTERESTRATE";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?commad=updateInterestRate";
+        return this;
+    }
 }

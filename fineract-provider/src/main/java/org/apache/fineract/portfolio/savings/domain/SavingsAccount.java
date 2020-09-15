@@ -849,7 +849,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.savingsHelper.calculateInterestForAllPostingPeriods(this.currency, allPostingPeriods, getLockedInUntilLocalDate(),
                 isTransferInterestToOtherAccount());
 
-        this.summary.updateFromInterestPeriodSummaries(this.currency, allPostingPeriods);
+        LocalDate startInterestCalculationLocalDate = this.startInterestCalculationDate != null ?
+                LocalDate.fromDateFields(this.startInterestCalculationDate) : null;
+        this.summary.updateFromInterestPeriodSummaries(this.currency, allPostingPeriods, startInterestCalculationLocalDate);
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
 
         return allPostingPeriods;
@@ -3767,4 +3769,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return this.withHoldTax;
     }
 
+    public void setNominalAnnualInterestRate(BigDecimal nominalAnnualInterestRate) {
+        this.nominalAnnualInterestRate = nominalAnnualInterestRate;
+    }
+
+    public void setStartInterestCalculationDate(Date startInterestCalculationDate) {
+        this.startInterestCalculationDate = startInterestCalculationDate;
+    }
 }

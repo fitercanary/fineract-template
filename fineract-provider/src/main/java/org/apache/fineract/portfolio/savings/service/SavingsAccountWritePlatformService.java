@@ -126,4 +126,6 @@ public interface SavingsAccountWritePlatformService {
     
     CommandProcessingResult modifyNickName(Long savingsAccountId, JsonCommand command);
 
+    CommandProcessingResult updateInterestRate(Long savingsAccountId, JsonCommand command);
+
 }

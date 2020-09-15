@@ -6,9 +6,9 @@ RUN apt-get install curl
 
 #RUN apk --update add fontconfig ttf-dejavu ttf-liberation nano
 
-ADD ./docker/setenv.sh /usr/local/tomcat/bin/setenv.sh
+#ADD ./docker/setenv.sh /usr/local/tomcat/bin/setenv.sh
 
-ADD ./docker/server.xml /usr/local/tomcat/conf/server.xml
+#ADD ./docker/server.xml /usr/local/tomcat/conf/server.xml
 
 ADD ./docker/mysql-connector-java-8.0.18.jar /usr/local/tomcat/lib/mysql-connector-java-8.0.18.jar
 

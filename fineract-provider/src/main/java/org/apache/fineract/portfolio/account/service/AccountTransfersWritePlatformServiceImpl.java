@@ -54,6 +54,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -433,6 +434,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 this.savingsAccountAssembler.setHelpers(fromSavingsAccount);
                 toLoanAccount = accountTransferDetails.toLoanAccount();
                 this.loanAccountAssembler.setHelpers(toLoanAccount);
+            }
+
+            if(fromSavingsAccount.isNegativeBalance()){
+                throw new InsufficientAccountBalanceException("transactionAmount",fromSavingsAccount.getSummary().getAccountBalance(),null,
+                        accountTransferDTO.getTransactionAmount());
             }
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,

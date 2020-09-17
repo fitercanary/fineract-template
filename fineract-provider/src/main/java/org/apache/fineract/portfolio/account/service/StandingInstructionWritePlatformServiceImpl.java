@@ -274,11 +274,18 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
 						accountTransferDTO.setTransactionAmount(transactionAmount);
 					}
 				}
-                final boolean transferCompleted = transferAmount(sb, accountTransferDTO, data.getId());
+				// check account is not overdrawn
+                if(fromSavingsAccount.isNegativeBalance()){
+                        sb.append("InsufficientAccountBalance Exception (Savings Account is OVERDRAWN) while transfering funds for standing Instruction id").append(data.getId())
+                                .append(" from ").append(accountTransferDTO.getFromAccountId()).append(" to ")
+                                .append(accountTransferDTO.getToAccountId()).append("--------");
+                }else {
+                    final boolean transferCompleted = transferAmount(sb, accountTransferDTO, data.getId());
 
-                if(transferCompleted){
-                    final String updateQuery = "UPDATE m_account_transfer_standing_instructions SET last_run_date = ? where id = ?";
-                    this.jdbcTemplate.update(updateQuery, transactionDate.toDate(), data.getId());
+                    if (transferCompleted) {
+                        final String updateQuery = "UPDATE m_account_transfer_standing_instructions SET last_run_date = ? where id = ?";
+                        this.jdbcTemplate.update(updateQuery, transactionDate.toDate(), data.getId());
+                    }
                 }
 
             }

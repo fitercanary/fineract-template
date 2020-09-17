@@ -3776,4 +3776,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     public void setStartInterestCalculationDate(Date startInterestCalculationDate) {
         this.startInterestCalculationDate = startInterestCalculationDate;
     }
+
+    public Boolean isNegativeBalance() {
+        return this.getSummary().getAccountBalance(this.getCurrency()).isLessThanZero();
+    }
 }

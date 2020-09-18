@@ -436,7 +436,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 this.loanAccountAssembler.setHelpers(toLoanAccount);
             }
 
-            if(fromSavingsAccount.isNegativeBalance()){
+            if(fromSavingsAccount.getSummary().getAccountBalance(toLoanAccount.getCurrency()).minus(accountTransferDTO.getTransactionAmount()).isLessThanZero()){
                 throw new InsufficientAccountBalanceException("transactionAmount",fromSavingsAccount.getSummary().getAccountBalance(),null,
                         accountTransferDTO.getTransactionAmount());
             }

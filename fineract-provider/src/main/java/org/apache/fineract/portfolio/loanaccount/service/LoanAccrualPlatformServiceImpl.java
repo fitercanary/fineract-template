@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationProperty;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
@@ -54,19 +56,22 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
     private final LoanAssembler loanAssembler;
 
+    private final GlobalConfigurationRepositoryWrapper repository;
+
     @Autowired
     public LoanAccrualPlatformServiceImpl(final LoanReadPlatformService loanReadPlatformService,
             final LoanAccrualWritePlatformService loanAccrualWritePlatformService,
             final LoanRepositoryWrapper loanRepositoryWrapper,
             final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
             final JournalEntryWritePlatformService journalEntryWritePlatformService,
-                                          final LoanAssembler loanAssembler) {
+                                          final LoanAssembler loanAssembler,final GlobalConfigurationRepositoryWrapper repository) {
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanAccrualWritePlatformService = loanAccrualWritePlatformService;
         this.loanRepositoryWrapper = loanRepositoryWrapper;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
         this.loanAssembler = loanAssembler;
+        this.repository = repository;
     }
 
     @Override
@@ -89,9 +94,10 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
         for (Map.Entry<Long, Collection<LoanScheduleAccrualData>> mapEntry : loanDataMap.entrySet()) {
             try {
                 final Loan loan = this.loanAssembler.assembleFrom(mapEntry.getKey());
+                GlobalConfigurationProperty daysInArrearsProperty = repository.findOneByNameWithNotFoundDetection("stop-interest-accrual-for-loan-in-arrears");
 
-                int numberOfDaysInArrearsLimit = 90;
-                if(loan.isOverdue() && DateUtils.daysBetween(DateUtils.getLocalDateOfTenant(), loan.getOverdueSince()) > numberOfDaysInArrearsLimit){
+                Long numberOfDaysInArrearsLimit = daysInArrearsProperty.getValue();
+                if(loan.isOverdue() && DateUtils.daysBetween(DateUtils.getLocalDateOfTenant(), loan.getOverdueSince()) > numberOfDaysInArrearsLimit.intValue()){
                     throw new GeneralPlatformDomainRuleException("error.msg.loan.is.overdue.unacceptable.time",
                             "Loan accrual transaction cannot be added because loan is overdue for more than " + numberOfDaysInArrearsLimit);
                 }
@@ -165,7 +171,9 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
                 try {
 
                     final Loan loan = this.loanAssembler.assembleFrom(loanId);
-                    int numberOfDaysInArrearsLimit = 90;
+                    GlobalConfigurationProperty daysInArrearsProperty = repository.findOneByNameWithNotFoundDetection("stop-interest-accrual-for-loan-in-arrears");
+
+                    Long numberOfDaysInArrearsLimit = daysInArrearsProperty.getValue();
                     if(loan.isOverdue() && DateUtils.daysBetween(DateUtils.getLocalDateOfTenant(), loan.getOverdueSince()) > numberOfDaysInArrearsLimit){
                         throw new GeneralPlatformDomainRuleException("error.msg.loan.is.overdue.unacceptable.time",
                                 "Loan accrual transaction cannot be added because loan is overdue for more than " + numberOfDaysInArrearsLimit);

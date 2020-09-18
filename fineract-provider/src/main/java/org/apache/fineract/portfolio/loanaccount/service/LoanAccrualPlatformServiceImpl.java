@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
@@ -51,18 +52,21 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
     private final LoanRepositoryWrapper loanRepositoryWrapper;
     private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
+    private final LoanAssembler loanAssembler;
 
     @Autowired
     public LoanAccrualPlatformServiceImpl(final LoanReadPlatformService loanReadPlatformService,
             final LoanAccrualWritePlatformService loanAccrualWritePlatformService,
             final LoanRepositoryWrapper loanRepositoryWrapper,
             final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper,
-            final JournalEntryWritePlatformService journalEntryWritePlatformService) {
+            final JournalEntryWritePlatformService journalEntryWritePlatformService,
+                                          final LoanAssembler loanAssembler) {
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanAccrualWritePlatformService = loanAccrualWritePlatformService;
         this.loanRepositoryWrapper = loanRepositoryWrapper;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
+        this.loanAssembler = loanAssembler;
     }
 
     @Override
@@ -84,6 +88,13 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
 
         for (Map.Entry<Long, Collection<LoanScheduleAccrualData>> mapEntry : loanDataMap.entrySet()) {
             try {
+                final Loan loan = this.loanAssembler.assembleFrom(mapEntry.getKey());
+
+                int numberOfDaysInArrearsLimit = 90;
+                if(loan.isOverdue() && DateUtils.daysBetween(DateUtils.getLocalDateOfTenant(), loan.getOverdueSince()) > numberOfDaysInArrearsLimit){
+                    throw new GeneralPlatformDomainRuleException("error.msg.loan.is.overdue.unacceptable.time",
+                            "Loan accrual transaction cannot be added because loan is overdue for more than " + numberOfDaysInArrearsLimit);
+                }
                 this.loanAccrualWritePlatformService.addAccrualAccounting(mapEntry.getKey(), mapEntry.getValue());
             } catch (Exception e) {
                 Throwable realCause = e;
@@ -152,6 +163,13 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
             StringBuilder sb = new StringBuilder();
             for (Long loanId : loanIds) {
                 try {
+
+                    final Loan loan = this.loanAssembler.assembleFrom(loanId);
+                    int numberOfDaysInArrearsLimit = 90;
+                    if(loan.isOverdue() && DateUtils.daysBetween(DateUtils.getLocalDateOfTenant(), loan.getOverdueSince()) > numberOfDaysInArrearsLimit){
+                        throw new GeneralPlatformDomainRuleException("error.msg.loan.is.overdue.unacceptable.time",
+                                "Loan accrual transaction cannot be added because loan is overdue for more than " + numberOfDaysInArrearsLimit);
+                    }
                     this.loanAccrualWritePlatformService.addIncomeAndAccrualTransactions(loanId);
                 } catch (Exception e) {
                     Throwable realCause = e;

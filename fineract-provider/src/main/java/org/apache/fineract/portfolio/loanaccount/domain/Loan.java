@@ -6561,4 +6561,38 @@ public class Loan extends AbstractPersistableCustom<Long> {
     public void setAccruedTill(Date accruedTill) {
         this.accruedTill = accruedTill;
     }
+
+    public Boolean isOverdue(){
+        List<LoanRepaymentScheduleInstallment> installments = this.getRepaymentScheduleInstallments();
+        for (LoanRepaymentScheduleInstallment installment : installments) {
+            if (installment.isNotFullyPaidOff() && installment.getDueDate().isBefore(DateUtils.getLocalDateOfTenant())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public LocalDate getOverdueSince(){
+        List<LoanRepaymentScheduleInstallment> installments = this.getRepaymentScheduleInstallments();
+        BigDecimal principalOverdue = BigDecimal.ZERO;
+        BigDecimal interestOverdue = BigDecimal.ZERO;
+        BigDecimal feeOverdue = BigDecimal.ZERO;
+        BigDecimal penaltyOverdue = BigDecimal.ZERO;
+        LocalDate overDueSince = DateUtils.getLocalDateOfTenant();
+        for (LoanRepaymentScheduleInstallment installment : installments) {
+            if (installment.getDueDate().isBefore(DateUtils.getLocalDateOfTenant())) {
+                principalOverdue = principalOverdue.add(installment.getPrincipalOutstanding(this.getCurrency()).getAmount());
+                interestOverdue = interestOverdue.add(installment.getInterestOutstanding(this.getCurrency()).getAmount());
+                feeOverdue = feeOverdue.add(installment.getFeeChargesOutstanding(this.getCurrency()).getAmount());
+                penaltyOverdue = penaltyOverdue.add(installment.getPenaltyChargesOutstanding(this.getCurrency()).getAmount());
+                if (installment.isNotFullyPaidOff() && overDueSince.isAfter(installment.getDueDate())) {
+                    overDueSince = installment.getDueDate();
+                }
+            }
+        }
+
+        //BigDecimal totalOverDue = principalOverdue.add(interestOverdue).add(feeOverdue).add(penaltyOverdue);
+        return overDueSince;
+    }
 }

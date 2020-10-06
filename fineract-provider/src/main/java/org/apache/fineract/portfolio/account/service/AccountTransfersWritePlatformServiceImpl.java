@@ -186,6 +186,10 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
             fromSavingsAccountNumber = fromSavingsAccount.getAccountNumber();
+            if(fromSavingsAccount.getSummary().getAccountBalance(fromSavingsAccount.getCurrency()).minus(transactionAmount).isLessThanZero()){
+                throw new InsufficientAccountBalanceException("transactionAmount",fromSavingsAccount.getSummary().getAccountBalance(),null,
+                        transactionAmount);
+            }
 
             final Long toLoanAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
             final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountId);
@@ -258,6 +262,10 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
             fromSavingsAccountNumber = fromSavingsAccount.getAccountNumber();
+            if(fromSavingsAccount.getSummary().getAccountBalance(fromSavingsAccount.getCurrency()).minus(transactionAmount).isLessThanZero()){
+                throw new InsufficientAccountBalanceException("transactionAmount",fromSavingsAccount.getSummary().getAccountBalance(),null,
+                        transactionAmount);
+            }
 
             final Long toLoanAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
             final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountId);

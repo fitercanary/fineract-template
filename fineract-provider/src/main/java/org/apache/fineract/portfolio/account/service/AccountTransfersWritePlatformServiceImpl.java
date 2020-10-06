@@ -18,6 +18,9 @@
  */
 package org.apache.fineract.portfolio.account.service;
 
+import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyConstant;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationProperty;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -93,6 +96,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private final LoanReadPlatformService loanReadPlatformService;
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
     private final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService;
+    private final GlobalConfigurationRepositoryWrapper globalConfigurationRepositoryWrapper;
 
     @Autowired
     public AccountTransfersWritePlatformServiceImpl(final AccountTransfersDataValidator accountTransfersDataValidator,
@@ -102,7 +106,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final AccountTransferDetailRepository accountTransferDetailRepository, final LoanReadPlatformService loanReadPlatformService,
             final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
-            final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService) {
+            final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService,
+                                                    final GlobalConfigurationRepositoryWrapper globalConfigurationRepositoryWrapper) {
         this.accountTransfersDataValidator = accountTransfersDataValidator;
         this.accountTransferAssembler = accountTransferAssembler;
         this.accountTransferRepository = accountTransferRepository;
@@ -115,6 +120,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         this.loanReadPlatformService = loanReadPlatformService;
         this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
         this.loanScheduleHistoryWritePlatformService = loanScheduleHistoryWritePlatformService;
+        this.globalConfigurationRepositoryWrapper = globalConfigurationRepositoryWrapper;
     }
 
     @Transactional
@@ -186,7 +192,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
             fromSavingsAccountNumber = fromSavingsAccount.getAccountNumber();
-            if(fromSavingsAccount.getSummary().getAccountBalance(fromSavingsAccount.getCurrency()).minus(transactionAmount).isLessThanZero()){
+
+            GlobalConfigurationProperty allowLoanRepaymentThroughOverdraftProperty = globalConfigurationRepositoryWrapper.
+                    findOneByNameWithNotFoundDetection(GlobalConfigurationPropertyConstant.ALLOW_LOAN_REPAYMENT_THROUGH_OVERDRAFT);
+            boolean allowLoanRepaymentThroughOverdraft = allowLoanRepaymentThroughOverdraftProperty.getValue() == 1 ? true : false;
+            if( !allowLoanRepaymentThroughOverdraft && fromSavingsAccount.getSummary().getAccountBalance(fromSavingsAccount.getCurrency()).minus(transactionAmount).isLessThanZero()){
                 throw new InsufficientAccountBalanceException("transactionAmount",fromSavingsAccount.getSummary().getAccountBalance(),null,
                         transactionAmount);
             }
@@ -443,8 +453,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 toLoanAccount = accountTransferDetails.toLoanAccount();
                 this.loanAccountAssembler.setHelpers(toLoanAccount);
             }
+            GlobalConfigurationProperty allowLoanRepaymentThroughOverdraftProperty = globalConfigurationRepositoryWrapper.
+                    findOneByNameWithNotFoundDetection(GlobalConfigurationPropertyConstant.ALLOW_LOAN_REPAYMENT_THROUGH_OVERDRAFT);
+            boolean allowLoanRepaymentThroughOverdraft = allowLoanRepaymentThroughOverdraftProperty.getValue() == 1 ? true : false;
 
-            if(fromSavingsAccount.getSummary().getAccountBalance(toLoanAccount.getCurrency()).minus(accountTransferDTO.getTransactionAmount()).isLessThanZero()){
+            if( !allowLoanRepaymentThroughOverdraft && fromSavingsAccount.getSummary().getAccountBalance(toLoanAccount.getCurrency()).minus(accountTransferDTO.getTransactionAmount()).isLessThanZero()){
                 throw new InsufficientAccountBalanceException("transactionAmount",fromSavingsAccount.getSummary().getAccountBalance(),null,
                         accountTransferDTO.getTransactionAmount());
             }

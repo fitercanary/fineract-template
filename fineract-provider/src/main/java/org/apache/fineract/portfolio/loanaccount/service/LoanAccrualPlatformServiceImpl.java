@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyConstant;
 import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationProperty;
 import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
@@ -94,7 +95,7 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
         for (Map.Entry<Long, Collection<LoanScheduleAccrualData>> mapEntry : loanDataMap.entrySet()) {
             try {
                 final Loan loan = this.loanAssembler.assembleFrom(mapEntry.getKey());
-                GlobalConfigurationProperty daysInArrearsProperty = repository.findOneByNameWithNotFoundDetection("stop-interest-accrual-for-loan-in-arrears");
+                GlobalConfigurationProperty daysInArrearsProperty = repository.findOneByNameWithNotFoundDetection(GlobalConfigurationPropertyConstant.STOP_INTEREST_ACCRUAL_FOR_LOAN_IN_ARREARS);
 
                 Long numberOfDaysInArrearsLimit = daysInArrearsProperty.getValue();
                 if(loan.isOverdue() && DateUtils.daysBetween(DateUtils.getLocalDateOfTenant(), loan.getOverdueSince()) > numberOfDaysInArrearsLimit.intValue()){

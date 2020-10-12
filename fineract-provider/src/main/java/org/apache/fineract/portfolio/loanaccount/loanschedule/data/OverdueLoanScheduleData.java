@@ -31,6 +31,8 @@ public class OverdueLoanScheduleData {
     private final BigDecimal principalOverdue;
     private final BigDecimal interestOverdue;
     private final Integer periodNumber;
+    private final BigDecimal feeOverdue;
+    private final BigDecimal penaltyOverdue;
 
     public OverdueLoanScheduleData(final Long loanId, final Long chargeId, final String dueDate, final BigDecimal amount,
             final String dateFormat, final String locale, final BigDecimal principalOverdue, final BigDecimal interestOverdue,
@@ -44,6 +46,24 @@ public class OverdueLoanScheduleData {
         this.principalOverdue = principalOverdue;
         this.interestOverdue = interestOverdue;
         this.periodNumber = periodNumber;
+        this.feeOverdue = null;
+        this.penaltyOverdue = null;
+    }
+
+    public OverdueLoanScheduleData(final Long loanId, final Long chargeId, final String dueDate, final BigDecimal amount,
+                                   final String dateFormat, final String locale, final BigDecimal principalOverdue, final BigDecimal interestOverdue,
+                                   final Integer periodNumber, final BigDecimal feeOverdue, final BigDecimal penaltyOverdue) {
+        this.loanId = loanId;
+        this.chargeId = chargeId;
+        this.dueDate = dueDate;
+        this.amount = amount;
+        this.dateFormat = dateFormat;
+        this.locale = locale;
+        this.principalOverdue = principalOverdue;
+        this.interestOverdue = interestOverdue;
+        this.periodNumber = periodNumber;
+        this.feeOverdue = feeOverdue;
+        this.penaltyOverdue = penaltyOverdue;
     }
 
     public Long getLoanId() {
@@ -79,7 +99,7 @@ public class OverdueLoanScheduleData {
     public String toString() {
         return "{" + "chargeId:" + this.chargeId + ", locale:'" + this.locale + '\'' + ", amount:" + this.amount + ", dateFormat:'"
                 + this.dateFormat + '\'' + ", dueDate:'" + this.dueDate + '\'' + ", principal:'" + this.principalOverdue + '\''
-                + ", interest:'" + this.interestOverdue + '\'' + '}';
+                + ", interest:'" + this.interestOverdue + '\'' + ", fee:'" + this.feeOverdue + '\'' + ", penalty:'" + this.penaltyOverdue + '\'' + '}';
     }
 
 }

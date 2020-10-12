@@ -1019,9 +1019,27 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final BigDecimal interestActualDue = interestExpectedDue.subtract(interestWaived).subtract(interestWrittenOff);
             final BigDecimal interestOutstanding = interestActualDue.subtract(interestPaid);
 
+            //fees
+            final BigDecimal feeChargesDue = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesDue");
+            final BigDecimal feeChargesPaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesPaid");
+            final BigDecimal feeChargesWaived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesWaived");
+            final BigDecimal feeChargesWrittenOff = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesWrittenOff");
+
+            final BigDecimal feeActualDue = feeChargesDue.subtract(feeChargesWaived).subtract(feeChargesWrittenOff);
+            final BigDecimal feeOutstanding = feeActualDue.subtract(feeChargesPaid);
+
+            //penalty
+            final BigDecimal penaltyChargesDue = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesDue");
+            final BigDecimal penaltyChargesPaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesPaid");
+            final BigDecimal penaltyChargesWaived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesWaived");
+            final BigDecimal penaltyChargesWrittenOff = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesWrittenOff");
+
+            final BigDecimal penaltyActualDue = penaltyChargesDue.subtract(penaltyChargesWaived).subtract(penaltyChargesWrittenOff);
+            final BigDecimal penaltyOutstanding = penaltyActualDue.subtract(penaltyChargesPaid);
+
             final Integer installmentNumber = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "period");
             final OverdueLoanScheduleData overdueLoanScheduleData = new OverdueLoanScheduleData(loanId, chargeId, dueDate, amount,
-                    dateFormat, locale, principalOutstanding, interestOutstanding, installmentNumber);
+                    dateFormat, locale, principalOutstanding, interestOutstanding, installmentNumber, feeOutstanding, penaltyOutstanding);
 
             return overdueLoanScheduleData;
         }

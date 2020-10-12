@@ -896,6 +896,16 @@ public class Loan extends AbstractPersistableCustom<Long> {
                     amount = getPrincpal().getAmount();
                 }
             break;
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
+                final BigDecimal totalInterestChargedu = getTotalInterest();
+                final BigDecimal totalFeeCharged = getTotalFeeCharged();
+                final BigDecimal totalPenaltyCharged = getTotalPenaltyCharged();
+                if (isMultiDisburmentLoan() && loanCharge.isDisbursementCharge()) {
+                    amount = getTotalAllTrancheDisbursementAmount().getAmount().add(totalInterestChargedu).add(totalFeeCharged).add(totalPenaltyCharged);
+                } else {
+                    amount = getPrincpal().getAmount().add(totalInterestChargedu).add(totalFeeCharged).add(totalPenaltyCharged);
+                }
+                break;
             default:
             break;
         }
@@ -968,6 +978,10 @@ public class Loan extends AbstractPersistableCustom<Long> {
             break;
             case PERCENT_OF_INTEREST:
                 percentOf = installment.getInterestCharged(getCurrency());
+            break;
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
+                percentOf = installment.getPrincipal(getCurrency()).plus(installment.getInterestCharged(getCurrency())).
+                        plus(installment.getFeeChargesCharged(getCurrency())).plus(installment.getPenaltyChargesCharged(getCurrency()));
             break;
             default:
             break;
@@ -1682,6 +1696,10 @@ public class Loan extends AbstractPersistableCustom<Long> {
             break;
             case PERCENT_OF_INTEREST:
                 amount = installment.getInterestOutstanding(getCurrency());
+            break;
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
+                amount = installment.getPrincipalOutstanding(getCurrency()).plus(installment.getInterestOutstanding(getCurrency())).
+                        plus(installment.getFeeChargesCharged(getCurrency())).plus(installment.getPenaltyChargesCharged(getCurrency()));
             break;
             default:
             break;
@@ -6594,5 +6612,19 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
         //BigDecimal totalOverDue = principalOverdue.add(interestOverdue).add(feeOverdue).add(penaltyOverdue);
         return overDueSince;
+    }
+
+    /**
+     * @return
+     */
+    public BigDecimal getTotalFeeCharged() {
+        return this.loanSummaryWrapper.calculateTotalFeeChargesCharged(getRepaymentScheduleInstallments(), getCurrency()).getAmount();
+    }
+
+    /**
+     * @return
+     */
+    public BigDecimal getTotalPenaltyCharged() {
+        return this.loanSummaryWrapper.calculateTotalPenaltyChargesCharged(getRepaymentScheduleInstallments(), getCurrency()).getAmount();
     }
 }

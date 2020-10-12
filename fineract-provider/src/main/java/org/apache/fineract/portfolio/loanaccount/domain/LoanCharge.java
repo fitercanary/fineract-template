@@ -168,6 +168,17 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                     amountPercentageAppliedTo = loan.getTotalInterest();
                 }
             break;
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
+                if (command.hasParameter("principal") && command.hasParameter("interest")
+                        && command.hasParameter("fee") && command.hasParameter("penalty")) {
+                    amountPercentageAppliedTo = command.bigDecimalValueOfParameterNamed("principal")
+                            .add(command.bigDecimalValueOfParameterNamed("interest")).add(command.bigDecimalValueOfParameterNamed("fee")
+                                    .add(command.bigDecimalValueOfParameterNamed("penalty")));
+                } else {
+                    amountPercentageAppliedTo = loan.getPrincpal().getAmount().add(loan.getTotalInterest()).add(loan.getTotalFeeCharged())
+                    .add(loan.getTotalPenaltyCharged());
+                }
+                break;
             default:
             break;
         }
@@ -306,6 +317,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
         }
         this.amountOrPercentage = chargeAmount;
         if (this.loan != null && isInstalmentFee()) {
@@ -410,6 +422,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                     }
                     this.amount = minimumAndMaximumCap(loanCharge);
                 break;
+                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
             }
             this.amountOrPercentage = amount;
             this.amountOutstanding = calculateOutstanding();
@@ -449,6 +462,10 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                     LoanTrancheDisbursementCharge loanTrancheDisbursementCharge = this.loanTrancheDisbursementCharge;
                     amountPercentageAppliedTo = loanTrancheDisbursementCharge.getloanDisbursementDetails().principal();
                 break;
+                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
+                    amountPercentageAppliedTo = this.loan.getPrincpal().getAmount().add(this.loan.getTotalInterest()).add(this.loan.getTotalFeeCharged())
+                    .add(this.loan.getTotalPenaltyCharged());
+                    break;
                 default:
                 break;
             }
@@ -508,6 +525,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                     this.amount = minimumAndMaximumCap(loanCharge);
                     this.amountOutstanding = calculateOutstanding();
                 break;
+                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
             }
             this.amountOrPercentage = newValue;
             if (isInstalmentFee()) {

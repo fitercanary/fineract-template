@@ -97,6 +97,7 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
                     sb.append("Apply Charges due for overdue loans failed for account:").append(loanId).append(" with message ")
                             .append(ex.getDefaultUserMessage());
                 } catch (Exception e) {
+                	e.printStackTrace();
                     Throwable realCause = e;
                     if (e.getCause() != null) {
                         realCause = e.getCause();

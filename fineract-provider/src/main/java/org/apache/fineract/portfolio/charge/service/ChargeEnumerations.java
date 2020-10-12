@@ -172,6 +172,10 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().longValue(),
                         ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getCode(), "% Disbursement Amount");
             break;
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
+                optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES.getValue().longValue(),
+                        ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES.getCode(), "% Loan Amount + Interest + Fees + Penalty");
+            break;
             default:
                 optionData = new EnumOptionData(ChargeCalculationType.INVALID.getValue().longValue(),
                         ChargeCalculationType.INVALID.getCode(), "Invalid");

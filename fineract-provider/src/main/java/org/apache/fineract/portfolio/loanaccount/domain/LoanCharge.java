@@ -305,6 +305,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
             case PERCENT_OF_AMOUNT:
             case PERCENT_OF_AMOUNT_AND_INTEREST:
             case PERCENT_OF_INTEREST:
+            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
             case PERCENT_OF_DISBURSEMENT_AMOUNT:
                 this.percentage = chargeAmount;
                 this.amountPercentageAppliedTo = amountPercentageAppliedTo;
@@ -317,7 +318,6 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
-            case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
         }
         this.amountOrPercentage = chargeAmount;
         if (this.loan != null && isInstalmentFee()) {
@@ -414,6 +414,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                 case PERCENT_OF_AMOUNT:
                 case PERCENT_OF_AMOUNT_AND_INTEREST:
                 case PERCENT_OF_INTEREST:
+                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
                 case PERCENT_OF_DISBURSEMENT_AMOUNT:
                     this.percentage = amount;
                     this.amountPercentageAppliedTo = loanPrincipal;
@@ -422,7 +423,6 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                     }
                     this.amount = minimumAndMaximumCap(loanCharge);
                 break;
-                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
             }
             this.amountOrPercentage = amount;
             this.amountOutstanding = calculateOutstanding();
@@ -511,6 +511,7 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                 case PERCENT_OF_AMOUNT:
                 case PERCENT_OF_AMOUNT_AND_INTEREST:
                 case PERCENT_OF_INTEREST:
+                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
                 case PERCENT_OF_DISBURSEMENT_AMOUNT:
                     this.percentage = newValue;
                     this.amountPercentageAppliedTo = amount;
@@ -525,7 +526,6 @@ public class LoanCharge extends AbstractPersistableCustom<Long> {
                     this.amount = minimumAndMaximumCap(loanCharge);
                     this.amountOutstanding = calculateOutstanding();
                 break;
-                case PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES:
             }
             this.amountOrPercentage = newValue;
             if (isInstalmentFee()) {

@@ -91,7 +91,7 @@ public enum ChargeCalculationType {
             break;
             case 6:
                 chargeCalculationType = PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES;
-                break;
+            break;
         }
         return chargeCalculationType;
     }

@@ -82,7 +82,12 @@ public class LoanRepaymentScheduleProcessingWrapper {
                                     .add(period.getInterestCharged(monetaryCurrency).getAmount());
                         } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
                             amount = amount.add(period.getInterestCharged(monetaryCurrency).getAmount());
-                        } else {
+                        } else if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterestAndFeesAndPenalties()) {
+                            amount = amount.add(period.getPrincipal(monetaryCurrency).getAmount())
+                                    .add(period.getInterestCharged(monetaryCurrency).getAmount())
+                                    .add(period.getFeeChargesCharged(monetaryCurrency).getAmount())
+                                    .add(period.getPenaltyChargesCharged(monetaryCurrency).getAmount());
+                        }else {
                             amount = amount.add(period.getPrincipal(monetaryCurrency).getAmount());
                         }
                         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
@@ -103,7 +108,12 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         amount = amount.add(totalPrincipal.getAmount()).add(totalInterest.getAmount());
                     } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
                         amount = amount.add(totalInterest.getAmount());
-                    } else {
+                    } else if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterestAndFeesAndPenalties()) {
+                        amount = amount.add(period.getPrincipal(monetaryCurrency).getAmount())
+                                .add(period.getInterestCharged(monetaryCurrency).getAmount())
+                                .add(period.getFeeChargesCharged(monetaryCurrency).getAmount())
+                                .add(period.getPenaltyChargesCharged(monetaryCurrency).getAmount());
+                    }else {
                         // If charge type is specified due date and loan is
                         // multi disburment loan.
                         // Then we need to get as of this loan charge due date
@@ -190,7 +200,12 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest()) {
                             amount = amount.add(period.getPrincipal(currency).getAmount())
                                     .add(period.getInterestCharged(currency).getAmount());
-                        } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
+                        } else if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterestAndFeesAndPenalties()) {
+                            amount = amount.add(period.getPrincipal(currency).getAmount())
+                                    .add(period.getInterestCharged(currency).getAmount())
+                                    .add(period.getFeeChargesCharged(currency).getAmount())
+                                    .add(period.getPenaltyChargesCharged(currency).getAmount());
+                        }else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
                             amount = amount.add(period.getInterestCharged(currency).getAmount());
                         } else {
                             amount = amount.add(period.getPrincipal(currency).getAmount());
@@ -213,7 +228,12 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         amount = amount.add(totalPrincipal.getAmount()).add(totalInterest.getAmount());
                     } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
                         amount = amount.add(totalInterest.getAmount());
-                    } else {
+                    } else if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterestAndFeesAndPenalties()) {
+                        amount = amount.add(period.getPrincipal(currency).getAmount())
+                                .add(period.getInterestCharged(currency).getAmount())
+                                .add(period.getFeeChargesCharged(currency).getAmount())
+                                .add(period.getPenaltyChargesCharged(currency).getAmount());
+                    }else {
                         amount = amount.add(totalPrincipal.getAmount());
                     }
                     BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));

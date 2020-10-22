@@ -195,9 +195,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         sqlBuilder.append(this.savingAccountMapper.schema());
 
         sqlBuilder.append(" join m_office o on o.id = c.office_id");
-        sqlBuilder.append(" join m_client cl ON cl.id = sa.client_id ");
-        sqlBuilder.append(" join m_staff st ON st.id = cl.staff_id ");
-        sqlBuilder.append(" join m_appuser aus ON aus.staff_id = st.id ");
+        //sqlBuilder.append(" join m_client cl ON cl.id = sa.client_id ");
+        //sqlBuilder.append(" join m_staff st ON st.id = cl.staff_id ");
+        //sqlBuilder.append(" join m_appuser aus ON aus.staff_id = st.id ");
         sqlBuilder.append(" where o.hierarchy like ?");
 
         final Boolean allowedToReadAllAccounts = currentUser.hasPermissionTo(SavingsApiConstants.READ_ALL_SAVINGSACCOUNT_PERMISSIONS);

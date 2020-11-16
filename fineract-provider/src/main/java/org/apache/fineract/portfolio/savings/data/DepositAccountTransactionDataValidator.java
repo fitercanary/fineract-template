@@ -90,7 +90,7 @@ public class DepositAccountTransactionDataValidator {
     private static final Set<String> DEPOSIT_ACCOUNT_PARTIAL_LIQUIDATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, DepositsApiConstants.submittedOnDateParamName,
             DepositsApiConstants.noteParamName, DepositsApiConstants.depositPeriodParamName,
-            DepositsApiConstants.depositPeriodFrequencyIdParamName, DepositsApiConstants.liquidationAmountParamName));
+            DepositsApiConstants.depositPeriodFrequencyIdParamName, DepositsApiConstants.liquidationAmountParamName,DepositsApiConstants.interestRateParamName));
 
     private static final Set<String> DEPOSIT_ACCOUNT_TOP_UP_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, DepositsApiConstants.submittedOnDateParamName,
@@ -282,6 +282,10 @@ public class DepositAccountTransactionDataValidator {
             baseDataValidator.reset().parameter(DepositsApiConstants.liquidationAmountParamName)
                     .failWithCode("liquidation.amount.must.be.less.than.maturity.amount");
         }
+
+        final BigDecimal interestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(DepositsApiConstants.interestRateParamName, element);
+        baseDataValidator.reset().parameter(DepositsApiConstants.interestRateParamName).value(interestRate).notLessThanMin(BigDecimal.ONE).notNull();
+
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

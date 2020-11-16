@@ -190,6 +190,8 @@ public class DepositsApiConstants {
     public static final String closureOnParamName = "closureOn";
     public static final String transferParamName = "transfer";
     public static final String withdrawParamName = "withdraw";
+
+    public static final String interestRateParamName = "interestRate";
     
 
     /**

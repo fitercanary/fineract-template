@@ -880,10 +880,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         fixedDepositApplicationReq.setFixedDepositApplicationPreClosureReq(this.generateFixedDepositApplicationPreClosureReq(account));
 
         if(command.bigDecimalValueOfParameterNamed(DepositsApiConstants.interestRateParamName) != null){
-            
+            fixedDepositApplicationReq.setInterestRateSet(true);
+            fixedDepositApplicationReq.setInterestRate(command.bigDecimalValueOfParameterNamed(DepositsApiConstants.interestRateParamName));
         }
-        fixedDepositApplicationReq.setInterestRateSet(true);
-        fixedDepositApplicationReq.setInterestRate(command.bigDecimalValueOfParameterNamed(DepositsApiConstants.interestRateParamName));
 
         return fixedDepositApplicationReq;
     }

@@ -95,7 +95,7 @@ public class DepositAccountTransactionDataValidator {
     private static final Set<String> DEPOSIT_ACCOUNT_TOP_UP_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             DepositsApiConstants.localeParamName, DepositsApiConstants.dateFormatParamName, DepositsApiConstants.submittedOnDateParamName,
             DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName,
-            DepositsApiConstants.depositAmountParamName, DepositsApiConstants.changeTenureParamName));
+            DepositsApiConstants.depositAmountParamName, DepositsApiConstants.changeTenureParamName, DepositsApiConstants.interestRateParamName));
 
     private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName));

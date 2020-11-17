@@ -731,34 +731,39 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
      * @param fixedDepositApplicationReq
      */
     private void setEffectiveInterestRate(FixedDepositAccount account, FixedDepositApplicationReq fixedDepositApplicationReq) {
-        SavingsInterestCalculationDaysInYearType daysInYearType = account.getProduct().interestCalculationDaysInYearType();
-        if (daysInYearType.isActual()) {
-            Year year;
-            if (account.getAccountTermAndPreClosure().getMaturityLocalDate() != null) {
-                year = Year.of(account.getAccountTermAndPreClosure().getMaturityLocalDate().getYear());
-            } else {
-                year = Year.of(LocalDate.now().getYear());
+        if(fixedDepositApplicationReq.isInterestRateSet() ){
+            fixedDepositApplicationReq.setInterestRateSet(true);
+            fixedDepositApplicationReq.setInterestRate(fixedDepositApplicationReq.getInterestRate());
+        }else {
+            SavingsInterestCalculationDaysInYearType daysInYearType = account.getProduct().interestCalculationDaysInYearType();
+            if (daysInYearType.isActual()) {
+                Year year;
+                if (account.getAccountTermAndPreClosure().getMaturityLocalDate() != null) {
+                    year = Year.of(account.getAccountTermAndPreClosure().getMaturityLocalDate().getYear());
+                } else {
+                    year = Year.of(LocalDate.now().getYear());
+                }
+                daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
             }
-            daysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(year.length());
+            BigDecimal topUpAmount = fixedDepositApplicationReq.getDepositAmount()
+                    .subtract(account.getAccountTermAndPreClosure().depositAmount());
+            BigDecimal interestEarnedOnExisting = this.calculateInterest(account.getAccountTermAndPreClosure().depositAmount(),
+                    account.getOriginalInterestRate(), fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
+            BigDecimal applicableInterestRate = account.getChart().getApplicableInterestRate(fixedDepositApplicationReq.getDepositAmount(),
+                    fixedDepositApplicationReq.getSubmittedOnDate(),
+                    fixedDepositApplicationReq.getSubmittedOnDate().plusDays(fixedDepositApplicationReq.getDepositPeriod()),
+                    account.getClient());
+            BigDecimal interestEarnedOnNew = this.calculateInterest(topUpAmount, applicableInterestRate,
+                    fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
+            BigDecimal interestSum = interestEarnedOnExisting.add(interestEarnedOnNew);
+            BigDecimal principalSum = account.getAccountTermAndPreClosure().depositAmount().add(topUpAmount);
+            BigDecimal effectiveRate = interestSum.divide(principalSum, MathContext.DECIMAL64)
+                    .multiply(BigDecimal.valueOf(daysInYearType.getValue()))
+                    .divide(BigDecimal.valueOf(fixedDepositApplicationReq.getDepositPeriod()), MathContext.DECIMAL64)
+                    .multiply(BigDecimal.valueOf(100));
+            fixedDepositApplicationReq.setInterestRateSet(true);
+            fixedDepositApplicationReq.setInterestRate(effectiveRate);
         }
-        BigDecimal topUpAmount = fixedDepositApplicationReq.getDepositAmount()
-                .subtract(account.getAccountTermAndPreClosure().depositAmount());
-        BigDecimal interestEarnedOnExisting = this.calculateInterest(account.getAccountTermAndPreClosure().depositAmount(),
-                account.getOriginalInterestRate(), fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
-        BigDecimal applicableInterestRate = account.getChart().getApplicableInterestRate(fixedDepositApplicationReq.getDepositAmount(),
-                fixedDepositApplicationReq.getSubmittedOnDate(),
-                fixedDepositApplicationReq.getSubmittedOnDate().plusDays(fixedDepositApplicationReq.getDepositPeriod()),
-                account.getClient());
-        BigDecimal interestEarnedOnNew = this.calculateInterest(topUpAmount, applicableInterestRate,
-                fixedDepositApplicationReq.getDepositPeriod(), daysInYearType.getValue());
-        BigDecimal interestSum = interestEarnedOnExisting.add(interestEarnedOnNew);
-        BigDecimal principalSum = account.getAccountTermAndPreClosure().depositAmount().add(topUpAmount);
-        BigDecimal effectiveRate = interestSum.divide(principalSum, MathContext.DECIMAL64)
-                .multiply(BigDecimal.valueOf(daysInYearType.getValue()))
-                .divide(BigDecimal.valueOf(fixedDepositApplicationReq.getDepositPeriod()), MathContext.DECIMAL64)
-                .multiply(BigDecimal.valueOf(100));
-        fixedDepositApplicationReq.setInterestRateSet(true);
-        fixedDepositApplicationReq.setInterestRate(effectiveRate);
     }
 
     private BigDecimal calculateInterest(BigDecimal principal, BigDecimal interestRate, int depositPeriod, int daysInYear) {

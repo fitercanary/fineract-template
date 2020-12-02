@@ -49,7 +49,7 @@ jobs:
           tags: "latest"
 
       - name: Deploy to demo server
-        if endsWith(github.ref, '/canary-dev')
+        if: endsWith(github.ref, '/canary-dev')
         run: |
           echo "$TEST_SERVER_SSH_KEY" > key.pem
           chmod 400 key.pem
@@ -60,7 +60,7 @@ jobs:
           TEST_SERVER_URL: ${{ secrets.CANARY_SERVER_URL }}
 
       - name: Deploy to production server
-        if endsWith(github.ref, '/canary-prod')
+        if: endsWith(github.ref, '/canary-prod')
         run: |
           echo "$TEST_SERVER_SSH_KEY" > key.pem
           chmod 400 key.pem

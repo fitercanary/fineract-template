@@ -67,5 +67,5 @@ jobs:
           echo "Restart docker container...!!!"
           ssh -i key.pem -o StrictHostKeyChecking=no $TEST_SERVER_URL 'sudo /root/deploy-fineract.sh'
         env:
-          TEST_SERVER_SSH_KEY: ${{ secrets.CANARY_PROD_SERVER_SSH_KEY }}
+          TEST_SERVER_SSH_KEY: ${{ secrets.CANARY_SERVER_SSH_KEY }}
           TEST_SERVER_URL: ${{ secrets.CANARY_PROD_SERVER_URL }}

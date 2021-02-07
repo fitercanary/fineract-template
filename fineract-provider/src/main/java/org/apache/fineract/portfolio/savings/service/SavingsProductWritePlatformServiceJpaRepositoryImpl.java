@@ -18,11 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountingRuleParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargesParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +27,8 @@ import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -57,6 +54,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.*;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.savingsProductDepositCategoryParamName;
+
 @Service
 public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements SavingsProductWritePlatformService {
 
@@ -67,13 +67,14 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsProductAssembler savingsProductAssembler;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
     private final FineractEntityAccessUtil fineractEntityAccessUtil;
+    private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
 
     @Autowired
     public SavingsProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final SavingsProductRepository savingProductRepository, final SavingsProductDataValidator fromApiJsonDataValidator,
             final SavingsProductAssembler savingsProductAssembler,
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
-            final FineractEntityAccessUtil fineractEntityAccessUtil) {
+            final FineractEntityAccessUtil fineractEntityAccessUtil, final CodeValueRepositoryWrapper codeValueRepositoryWrapper) {
         this.context = context;
         this.savingProductRepository = savingProductRepository;
         this.fromApiJsonDataValidator = fromApiJsonDataValidator;
@@ -81,6 +82,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         this.logger = LoggerFactory.getLogger(SavingsProductWritePlatformServiceJpaRepositoryImpl.class);
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.fineractEntityAccessUtil = fineractEntityAccessUtil;
+        this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
     }
 
     /*
@@ -185,6 +187,16 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
                     .updateSavingsProductToGLAccountMapping(product.getId(), command, accountingTypeChanged, product.getAccountingType(),
                             DepositAccountType.SAVINGS_DEPOSIT);
             changes.putAll(accountingMappingChanges);
+
+            /* Savings Product Deposit Category Changes */
+            if (changes.containsKey(savingsProductDepositCategoryParamName)) {
+                final Long savingsProductDepositCategoryIdLongValue = command.longValueOfParameterNamed(savingsProductDepositCategoryParamName);
+                CodeValue savingsProductDepositCategory = null;
+                if (savingsProductDepositCategoryIdLongValue != null) {
+                    savingsProductDepositCategory = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(savingsProductDepositCategoryIdLongValue);
+                }
+                product.setSavingsProductDepositCategory(savingsProductDepositCategory);
+            }
 
             if (!changes.isEmpty()) {
                 this.savingProductRepository.saveAndFlush(product);

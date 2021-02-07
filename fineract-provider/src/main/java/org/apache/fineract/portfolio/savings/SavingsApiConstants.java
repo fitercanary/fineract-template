@@ -213,4 +213,7 @@ public class    SavingsApiConstants {
     
     // Permissions
     public static final String READ_ALL_SAVINGSACCOUNT_PERMISSIONS = "READ_ALL_SAVINGSACCOUNT";
+
+    // other
+    public static final String savingsProductDepositCategoryParamName = "savingsProductDepositCategory";
 }

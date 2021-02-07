@@ -21,6 +21,8 @@ package org.apache.fineract.portfolio.savings.domain;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.fineract.accounting.common.AccountingRuleType;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
@@ -32,11 +34,7 @@ import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeAppliedToExc
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.apache.fineract.portfolio.loanproduct.exception.InvalidCurrencyException;
-import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
-import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
-import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
-import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
-import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.*;
 import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationPreClosureReq;
 import org.apache.fineract.portfolio.savings.request.FixedDepositApplicationTermsReq;
 import org.apache.fineract.portfolio.tax.domain.TaxGroup;
@@ -95,13 +93,15 @@ public class DepositProductAssembler {
     private final ChargeRepositoryWrapper chargeRepository;
     private final InterestRateChartAssembler chartAssembler;
     private final TaxGroupRepositoryWrapper taxGroupRepository;
+    private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
 
     @Autowired
     public DepositProductAssembler(final ChargeRepositoryWrapper chargeRepository, final InterestRateChartAssembler chartAssembler,
-            final TaxGroupRepositoryWrapper taxGroupRepository) {
+            final TaxGroupRepositoryWrapper taxGroupRepository, final CodeValueRepositoryWrapper codeValueRepositoryWrapper) {
         this.chargeRepository = chargeRepository;
         this.chartAssembler = chartAssembler;
         this.taxGroupRepository = taxGroupRepository;
+        this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
     }
 
     public FixedDepositProduct assembleFixedDepositProduct(final JsonCommand command) {
@@ -183,10 +183,16 @@ public class DepositProductAssembler {
             taxGroup = this.taxGroupRepository.findOneWithNotFoundDetection(taxGroupId);
         }
 
+        final Long savingsProductDepositCategoryValue = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductDepositCategoryParamName);
+        CodeValue savingsProductDepositCategory = null;
+        if(savingsProductDepositCategoryValue != null) {
+            savingsProductDepositCategory = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(savingsProductDepositCategoryValue);
+        }
+
         FixedDepositProduct fixedDepositProduct = FixedDepositProduct.createNew(name, shortName, description, currency, interestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges, productTermAndPreClosure, charts,
-                minBalanceForInterestCalculation, withHoldTax, taxGroup);
+                minBalanceForInterestCalculation, withHoldTax, taxGroup, savingsProductDepositCategory);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(fixedDepositProduct);
@@ -274,10 +280,17 @@ public class DepositProductAssembler {
         final boolean withHoldTax = command.booleanPrimitiveValueOfParameterNamed(withHoldTaxParamName);
         final TaxGroup taxGroup = assembleTaxGroup(command);
 
+        final Long savingsProductDepositCategoryValue = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductDepositCategoryParamName);
+        CodeValue savingsProductDepositCategory = null;
+        if(savingsProductDepositCategoryValue != null) {
+            savingsProductDepositCategory = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(savingsProductDepositCategoryValue);
+        }
+
         RecurringDepositProduct recurringDepositProduct = RecurringDepositProduct.createNew(name, shortName, description, currency,
                 interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges,
-                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation, taxGroup, withHoldTax);
+                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation, taxGroup, withHoldTax,
+                savingsProductDepositCategory);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(recurringDepositProduct);

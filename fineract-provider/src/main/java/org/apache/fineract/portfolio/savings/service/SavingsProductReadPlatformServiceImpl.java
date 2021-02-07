@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 import org.apache.fineract.accounting.common.AccountingEnumerations;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
@@ -138,10 +139,14 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.is_dormancy_tracking_active as isDormancyTrackingActive,");
             sqlBuilder.append("sp.days_to_inactive as daysToInactive,");
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy,");
-            sqlBuilder.append("sp.days_to_escheat as daysToEscheat ");
+            sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
+            sqlBuilder.append("sp.savings_product_deposit_category as savingsProductDepositCategoryId, ");
+            sqlBuilder.append("deposit_category.code_value as savingsProductDepositCategoryValue ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id  ");
+
+            sqlBuilder.append("left join m_code_value deposit_category on deposit_category.id=sp.savings_product_deposit_category ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -219,13 +224,20 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             final Long daysToInactive = JdbcSupport.getLong(rs, "daysToInactive");
             final Long daysToDormancy = JdbcSupport.getLong(rs, "daysToDormancy");
             final Long daysToEscheat = JdbcSupport.getLong(rs, "daysToEscheat");
-            
+
+            final Long savingsProductDepositCategoryId = JdbcSupport.getLong(rs,"savingsProductDepositCategoryId");
+
+            final String savingsProductDepositCategoryValue = rs.getString("savingsProductDepositCategoryValue");
+
+            final CodeValueData savingsProductDepositCategory = CodeValueData.instance(savingsProductDepositCategoryId, savingsProductDepositCategoryValue);
+
+
             return SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     accountingRuleType, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
-                    taxGroupData, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
+                    taxGroupData, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsProductDepositCategory);
         }
     }
 

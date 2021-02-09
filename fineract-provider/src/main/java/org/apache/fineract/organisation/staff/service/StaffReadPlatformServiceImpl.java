@@ -26,11 +26,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
+import org.apache.fineract.organisation.office.data.OfficeData;
+import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
+import org.apache.fineract.organisation.staff.api.StaffApiConstants;
 import org.apache.fineract.organisation.staff.data.StaffData;
 import org.apache.fineract.organisation.staff.exception.StaffNotFoundException;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
@@ -51,13 +56,18 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
     private final StaffLookupMapper lookupMapper = new StaffLookupMapper();
     private final StaffInOfficeHierarchyMapper staffInOfficeHierarchyMapper = new StaffInOfficeHierarchyMapper();
     private final ColumnValidator columnValidator;
+    private final OfficeReadPlatformService officeReadPlatformService;
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
     public StaffReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-    		final ColumnValidator columnValidator) {
+    		final ColumnValidator columnValidator, final OfficeReadPlatformService officeReadPlatformService,
+                                        final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.columnValidator = columnValidator;
+        this.officeReadPlatformService = officeReadPlatformService;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
     }
 
     private static final class StaffMapper implements RowMapper<StaffData> {
@@ -65,8 +75,15 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         public String schema() {
             return " s.id as id,s.office_id as officeId, o.name as officeName, s.firstname as firstname, s.lastname as lastname,"
                     + " s.display_name as displayName, s.is_loan_officer as isLoanOfficer, s.external_id as externalId, s.mobile_no as mobileNo,"
-            		+ " s.is_active as isActive, s.joining_date as joiningDate from m_staff s "
-                    + " join m_office o on o.id = s.office_id";
+            		+ " s.is_active as isActive, s.joining_date as joiningDate, "
+                    + " s.gender_cv_id as genderId, "
+                    + " gender_cv.code_value as genderCodeValue, "
+                    + " s.staff_category_cv_id as staffCategoryId, "
+                    + " staff_category_cv.code_value as staffCategoryCodeValue "
+                    + " from m_staff s "
+                    + " join m_office o on o.id = s.office_id"
+                    + " left join m_code_value gender_cv on gender_cv.id=s.gender_cv_id "
+                    + " left join m_code_value staff_category_cv on staff_category_cv.id=s.staff_category_cv_id ";
         }
 
         @Override
@@ -84,8 +101,18 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             final boolean isActive = rs.getBoolean("isActive");
             final LocalDate joiningDate = JdbcSupport.getLocalDate(rs, "joiningDate");
 
+            final Long genderId = JdbcSupport.getLong(rs,"genderId");
+            final String genderCodeValue = rs.getString("genderCodeValue");
+
+            final CodeValueData gender = CodeValueData.instance(genderId, genderCodeValue);
+
+            final Long staffCategoryId = JdbcSupport.getLong(rs,"staffCategoryId");
+            final String staffCategoryCodeValue = rs.getString("staffCategoryCodeValue");
+
+            final CodeValueData staffCategory = CodeValueData.instance(staffCategoryId, staffCategoryCodeValue);
+
             return StaffData.instance(id, firstname, lastname, displayName, officeId, officeName, isLoanOfficer, externalId, mobileNo,
-                    isActive, joiningDate);
+                    isActive, joiningDate, gender, staffCategory);
         }
     }
 
@@ -98,10 +125,14 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             sqlBuilder.append("s.id as id, s.office_id as officeId, ohierarchy.name as officeName,");
             sqlBuilder.append("s.firstname as firstname, s.lastname as lastname,");
             sqlBuilder.append("s.display_name as displayName, s.is_loan_officer as isLoanOfficer, s.external_id as externalId, ");
-            sqlBuilder.append("s.mobile_no as mobileNo, s.is_active as isActive, s.joining_date as joiningDate ");
+            sqlBuilder.append("s.mobile_no as mobileNo, s.is_active as isActive, s.joining_date as joiningDate, ");
+            sqlBuilder.append(" s.gender_cv_id as genderId, gender_cv.code_value as genderCodeValue, s.staff_category_cv_id as staffCategoryId, ");
+            sqlBuilder.append(" staff_category_cv.code_value as staffCategoryCodeValue ");
             sqlBuilder.append("from m_office o ");
             sqlBuilder.append("join m_office ohierarchy on o.hierarchy like concat(ohierarchy.hierarchy, '%') ");
             sqlBuilder.append("join m_staff s on s.office_id = ohierarchy.id and s.is_active=1 ");
+            sqlBuilder.append(" left join m_code_value gender_cv on gender_cv.id=s.gender_cv_id ");
+            sqlBuilder.append(" left join m_code_value staff_category_cv on staff_category_cv.id=s.staff_category_cv_id ");
 
             if (loanOfficersOnly) {
                 sqlBuilder.append("and s.is_loan_officer is true ");
@@ -126,9 +157,18 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             final String mobileNo = rs.getString("mobileNo");
             final boolean isActive = rs.getBoolean("isActive");
             final LocalDate joiningDate = JdbcSupport.getLocalDate(rs, "joiningDate");
+            final Long genderId = JdbcSupport.getLong(rs,"genderId");
+            final String genderCodeValue = rs.getString("genderCodeValue");
+
+            final CodeValueData gender = CodeValueData.instance(genderId, genderCodeValue);
+
+            final Long staffCategoryId = JdbcSupport.getLong(rs,"staffCategoryId");
+            final String staffCategoryCodeValue = rs.getString("staffCategoryCodeValue");
+
+            final CodeValueData staffCategory = CodeValueData.instance(staffCategoryId, staffCategoryCodeValue);
 
             return StaffData.instance(id, firstname, lastname, displayName, officeId, officeName, isLoanOfficer, externalId, mobileNo,
-                    isActive, joiningDate);
+                    isActive, joiningDate, gender, staffCategory);
         }
     }
 
@@ -310,5 +350,21 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         }
         return params.toArray();
         
+    }
+
+    @Override
+    public StaffData retrieveTemplate() {
+        this.context.authenticatedUser();
+
+        final Collection<OfficeData> offices = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
+
+        final Collection<OfficeData> allowedOffices = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
+
+        final Collection<CodeValueData> genderOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode(StaffApiConstants.GENDER);
+
+        final Collection<CodeValueData> staffCategoryOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode(StaffApiConstants.STAFF_CATEGORY);
+
+
+        return StaffData.templateData(allowedOffices, genderOptions, staffCategoryOptions);
     }
 }

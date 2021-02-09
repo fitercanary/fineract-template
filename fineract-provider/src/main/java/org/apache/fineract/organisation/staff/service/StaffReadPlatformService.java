@@ -39,4 +39,6 @@ public interface StaffReadPlatformService {
     Collection<StaffData> retrieveAllStaff(String sqlSearch, Long officeId, boolean loanOfficersOnly, String status);
     
     Object[] hasAssociatedItems(final Long staffId);
+
+    StaffData retrieveTemplate();
 }

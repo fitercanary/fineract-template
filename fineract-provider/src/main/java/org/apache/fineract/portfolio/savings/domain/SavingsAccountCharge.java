@@ -312,6 +312,15 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
+            case PERCENT_OF_TOTAL_WITHDRAWALS:
+                this.percentage = chargeAmount;
+                this.amountPercentageAppliedTo = transactionAmount;
+                this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
+                this.amountPaid = null;
+                this.amountOutstanding = calculateOutstanding();
+                this.amountWaived = null;
+                this.amountWrittenOff = null;
+                break;
         }
     }
 
@@ -453,6 +462,12 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                     this.amountPercentageAppliedTo = null;
                     this.amountOutstanding = null;
                 break;
+                case PERCENT_OF_TOTAL_WITHDRAWALS:
+                    this.percentage = amount;
+                    this.amount = null;
+                    this.amountPercentageAppliedTo = null;
+                    this.amountOutstanding = null;
+                    break;
             }
         }
     }
@@ -524,6 +539,12 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                     this.amountPercentageAppliedTo = null;
                     this.amountOutstanding = null;
                 break;
+                case PERCENT_OF_TOTAL_WITHDRAWALS:
+                    this.percentage = newValue;
+                    this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
+                    this.amountPercentageAppliedTo = null;
+                    this.amountOutstanding = null;
+                    break;
             }
         }
 

@@ -52,6 +52,7 @@ import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
 import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.Client;
@@ -1023,7 +1024,16 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository.findOneWithNotFoundDetection(savingsChargeId,
                 savingsAccountId);
 
-        final Map<String, Object> changes = savingsAccountCharge.update(command);
+        // calculate transaction amount
+
+        final BigDecimal transactionAmount;//= new BigDecimal(0);
+        if(ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
+            BigDecimal totalWithdrawals = savingsAccount.getSummary().getTotalWithdrawals();
+            transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+        }else{
+            transactionAmount = new BigDecimal(0);
+        }
+        final Map<String, Object> changes = savingsAccountCharge.update(command, transactionAmount);
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             final Locale locale = command.extractLocale();

@@ -232,7 +232,15 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             chargeAmount = amount;
         }
 
-        final BigDecimal transactionAmount = new BigDecimal(0);
+        // calculate transaction amount
+
+        final BigDecimal transactionAmount;//= new BigDecimal(0);
+        if(ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
+            BigDecimal totalWithdrawals = this.savingsAccount.getSummary().getTotalWithdrawals();
+            transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+        }else{
+            transactionAmount = new BigDecimal(0);
+        }
         logger.info("Before populateDerivedFields chargeAmount " + chargeAmount);
         populateDerivedFields(transactionAmount, chargeAmount);
 
@@ -472,7 +480,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
     }
 
-    public Map<String, Object> update(final JsonCommand command) {
+    public Map<String, Object> update(final JsonCommand command, final BigDecimal transactionAmount) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(7);
 
@@ -541,9 +549,9 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
                 break;
                 case PERCENT_OF_TOTAL_WITHDRAWALS:
                     this.percentage = newValue;
+                    this.amountPercentageAppliedTo = transactionAmount;
                     this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
-                    this.amountPercentageAppliedTo = null;
-                    this.amountOutstanding = null;
+                    this.amountOutstanding = calculateOutstanding();
                     break;
             }
         }
@@ -770,6 +778,8 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfAmount()) {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfInterest()) {
+            amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
+        }else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfTotalWithdrals()) {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         }
         this.amountOutstanding = amountPaybale;

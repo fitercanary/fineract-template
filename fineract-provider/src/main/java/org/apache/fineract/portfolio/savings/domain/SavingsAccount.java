@@ -2706,10 +2706,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         if (savingsAccountCharge.isAnnualFee() || savingsAccountCharge.isMonthlyFee() || savingsAccountCharge.isWeeklyFee()) {
             // update due date
-            if (isActive()) {
-                savingsAccountCharge.updateToNextDueDateFrom(getActivationLocalDate());
-            } else if (isApproved()) {
-                savingsAccountCharge.updateToNextDueDateFrom(getApprovedOnLocalDate());
+            if(!savingsAccountCharge.getChargeCalculation().equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue())) {
+                if (isActive()) {
+                    savingsAccountCharge.updateToNextDueDateFrom(getActivationLocalDate());
+                } else if (isApproved()) {
+                    savingsAccountCharge.updateToNextDueDateFrom(getApprovedOnLocalDate());
+                }
             }
         }
 
@@ -3779,5 +3781,29 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     public Boolean isNegativeBalance() {
         return this.getSummary().getAccountBalance(this.getCurrency()).isLessThanZero();
+    }
+
+    public BigDecimal getTotalWithdrawalsInMonth(LocalDate date){
+        List<SavingsAccountTransaction> trans = getTransactions();
+        BigDecimal totalWithdrawals = BigDecimal.ZERO;
+
+        for (final SavingsAccountTransaction transaction : trans) {
+            if ( transaction.isNotReversed() && transaction.isWithdrawal()  && sameMonth(date, transaction.getTransactionLocalDate())) {//transaction.isTransferWithdrawal()
+                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
+            }
+        }
+        return totalWithdrawals;
+    }
+
+    private boolean sameMonth(LocalDate date1, LocalDate date2){
+
+        if(date1 == null || date2 == null){
+            return false;
+        }
+        if(date1.getYear() == date2.getYear() && date1.getMonthOfYear() == date2.getMonthOfYear()){
+            return true;
+        }
+
+        return false;
     }
 }

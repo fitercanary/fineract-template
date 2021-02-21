@@ -100,6 +100,7 @@ import org.apache.fineract.portfolio.savings.request.SavingsAccountChargeReq;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.joda.time.LocalDate;
+import org.joda.time.MonthDay;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,13 +120,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.*;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.feeOnMonthDayParamName;
 
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
@@ -1025,19 +1021,28 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 savingsAccountId);
 
         // calculate transaction amount
+        BigDecimal transactionAmount = new BigDecimal(0);
+        boolean percentOfTotalWithdraws = ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation())
+                .equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS);
 
-        final BigDecimal transactionAmount;//= new BigDecimal(0);
-        if(ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
-            BigDecimal totalWithdrawals = savingsAccount.getSummary().getTotalWithdrawals();
-            transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+        if(percentOfTotalWithdraws){
+            if (command.hasParameter(feeOnMonthDayParamName)) {
+                final MonthDay monthDay = command.extractMonthDayNamed(feeOnMonthDayParamName);
+                LocalDate chargeDueDate = monthDay.toLocalDate(LocalDate.now().getYear());
+                BigDecimal totalWithdrawals = savingsAccount.getTotalWithdrawalsInMonth( chargeDueDate );
+                savingsAccountCharge.updateDueDate(chargeDueDate.toDate());
+                transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+            }
         }else{
             transactionAmount = new BigDecimal(0);
         }
         final Map<String, Object> changes = savingsAccountCharge.update(command, transactionAmount);
 
-        if (savingsAccountCharge.getDueLocalDate() != null) {
+        if ( savingsAccountCharge.getDueLocalDate() != null) {
             final Locale locale = command.extractLocale();
-            final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+            final String format = command.dateFormat();
+            final DateTimeFormatter fmt = StringUtils.isNotBlank(format) ? DateTimeFormat.forPattern(format).withLocale(locale)
+                    : DateTimeFormat.forPattern("dd MM yyyy");
 
             // transaction date should not be on a holiday or non working day
             if (!this.configurationDomainService.allowTransactionsOnHolidayEnabled()

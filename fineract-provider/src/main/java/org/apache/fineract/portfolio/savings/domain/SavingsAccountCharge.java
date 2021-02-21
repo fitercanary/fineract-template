@@ -233,10 +233,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
 
         // calculate transaction amount
-
-        final BigDecimal transactionAmount;//= new BigDecimal(0);
+        final BigDecimal transactionAmount;
         if(ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
-            BigDecimal totalWithdrawals = this.savingsAccount.getSummary().getTotalWithdrawals();
+            LocalDate chargeDueDate = feeOnMonthDay.toLocalDate(LocalDate.now().getYear());
+            BigDecimal totalWithdrawals = this.savingsAccount.getTotalWithdrawalsInMonth( chargeDueDate );
+            this.dueDate = chargeDueDate.toDate();
             transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
         }else{
             transactionAmount = new BigDecimal(0);
@@ -961,5 +962,9 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 
     public boolean isFdaPreclosureFee() {
         return ChargeTimeType.fromInt(this.chargeTime).isFdaPreclosureFee();
+    }
+
+    public void updateDueDate(Date dueDate){
+        this.dueDate = dueDate;
     }
 }

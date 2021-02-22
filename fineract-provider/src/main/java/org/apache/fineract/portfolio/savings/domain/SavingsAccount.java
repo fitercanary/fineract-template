@@ -3783,7 +3783,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return this.getSummary().getAccountBalance(this.getCurrency()).isLessThanZero();
     }
 
-    public BigDecimal getTotalWithdrawalsInMonth(LocalDate date){
+    public BigDecimal getTotalWithdrawalsInSameYearAndMonthAsDate(LocalDate date){
         List<SavingsAccountTransaction> trans = getTransactions();
         BigDecimal totalWithdrawals = BigDecimal.ZERO;
 
@@ -3805,5 +3805,45 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         return false;
+    }
+
+    public BigDecimal getTotalWithdrawalsUpToDate(LocalDate date){
+
+        List<SavingsAccountTransaction> trans = getTransactions();
+        BigDecimal totalWithdrawals = BigDecimal.ZERO;
+
+        for (final SavingsAccountTransaction transaction : trans) {
+            if ( transaction.isWithdrawalAndNotReversed() && !transaction.getTransactionLocalDate().isAfter(date) ) {
+                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
+            }
+        }
+        return totalWithdrawals;
+    }
+
+    public BigDecimal getTotalWithdrawalsAfterDate(LocalDate date){
+
+        List<SavingsAccountTransaction> trans = getTransactions();
+        BigDecimal totalWithdrawals = BigDecimal.ZERO;
+
+        for (final SavingsAccountTransaction transaction : trans) {
+            if ( transaction.isWithdrawalAndNotReversed() && transaction.getTransactionLocalDate().isAfter(date) ) {
+                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
+            }
+        }
+        return totalWithdrawals;
+    }
+
+    public BigDecimal getTotalWithdrawalsAfterOrOnDate(LocalDate date){
+
+        List<SavingsAccountTransaction> trans = getTransactions();
+        BigDecimal totalWithdrawals = BigDecimal.ZERO;
+
+        for (final SavingsAccountTransaction transaction : trans) {
+            if ( transaction.isWithdrawalAndNotReversed() &&
+                    transaction.getTransactionLocalDate().isEqual(date) || (transaction.getTransactionLocalDate().isAfter(date) ) ) {
+                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
+            }
+        }
+        return totalWithdrawals;
     }
 }

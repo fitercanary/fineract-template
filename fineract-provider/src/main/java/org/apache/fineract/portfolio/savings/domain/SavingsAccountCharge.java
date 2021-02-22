@@ -236,7 +236,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         final BigDecimal transactionAmount;
         if(ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
             LocalDate chargeDueDate = feeOnMonthDay.toLocalDate(LocalDate.now().getYear());
-            BigDecimal totalWithdrawals = this.savingsAccount.getTotalWithdrawalsInMonth( chargeDueDate );
+            BigDecimal totalWithdrawals = this.savingsAccount.getTotalWithdrawalsInSameYearAndMonthAsDate( chargeDueDate );
             this.dueDate = chargeDueDate.toDate();
             transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
         }else{

@@ -1029,7 +1029,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (command.hasParameter(feeOnMonthDayParamName)) {
                 final MonthDay monthDay = command.extractMonthDayNamed(feeOnMonthDayParamName);
                 LocalDate chargeDueDate = monthDay.toLocalDate(LocalDate.now().getYear());
-                BigDecimal totalWithdrawals = savingsAccount.getTotalWithdrawalsInMonth( chargeDueDate );
+                BigDecimal totalWithdrawals = savingsAccount.getTotalWithdrawalsInSameYearAndMonthAsDate( chargeDueDate );
                 savingsAccountCharge.updateDueDate(chargeDueDate.toDate());
                 transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
             }

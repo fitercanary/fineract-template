@@ -755,4 +755,12 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
     }
 
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.GENERATE_MONTHLY_WITHDRAW_CHARGES)
+    public void generateMonthlyWithdrawCharges() throws JobExecutionException {
+
+
+    }
+
 }

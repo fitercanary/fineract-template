@@ -28,6 +28,7 @@ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -969,8 +970,17 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     .failWithCodeNoParameterAddedToErrorCode(
                             "charge.due.date.is.invalid.for." + ChargeTimeType.fromInt(chargeTimeType).getCode());
         }
+
+        // charge calculation type is percent of total withdrawal monthly withdrawals abort, charges should only be added by system.
+        // Requirement for Canary
+        if( ChargeCalculationType.fromInt(chargeDefinition.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS) ){
+            throw new GeneralPlatformDomainRuleException("This charge cannot be manually added. System will automatically generate the charge at end of the month",
+                    "This charge cannot be manually added. System will automatically generate the charge at end of the month");
+        }
         // calculation is in this line
         final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, SavingsAccountChargeReq.instance(command));
+
+        // handle the calculation for monthly charges on withdrawals here
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             // transaction date should not be on a holiday or non working day
@@ -1020,22 +1030,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository.findOneWithNotFoundDetection(savingsChargeId,
                 savingsAccountId);
 
+        // charge calculation type is percent of total withdrawal monthly withdrawals abort, charges should only be added by system.
+        // Requirement for Canary
+        if( ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS) ){
+            throw new GeneralPlatformDomainRuleException("This charge cannot be manually added/updated. System will automatically generate the charge at end of the month",
+                    "This charge cannot be manually added. System will automatically generate the charge at end of the month");
+        }
+
         // calculate transaction amount
         BigDecimal transactionAmount = new BigDecimal(0);
-        boolean percentOfTotalWithdraws = ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation())
-                .equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS);
-
-        if(percentOfTotalWithdraws){
-            if (command.hasParameter(feeOnMonthDayParamName)) {
-                final MonthDay monthDay = command.extractMonthDayNamed(feeOnMonthDayParamName);
-                LocalDate chargeDueDate = monthDay.toLocalDate(LocalDate.now().getYear());
-                BigDecimal totalWithdrawals = savingsAccount.getTotalWithdrawalsInSameYearAndMonthAsDate( chargeDueDate );
-                savingsAccountCharge.updateDueDate(chargeDueDate.toDate());
-                transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
-            }
-        }else{
-            transactionAmount = new BigDecimal(0);
-        }
         final Map<String, Object> changes = savingsAccountCharge.update(command, transactionAmount);
 
         if ( savingsAccountCharge.getDueLocalDate() != null) {
@@ -1909,5 +1912,37 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
+    }
+
+    //
+    private void handleMonthlyWithdrawCharges(SavingsAccountCharge savingsAccountCharge, SavingsAccount savingsAccount, Charge chargeDefinition,
+                                              SavingsAccountChargeReq savingsAccountChargeReq){
+        // calculate transaction amount
+        BigDecimal transactionAmount = BigDecimal.ZERO;
+
+        // generate the due date
+        //  job will run on 1st of every month
+        MonthDay feeOnMonthDay = savingsAccountChargeReq.getFeeOnMonthDay();
+        feeOnMonthDay = (feeOnMonthDay == null) ? chargeDefinition.getFeeOnMonthDay() : feeOnMonthDay;
+        LocalDate chargeDueDate = feeOnMonthDay.toLocalDate(LocalDate.now().getYear());
+
+        // calculate the withdrawals
+        BigDecimal totalWithdrawals = savingsAccount.getTotalWithdrawalsInSameYearAndMonthAsDate( chargeDueDate );
+        transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+
+        // calculate transfers to loan accounts of same client
+
+
+        // calculate the charges
+
+        savingsAccountCharge.updateDueDate(chargeDueDate.toDate());
+    }
+
+    /**
+     * Used by the charges job to generate monthly account withdrawal charge
+     * Ticker CP-49*/
+    @Override
+    public void addSavingsAccountCharge(SavingsAccount account, LocalDate chargeDueDate, Charge charge) {
+
     }
 }

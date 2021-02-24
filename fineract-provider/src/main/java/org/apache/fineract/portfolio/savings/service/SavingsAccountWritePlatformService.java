@@ -25,6 +25,7 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
+import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
@@ -127,5 +128,7 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult modifyNickName(Long savingsAccountId, JsonCommand command);
 
     CommandProcessingResult updateInterestRate(Long savingsAccountId, JsonCommand command);
+
+    void addSavingsAccountCharge(SavingsAccount account, LocalDate chargeDueDate, Charge charge);
 
 }

@@ -233,15 +233,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
 
         // calculate transaction amount
-        final BigDecimal transactionAmount;
-        if(ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
-            LocalDate chargeDueDate = feeOnMonthDay.toLocalDate(LocalDate.now().getYear());
-            BigDecimal totalWithdrawals = this.savingsAccount.getTotalWithdrawalsInSameYearAndMonthAsDate( chargeDueDate );
-            this.dueDate = chargeDueDate.toDate();
-            transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
-        }else{
-            transactionAmount = new BigDecimal(0);
-        }
+        final BigDecimal transactionAmount =  new BigDecimal(0);
         logger.info("Before populateDerivedFields chargeAmount " + chargeAmount);
         populateDerivedFields(transactionAmount, chargeAmount);
 

@@ -129,6 +129,6 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult updateInterestRate(Long savingsAccountId, JsonCommand command);
 
-    void addSavingsAccountCharge(SavingsAccount account, LocalDate chargeDueDate, Charge charge);
+    void addSavingsAccountCharge(Long savingsAccountId, LocalDate chargeDueDate, Long chargeId);
 
 }

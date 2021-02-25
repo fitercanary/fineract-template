@@ -30,6 +30,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
@@ -979,8 +980,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
         // calculation is in this line
         final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, SavingsAccountChargeReq.instance(command));
-
-        // handle the calculation for monthly charges on withdrawals here
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             // transaction date should not be on a holiday or non working day
@@ -1942,7 +1941,53 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
      * Used by the charges job to generate monthly account withdrawal charge
      * Ticker CP-49*/
     @Override
-    public void addSavingsAccountCharge(SavingsAccount account, LocalDate chargeDueDate, Charge charge) {
+    public void addSavingsAccountCharge(Long savingsAccountId, LocalDate chargeDueDate, Long chargeId) {
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME);
+
+        baseDataValidator.reset().parameter("chargeDueDate").value(chargeDueDate).notNull();
+        baseDataValidator.reset().parameter("savingsAccountId").value(savingsAccountId).notNull();
+        baseDataValidator.reset().parameter("chargeId").value(chargeId).notNull();
+
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+
+        Charge charge = this.chargeRepository.findOneWithNotFoundDetection(chargeId);
+
+        final SavingsAccount savingsAccount = this.savingAccountAssembler.assembleFrom(savingsAccountId);
+        checkClientOrGroupActive(savingsAccount);
+
+        // create savings account charge
+        // calculation is in this line [ for monthly withdraw charges amount will be updated below this line ]
+        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, charge,
+                SavingsAccountChargeReq.instance(charge.getAmount(), chargeDueDate, charge.getFeeOnMonthDay(), charge.feeInterval()));
+
+        // calculate monthly withdrawal charges
+        // we assume the job will run on 1st so as to capture all withdraws
+        // for the previous month even those done up to 23:59
+        // But the payment or due date is on 1st of. There we get withdrawals up to chargeDueDate.minusDays(1)
+
+        if(ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)) {
+            BigDecimal totalWithdrawals = savingsAccount.getTotalWithdrawalsUpToDate(chargeDueDate.minusDays(1));
+
+            BigDecimal totalTransfersToOwnerLoans = BigDecimal.ZERO;// to implement
+
+            savingsAccountCharge.setAmountPercentageAppliedTo(totalWithdrawals);
+            BigDecimal chargeAmount = savingsAccountCharge.percentageOf(totalWithdrawals, savingsAccountCharge.getPercentage());
+            savingsAccountCharge.setAmount(chargeAmount);
+            BigDecimal outstandingAmount = savingsAccountCharge.calculateOutstanding();
+
+            savingsAccountCharge.setAmountOutstanding(outstandingAmount);
+
+            if(chargeAmount.equals(BigDecimal.ZERO)) return;// don't create charge with 0 due amount
+
+        }
+
+        savingsAccount.addCharge(DateUtils.getDefaultFormatter(), savingsAccountCharge, charge);
+       // this.savingsAccountChargeRepository.save(savingsAccountCharge);
+        //this.savingAccountRepositoryWrapper.saveAndFlush(savingsAccount);
+
 
     }
 }

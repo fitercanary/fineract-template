@@ -568,7 +568,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return BigDecimal.ZERO.compareTo(calculateOutstanding()) == 0;
     }
 
-    private BigDecimal calculateOutstanding() {
+    public BigDecimal calculateOutstanding() {
 
         BigDecimal amountPaidLocal = BigDecimal.ZERO;
         if (this.amountPaid != null) {

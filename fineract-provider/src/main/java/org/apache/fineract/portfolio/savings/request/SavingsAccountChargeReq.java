@@ -47,6 +47,16 @@ public class SavingsAccountChargeReq {
         return instance;
     }
 
+    public static SavingsAccountChargeReq instance(BigDecimal amount, LocalDate dueDate, MonthDay feeOnMonthDay, Integer feeInterval) {
+        SavingsAccountChargeReq instance = new SavingsAccountChargeReq();
+        instance.amount = amount;
+        instance.dueDate = dueDate;
+        instance.feeOnMonthDay = feeOnMonthDay;
+        instance.feeInterval = feeInterval;
+
+        return instance;
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }

@@ -258,4 +258,16 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
 
     }
 
+    @Override
+    public Collection<SavingsAccountAnnualFeeData> retrieveAccountsWithChargeByCalculationTypeAndStatus(Integer chargeCalculationType, Long isActive) {
+        final String sql = "select sac.id as id, sa.id as accountId,sa.account_no as accountNo, sac.charge_due_date as dueDate "
+                        + " from m_savings_account sa "
+                        + " inner join m_savings_account_charge sac on sac.savings_account_id = sa.id "
+                        + " where sac.is_active = ? and sac.charge_calculation_enum = ? and sa.status_enum = ? and "
+                        + " sac.charge_due_date is not null and sac.charge_due_date <= NOW() and sac.amount_outstanding_derived = 0 and sac.is_paid_derived=1 ";
+
+        return this.jdbcTemplate.query(sql, this.chargeDueMapper, new Object[] {isActive, chargeCalculationType, SavingsAccountStatusType.ACTIVE.getValue()});
+    }
+
+
 }

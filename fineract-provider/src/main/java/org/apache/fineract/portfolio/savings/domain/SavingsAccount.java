@@ -2706,7 +2706,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         if (savingsAccountCharge.isAnnualFee() || savingsAccountCharge.isMonthlyFee() || savingsAccountCharge.isWeeklyFee()) {
             // update due date
-            if(!savingsAccountCharge.getChargeCalculation().equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue())) {
+            if( savingsAccountCharge.getDueLocalDate() == null) {// if due date is not sent generate
                 if (isActive()) {
                     savingsAccountCharge.updateToNextDueDateFrom(getActivationLocalDate());
                 } else if (isApproved()) {
@@ -3783,18 +3783,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return this.getSummary().getAccountBalance(this.getCurrency()).isLessThanZero();
     }
 
-    public BigDecimal getTotalWithdrawalsInSameYearAndMonthAsDate(LocalDate date){
-        List<SavingsAccountTransaction> trans = getTransactions();
-        BigDecimal totalWithdrawals = BigDecimal.ZERO;
-
-        for (final SavingsAccountTransaction transaction : trans) {
-            if ( transaction.isNotReversed() && transaction.isWithdrawal()  && sameMonth(date, transaction.getTransactionLocalDate())) {//transaction.isTransferWithdrawal()
-                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
-            }
-        }
-        return totalWithdrawals;
-    }
-
     private boolean sameMonth(LocalDate date1, LocalDate date2){
 
         if(date1 == null || date2 == null){
@@ -3807,43 +3795,17 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return false;
     }
 
-    public BigDecimal getTotalWithdrawalsUpToDate(LocalDate date){
+    public BigDecimal getTotalWithdrawalsBetweenDatesInclusive(LocalDate startDate, LocalDate endDate){
 
         List<SavingsAccountTransaction> trans = getTransactions();
         BigDecimal totalWithdrawals = BigDecimal.ZERO;
 
-        for (final SavingsAccountTransaction transaction : trans) {
-            if ( transaction.isWithdrawalAndNotReversed() && !transaction.getTransactionLocalDate().isAfter(date) ) {
+        for (final SavingsAccountTransaction transaction : trans) {//!transaction.getTransactionLocalDate().isAfter(date)
+            if ( transaction.isWithdrawalAndNotReversed() &&  DateUtils.isDateBetween(transaction.getTransactionLocalDate(), startDate, endDate)) {
                 totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
             }
         }
         return totalWithdrawals;
     }
 
-    public BigDecimal getTotalWithdrawalsAfterDate(LocalDate date){
-
-        List<SavingsAccountTransaction> trans = getTransactions();
-        BigDecimal totalWithdrawals = BigDecimal.ZERO;
-
-        for (final SavingsAccountTransaction transaction : trans) {
-            if ( transaction.isWithdrawalAndNotReversed() && transaction.getTransactionLocalDate().isAfter(date) ) {
-                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
-            }
-        }
-        return totalWithdrawals;
-    }
-
-    public BigDecimal getTotalWithdrawalsAfterOrOnDate(LocalDate date){
-
-        List<SavingsAccountTransaction> trans = getTransactions();
-        BigDecimal totalWithdrawals = BigDecimal.ZERO;
-
-        for (final SavingsAccountTransaction transaction : trans) {
-            if ( transaction.isWithdrawalAndNotReversed() &&
-                    transaction.getTransactionLocalDate().isEqual(date) || (transaction.getTransactionLocalDate().isAfter(date) ) ) {
-                totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
-            }
-        }
-        return totalWithdrawals;
-    }
 }

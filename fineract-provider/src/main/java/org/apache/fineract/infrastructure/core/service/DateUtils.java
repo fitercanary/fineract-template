@@ -116,4 +116,8 @@ public class DateUtils {
     public static int daysBetween(LocalDate start, LocalDate end){
         return Days.daysBetween(start , end).getDays();
     }
+
+    public static boolean isDateBetween( LocalDate date, LocalDate start, LocalDate end){
+        return !date.isBefore(start) && !date.isAfter(end);
+    }
 }

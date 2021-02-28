@@ -31,6 +31,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
+import org.joda.time.MonthDay;
 import org.joda.time.format.DateTimeFormatter;
 
 public interface SavingsAccountWritePlatformService {
@@ -129,6 +130,6 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult updateInterestRate(Long savingsAccountId, JsonCommand command);
 
-    void addSavingsAccountCharge(Long savingsAccountId, LocalDate chargeDueDate, Long chargeId);
+    public void updateSavingsAccountCharge(final Long savingsAccountId, final Long savingsChargeId);
 
 }

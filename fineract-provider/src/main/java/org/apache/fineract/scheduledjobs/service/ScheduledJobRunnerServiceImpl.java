@@ -52,6 +52,7 @@ import org.apache.fineract.notification.config.MessagingConfiguration;
 import org.apache.fineract.notification.config.VfdServiceApi;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
 import org.apache.fineract.portfolio.savings.classification.data.TransactionClassificationData;
@@ -287,14 +288,37 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @Override
     @CronTarget(jobName = JobName.PAY_DUE_SAVINGS_CHARGES)
     public void applyDueChargesForSavings() throws JobExecutionException {
+
+        // We first take care of updating monthly withdraw charges by percentage
+        // in this case we have % of total withdrawals in a month
+        // then call pay charges.
+
+        final StringBuilder errorMsg = new StringBuilder();
+
+        final Collection<SavingsAccountAnnualFeeData> monthlyWithdrawChargesDueData = this.savingsAccountChargeReadPlatformService
+                .retrieveAccountsWithChargeByCalculationTypeAndStatus(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue(), new Long(1));
+        for (final SavingsAccountAnnualFeeData savingsAccountMonthlyFeeData: monthlyWithdrawChargesDueData){
+            try {
+                this.savingsAccountWritePlatformService.updateSavingsAccountCharge(savingsAccountMonthlyFeeData.getAccountId(), savingsAccountMonthlyFeeData.getId());
+            }catch (final PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Generate Monthly withdrawal charges by percentage  for savings failed for account:" + savingsAccountMonthlyFeeData.getAccountNo()
+                            + " with message " + error.getDeveloperMessage());
+                    errorMsg.append("Generate Monthly total withdrawal charges by percentage  for savings failed for account:").append(savingsAccountMonthlyFeeData.getAccountNo())
+                            .append(" with message ").append(error.getDeveloperMessage());
+                }
+            }
+        }
+
+
         final Collection<SavingsAccountAnnualFeeData> chargesDueData = this.savingsAccountChargeReadPlatformService
                 .retrieveChargesWithDue();
-        final StringBuilder errorMsg = new StringBuilder();
 
         for (final SavingsAccountAnnualFeeData savingsAccountReference : chargesDueData) {
             try {
-                this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
-                        savingsAccountReference.getAccountId());
+                    this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
+                            savingsAccountReference.getAccountId());
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {

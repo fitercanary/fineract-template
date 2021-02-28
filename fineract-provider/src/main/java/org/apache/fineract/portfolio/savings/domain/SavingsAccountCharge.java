@@ -147,15 +147,17 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         feeOnMonthDay = (feeOnMonthDay == null) ? chargeDefinition.getFeeOnMonthDay() : feeOnMonthDay;
         feeInterval = (feeInterval == null) ? chargeDefinition.getFeeInterval() : feeInterval;
 
+        final BigDecimal amountPercentAppliedTo = savingsAccountChargeReq.getAmountPercentAppliedTo();
+
         return new SavingsAccountCharge(savingsAccount, chargeDefinition, amount, chargeTime, chargeCalculation, dueDate, status,
-                feeOnMonthDay, feeInterval);
+                feeOnMonthDay, feeInterval, amountPercentAppliedTo);
     }
 
     public static SavingsAccountCharge createNewWithoutSavingsAccount(final Charge chargeDefinition, final BigDecimal amountPayable,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
             final MonthDay feeOnMonthDay, final Integer feeInterval) {
         return new SavingsAccountCharge(null, chargeDefinition, amountPayable, chargeTime, chargeCalculation, dueDate, status,
-                feeOnMonthDay, feeInterval);
+                feeOnMonthDay, feeInterval, null);
     }
 
     protected SavingsAccountCharge() {
@@ -164,7 +166,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 
     private SavingsAccountCharge(final SavingsAccount savingsAccount, final Charge chargeDefinition, final BigDecimal amount,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
-            MonthDay feeOnMonthDay, final Integer feeInterval) {
+            MonthDay feeOnMonthDay, final Integer feeInterval, BigDecimal amountPercentageAppliedTo) {
 
         this.savingsAccount = savingsAccount;
         this.charge = chargeDefinition;
@@ -233,7 +235,10 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
 
         // calculate transaction amount
-        final BigDecimal transactionAmount =  new BigDecimal(0);
+        BigDecimal transactionAmount =  new BigDecimal(0);
+        if(amountPercentageAppliedTo != null){
+            transactionAmount = amountPercentageAppliedTo;
+        }
         logger.info("Before populateDerivedFields chargeAmount " + chargeAmount);
         populateDerivedFields(transactionAmount, chargeAmount);
 
@@ -406,7 +411,16 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         if (BigDecimal.ZERO.compareTo(this.amountOutstanding) == 0) {
             // full outstanding is paid, update to next due date
             updateNextDueDateForRecurringFees();
-            resetPropertiesForRecurringFees();
+            if(ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
+                // reset properties for recurring monthly fees percentage [needs more generic modification]
+                // set outstanding to zero and paid to true so next run by job can use same charge to update with recurring fees
+                this.amountOutstanding = BigDecimal.ZERO;
+                this.paid = true;// reset to false for recurring fee.
+                this.waived = false;
+            }else{
+                resetPropertiesForRecurringFees();
+            }
+
         }
 
         return Money.of(currency, this.amountOutstanding);
@@ -817,7 +831,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         return nextDueLocalDate;
     }
 
-    private LocalDate calculateNextDueDate(final LocalDate date) {
+    public LocalDate calculateNextDueDate(final LocalDate date) {
         LocalDate nextDueLocalDate = null;
         if (isAnnualFee()) {
             nextDueLocalDate = date.withMonthOfYear(this.feeOnMonth).plusYears(1);
@@ -958,5 +972,13 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 
     public void updateDueDate(Date dueDate){
         this.dueDate = dueDate;
+    }
+
+    public Integer getFeeInterval() {
+        return feeInterval;
+    }
+
+    public void setChargeNotPaid(){
+        this.paid = false;
     }
 }

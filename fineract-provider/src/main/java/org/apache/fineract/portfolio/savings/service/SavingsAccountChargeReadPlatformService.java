@@ -35,4 +35,6 @@ public interface SavingsAccountChargeReadPlatformService {
     Collection<SavingsAccountAnnualFeeData> retrieveChargesWithAnnualFeeDue();
 
     Collection<SavingsAccountAnnualFeeData> retrieveChargesWithDue();
+
+    Collection<SavingsAccountAnnualFeeData> retrieveAccountsWithChargeByCalculationTypeAndStatus(Integer chargeCalculationType, Long isActive);
 }

@@ -1976,7 +1976,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
             // Generate next due date
             if ( savingsAccountCharge.getDueLocalDate()!= null && savingsAccountCharge.getFeeInterval() != null) {
-                savingsAccountCharge.updateNextDueDateForRecurringFees();
+                //savingsAccountCharge.updateNextDueDateForRecurringFees();
                 LocalDate nextDueDate = savingsAccountCharge.getDueLocalDate();
                         //savingsAccountCharge.getDueLocalDate().plusMonths(savingsAccountCharge.getFeeInterval());
                 LocalDate startDate = nextDueDate.minusMonths(savingsAccountCharge.getFeeInterval());
@@ -1986,11 +1986,13 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 // we use date before due date so we can capture all withdrawals up to midnight the day
                 amountPercentAppliedTo = savingsAccount.getTotalWithdrawalsBetweenDatesInclusive(startDate, nextDueDate.minusDays(1));
 
-                savingsAccountCharge.setAmountPercentageAppliedTo(amountPercentAppliedTo);
-                savingsAccountCharge.setAmount(savingsAccountCharge.percentageOf(amountPercentAppliedTo, savingsAccountCharge.getPercentage()));
-                savingsAccountCharge.setAmountOutstanding(savingsAccountCharge.calculateOutstanding());
-                if(savingsAccountCharge.getAmountOutstanding(savingsAccount.getCurrency()).isGreaterThanZero()){
-                    savingsAccountCharge.resetPropertiesForRecurringFees();
+                if(Money.of(savingsAccount.getCurrency(), amountPercentAppliedTo).isGreaterThanZero()) {
+                    savingsAccountCharge.setAmountPercentageAppliedTo(amountPercentAppliedTo);
+                    savingsAccountCharge.setAmount(savingsAccountCharge.percentageOf(amountPercentAppliedTo, savingsAccountCharge.getPercentage()));
+                    savingsAccountCharge.resetPayProperties();
+                    BigDecimal outstanding = savingsAccountCharge.calculateOutstanding();
+                    savingsAccountCharge.setAmountOutstanding(outstanding);
+
                 }
             }
         }

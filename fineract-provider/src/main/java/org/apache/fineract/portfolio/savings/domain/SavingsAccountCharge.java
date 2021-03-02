@@ -260,9 +260,20 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             // update amount outstanding accordingly.
             // Right now annual and monthly charges supports charge calculation
             // type flat.
-            this.amountOutstanding = this.amount;
-            this.paid = false;// reset to false for recurring fee.
-            this.waived = false;
+            // for this charge since it is % of x amount and x is not known yet we let it the outstanding amount be 0
+            if(!ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
+                this.amountOutstanding = this.amount;
+                this.paid = false;// reset to false for recurring fee.
+                this.waived = false;
+            }else {
+                if(BigDecimal.ZERO.compareTo(this.amountOutstanding) == 0){
+                    this.paid = true;// reset to true for monthly % of total withdraw recurring fee.
+                    this.amountOutstanding = BigDecimal.ZERO;
+                    this.waived = false;
+                    this.amountWaived = null;
+                    this.amountWrittenOff = null;
+                }
+            }
         }
     }
 
@@ -411,15 +422,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         if (BigDecimal.ZERO.compareTo(this.amountOutstanding) == 0) {
             // full outstanding is paid, update to next due date
             updateNextDueDateForRecurringFees();
-            if(ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
-                // reset properties for recurring monthly fees percentage [needs more generic modification]
-                // set outstanding to zero and paid to true so next run by job can use same charge to update with recurring fees
-                this.amountOutstanding = BigDecimal.ZERO;
-                this.paid = true;// reset to false for recurring fee.
-                this.waived = false;
-            }else{
-                resetPropertiesForRecurringFees();
-            }
+            resetPropertiesForRecurringFees();
 
         }
 
@@ -980,5 +983,16 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 
     public void setChargeNotPaid(){
         this.paid = false;
+    }
+
+    public void resetPayProperties(){
+        this.amountPaid = BigDecimal.ZERO;
+        this.amountWaived = null;
+        this.amountWrittenOff = null;
+        this.paid = false;
+    }
+
+    public boolean isChargePercentOfTotalWithdrawals(){
+        return ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS);
     }
 }

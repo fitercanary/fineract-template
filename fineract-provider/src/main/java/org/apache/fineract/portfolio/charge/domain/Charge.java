@@ -632,4 +632,8 @@ public class Charge extends AbstractPersistableCustom<Long> {
     public void setTaxGroup(TaxGroup taxGroup) {
         this.taxGroup = taxGroup;
     }
+
+    public boolean isPercentageOfTotalWithdrawals() {
+        return ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS);
+    }
 }

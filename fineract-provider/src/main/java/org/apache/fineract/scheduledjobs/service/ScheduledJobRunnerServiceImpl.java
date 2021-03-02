@@ -295,7 +295,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         final StringBuilder errorMsg = new StringBuilder();
 
-        final Collection<SavingsAccountAnnualFeeData> monthlyWithdrawChargesDueData = this.savingsAccountChargeReadPlatformService
+       final Collection<SavingsAccountAnnualFeeData> monthlyWithdrawChargesDueData = this.savingsAccountChargeReadPlatformService
                 .retrieveAccountsWithChargeByCalculationTypeAndStatus(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue(), new Long(1));
         for (final SavingsAccountAnnualFeeData savingsAccountMonthlyFeeData: monthlyWithdrawChargesDueData){
             try {
@@ -317,8 +317,10 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         for (final SavingsAccountAnnualFeeData savingsAccountReference : chargesDueData) {
             try {
+                if(savingsAccountReference.getAccountId().equals(new Long(8))) {
                     this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
                             savingsAccountReference.getAccountId());
+                }
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {

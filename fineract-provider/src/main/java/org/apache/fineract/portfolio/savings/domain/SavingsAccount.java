@@ -2813,10 +2813,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
         savingsAccountCharge.setChargePaid();
         // validate charge is not already paid or waived
-        if (savingsAccountCharge.isWaived()) {
+        if (!savingsAccountCharge.getCharge().isPercentageOfTotalWithdrawals() && savingsAccountCharge.isWaived()) {
             baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.invalid.account.charge.is.already.waived");
             if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-        } else if (savingsAccountCharge.isPaid()) {
+        } else if (!savingsAccountCharge.getCharge().isPercentageOfTotalWithdrawals() && savingsAccountCharge.isPaid()) {
             baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.invalid.account.charge.is.paid");
             if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
         }

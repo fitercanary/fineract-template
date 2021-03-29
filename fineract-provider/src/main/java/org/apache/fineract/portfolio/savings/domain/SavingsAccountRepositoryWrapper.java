@@ -132,4 +132,10 @@ public class SavingsAccountRepositoryWrapper {
 
         return account;
     }
+
+    public List<SavingsAccount> findByAccountsWithMonthlyChargeCalculationType(@Param("chargeCalculationType") Integer chargeCalculationType) {
+        return this.repository.findByAccountsWithMonthlyChargeCalculationType(chargeCalculationType);
+    }
+
+
 }

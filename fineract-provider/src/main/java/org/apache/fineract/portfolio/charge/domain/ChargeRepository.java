@@ -26,4 +26,7 @@ import java.util.List;
 public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
 
     List<Charge> findChargesByChargeTimeTypeAndActive(Integer chargeTimeType, boolean active);
+
+    List<Charge> findChargesByChargeCalculationAndActive(Integer chargeCalculationtype, boolean active);
+
 }

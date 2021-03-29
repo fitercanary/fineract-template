@@ -47,7 +47,7 @@ public class SchedulerTriggerListener implements TriggerListener {
 
     private final TenantDetailsService tenantDetailsService;
 
-    @Value("${fineract.allowJobs:false}")
+    @Value("${fineract.allowJobs:true}")
     private volatile @NotNull
     boolean allowJobs;
 

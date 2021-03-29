@@ -21,7 +21,7 @@ package org.apache.fineract.integrationtests.common.savings;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.gson.Gson;
+import org.json.JSONObject;
 
 public class SavingsApplicationTestBuilder {
 
@@ -30,6 +30,8 @@ public class SavingsApplicationTestBuilder {
     private String submittedOnDate = "";
 
     private HashMap<String, String> addParams = null;
+
+    private List<HashMap<String, Object>> charges = null;
 
     private List<HashMap<String, Object>> datatables = null;
 
@@ -45,13 +47,17 @@ public class SavingsApplicationTestBuilder {
         map.put("productId", savingsProductId);
         map.put("locale", LOCALE);
         map.put("submittedOnDate", this.submittedOnDate);
+        if (charges != null) {
+            map.put("charges", charges);
+        }
         if (addParams != null && addParams.size() > 0) {
             map.putAll(addParams);
         }
         if (datatables != null) {
             map.put("datatables", this.datatables);
         }
-        String savingsApplicationJSON = new Gson().toJson(map);
+
+        final String savingsApplicationJSON = new JSONObject(map).toString();
         System.out.println(savingsApplicationJSON);
         return savingsApplicationJSON;
     }
@@ -68,6 +74,11 @@ public class SavingsApplicationTestBuilder {
 
     public SavingsApplicationTestBuilder withDatatables(final List<HashMap<String, Object>> datatables) {
         this.datatables = datatables;
+        return this;
+    }
+
+    public SavingsApplicationTestBuilder withCharges(final List<HashMap<String, Object>> charges) {
+        this.charges = charges;
         return this;
     }
 }

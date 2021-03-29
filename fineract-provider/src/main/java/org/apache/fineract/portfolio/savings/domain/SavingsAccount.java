@@ -1177,6 +1177,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
         for (SavingsAccountCharge charge : this.charges()) {
             if (charge.isWithdrawalFee() && charge.isActive()) {
+                if(ChargeCalculationType.fromInt(charge.getChargeCalculation()).isPercentageOfTotalWithdrals())
+                    break;
+
                 if(ChargeCalculationType.fromInt(charge.getChargeCalculation()).isPercentageOfInterest()) {
                     transactionAmount = transactionDTO.getTotalInterestAccrued();
                 }
@@ -2822,7 +2825,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         final Money chargePaid = Money.of(currency, amountPaid);
-        if (!savingsAccountCharge.getAmountOutstanding(getCurrency()).isGreaterThanOrEqualTo(chargePaid)) {
+        if (!savingsAccountCharge.getAmountOutstanding(getCurrency()).isGreaterThanOrEqualTo(chargePaid) && !savingsAccountCharge.getChargeCalculation().equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue())) {
             baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.invalid.charge.amount.paid.in.access");
             if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
         }
@@ -2840,7 +2843,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final LocalDate transactionDate, final AppUser user) {
         SavingsAccountTransaction chargeTransaction = null;
 
-        if (savingsAccountCharge.isWithdrawalFee()) {
+        if (savingsAccountCharge.isWithdrawalFee() ) {
             chargeTransaction = SavingsAccountTransaction.withdrawalFee(this, office(), transactionDate, transactionAmount, user, false);
         } else if (savingsAccountCharge.isAnnualFee()) {
             chargeTransaction = SavingsAccountTransaction.annualFee(this, office(), transactionDate, transactionAmount, user, false);

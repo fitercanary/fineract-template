@@ -23,11 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import org.apache.fineract.integrationtests.common.CommonConstants;
 import org.apache.fineract.integrationtests.common.Utils;
@@ -81,6 +77,7 @@ public class SavingsAccountHelper {
     public static final String TRANSACTION_DATE_PLUS_ONE = "02 March 2013";
     public static final String LAST_TRANSACTION_DATE = "01 March 2013";
     public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
+    public static final int MONTHLY_WITHDRAWS_CHARGE_PERCENTAGE = 5;
 
     public static final String DATE_TIME_FORMAT = "dd MMMM yyyy HH:mm";
     private static final Boolean isBlock = false;
@@ -99,6 +96,27 @@ public class SavingsAccountHelper {
 
     public Integer applyForSavingsApplication(final Integer ID, final Integer savingsProductID, final String accountType) {
         return applyForSavingsApplicationOnDate(ID, savingsProductID, accountType, CREATED_DATE);
+    }
+
+    public Integer applyForSavingsApplicationWithCharge(final Integer ID, final Integer savingsProductID, final String accountType,
+                                                    final String submittedOnDate, Integer chargeId) {
+        System.out.println("--------------------------------APPLYING FOR SAVINGS APPLICATION--------------------------------");
+
+        HashMap<String, Object> chargeMap = new HashMap<String, Object>(){{
+            put("chargeId", chargeId);
+            put("amount", MONTHLY_WITHDRAWS_CHARGE_PERCENTAGE);
+            put("feeOnMonthDay", null);
+            put("feeInterval", 1);
+        }};
+
+        final String savingsApplicationJSON = new SavingsApplicationTestBuilder() //
+                .withSubmittedOnDate(submittedOnDate)
+                .withCharges(new ArrayList<HashMap<String, Object>>(){{
+                        add(chargeMap);
+                    }})
+                .build(ID.toString(), savingsProductID.toString(), accountType);
+        return Utils.performServerPost(this.requestSpec, this.responseSpec, SAVINGS_ACCOUNT_URL + "?" + Utils.TENANT_IDENTIFIER,
+                savingsApplicationJSON, "savingsId");
     }
 
     public Integer applyForSavingsApplicationOnDate(final Integer ID, final Integer savingsProductID, final String accountType,

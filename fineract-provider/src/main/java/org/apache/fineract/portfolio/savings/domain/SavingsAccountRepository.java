@@ -60,4 +60,8 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
     List<SavingsAccount>findByAccountsDueForOverdraftClose(@Param("date") Date date);
 
 	List<SavingsAccount>findSavingsAccountsByStatusAndDepositType(Integer status, Integer depositType);
+
+    @Query("SELECT DISTINCT sa FROM SavingsAccountCharge sc INNER JOIN sc.savingsAccount sa WHERE sc.chargeCalculation = :chargeCalculationType")
+    List<SavingsAccount>findByAccountsWithMonthlyChargeCalculationType(@Param("chargeCalculationType") Integer integer);
+
 }

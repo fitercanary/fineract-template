@@ -789,8 +789,6 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfInterest()) {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
-        }else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfTotalWithdrals()) {
-            amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         }
         this.amountOutstanding = amountPaybale;
         return amountPaybale;

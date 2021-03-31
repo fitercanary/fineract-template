@@ -45,15 +45,19 @@ public class GLAccountBuilder {
     private static String accountUsage = ACCOUNT_USAGE_DETAIL;
     private static String manualEntriesAllowed = MANUAL_ENTRIES_ALLOW;
     private static String description = "DEFAULT_DESCRIPTION";
+    private static int cbnCategoryId = 17;
+    private static int cbnSubCategoryId = 20;
 
     public String build() {
-        final HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("name", GLAccountBuilder.name);
         map.put("glCode", GLAccountBuilder.GLCode);
         map.put("manualEntriesAllowed", GLAccountBuilder.manualEntriesAllowed);
         map.put("type", GLAccountBuilder.accountType);
         map.put("usage", GLAccountBuilder.accountUsage);
         map.put("description", GLAccountBuilder.description);
+        map.put("cbnCategoryId", GLAccountBuilder.cbnCategoryId);
+        map.put("cbnSubCategoryId", GLAccountBuilder.cbnSubCategoryId);
         return new Gson().toJson(map);
     }
 

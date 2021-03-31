@@ -217,6 +217,16 @@ public class SavingsProductHelper {
         return this;
     }
 
+    public SavingsProductHelper withSavingsReferenceAccountId(String savingsReferenceAccountId) {
+        this.savingsReferenceAccountId = savingsReferenceAccountId;
+        return this;
+    }
+
+    public SavingsProductHelper withSavingsControlAccountId(String savingsControlAccountId){
+        this.savingsControlAccountId = savingsControlAccountId;
+        return this;
+    }
+
     public SavingsProductHelper withOverDraft(final String overDraftLimit) {
         this.allowOverdraft = "true";
         this.overdraftLimit = overDraftLimit;

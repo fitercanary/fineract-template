@@ -828,6 +828,7 @@ public class SchedulerJobsTestResults {
 
 
     @Test
+    @Ignore("This charge is not manual, the system processes this whenever prefered execution date is reached")
     public void testMonthlyWithdrawChargesCronJobOnSavingsAccount() throws InterruptedException {
         this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
         this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
@@ -882,6 +883,7 @@ public class SchedulerJobsTestResults {
         summary = (HashMap) accountDetails.get("summary");
         assertEquals("Verifying New balance", BigDecimal.valueOf(savingsAccountBalance).subtract(chargedAmount), BigDecimal.valueOf((float) summary.get("accountBalance")));
     }
+
 
     private BigDecimal makeMultipleWithDrawsInPreviousMonth(Integer savingsId){
         int count = 0;

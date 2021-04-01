@@ -56,8 +56,8 @@ public class SavingsAccountHelper {
     private static final String CLOSE_SAVINGS_COMMAND = "close";
     private static final String UPDATE_WITHHOLD_TAX_STATUS = "updateWithHoldTax";
 
-    private static final String DEPOSIT_SAVINGS_COMMAND = "deposit";
-    private static final String WITHDRAW_SAVINGS_COMMAND = "withdrawal";
+    public static final String DEPOSIT_SAVINGS_COMMAND = "deposit";
+    public static final String WITHDRAW_SAVINGS_COMMAND = "withdrawal";
     private static final String MODIFY_TRASACTION_COMMAND = "modify";
     private static final String UNDO_TRASACTION_COMMAND = "undo";
     
@@ -220,6 +220,12 @@ public class SavingsAccountHelper {
         return Utils.performServerDelete(this.requestSpec, this.responseSpec, SAVINGS_ACCOUNT_URL + "/" + savingsId + "?"
                 + Utils.TENANT_IDENTIFIER, jsonAttributeToGetBack);
 
+    }
+
+    public Object savingsAccountTransaction(final Integer savingsID, final String amount, String transactionDate, String postingDate, String command, String jsonAttributeToGetback) {
+        System.out.println("--------------------------------- "+command+" --------------------------------");
+        return performSavingActions(createSavingsTransactionURL(command, savingsID),
+                getSavingsTransactionJSON(amount, transactionDate, postingDate), jsonAttributeToGetback);
     }
 
     public Object depositToSavingsAccount(final Integer savingsID, final String amount, String date, String jsonAttributeToGetback) {
@@ -400,6 +406,19 @@ public class SavingsAccountHelper {
         String savingsAccountWithdrawalJson = new Gson().toJson(map);
         System.out.println(savingsAccountWithdrawalJson);
         return savingsAccountWithdrawalJson;
+    }
+
+    private String getSavingsTransactionJSON(final String amount, final String transactionDate, final String postingDate) {
+        final HashMap<String, Object> map = new HashMap<>();
+        map.put("locale", CommonConstants.locale);
+        map.put("dateFormat", CommonConstants.dateFormat);
+        map.put("transactionDate", transactionDate);
+        map.put("transactionAmount", amount);
+        map.put("postingDate", postingDate);
+        map.put("paymentTypeId", 1);
+        String savingsTransactionJson = new Gson().toJson(map);
+        System.out.println(savingsTransactionJson);
+        return savingsTransactionJson;
     }
 
     private String getCalculatedInterestForSavingsApplicationAsJSON() {

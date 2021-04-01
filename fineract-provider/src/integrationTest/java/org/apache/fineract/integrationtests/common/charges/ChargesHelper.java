@@ -131,14 +131,17 @@ public class ChargesHelper {
     }
 
     public static String getWithdrawsMonthlyChargedJSON() {
+
         final HashMap<String, Object> map = new HashMap<>();
         map.put("chargeAppliesTo", ChargesHelper.CHARGE_APPLIES_TO_SAVINGS);
         map.put("name", Utils.randomNameGenerator("Charge_Savings_", 6));
         map.put("currencyCode", ChargesHelper.currencyCode);
-        map.put("chargeTimeType", CHARGE_WITHDRAWAL_FEE);
+        map.put("chargeTimeType", CHARGE_MONTHLY_FEE);
         map.put("chargeCalculationType", CHARGE_CALCULATION_TYPE_PERCENTAGE_AMOUNT_ON_WITHDRAWS);
-        map.put("amount", 2);
+        map.put("amount", CHARGE_WITHDRAWAL_FEE);
+        map.put("feeInterval", 1);
         map.put("active", true);
+        map.put("feeOnMonthDay", feeOnMonthDay);
         map.put("locale", "en");
         map.put("monthDayFormat", "dd MMM");
         String chargesCreateJson = new Gson().toJson(map);

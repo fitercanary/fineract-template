@@ -349,6 +349,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     @Column(name = "nickname")
     private String nickname;
 
+    @Transient
+    protected Date postingDate;
+
     protected SavingsAccount() {
         //
     }
@@ -492,9 +495,17 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return SavingsAccountStatusType.fromInt(this.status).isClosed();
     }
 
+    public LocalDate getPostingDate() {
+        return new LocalDate(this.postingDate) ;
+    }
+
+    public void setPostingDate(Date postingDate) {
+        this.postingDate = postingDate;
+    }
+
     public void postInterest(final MathContext mc, final LocalDate interestPostingUpToDate, final boolean isInterestTransfer,
-            final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate postInterestOnDate) {
+                             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
+                             final LocalDate postInterestOnDate) {
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
                 isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
         Money interestPostedToDate = Money.zero(this.currency);
@@ -1177,9 +1188,6 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
         for (SavingsAccountCharge charge : this.charges()) {
             if (charge.isWithdrawalFee() && charge.isActive()) {
-                if(ChargeCalculationType.fromInt(charge.getChargeCalculation()).isPercentageOfTotalWithdrals())
-                    break;
-
                 if(ChargeCalculationType.fromInt(charge.getChargeCalculation()).isPercentageOfInterest()) {
                     transactionAmount = transactionDTO.getTotalInterestAccrued();
                 }
@@ -1680,7 +1688,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
                 newSavingsTransactions.add(transaction.toMapData(currencyData));
             } else if (!existingTransactionIds.contains(transaction.getId())) {
-                newSavingsTransactions.add(transaction.toMapData(currencyData));
+                Map<String,Object> newTransaction =  transaction.toMapData(currencyData);
+                if(postingDate != null)
+                    newTransaction.put("date", getPostingDate());
+
+                newSavingsTransactions.add(newTransaction);
             }
         }
 

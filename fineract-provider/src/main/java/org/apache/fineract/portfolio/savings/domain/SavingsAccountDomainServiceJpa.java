@@ -164,7 +164,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
-        if(!transactionDate.equals(postingDate))
+        if(postingDate!=null && !transactionDate.equals(postingDate))
             account.setPostingDate(postingDate.toDate());
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
@@ -265,7 +265,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         this.savingsAccountRepository.saveAndFlush(account);
 
-        if(!postingDate.equals(transactionDate))
+        if(postingDate!=null && !postingDate.equals(transactionDate))
             account.setPostingDate(postingDate.toDate());
 
 

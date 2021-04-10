@@ -163,7 +163,7 @@ public class Charge extends AbstractPersistableCustom<Long> {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("charges");
 
-        if (isMonthlyFee() || isAnnualFee()) {
+        if ((isMonthlyFee() || isAnnualFee()) && !chargeCalculation.equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue())) {
             this.feeOnMonth = feeOnMonthDay.getMonthOfYear();
             this.feeOnDay = feeOnMonthDay.getDayOfMonth();
         }

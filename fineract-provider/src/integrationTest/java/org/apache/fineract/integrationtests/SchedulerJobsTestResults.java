@@ -828,7 +828,6 @@ public class SchedulerJobsTestResults {
 
 
     @Test
-    @Ignore("This charge is not manual, the system processes this whenever prefered execution date is reached")
     public void testMonthlyWithdrawChargesCronJobOnSavingsAccount() throws InterruptedException {
         this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
         this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
@@ -874,7 +873,7 @@ public class SchedulerJobsTestResults {
         assertEquals("Verifying Withdraw Amount", totalWithdraws.floatValue(), summary.get("totalWithdrawals"));
 
         //trigger cron now
-        String JobName = "Generate Monthly Withdraw Charges";
+        String JobName = "Pay Due Savings Charges";
         this.schedulerJobHelper.executeJob(JobName);
 
 

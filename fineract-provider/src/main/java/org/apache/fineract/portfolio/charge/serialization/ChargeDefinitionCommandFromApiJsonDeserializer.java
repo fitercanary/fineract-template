@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Objects;
 
 @Component
 public final class ChargeDefinitionCommandFromApiJsonDeserializer {
@@ -143,7 +144,8 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
 
 			if (ctt.isMonthlyFee()) {
 				final MonthDay monthDay = this.fromApiJsonHelper.extractMonthDayNamed("feeOnMonthDay", element);
-				baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).notNull();
+				if(!Objects.equals(chargeCalculationType, ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue()))
+					baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).notNull();
 
 				baseDataValidator.reset().parameter("feeInterval").value(feeInterval).notNull().inMinMaxRange(1, 12);
 			}

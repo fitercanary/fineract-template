@@ -81,13 +81,4 @@ public class SavingsAccountChargeRepositoryWrapper {
         return this.repository.findWithdrawalFeeByAccountId(accountId, chargeTimeType);
     }
 
-    public SavingsAccountCharge  findWithdrawalFeeByAccountIdAndChargeCalculationType(Long accountId, Integer chargeCalculationType) {
-        SavingsAccountCharge charge = null;
-        List<SavingsAccountCharge> charges = this.repository.findWithdrawalFeeByAccountIdAndChargeCalculationType(accountId, chargeCalculationType);
-        if (!charges.isEmpty()) {
-            charge = charges.get(0);
-        }
-
-        return charge;
-    }
 }

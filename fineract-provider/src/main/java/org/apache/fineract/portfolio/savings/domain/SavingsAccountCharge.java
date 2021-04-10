@@ -134,7 +134,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             SavingsAccountChargeReq savingsAccountChargeReq) {
 
         BigDecimal amount = savingsAccountChargeReq.getAmount();
-        final LocalDate dueDate = savingsAccountChargeReq.getDueDate();
+        LocalDate dueDate =  savingsAccountChargeReq.getDueDate();
         MonthDay feeOnMonthDay = savingsAccountChargeReq.getFeeOnMonthDay();
         Integer feeInterval = savingsAccountChargeReq.getFeeInterval();
         final ChargeTimeType chargeTime = null;
@@ -154,7 +154,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
     }
 
     public static SavingsAccountCharge createNewWithoutSavingsAccount(final Charge chargeDefinition, final BigDecimal amountPayable,
-            final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
+            final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation,final LocalDate dueDate, final boolean status,
             final MonthDay feeOnMonthDay, final Integer feeInterval) {
         return new SavingsAccountCharge(null, chargeDefinition, amountPayable, chargeTime, chargeCalculation, dueDate, status,
                 feeOnMonthDay, feeInterval, null);
@@ -173,6 +173,11 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         this.penaltyCharge = chargeDefinition.isPenalty();
         this.chargeTime = (chargeTime == null) ? chargeDefinition.getChargeTimeType() : chargeTime.getValue();
 
+        this.chargeCalculation = chargeDefinition.getChargeCalculation();
+        if (chargeCalculation != null) {
+            this.chargeCalculation = chargeCalculation.getValue();
+        }
+
         if (isOnSpecifiedDueDate()) {
             if (dueDate == null) {
                 final String defaultUserMessage = "Savings Account charge is missing due date.";
@@ -190,7 +195,7 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
             }
         }
 
-        if (isAnnualFee() || isMonthlyFee()) {
+        if ((isAnnualFee() || isMonthlyFee())) {
             feeOnMonthDay = (feeOnMonthDay == null) ? chargeDefinition.getFeeOnMonthDay() : feeOnMonthDay;
             if (feeOnMonthDay == null) {
                 final String defaultUserMessage = "Savings Account charge is missing due date.";
@@ -223,11 +228,6 @@ public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
         }
 
         this.dueDate = (dueDate == null) ? null : dueDate.toDate();
-
-        this.chargeCalculation = chargeDefinition.getChargeCalculation();
-        if (chargeCalculation != null) {
-            this.chargeCalculation = chargeCalculation.getValue();
-        }
 
         BigDecimal chargeAmount = chargeDefinition.getAmount();
         if (amount != null) {

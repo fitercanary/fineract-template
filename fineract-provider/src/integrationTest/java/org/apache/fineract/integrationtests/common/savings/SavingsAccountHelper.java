@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 import org.apache.fineract.integrationtests.common.CommonConstants;
@@ -102,11 +103,15 @@ public class SavingsAccountHelper {
                                                     final String submittedOnDate, Integer chargeId) {
         System.out.println("--------------------------------APPLYING FOR SAVINGS APPLICATION--------------------------------");
 
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
         HashMap<String, Object> chargeMap = new HashMap<String, Object>(){{
             put("chargeId", chargeId);
             put("amount", MONTHLY_WITHDRAWS_CHARGE_PERCENTAGE);
-            put("feeOnMonthDay", null);
+            put("feeOnMonthDay", startOfMonth.getDayOfMonth()+" "+startOfMonth.getMonth().toString());
+            put("dueDate", startOfMonth);
             put("feeInterval", 1);
+            put("dateFormat", "dd MMMM yyyy");
+            put("monthDayFormat", "dd MMMM");
         }};
 
         final String savingsApplicationJSON = new SavingsApplicationTestBuilder() //

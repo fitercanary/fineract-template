@@ -36,8 +36,4 @@ public interface SavingsAccountTransactionRepository
     List<SavingsAccountTransaction> findByTransactionTypeAndSavingsAccountId(@Param("typeOfAccrual") Integer typeOfAccrual, @Param("typeOfWithdrawalFee") Integer typeOfWithdrawalFee, @Param("savingsId") Long savingsId,
             @Param("transactionDate") Date transactionDate);
 
-
-    @Query("select s from SavingsAccountTransaction s where s.savingsAccount.id = :savingsId and s.typeOf = :typeOfWithdrawalFee and s.dateOf between :startDate and :endDate")
-    List<SavingsAccountTransaction> findAllBySavingsAccountAndTypeOfAndDateOfBetween(@Param("savingsId") Long savingsAccount, @Param("typeOfWithdrawalFee")  Integer typeOf, @Param("startDate")  Date startDate, @Param("endDate")  Date endDate);
-
 }

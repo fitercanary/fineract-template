@@ -496,7 +496,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public LocalDate getPostingDate() {
-        return new LocalDate(this.postingDate) ;
+        return new LocalDate(this.postingDate);
     }
 
     public void setPostingDate(Date postingDate) {
@@ -1689,8 +1689,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 newSavingsTransactions.add(transaction.toMapData(currencyData));
             } else if (!existingTransactionIds.contains(transaction.getId())) {
                 Map<String,Object> newTransaction =  transaction.toMapData(currencyData);
-                if(postingDate != null)
+                if(postingDate != null) {
                     newTransaction.put("date", getPostingDate());
+                }
 
                 newSavingsTransactions.add(newTransaction);
             }
@@ -2837,7 +2838,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         final Money chargePaid = Money.of(currency, amountPaid);
-        if (!savingsAccountCharge.getAmountOutstanding(getCurrency()).isGreaterThanOrEqualTo(chargePaid) && !savingsAccountCharge.getChargeCalculation().equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue())) {
+        if (!savingsAccountCharge.getAmountOutstanding(getCurrency()).isGreaterThanOrEqualTo(chargePaid)) {
             baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.invalid.charge.amount.paid.in.access");
             if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
         }
@@ -3816,7 +3817,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         BigDecimal totalWithdrawals = BigDecimal.ZERO;
 
         for (final SavingsAccountTransaction transaction : trans) {//!transaction.getTransactionLocalDate().isAfter(date)
-            if ( transaction.isWithdrawalAndNotReversed() &&  DateUtils.isDateBetween(transaction.getTransactionLocalDate(), startDate, endDate)) {
+            if ( transaction.isWithdrawalAndNotReversed() &&  DateUtils.isDateBetween(transaction.getTransactionLocalDate(), startDate, endDate) && !transaction.getIsAccountTransfer()) {
                 totalWithdrawals = totalWithdrawals.add(transaction.getAmount());
             }
         }

@@ -100,7 +100,6 @@ import org.apache.fineract.portfolio.savings.request.SavingsAccountChargeReq;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.joda.time.LocalDate;
-import org.joda.time.MonthDay;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,9 +109,18 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.time.ZoneId;
 import java.util.*;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.*;
+import org.joda.time.MonthDay;
+
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
 
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
@@ -1237,6 +1245,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate()) && savingsAccountCharge.isNotFullyPaid()) {
             payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), fmt, user);
         }
+
     }
 
     @Transactional
@@ -1982,8 +1991,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if ( savingsAccountCharge.getDueLocalDate()!= null && savingsAccountCharge.getFeeInterval() != null) {
                 //savingsAccountCharge.updateNextDueDateForRecurringFees();
                 LocalDate nextDueDate = savingsAccountCharge.getDueLocalDate();
-                        //savingsAccountCharge.getDueLocalDate().plusMonths(savingsAccountCharge.getFeeInterval());
-                LocalDate startDate = nextDueDate.minusMonths(savingsAccountCharge.getFeeInterval());
+                //savingsAccountCharge.getDueLocalDate().plusMonths(savingsAccountCharge.getFeeInterval());
+                LocalDate startDate = nextDueDate.minusMonths(savingsAccountCharge.getFeeInterval()).withDayOfMonth(1);
+
 
                 // get total withdrawals for period i.e if due date is 1st Feb and interval is 1 Month
                 // then we get charges from 1st Jan to 31st Jan [ 1 Month]
@@ -1996,7 +2006,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     savingsAccountCharge.resetPayProperties();
                     BigDecimal outstanding = savingsAccountCharge.calculateOutstanding();
                     savingsAccountCharge.setAmountOutstanding(outstanding);
-
                 }
             }
         }

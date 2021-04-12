@@ -43,6 +43,4 @@ public interface ScheduledJobRunnerService {
     void savingTransactionClassification() throws JobExecutionException;
 
     void processAccountTransfers() throws JobExecutionException;
-
-    void generateMonthlyWithdrawCharges() throws JobExecutionException;
 }

@@ -18,7 +18,19 @@
  */
 package org.apache.fineract.scheduledjobs.service;
 
-import com.google.gson.JsonElement;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
+
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Queue;
+import javax.jms.QueueBrowser;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+
 import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalidException;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -34,19 +46,21 @@ import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.notification.config.MessagingConfiguration;
 import org.apache.fineract.notification.config.VfdServiceApi;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
-import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
-import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.classification.data.TransactionClassificationData;
 import org.apache.fineract.portfolio.savings.classification.service.TransactionClassificationReadPlatformService;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
 import org.apache.fineract.portfolio.savings.domain.*;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
-import org.apache.fineract.portfolio.savings.service.*;
+import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.service.ShareAccountDividendReadPlatformService;
 import org.apache.fineract.portfolio.shareaccounts.service.ShareAccountSchedularService;
 import org.joda.time.LocalDate;
@@ -63,12 +77,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 
-import javax.jms.Queue;
-import javax.jms.*;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.ZoneId;
-import java.util.*;
+import com.google.gson.JsonElement;
 
 @Service(value = "scheduledJobRunnerService")
 public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService {
@@ -87,15 +96,12 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
     private final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService;
-    private final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper;
-    private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
 
     private final MessagingConfiguration messagingConfiguration;
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final FromJsonHelper fromApiJsonHelper;
     private final VfdServiceApi vfdServiceApi;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
-    private final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepositoryWrapper;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -110,9 +116,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                          final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService,
                                          final MessagingConfiguration messagingConfiguration,
                                          final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final FromJsonHelper fromApiJsonHelper,
-                                         final VfdServiceApi vfdServiceApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper, final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper,
-                                         final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepositoryWrapper,
-                                         final SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
+                                         final VfdServiceApi vfdServiceApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -128,9 +132,6 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.vfdServiceApi = vfdServiceApi;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
-        this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
-        this.savingsAccountChargeRepositoryWrapper = savingsAccountChargeRepositoryWrapper;
-        this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
     }
 
     @Transactional
@@ -308,10 +309,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         for (final SavingsAccountAnnualFeeData savingsAccountReference : chargesDueData) {
             try {
-                if(savingsAccountReference.getAccountId().equals(new Long(8))) {
                     this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
                             savingsAccountReference.getAccountId());
-                }
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {
@@ -322,6 +321,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 }
             }
         }
+
+
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Savings accounts affected by update: " + chargesDueData.size());
 
@@ -770,42 +771,6 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             errorMsg.append("VFD Notification service failure: ").append(" with message ").append(e.getMessage());
         }
 
-    }
-
-    @Transactional
-    @Override
-    @CronTarget(jobName = JobName.GENERATE_MONTHLY_WITHDRAW_CHARGES)
-    public void generateMonthlyWithdrawCharges() {
-
-        Calendar firstDayOfPreviousMonth = fetchPreviousMonthsDate(Calendar.DAY_OF_MONTH, 1);
-        Calendar lastDayOfPreviousMonth = fetchPreviousMonthsDate(Calendar.DAY_OF_MONTH, firstDayOfPreviousMonth.getActualMaximum(Calendar.DATE));
-
-        for (SavingsAccount savingAccount : savingAccountRepositoryWrapper.findByAccountsWithMonthlyChargeCalculationType(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue())) {
-            try {
-
-                List<SavingsAccountTransaction> withdrawTransactions = savingsAccountTransactionRepository.findAllBySavingsAccountAndTypeOfAndDateOfBetween(savingAccount.getId(), SavingsAccountTransactionType.WITHDRAWAL.getValue(), firstDayOfPreviousMonth.getTime(), lastDayOfPreviousMonth.getTime());
-                SavingsAccountCharge savingsAccountCharge = savingsAccountChargeRepositoryWrapper.findWithdrawalFeeByAccountIdAndChargeCalculationType(savingAccount.getId(), ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue());
-                BigDecimal totalWithDraws = savingsAccountTransactionSummaryWrapper.calculateTotalWithdrawals(savingAccount.getCurrency(), withdrawTransactions);
-
-                if (savingsAccountCharge != null && totalWithDraws != null && Money.of(savingAccount.getCurrency(), totalWithDraws).isGreaterThanZero()) {
-                    BigDecimal amountPaid = (totalWithDraws.multiply(savingsAccountCharge.getPercentage())).divide(BigDecimal.valueOf(100));
-                    savingsAccountWritePlatformService.payCharge(savingsAccountCharge, LocalDate.now(), amountPaid, DateTimeFormat.forPattern("dd-MM-yyyy"), null);
-                }
-
-            } catch (Exception ex) {
-                logger.trace(ThreadLocalContextUtil.getTenant().getName()
-                        + ": Total Withdraws Charge Cron Skipped Savings Account id : " + savingAccount.getId(), ex);
-            }
-        }
-    }
-
-
-    private Calendar fetchPreviousMonthsDate(int field, int value) {
-        java.time.LocalDate lastMonth = java.time.LocalDate.now().minusMonths(1);
-        Calendar date = Calendar.getInstance();
-        date.setTime(Date.from(lastMonth.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        date.set(field, value);
-        return date;
     }
 
 }

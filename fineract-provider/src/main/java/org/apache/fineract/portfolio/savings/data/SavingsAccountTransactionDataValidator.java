@@ -65,6 +65,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transact
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionAmountParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.postingDateName;
 
 @Component
 public class SavingsAccountTransactionDataValidator {
@@ -99,6 +100,10 @@ public class SavingsAccountTransactionDataValidator {
 
         final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(transactionDateParamName, element);
         baseDataValidator.reset().parameter(transactionDateParamName).value(transactionDate).notNull();
+
+        final LocalDate postingDate = this.fromApiJsonHelper.extractLocalDateNamed(postingDateName, element);
+        if(postingDate != null)
+            baseDataValidator.reset().parameter(postingDateName).value(postingDate);
 
         final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(transactionAmountParamName, element);
         baseDataValidator.reset().parameter(transactionAmountParamName).value(transactionAmount).notNull().positiveAmount();

@@ -78,6 +78,7 @@ public class ChargesHelper {
     public final static String feeOnMonthDay = "04 March";
     private final static String monthDayFormat = "dd MMM";
 
+
     public static String getSavingsSpecifiedDueDateJSON() {
         final HashMap<String, Object> map = populateDefaultsForSavings();
         map.put("chargeTimeType", CHARGE_SPECIFIED_DUE_DATE);
@@ -141,9 +142,7 @@ public class ChargesHelper {
         map.put("amount", CHARGE_WITHDRAWAL_FEE);
         map.put("feeInterval", 1);
         map.put("active", true);
-        map.put("feeOnMonthDay", feeOnMonthDay);
         map.put("locale", "en");
-        map.put("monthDayFormat", "dd MMM");
         String chargesCreateJson = new Gson().toJson(map);
         System.out.println(chargesCreateJson);
         return chargesCreateJson;

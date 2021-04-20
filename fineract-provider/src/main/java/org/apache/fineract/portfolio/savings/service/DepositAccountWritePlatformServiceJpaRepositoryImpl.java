@@ -1563,7 +1563,16 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepositoryWrapper
                 .findOneWithNotFoundDetection(savingsChargeId, savingsAccountId);
 
-        final Map<String, Object> changes = savingsAccountCharge.update(command);
+        // calculate transaction amount
+
+        final BigDecimal transactionAmount;//= new BigDecimal(0);
+        if(ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)){
+            BigDecimal totalWithdrawals = savingsAccount.getSummary().getTotalWithdrawals();
+            transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+        }else{
+            transactionAmount = new BigDecimal(0);
+        }
+        final Map<String, Object> changes = savingsAccountCharge.update(command, transactionAmount);
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             final Locale locale = command.extractLocale();

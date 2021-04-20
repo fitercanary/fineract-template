@@ -23,8 +23,8 @@ jobs:
         uses: azure/docker-login@v1
         with:
           login-server: 'docker.pkg.github.com'
-          username: ${{ secrets.DOCKER_USERNAME_CANARY }}
-          password: ${{ secrets.DOCKER_PASSWORD_CANARY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -43,8 +43,8 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
           name: fiter1/fineract/canary-fineract-app
-          username: ${{ secrets.DOCKER_USERNAME_CANARY }}
-          password: ${{ secrets.DOCKER_PASSWORD_CANARY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
           registry: docker.pkg.github.com
           tags: "latest"
 

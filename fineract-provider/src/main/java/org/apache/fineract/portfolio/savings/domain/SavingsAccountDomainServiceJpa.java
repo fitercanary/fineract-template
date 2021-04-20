@@ -106,6 +106,14 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotTransferToOtherAccount) {
+        return handleWithdrawal(account, fmt, transactionDate, transactionDate, transactionAmount, paymentDetail,
+        transactionBooleanValues, isNotTransferToOtherAccount);
+    }
+
+    @Override
+    public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
+                                                      final LocalDate transactionDate, final LocalDate postingDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
+                                                      final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotTransferToOtherAccount) {
 
         AppUser user = getAppUserIfPresent();
         account.validateForAccountBlock();
@@ -156,6 +164,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
+        if(postingDate!=null && !transactionDate.equals(postingDate))
+            account.setPostingDate(postingDate.toDate());
+
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,
                 constructEntityMap(withdrawal));
@@ -195,12 +206,19 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final boolean isAccountTransfer, final boolean isRegularTransaction) {
         final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DEPOSIT;
-        return handleDeposit(account, fmt, transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,
+        return handleDeposit(account, fmt, transactionDate, transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,
+                savingsAccountTransactionType);
+    }
+
+    @Override
+    public SavingsAccountTransaction handleDeposit(SavingsAccount account, DateTimeFormatter fmt, LocalDate transactionDate, LocalDate postingDate, BigDecimal transactionAmount, PaymentDetail paymentDetail, boolean isAccountTransfer, boolean isRegularTransaction) {
+        final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DEPOSIT;
+        return handleDeposit(account, fmt, transactionDate, postingDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,
                 savingsAccountTransactionType);
     }
 
     private SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
-            final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
+            final LocalDate transactionDate, final LocalDate postingDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final boolean isAccountTransfer, final boolean isRegularTransaction,
             final SavingsAccountTransactionType savingsAccountTransactionType) {
         AppUser user = getAppUserIfPresent();
@@ -247,6 +265,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         this.savingsAccountRepository.saveAndFlush(account);
 
+        if(postingDate!=null && !postingDate.equals(transactionDate))
+            account.setPostingDate(postingDate.toDate());
+
+
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT, constructEntityMap(deposit));
         return deposit;
@@ -264,7 +286,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final boolean isAccountTransfer = false;
         final boolean isRegularTransaction = true;
         final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DIVIDEND_PAYOUT;
-        return handleDeposit(account, null, transactionDate, transactionAmount, null, isAccountTransfer, isRegularTransaction,
+        return handleDeposit(account, null, transactionDate, transactionDate, transactionAmount, null, isAccountTransfer, isRegularTransaction,
                 savingsAccountTransactionType);
     }
 

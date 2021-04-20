@@ -21,6 +21,7 @@ package org.apache.fineract.organisation.staff.data;
 import java.util.Collection;
 
 import org.apache.fineract.infrastructure.bulkimport.constants.TemplatePopulateImportConstants;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.joda.time.LocalDate;
 
@@ -40,20 +41,25 @@ public class StaffData {
     private final Boolean isLoanOfficer;
     private final Boolean isActive;
     private final LocalDate joiningDate;
+    private final CodeValueData gender;
+    private final CodeValueData staffCategory;
 
     //import fields
     private transient Integer rowIndex;
     private String dateFormat;
     private String locale;
+    private final Collection<CodeValueData> genderOptions;
+    private final Collection<CodeValueData> staffCategoryOptions;
 
     public static StaffData importInstance(String externalId, String firstName, String lastName, String mobileNo, Long officeId, Boolean isLoanOfficer,
             Boolean isActive, LocalDate joinedOnDate, Integer rowIndex,String locale, String dateFormat){
         return  new StaffData(externalId,firstName,lastName,mobileNo,officeId,isLoanOfficer,isActive,
-                joinedOnDate,rowIndex,locale,dateFormat);
+                joinedOnDate,rowIndex,locale,dateFormat, null, null);
 
     }
     private StaffData(String externalId, String firstname, String lastname, String mobileNo, Long officeId, Boolean isLoanOfficer,
-            Boolean isActive, LocalDate joiningDate, Integer rowIndex,String locale, String dateFormat) {
+            Boolean isActive, LocalDate joiningDate, Integer rowIndex,String locale, String dateFormat, CodeValueData gender,
+                      CodeValueData staffCategory) {
 
         this.externalId = externalId;
         this.firstname = firstname;
@@ -70,6 +76,10 @@ public class StaffData {
         this.id = null;
         this.officeName = null;
         this.displayName = null;
+        this.gender = gender;
+        this.staffCategory = staffCategory;
+        this.genderOptions = null;
+        this.staffCategoryOptions = null;
     }
 
     public Integer getRowIndex() {
@@ -79,25 +89,28 @@ public class StaffData {
     @SuppressWarnings("unused")
     private final Collection<OfficeData> allowedOffices;
 
-    public static StaffData templateData(final StaffData staff, final Collection<OfficeData> allowedOffices) {
+    public static StaffData templateData(final StaffData staff, final Collection<OfficeData> allowedOffices, final Collection<CodeValueData> genderOptions,
+                                         final Collection<CodeValueData> staffCategoryOptions) {
         return new StaffData(staff.id, staff.firstname, staff.lastname, staff.displayName, staff.officeId, staff.officeName,
-                staff.isLoanOfficer, staff.externalId, staff.mobileNo, allowedOffices, staff.isActive, staff.joiningDate);
+                staff.isLoanOfficer, staff.externalId, staff.mobileNo, allowedOffices, staff.isActive, staff.joiningDate, staff.gender,
+                staff.staffCategory, genderOptions, staffCategoryOptions);
     }
 
     public static StaffData lookup(final Long id, final String displayName) {
-        return new StaffData(id, null, null, displayName, null, null, null, null, null, null, null, null);
+        return new StaffData(id, null, null, displayName, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public static StaffData instance(final Long id, final String firstname, final String lastname, final String displayName,
             final Long officeId, final String officeName, final Boolean isLoanOfficer, final String externalId, final String mobileNo,
-            final boolean isActive, final LocalDate joiningDate) {
+            final boolean isActive, final LocalDate joiningDate, final CodeValueData gender, CodeValueData staffCategry) {
         return new StaffData(id, firstname, lastname, displayName, officeId, officeName, isLoanOfficer, externalId, mobileNo, null,
-                isActive, joiningDate);
+                isActive, joiningDate, gender, staffCategry, null, null);
     }
 
     private StaffData(final Long id, final String firstname, final String lastname, final String displayName, final Long officeId,
             final String officeName, final Boolean isLoanOfficer, final String externalId, final String mobileNo,
-            final Collection<OfficeData> allowedOffices, final Boolean isActive, final LocalDate joiningDate) {
+            final Collection<OfficeData> allowedOffices, final Boolean isActive, final LocalDate joiningDate, CodeValueData gender,
+                      CodeValueData staffCategory, final Collection<CodeValueData> genderOptions, final Collection<CodeValueData> staffCategoryOptions) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
@@ -110,6 +123,10 @@ public class StaffData {
         this.allowedOffices = allowedOffices;
         this.isActive = isActive;
         this.joiningDate = joiningDate;
+        this.gender = gender;
+        this.staffCategory = staffCategory;
+        this.genderOptions = genderOptions;
+        this.staffCategoryOptions = staffCategoryOptions;
     }
 
     public Long getId() {
@@ -138,5 +155,30 @@ public class StaffData {
 
     public Long getOfficeId() {
         return this.officeId;
+    }
+
+    public static StaffData templateData(final Collection<OfficeData> allowedOffices, final Collection<CodeValueData> genderOptions,
+                                         final Collection<CodeValueData> staffCategoryOptions) {
+        return new StaffData( allowedOffices, genderOptions, staffCategoryOptions);
+    }
+
+    private StaffData(final Collection<OfficeData> allowedOffices, final Collection<CodeValueData> genderOptions,
+                      final Collection<CodeValueData> staffCategoryOptions) {
+        this.id = null;
+        this.firstname = null;
+        this.lastname = null;
+        this.displayName = null;
+        this.officeName = null;
+        this.isLoanOfficer = null;
+        this.externalId = null;
+        this.officeId = null;
+        this.mobileNo = null;
+        this.allowedOffices = allowedOffices;
+        this.isActive = null;
+        this.joiningDate = null;
+        this.gender = null;
+        this.staffCategory = null;
+        this.genderOptions = genderOptions;
+        this.staffCategoryOptions = staffCategoryOptions;
     }
 }

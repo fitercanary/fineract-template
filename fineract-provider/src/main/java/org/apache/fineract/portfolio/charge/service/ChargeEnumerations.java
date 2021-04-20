@@ -176,6 +176,10 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES.getValue().longValue(),
                         ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES.getCode(), "% Loan Amount + Interest + Fees + Penalty");
             break;
+            case PERCENT_OF_TOTAL_WITHDRAWALS:
+                optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue().longValue(),
+                        ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getCode(), "% Total Withdrawals");
+                break;
             default:
                 optionData = new EnumOptionData(ChargeCalculationType.INVALID.getValue().longValue(),
                         ChargeCalculationType.INVALID.getCode(), "Invalid");

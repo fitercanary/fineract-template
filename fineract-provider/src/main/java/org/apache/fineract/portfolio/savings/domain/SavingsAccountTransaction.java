@@ -833,4 +833,8 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public Boolean getIsAccountTransfer() {
         return this.isAccountTransfer;
     }
+
+    public boolean isWithdrawalAndNotReversed() {
+        return SavingsAccountTransactionType.fromInt(this.typeOf).isWithdrawal() && isNotReversed();
+    }
 }

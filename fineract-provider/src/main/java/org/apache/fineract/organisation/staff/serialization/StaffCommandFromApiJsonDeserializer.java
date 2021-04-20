@@ -48,7 +48,7 @@ public final class StaffCommandFromApiJsonDeserializer {
      * The parameters supported for this command.
      */
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("firstname", "lastname", "officeId", "externalId",
-            "mobileNo", "isLoanOfficer", "isActive", "joiningDate", "dateFormat", "locale", "forceStatus"));
+            "mobileNo", "isLoanOfficer", "isActive", "joiningDate", "dateFormat", "locale", "forceStatus","genderId", "staffCategoryId"));
 
     private final FromJsonHelper fromApiJsonHelper;
     
@@ -109,6 +109,16 @@ public final class StaffCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists("locale", element)) {
         	final String locale = this.fromApiJsonHelper.extractStringNamed("locale", element);
         	baseDataValidator.reset().parameter("locale").value(locale).notBlank();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists("genderId", element)) {
+            final Integer genderId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("genderId", element);
+            baseDataValidator.reset().parameter("genderId").value(genderId).integerGreaterThanZero();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists("staffCategoryId", element)) {
+            final Integer staffCategoryId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("staffCategoryId", element);
+            baseDataValidator.reset().parameter("staffCategoryId").value(staffCategoryId).integerGreaterThanZero();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -182,6 +192,16 @@ public final class StaffCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists("locale", element)) {
         	final String locale = this.fromApiJsonHelper.extractStringNamed("locale", element);
         	baseDataValidator.reset().parameter("locale").value(locale).notBlank();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists("genderId", element)) {
+            final Integer genderId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("genderId", element);
+            baseDataValidator.reset().parameter("genderId").value(genderId).integerGreaterThanZero();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists("staffCategoryId", element)) {
+            final Integer staffCategoryId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("staffCategoryId", element);
+            baseDataValidator.reset().parameter("staffCategoryId").value(staffCategoryId).integerGreaterThanZero();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);

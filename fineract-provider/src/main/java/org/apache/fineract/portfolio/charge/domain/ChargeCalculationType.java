@@ -26,7 +26,8 @@ public enum ChargeCalculationType {
     PERCENT_OF_AMOUNT_AND_INTEREST(3, "chargeCalculationType.percent.of.amount.and.interest"), //
     PERCENT_OF_INTEREST(4, "chargeCalculationType.percent.of.interest"), //
     PERCENT_OF_DISBURSEMENT_AMOUNT(5,"chargeCalculationType.percent.of.disbursement.amount"), //
-    PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES(6, "chargeCalculationType.percent.of.amount.and.interest.and.fees.and.penalties");
+    PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES(6, "chargeCalculationType.percent.of.amount.and.interest.and.fees.and.penalties"), //
+    PERCENT_OF_TOTAL_WITHDRAWALS(7, "chargeCalculationType.percent.of.total.withdrawals");
 
     private final Integer value;
     private final String code;
@@ -52,7 +53,7 @@ public enum ChargeCalculationType {
 
     public static Object[] validValuesForSavings() {
         return new Integer[] { ChargeCalculationType.FLAT.getValue(), ChargeCalculationType.PERCENT_OF_AMOUNT.getValue(),
-				ChargeCalculationType.PERCENT_OF_INTEREST.getValue() };
+				ChargeCalculationType.PERCENT_OF_INTEREST.getValue(), ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue() };
     }
 
     public static Object[] validValuesForShares() {
@@ -92,6 +93,9 @@ public enum ChargeCalculationType {
             case 6:
                 chargeCalculationType = PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES;
             break;
+            case 7:
+                chargeCalculationType = PERCENT_OF_TOTAL_WITHDRAWALS;
+                break;
         }
         return chargeCalculationType;
     }
@@ -113,7 +117,7 @@ public enum ChargeCalculationType {
     }
 
     public boolean isAllowedSavingsChargeCalculationType() {
-        return isFlat() || isPercentageOfAmount() || isPercentageOfInterest();
+        return isFlat() || isPercentageOfAmount() || isPercentageOfInterest() || isPercentageOfTotalWithdrals();
     }
 
     public boolean isAllowedClientChargeCalculationType() {
@@ -122,7 +126,7 @@ public enum ChargeCalculationType {
 
     public boolean isPercentageBased() {
         return isPercentageOfAmount() || isPercentageOfAmountAndInterest() || isPercentageOfInterest() || isPercentageOfDisbursementAmount()
-                || isPercentageOfAmountAndInterestAndFeesAndPenalties();
+                || isPercentageOfAmountAndInterestAndFeesAndPenalties() || isPercentageOfTotalWithdrals();
     }
     
     public boolean isPercentageOfDisbursementAmount(){
@@ -131,5 +135,9 @@ public enum ChargeCalculationType {
 
     public boolean isPercentageOfAmountAndInterestAndFeesAndPenalties() {
         return this.value.equals(ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST_AND_FEES_AND_PENALTIES.getValue());
+    }
+
+    public boolean isPercentageOfTotalWithdrals() {
+        return this.value.equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue());
     }
 }

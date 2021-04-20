@@ -20,22 +20,16 @@ package org.apache.fineract.integrationtests;
 
 import static org.junit.Assert.assertEquals;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
 
-import org.apache.fineract.integrationtests.common.ClientHelper;
-import org.apache.fineract.integrationtests.common.GlobalConfigurationHelper;
-import org.apache.fineract.integrationtests.common.HolidayHelper;
-import org.apache.fineract.integrationtests.common.SchedulerJobHelper;
-import org.apache.fineract.integrationtests.common.StandingInstructionsHelper;
-import org.apache.fineract.integrationtests.common.Utils;
+import org.apache.fineract.integrationtests.common.*;
 import org.apache.fineract.integrationtests.common.accounting.Account;
 import org.apache.fineract.integrationtests.common.accounting.AccountHelper;
 import org.apache.fineract.integrationtests.common.accounting.JournalEntry;
@@ -830,6 +824,103 @@ public class SchedulerJobsTestResults {
         summary = savingsAccountHelper.getSavingsSummary(savingsId);
         balance = new Float(MINIMUM_OPENING_BALANCE) + interestPosted;
         validateNumberForEqualExcludePrecission(String.valueOf(balance), String.valueOf(summary.get("accountBalance")));
+    }
+
+
+    @Test
+    public void testMonthlyWithdrawChargesCronJobOnSavingsAccount() throws InterruptedException {
+        this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
+
+        final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        Assert.assertNotNull(clientID);
+
+        final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec,
+                ClientSavingsIntegrationTest.MINIMUM_OPENING_BALANCE);
+        Assert.assertNotNull(savingsProductID);
+
+        //create monthly withdraw charge
+        final Integer specifiedDueDateChargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
+                ChargesHelper.getWithdrawsMonthlyChargedJSON());
+        Assert.assertNotNull(specifiedDueDateChargeId);
+
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplicationWithCharge(clientID, savingsProductID, ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL,
+                savingsAccountHelper.TRANSACTION_DATE, specifiedDueDateChargeId);
+
+        HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
+        SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.approveSavingsOnDate(savingsId, TRANSACTION_DATE);
+        SavingsStatusChecker.verifySavingsIsApproved(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.activateSavings(savingsId);
+        SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
+
+        //post backdated deposit to savings account
+        String DEPOSIT_AMOUNT = "2000000";
+        Integer depositTransactionId = (Integer) this.savingsAccountHelper.depositToSavingsAccount(savingsId, DEPOSIT_AMOUNT,
+                TRANSACTION_DATE, CommonConstants.RESPONSE_RESOURCE_ID);
+        HashMap depositTransaction = this.savingsAccountHelper.getSavingsTransaction(savingsId, depositTransactionId);
+        assertEquals("Verifying Deposit Amount", new Float(DEPOSIT_AMOUNT), depositTransaction.get("amount"));
+
+        //post back dated withdraws to savings account
+        BigDecimal totalWithdraws =  makeMultipleWithDrawsInPreviousMonth(savingsId);
+
+        //get current balance before subjecting a charge
+        HashMap accountDetails = this.savingsAccountHelper.getSavingsDetails(savingsId);
+        HashMap summary = (HashMap) accountDetails.get("summary");
+        Float savingsAccountBalance = Float.valueOf((float) summary.get("accountBalance"));
+        assertEquals("Verifying Withdraw Amount", totalWithdraws.floatValue(), summary.get("totalWithdrawals"));
+
+        //trigger cron now
+        String JobName = "Pay Due Savings Charges";
+        this.schedulerJobHelper.executeJob(JobName);
+
+
+        BigDecimal chargedAmount = BigDecimal.valueOf(SavingsAccountHelper.MONTHLY_WITHDRAWS_CHARGE_PERCENTAGE).multiply(totalWithdraws).divide(BigDecimal.valueOf(100));
+        accountDetails = this.savingsAccountHelper.getSavingsDetails(savingsId);
+        summary = (HashMap) accountDetails.get("summary");
+        assertEquals("Verifying New balance", BigDecimal.valueOf(savingsAccountBalance).subtract(chargedAmount), BigDecimal.valueOf((float) summary.get("accountBalance")));
+    }
+
+
+    private BigDecimal makeMultipleWithDrawsInPreviousMonth(Integer savingsId){
+        int count = 0;
+        Random rand = new Random();
+        BigDecimal totalWithdraws = BigDecimal.ZERO;
+
+        //handle dates
+        LocalDate now = LocalDate.now();
+        LocalDate c = now.minusMonths(1);
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(Date.from(c.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        int lastDayOfMonth = cal.getActualMaximum(Calendar.DATE);
+        int dayOfMonth = 1;
+
+
+        while(count < 5 && dayOfMonth < lastDayOfMonth) {
+            String withdrawAmt = getRandomNumberUsingNextInt(1, 10) +"00";
+            //make random dates within last month
+            String TRANSACTION_DATE = dayOfMonth+" "+c.getMonth()+" "+c.getYear();
+            Integer withdrawTransactionId = (Integer) this.savingsAccountHelper.withdrawalFromSavingsAccount(savingsId, withdrawAmt,
+                    TRANSACTION_DATE, CommonConstants.RESPONSE_RESOURCE_ID);
+            HashMap withdrawTransaction = this.savingsAccountHelper.getSavingsTransaction(savingsId, withdrawTransactionId);
+            assertEquals("Verifying Withdrawal Amount", new Float(withdrawAmt), withdrawTransaction.get("amount"));
+
+            //due to Transaction date cannot be in the past from last transaction date.
+            dayOfMonth = 4 + dayOfMonth;
+            totalWithdraws = totalWithdraws.add(BigDecimal.valueOf(Long.valueOf(withdrawAmt)));
+            count ++;
+
+        }
+
+        return totalWithdraws;
+
+    }
+
+    private int getRandomNumberUsingNextInt(int min, int max) {
+        Random random = new Random();
+        return random.nextInt(max - min) + min;
     }
 
     private Integer createSavingsProduct(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,

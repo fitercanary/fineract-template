@@ -23,11 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDate;
+import java.util.*;
 
 import org.apache.fineract.integrationtests.common.CommonConstants;
 import org.apache.fineract.integrationtests.common.Utils;
@@ -60,8 +57,8 @@ public class SavingsAccountHelper {
     private static final String CLOSE_SAVINGS_COMMAND = "close";
     private static final String UPDATE_WITHHOLD_TAX_STATUS = "updateWithHoldTax";
 
-    private static final String DEPOSIT_SAVINGS_COMMAND = "deposit";
-    private static final String WITHDRAW_SAVINGS_COMMAND = "withdrawal";
+    public static final String DEPOSIT_SAVINGS_COMMAND = "deposit";
+    public static final String WITHDRAW_SAVINGS_COMMAND = "withdrawal";
     private static final String MODIFY_TRASACTION_COMMAND = "modify";
     private static final String UNDO_TRASACTION_COMMAND = "undo";
     
@@ -81,6 +78,7 @@ public class SavingsAccountHelper {
     public static final String TRANSACTION_DATE_PLUS_ONE = "02 March 2013";
     public static final String LAST_TRANSACTION_DATE = "01 March 2013";
     public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
+    public static final int MONTHLY_WITHDRAWS_CHARGE_PERCENTAGE = 5;
 
     public static final String DATE_TIME_FORMAT = "dd MMMM yyyy HH:mm";
     private static final Boolean isBlock = false;
@@ -99,6 +97,31 @@ public class SavingsAccountHelper {
 
     public Integer applyForSavingsApplication(final Integer ID, final Integer savingsProductID, final String accountType) {
         return applyForSavingsApplicationOnDate(ID, savingsProductID, accountType, CREATED_DATE);
+    }
+
+    public Integer applyForSavingsApplicationWithCharge(final Integer ID, final Integer savingsProductID, final String accountType,
+                                                    final String submittedOnDate, Integer chargeId) {
+        System.out.println("--------------------------------APPLYING FOR SAVINGS APPLICATION--------------------------------");
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        HashMap<String, Object> chargeMap = new HashMap<String, Object>(){{
+            put("chargeId", chargeId);
+            put("amount", MONTHLY_WITHDRAWS_CHARGE_PERCENTAGE);
+            put("feeOnMonthDay", startOfMonth.getDayOfMonth()+" "+startOfMonth.getMonth().toString());
+            put("dueDate", startOfMonth);
+            put("feeInterval", 1);
+            put("dateFormat", "dd MMMM yyyy");
+            put("monthDayFormat", "dd MMMM");
+        }};
+
+        final String savingsApplicationJSON = new SavingsApplicationTestBuilder() //
+                .withSubmittedOnDate(submittedOnDate)
+                .withCharges(new ArrayList<HashMap<String, Object>>(){{
+                        add(chargeMap);
+                    }})
+                .build(ID.toString(), savingsProductID.toString(), accountType);
+        return Utils.performServerPost(this.requestSpec, this.responseSpec, SAVINGS_ACCOUNT_URL + "?" + Utils.TENANT_IDENTIFIER,
+                savingsApplicationJSON, "savingsId");
     }
 
     public Integer applyForSavingsApplicationOnDate(final Integer ID, final Integer savingsProductID, final String accountType,
@@ -202,6 +225,12 @@ public class SavingsAccountHelper {
         return Utils.performServerDelete(this.requestSpec, this.responseSpec, SAVINGS_ACCOUNT_URL + "/" + savingsId + "?"
                 + Utils.TENANT_IDENTIFIER, jsonAttributeToGetBack);
 
+    }
+
+    public Object savingsAccountTransaction(final Integer savingsID, final String amount, String transactionDate, String postingDate, String command, String jsonAttributeToGetback) {
+        System.out.println("--------------------------------- "+command+" --------------------------------");
+        return performSavingActions(createSavingsTransactionURL(command, savingsID),
+                getSavingsTransactionJSON(amount, transactionDate, postingDate), jsonAttributeToGetback);
     }
 
     public Object depositToSavingsAccount(final Integer savingsID, final String amount, String date, String jsonAttributeToGetback) {
@@ -382,6 +411,19 @@ public class SavingsAccountHelper {
         String savingsAccountWithdrawalJson = new Gson().toJson(map);
         System.out.println(savingsAccountWithdrawalJson);
         return savingsAccountWithdrawalJson;
+    }
+
+    private String getSavingsTransactionJSON(final String amount, final String transactionDate, final String postingDate) {
+        final HashMap<String, Object> map = new HashMap<>();
+        map.put("locale", CommonConstants.locale);
+        map.put("dateFormat", CommonConstants.dateFormat);
+        map.put("transactionDate", transactionDate);
+        map.put("transactionAmount", amount);
+        map.put("postingDate", postingDate);
+        map.put("paymentTypeId", 1);
+        String savingsTransactionJson = new Gson().toJson(map);
+        System.out.println(savingsTransactionJson);
+        return savingsTransactionJson;
     }
 
     private String getCalculatedInterestForSavingsApplicationAsJSON() {

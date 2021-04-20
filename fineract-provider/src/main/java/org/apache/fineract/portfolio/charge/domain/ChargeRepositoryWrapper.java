@@ -64,4 +64,14 @@ public class ChargeRepositoryWrapper {
         }
         return charge;
     }
+
+
+    public Charge findChargeByChargeCalculationType(ChargeCalculationType chargeCalculationType) {
+        Charge charge = null;
+        List<Charge> charges = this.repository.findChargesByChargeCalculationAndActive(chargeCalculationType.getValue(), true);
+        if (!charges.isEmpty()) {
+            charge = charges.get(0);
+        }
+        return charge;
+    }
 }

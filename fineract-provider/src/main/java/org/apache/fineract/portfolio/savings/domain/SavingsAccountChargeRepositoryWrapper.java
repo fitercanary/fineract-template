@@ -80,4 +80,5 @@ public class SavingsAccountChargeRepositoryWrapper {
     public List<SavingsAccountCharge> findWithdrawalFee(Long accountId, Integer chargeTimeType) {
         return this.repository.findWithdrawalFeeByAccountId(accountId, chargeTimeType);
     }
+
 }

@@ -45,6 +45,8 @@ import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToG
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
@@ -67,6 +69,7 @@ import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYea
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.data.FixedDepositProductData;
+import org.apache.fineract.portfolio.savings.data.SavingsProductConstants;
 import org.apache.fineract.portfolio.savings.service.DepositProductReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositsDropdownReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsDropdownReadPlatformService;
@@ -99,6 +102,7 @@ public class FixedDepositProductsApiResource {
     private final DropdownReadPlatformService dropdownReadPlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
     private final TaxReadPlatformService taxReadPlatformService;
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
     public FixedDepositProductsApiResource(final DepositProductReadPlatformService depositProductReadPlatformService,
@@ -113,7 +117,8 @@ public class FixedDepositProductsApiResource {
             final InterestRateChartReadPlatformService interestRateChartReadPlatformService,
             final DepositsDropdownReadPlatformService depositsDropdownReadPlatformService,
             final DropdownReadPlatformService dropdownReadPlatformService,
-            final PaymentTypeReadPlatformService paymentTypeReadPlatformService, final TaxReadPlatformService taxReadPlatformService) {
+            final PaymentTypeReadPlatformService paymentTypeReadPlatformService, final TaxReadPlatformService taxReadPlatformService,
+                                           final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.depositProductReadPlatformService = depositProductReadPlatformService;
         this.savingsDropdownReadPlatformService = savingsDropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -130,6 +135,7 @@ public class FixedDepositProductsApiResource {
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
         this.taxReadPlatformService = taxReadPlatformService;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
     }
 
     @POST
@@ -299,20 +305,23 @@ public class FixedDepositProductsApiResource {
         // interest rate chart template
         final InterestRateChartData chartTemplate = this.interestRateChartReadPlatformService.template();
 
+        Collection<CodeValueData> savingsProductDepositCategoryOptions = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(SavingsProductConstants.SAVINGS_PRODUCT_DEPOSIT_CATEGORIES_OPTION_CODE_NAME);
+
         FixedDepositProductData fixedDepositProductToReturn;
         if (savingsProduct != null) {
             fixedDepositProductToReturn = FixedDepositProductData.withTemplate(savingsProduct, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
-                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions);
+                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions, savingsProductDepositCategoryOptions);
         } else {
             fixedDepositProductToReturn = FixedDepositProductData.template(currency, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
-                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions);
+                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions, savingsProductDepositCategoryOptions);
         }
         fixedDepositProductToReturn.setPreClosureCharges(preClosureChargeOptions);
         return fixedDepositProductToReturn;

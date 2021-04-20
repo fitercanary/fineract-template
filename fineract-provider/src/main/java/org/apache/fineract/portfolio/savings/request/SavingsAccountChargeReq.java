@@ -36,6 +36,8 @@ public class SavingsAccountChargeReq {
     private LocalDate dueDate;
     private MonthDay feeOnMonthDay;
     private Integer feeInterval;
+    private BigDecimal amountPercentAppliedTo;// used incase of % charges. Note amount is the percentage in that case
+
 
     public static SavingsAccountChargeReq instance(JsonCommand command) {
         SavingsAccountChargeReq instance = new SavingsAccountChargeReq();
@@ -43,6 +45,27 @@ public class SavingsAccountChargeReq {
         instance.dueDate = command.localDateValueOfParameterNamed(dueAsOfDateParamName);
         instance.feeOnMonthDay = command.extractMonthDayNamed(feeOnMonthDayParamName);
         instance.feeInterval = command.integerValueOfParameterNamed(feeIntervalParamName);
+
+        return instance;
+    }
+
+    public static SavingsAccountChargeReq instance(BigDecimal amount, LocalDate dueDate, MonthDay feeOnMonthDay, Integer feeInterval) {
+        SavingsAccountChargeReq instance = new SavingsAccountChargeReq();
+        instance.amount = amount;
+        instance.dueDate = dueDate;
+        instance.feeOnMonthDay = feeOnMonthDay;
+        instance.feeInterval = feeInterval;
+
+        return instance;
+    }
+
+    public static SavingsAccountChargeReq instance(BigDecimal amount, LocalDate dueDate, MonthDay feeOnMonthDay, Integer feeInterval, BigDecimal amountChargeToBeAppliedTo) {
+        SavingsAccountChargeReq instance = new SavingsAccountChargeReq();
+        instance.amount = amount;
+        instance.dueDate = dueDate;
+        instance.feeOnMonthDay = feeOnMonthDay;
+        instance.feeInterval = feeInterval;
+        instance.amountPercentAppliedTo = amountChargeToBeAppliedTo;
 
         return instance;
     }
@@ -77,5 +100,13 @@ public class SavingsAccountChargeReq {
 
     public void setFeeInterval(Integer feeInterval) {
         this.feeInterval = feeInterval;
+    }
+
+    public BigDecimal getAmountPercentAppliedTo() {
+        return amountPercentAppliedTo;
+    }
+
+    public void setAmountPercentAppliedTo(BigDecimal amountPercentAppliedTo) {
+        this.amountPercentAppliedTo = amountPercentAppliedTo;
     }
 }

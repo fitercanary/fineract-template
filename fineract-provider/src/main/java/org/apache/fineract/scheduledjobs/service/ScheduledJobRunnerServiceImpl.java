@@ -20,11 +20,7 @@ package org.apache.fineract.scheduledjobs.service;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -39,7 +35,6 @@ import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalid
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -52,16 +47,14 @@ import org.apache.fineract.notification.config.MessagingConfiguration;
 import org.apache.fineract.notification.config.VfdServiceApi;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
 import org.apache.fineract.portfolio.savings.classification.data.TransactionClassificationData;
 import org.apache.fineract.portfolio.savings.classification.service.TransactionClassificationReadPlatformService;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
-import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
-import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequestRepository;
+import org.apache.fineract.portfolio.savings.domain.*;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
@@ -287,14 +280,37 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @Override
     @CronTarget(jobName = JobName.PAY_DUE_SAVINGS_CHARGES)
     public void applyDueChargesForSavings() throws JobExecutionException {
+
+        // We first take care of updating monthly withdraw charges by percentage
+        // in this case we have % of total withdrawals in a month
+        // then call pay charges.
+
+        final StringBuilder errorMsg = new StringBuilder();
+
+       final Collection<SavingsAccountAnnualFeeData> monthlyWithdrawChargesDueData = this.savingsAccountChargeReadPlatformService
+                .retrieveAccountsWithChargeByCalculationTypeAndStatus(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS.getValue(), new Long(1));
+        for (final SavingsAccountAnnualFeeData savingsAccountMonthlyFeeData: monthlyWithdrawChargesDueData){
+            try {
+                this.savingsAccountWritePlatformService.updateSavingsAccountCharge(savingsAccountMonthlyFeeData.getAccountId(), savingsAccountMonthlyFeeData.getId());
+            }catch (final PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Generate Monthly withdrawal charges by percentage  for savings failed for account:" + savingsAccountMonthlyFeeData.getAccountNo()
+                            + " with message " + error.getDeveloperMessage());
+                    errorMsg.append("Generate Monthly total withdrawal charges by percentage  for savings failed for account:").append(savingsAccountMonthlyFeeData.getAccountNo())
+                            .append(" with message ").append(error.getDeveloperMessage());
+                }
+            }
+        }
+
+
         final Collection<SavingsAccountAnnualFeeData> chargesDueData = this.savingsAccountChargeReadPlatformService
                 .retrieveChargesWithDue();
-        final StringBuilder errorMsg = new StringBuilder();
 
         for (final SavingsAccountAnnualFeeData savingsAccountReference : chargesDueData) {
             try {
-                this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
-                        savingsAccountReference.getAccountId());
+                    this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
+                            savingsAccountReference.getAccountId());
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {
@@ -305,6 +321,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 }
             }
         }
+
+
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Savings accounts affected by update: " + chargesDueData.size());
 

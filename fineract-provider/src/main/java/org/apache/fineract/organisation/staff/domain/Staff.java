@@ -22,17 +22,10 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
@@ -89,7 +82,15 @@ public class Staff extends AbstractPersistableCustom<Long> {
     @JoinColumn(name = "image_id", nullable = true)
     private Image image;
 
-    public static Staff fromJson(final Office staffOffice, final JsonCommand command) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gender_cv_id", nullable = true)
+    private CodeValue gender;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_category_cv_id", nullable = true)
+    private CodeValue staffCategory;
+
+    public static Staff fromJson(final Office staffOffice, final JsonCommand command, CodeValue gender, CodeValue stafffCategory) {
 
         final String firstnameParamName = "firstname";
         final String firstname = command.stringValueOfParameterNamed(firstnameParamName);
@@ -116,7 +117,7 @@ public class Staff extends AbstractPersistableCustom<Long> {
             joiningDate = command.localDateValueOfParameterNamed(joiningDateParamName);
         }
 
-        return new Staff(staffOffice, firstname, lastname, externalId, mobileNo, isLoanOfficer, isActive, joiningDate);
+        return new Staff(staffOffice, firstname, lastname, externalId, mobileNo, isLoanOfficer, isActive, joiningDate, gender, stafffCategory);
     }
 
     protected Staff() {
@@ -124,7 +125,7 @@ public class Staff extends AbstractPersistableCustom<Long> {
     }
 
     private Staff(final Office staffOffice, final String firstname, final String lastname, final String externalId, final String mobileNo,
-            final boolean isLoanOfficer, final Boolean isActive, final LocalDate joiningDate) {
+            final boolean isLoanOfficer, final Boolean isActive, final LocalDate joiningDate, final CodeValue gender, CodeValue staffCategory) {
         this.office = staffOffice;
         this.firstname = StringUtils.defaultIfEmpty(firstname, null);
         this.lastname = StringUtils.defaultIfEmpty(lastname, null);
@@ -136,6 +137,8 @@ public class Staff extends AbstractPersistableCustom<Long> {
         if (joiningDate != null) {
             this.joiningDate = joiningDate.toDateTimeAtStartOfDay().toDate();
         }
+        this.gender = gender;
+        this.staffCategory = staffCategory;
     }
 
     public EnumOptionData organisationalRoleData() {
@@ -218,6 +221,18 @@ public class Staff extends AbstractPersistableCustom<Long> {
             this.joiningDate = newValue.toDate();
         }
 
+        final String genderIdParamName = "genderId";
+        if (command.isChangeInLongParameterNamed(genderIdParamName, this.gender != null ? this.gender.getId() : null)) {
+            final Long newValue = command.longValueOfParameterNamed(genderIdParamName);
+            actualChanges.put(genderIdParamName, newValue);
+        }
+
+        final String staffCategoryIdParamName = "staffCategoryId";
+        if (command.isChangeInLongParameterNamed(staffCategoryIdParamName, this.staffCategory != null ? this.staffCategory.getId() : null)) {
+            final Long newValue = command.longValueOfParameterNamed(staffCategoryIdParamName);
+            actualChanges.put(staffCategoryIdParamName, newValue);
+        }
+
         return actualChanges;
     }
 
@@ -275,5 +290,21 @@ public class Staff extends AbstractPersistableCustom<Long> {
 
     public Image getImage() {
         return this.image;
+    }
+
+    public CodeValue getGender() {
+        return gender;
+    }
+
+    public void updateGender(CodeValue gender) {
+        this.gender = gender;
+    }
+
+    public CodeValue getStaffCategory() {
+        return staffCategory;
+    }
+
+    public void updateStaffCategory(CodeValue staffCategory) {
+        this.staffCategory = staffCategory;
     }
 }

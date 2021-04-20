@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 import org.apache.fineract.accounting.common.AccountingEnumerations;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
@@ -159,7 +160,9 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("sp.withhold_tax as withHoldTax,");
 			sqlBuilder.append("sp.withdrawal_fee_for_transfer as withdrawalFeeForTransfers,");
             sqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName, dptp.pre_closure_charge_applicable as preClosureChargeApplicable, ");
-            sqlBuilder.append("dptp.pre_closure_charge_id as preClosureChargeId ");
+            sqlBuilder.append("dptp.pre_closure_charge_id as preClosureChargeId, ");
+            sqlBuilder.append("sp.savings_product_deposit_category as savingsProductDepositCategoryId, ");
+            sqlBuilder.append("deposit_category.code_value as savingsProductDepositCategoryValue ");
             this.schemaSql = sqlBuilder.toString();
         }
 
@@ -224,10 +227,17 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
                 taxGroupData = TaxGroupData.lookup(taxGroupId, taxGroupName);
             }
 
-			DepositProductData depositProductData = DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
+            final Long savingsProductDepositCategoryId = JdbcSupport.getLong(rs,"savingsProductDepositCategoryId");
+
+            final String savingsProductDepositCategoryValue = rs.getString("savingsProductDepositCategoryValue");
+
+            final CodeValueData depositProductCategory = CodeValueData.instance(savingsProductDepositCategoryId, savingsProductDepositCategoryValue);
+
+
+            DepositProductData depositProductData = DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation, withHoldTax,
-                    taxGroupData);
+                    taxGroupData, depositProductCategory);
 			depositProductData.setWithdrawalFeeForTransfers(withdrawalFeeForTransfers);
 			depositProductData.setPreClosureChargeApplicable(preClosureChargeApplicable);
 			depositProductData.setPreClosureChargeId(preClosureChargeId);
@@ -258,6 +268,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("left join m_deposit_product_term_and_preclosure dptp on sp.id=dptp.savings_product_id ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id ");
+            sqlBuilder.append("left join m_code_value deposit_category on deposit_category.id=sp.savings_product_deposit_category ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -327,6 +338,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("left join m_deposit_product_recurring_detail dprd on sp.id=dprd.savings_product_id ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append(" left join m_tax_group tg on tg.id = sp.tax_group_id  ");
+            sqlBuilder.append("left join m_code_value deposit_category on deposit_category.id=sp.savings_product_deposit_category ");
 
             this.schemaSql = sqlBuilder.toString();
         }

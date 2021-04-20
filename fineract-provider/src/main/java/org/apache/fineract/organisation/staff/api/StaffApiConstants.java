@@ -16,17 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.charge.domain;
+package org.apache.fineract.organisation.staff.api;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+public class StaffApiConstants {
 
-import java.util.List;
-
-public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
-
-    List<Charge> findChargesByChargeTimeTypeAndActive(Integer chargeTimeType, boolean active);
-
-    List<Charge> findChargesByChargeCalculationAndActive(Integer chargeCalculationtype, boolean active);
-
+    // Commands
+    public static final String GENDER = "Gender";
+    public static final String STAFF_CATEGORY = "Staff Categories";
 }

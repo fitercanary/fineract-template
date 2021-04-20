@@ -52,6 +52,7 @@ import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
 import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.client.domain.Client;
@@ -108,15 +109,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.time.ZoneId;
+import java.util.*;
+
+import org.joda.time.MonthDay;
 
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
@@ -294,13 +290,14 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
 
         final Map<String, Object> changes = new LinkedHashMap<>();
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
-        final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
+        final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate, postingDate,
                 transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
 
         this.saveTransactionRequest(command, deposit);
@@ -366,6 +363,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.savingsAccountTransactionDataValidator.validate(command);
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
+
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
 
         final Locale locale = command.extractLocale();
@@ -385,7 +384,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final boolean isApplyOverdraftFee = true;
         final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                 isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance, isApplyOverdraftFee);
-        final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate,
+
+        final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate, postingDate,
                 transactionAmount, paymentDetail, transactionBooleanValues, false);
 
         this.saveTransactionRequest(command, withdrawal);
@@ -972,8 +972,28 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     .failWithCodeNoParameterAddedToErrorCode(
                             "charge.due.date.is.invalid.for." + ChargeTimeType.fromInt(chargeTimeType).getCode());
         }
+
         // calculation is in this line
-        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, SavingsAccountChargeReq.instance(command));
+        SavingsAccountChargeReq savingsAccountChargeReq = SavingsAccountChargeReq.instance(command);
+
+        //  FIXME take care of m% charges in this case total withdrawals. We can look into how to make this more generic.
+        // FIXME For now this works for CANARY case. Time was not enough to make it more generic
+        if(ChargeCalculationType.fromInt(chargeDefinition.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)) {
+            BigDecimal amountPercentAppliedTo = BigDecimal.ZERO;
+
+            if (dueAsOfDateParam != null && savingsAccountChargeReq.getFeeInterval() != null) {
+                LocalDate startDate = dueAsOfDateParam.minusMonths(savingsAccountChargeReq.getFeeInterval());
+
+                // get total withdrawals for period i.e if due date is 1st Feb and interval is 1 Month
+                // then we get charges from 1st Jan to 31st Jan [ 1 Month]
+                // we use date before due date so we can capture all withdrawals up to midnight the day
+                amountPercentAppliedTo = savingsAccount.getTotalWithdrawalsBetweenDatesInclusive(startDate, dueAsOfDateParam.minusDays(1));
+
+                savingsAccountChargeReq.setAmountPercentAppliedTo(amountPercentAppliedTo);
+            }
+
+        }
+        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNew(savingsAccount, chargeDefinition, savingsAccountChargeReq);
 
         if (savingsAccountCharge.getDueLocalDate() != null) {
             // transaction date should not be on a holiday or non working day
@@ -1023,11 +1043,37 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository.findOneWithNotFoundDetection(savingsChargeId,
                 savingsAccountId);
 
-        final Map<String, Object> changes = savingsAccountCharge.update(command);
+        // calculate transaction amount
+        BigDecimal transactionAmount = new BigDecimal(0);
 
-        if (savingsAccountCharge.getDueLocalDate() != null) {
+        final Map<String, Object> changes = savingsAccountCharge.update(command, transactionAmount);
+        //  FIXME take care of m% charges in this case total withdrawals. We can look into how to make this more generic.
+        // FIXME For now this works for CANARY case.
+        if(ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)) {
+            BigDecimal amountPercentAppliedTo = BigDecimal.ZERO;
+
+            if(changes.containsKey(dueAsOfDateParamName)) {
+                if ( savingsAccountCharge.getDueLocalDate()!= null && savingsAccountCharge.getFeeInterval() != null) {
+                    LocalDate startDate = savingsAccountCharge.getDueLocalDate().minusMonths(savingsAccountCharge.getFeeInterval());
+
+                    // get total withdrawals for period i.e if due date is 1st Feb and interval is 1 Month
+                    // then we get charges from 1st Jan to 31st Jan [ 1 Month]
+                    // we use date before due date so we can capture all withdrawals up to midnight the day
+                    amountPercentAppliedTo = savingsAccount.getTotalWithdrawalsBetweenDatesInclusive(startDate, savingsAccountCharge.getDueLocalDate().minusDays(1));
+
+                    savingsAccountCharge.setAmountPercentageAppliedTo(amountPercentAppliedTo);
+                    savingsAccountCharge.setAmount(savingsAccountCharge.percentageOf(amountPercentAppliedTo, savingsAccountCharge.getPercentage()));
+                    savingsAccountCharge.setAmountOutstanding(savingsAccountCharge.calculateOutstanding());
+                }
+            }
+
+        }
+
+        if ( savingsAccountCharge.getDueLocalDate() != null) {
             final Locale locale = command.extractLocale();
-            final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+            final String format = command.dateFormat();
+            final DateTimeFormatter fmt = StringUtils.isNotBlank(format) ? DateTimeFormat.forPattern(format).withLocale(locale)
+                    : DateTimeFormat.forPattern("dd MM yyyy");
 
             // transaction date should not be on a holiday or non working day
             if (!this.configurationDomainService.allowTransactionsOnHolidayEnabled()
@@ -1199,6 +1245,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate()) && savingsAccountCharge.isNotFullyPaid()) {
             payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), fmt, user);
         }
+
     }
 
     @Transactional
@@ -1894,5 +1941,75 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
+    }
+
+    //
+    private void handleMonthlyWithdrawCharges(SavingsAccountCharge savingsAccountCharge, SavingsAccount savingsAccount, Charge chargeDefinition,
+                                              SavingsAccountChargeReq savingsAccountChargeReq){
+        // calculate transaction amount
+        BigDecimal transactionAmount = BigDecimal.ZERO;
+
+        // generate the due date
+        //  job will run on 1st of every month
+        MonthDay feeOnMonthDay = savingsAccountChargeReq.getFeeOnMonthDay();
+        feeOnMonthDay = (feeOnMonthDay == null) ? chargeDefinition.getFeeOnMonthDay() : feeOnMonthDay;
+        LocalDate chargeDueDate = feeOnMonthDay.toLocalDate(LocalDate.now().getYear());
+
+        // calculate the withdrawals
+        BigDecimal totalWithdrawals = BigDecimal.ZERO;//savingsAccount.getTotalWithdrawalsInSameYearAndMonthAsDate( chargeDueDate );
+        transactionAmount = totalWithdrawals == null ? new BigDecimal(0) : totalWithdrawals;
+
+        // calculate transfers to loan accounts of same client
+
+
+        // calculate the charges
+
+        savingsAccountCharge.updateDueDate(chargeDueDate.toDate());
+    }
+
+    /**
+     * Used to update the amount in monthly % charge on total withdrawals
+     * This is used by the "Pay Due Savings Charges" JOB
+     * Once previous charge is paid, we can update the charge at end of next period
+     * */
+    public void updateSavingsAccountCharge(final Long savingsAccountId, final Long savingsChargeId) {
+
+        final SavingsAccount savingsAccount = this.savingAccountAssembler.assembleFrom(savingsAccountId);
+        checkClientOrGroupActive(savingsAccount);
+
+        final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository.findOneWithNotFoundDetection(savingsChargeId,
+                savingsAccountId);
+
+        // calculate transaction amount
+
+        //  FIXME take care of m% charges in this case total withdrawals. We can look into how to make this more generic.
+        // FIXME For now this works for CANARY case.
+        if(ChargeCalculationType.fromInt(savingsAccountCharge.getChargeCalculation()).equals(ChargeCalculationType.PERCENT_OF_TOTAL_WITHDRAWALS)) {
+            BigDecimal amountPercentAppliedTo = BigDecimal.ZERO;
+
+            // Generate next due date
+            if ( savingsAccountCharge.getDueLocalDate()!= null && savingsAccountCharge.getFeeInterval() != null) {
+                //savingsAccountCharge.updateNextDueDateForRecurringFees();
+                LocalDate nextDueDate = savingsAccountCharge.getDueLocalDate();
+                //savingsAccountCharge.getDueLocalDate().plusMonths(savingsAccountCharge.getFeeInterval());
+                LocalDate startDate = nextDueDate.minusMonths(savingsAccountCharge.getFeeInterval()).withDayOfMonth(1);
+
+
+                // get total withdrawals for period i.e if due date is 1st Feb and interval is 1 Month
+                // then we get charges from 1st Jan to 31st Jan [ 1 Month]
+                // we use date before due date so we can capture all withdrawals up to midnight the day
+                amountPercentAppliedTo = savingsAccount.getTotalWithdrawalsBetweenDatesInclusive(startDate, nextDueDate.minusDays(1));
+
+                if(Money.of(savingsAccount.getCurrency(), amountPercentAppliedTo).isGreaterThanZero()) {
+                    savingsAccountCharge.setAmountPercentageAppliedTo(amountPercentAppliedTo);
+                    savingsAccountCharge.setAmount(savingsAccountCharge.percentageOf(amountPercentAppliedTo, savingsAccountCharge.getPercentage()));
+                    savingsAccountCharge.resetPayProperties();
+                    BigDecimal outstanding = savingsAccountCharge.calculateOutstanding();
+                    savingsAccountCharge.setAmountOutstanding(outstanding);
+                }
+            }
+        }
+
+        this.savingsAccountChargeRepository.saveAndFlush(savingsAccountCharge);
     }
 }

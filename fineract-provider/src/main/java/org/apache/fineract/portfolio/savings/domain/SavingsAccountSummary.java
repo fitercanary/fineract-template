@@ -163,4 +163,8 @@ public final class SavingsAccountSummary {
         }
 
     }
+
+    public BigDecimal getTotalWithdrawals() {
+        return totalWithdrawals;
+    }
 }

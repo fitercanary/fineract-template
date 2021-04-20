@@ -16,17 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.charge.domain;
+package org.apache.fineract.portfolio.savings.data;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import java.util.List;
-
-public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
-
-    List<Charge> findChargesByChargeTimeTypeAndActive(Integer chargeTimeType, boolean active);
-
-    List<Charge> findChargesByChargeCalculationAndActive(Integer chargeCalculationtype, boolean active);
+public class SavingsProductConstants {
+    // Savings Products Deposit Categories
+    public static final String SAVINGS_PRODUCT_DEPOSIT_CATEGORIES_OPTION_CODE_NAME = "Savings Product Categories";
 
 }

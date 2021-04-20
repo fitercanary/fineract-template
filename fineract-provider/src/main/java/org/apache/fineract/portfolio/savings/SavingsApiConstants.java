@@ -162,6 +162,7 @@ public class    SavingsApiConstants {
 	public static final String longitudeParamName = "longitude";
 	public static final String notesImageParamName = "noteImage";
 	public static final String transactionBrandParamName = "transactionBrandName";
+	public static final String postingDateName = "postingDate";
 
     // charges parameters
     public static final String chargeIdParamName = "chargeId";
@@ -213,4 +214,7 @@ public class    SavingsApiConstants {
     
     // Permissions
     public static final String READ_ALL_SAVINGSACCOUNT_PERMISSIONS = "READ_ALL_SAVINGSACCOUNT";
+
+    // other
+    public static final String savingsProductDepositCategoryParamName = "savingsProductDepositCategory";
 }

@@ -60,4 +60,5 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
     List<SavingsAccount>findByAccountsDueForOverdraftClose(@Param("date") Date date);
 
 	List<SavingsAccount>findSavingsAccountsByStatusAndDepositType(Integer status, Integer depositType);
+
 }

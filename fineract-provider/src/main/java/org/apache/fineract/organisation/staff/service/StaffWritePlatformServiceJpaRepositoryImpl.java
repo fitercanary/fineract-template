@@ -24,6 +24,8 @@ import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -49,13 +51,16 @@ public class StaffWritePlatformServiceJpaRepositoryImpl implements StaffWritePla
     private final StaffCommandFromApiJsonDeserializer fromApiJsonDeserializer;
     private final StaffRepository staffRepository;
     private final OfficeRepositoryWrapper officeRepositoryWrapper;
+    private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
 
     @Autowired
     public StaffWritePlatformServiceJpaRepositoryImpl(final StaffCommandFromApiJsonDeserializer fromApiJsonDeserializer,
-            final StaffRepository staffRepository, final OfficeRepositoryWrapper officeRepositoryWrapper) {
+            final StaffRepository staffRepository, final OfficeRepositoryWrapper officeRepositoryWrapper,
+                                                      final CodeValueRepositoryWrapper codeValueRepositoryWrapper) {
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.staffRepository = staffRepository;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
+        this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
     }
 
     @Transactional
@@ -68,7 +73,19 @@ public class StaffWritePlatformServiceJpaRepositoryImpl implements StaffWritePla
             final Long officeId = command.longValueOfParameterNamed("officeId");
 
             final Office staffOffice = this.officeRepositoryWrapper.findOneWithNotFoundDetection(officeId);
-            final Staff staff = Staff.fromJson(staffOffice, command);
+            final Long genderId = command.longValueOfParameterNamed("genderId");
+            CodeValue gender = null;
+            if(genderId != null) {
+                gender = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(genderId);
+            }
+
+            final Long staffCategoryId = command.longValueOfParameterNamed("staffCategoryId");
+            CodeValue staffCategory = null;
+            if(staffCategoryId != null) {
+                staffCategory = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(staffCategoryId);
+            }
+
+            final Staff staff = Staff.fromJson(staffOffice, command, gender, staffCategory);
 
             this.staffRepository.save(staff);
 
@@ -102,6 +119,18 @@ public class StaffWritePlatformServiceJpaRepositoryImpl implements StaffWritePla
                 final Long officeId = (Long) changesOnly.get("officeId");
                 final Office newOffice = this.officeRepositoryWrapper.findOneWithNotFoundDetection(officeId);
                 staffForUpdate.changeOffice(newOffice);
+            }
+
+            if (changesOnly.containsKey("genderId")) {
+                final Long genderId = (Long) changesOnly.get("genderId");
+                final CodeValue gender = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(genderId);
+                staffForUpdate.updateGender(gender);
+            }
+
+            if (changesOnly.containsKey("staffCategoryId")) {
+                final Long staffCategoryId = (Long) changesOnly.get("staffCategoryId");
+                final CodeValue staffCategory = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(staffCategoryId);
+                staffForUpdate.updateStaffCategory(staffCategory);
             }
 
             if (!changesOnly.isEmpty()) {

@@ -35,4 +35,5 @@ public interface SavingsAccountTransactionRepository
     @Query("select sat from SavingsAccountTransaction sat where (sat.typeOf = :typeOfWithdrawalFee or sat.typeOf = :typeOfAccrual) and sat.savingsAccount.id = :savingsId and sat.dateOf <= :transactionDate")
     List<SavingsAccountTransaction> findByTransactionTypeAndSavingsAccountId(@Param("typeOfAccrual") Integer typeOfAccrual, @Param("typeOfWithdrawalFee") Integer typeOfWithdrawalFee, @Param("savingsId") Long savingsId,
             @Param("transactionDate") Date transactionDate);
+
 }

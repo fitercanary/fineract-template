@@ -61,6 +61,7 @@ public class ChargesHelper {
     public static final Integer CHARGE_CALCULATION_TYPE_PERCENTAGE_AMOUNT = 2;
     public static final Integer CHARGE_CALCULATION_TYPE_PERCENTAGE_AMOUNT_AND_INTEREST = 3;
     public static final Integer CHARGE_CALCULATION_TYPE_PERCENTAGE_INTEREST = 4;
+    public static final Integer CHARGE_CALCULATION_TYPE_PERCENTAGE_AMOUNT_ON_WITHDRAWS = 7;
 
     private static final Integer CHARGE_PAYMENT_MODE_REGULAR = 0;
     private static final Integer CHARGE_PAYMENT_MODE_ACCOUNT_TRANSFER = 1;
@@ -76,6 +77,7 @@ public class ChargesHelper {
     private final static String currencyCode = "USD";
     public final static String feeOnMonthDay = "04 March";
     private final static String monthDayFormat = "dd MMM";
+
 
     public static String getSavingsSpecifiedDueDateJSON() {
         final HashMap<String, Object> map = populateDefaultsForSavings();
@@ -128,7 +130,24 @@ public class ChargesHelper {
         System.out.println(chargesCreateJson);
         return chargesCreateJson;
     }
-    
+
+    public static String getWithdrawsMonthlyChargedJSON() {
+
+        final HashMap<String, Object> map = new HashMap<>();
+        map.put("chargeAppliesTo", ChargesHelper.CHARGE_APPLIES_TO_SAVINGS);
+        map.put("name", Utils.randomNameGenerator("Charge_Savings_", 6));
+        map.put("currencyCode", ChargesHelper.currencyCode);
+        map.put("chargeTimeType", CHARGE_MONTHLY_FEE);
+        map.put("chargeCalculationType", CHARGE_CALCULATION_TYPE_PERCENTAGE_AMOUNT_ON_WITHDRAWS);
+        map.put("amount", CHARGE_WITHDRAWAL_FEE);
+        map.put("feeInterval", 1);
+        map.put("active", true);
+        map.put("locale", "en");
+        String chargesCreateJson = new Gson().toJson(map);
+        System.out.println(chargesCreateJson);
+        return chargesCreateJson;
+    }
+
     public static String getSavingsWeeklyFeeJSON() {
         final HashMap<String, Object> map = populateDefaultsForSavings();
         map.put("chargeTimeType", WEEKLY_FEE);

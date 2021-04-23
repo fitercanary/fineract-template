@@ -61,6 +61,7 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
             LoanApiConstants.disbursementDateParameterName, LoanApiConstants.repaymentsStartingFromDateParameterName,
             LoanApiConstants.graceOnPrincipalPaymentParameterName, LoanApiConstants.graceOnInterestPaymentParameterName,
             LoanApiConstants.graceOnInterestChargedParameterName, LoanApiConstants.interestChargedFromDateParameterName,
+            LoanApiConstants.specificGraceOnInterestPaymentPeriod, LoanApiConstants.specificGraceOnInterestPaymentPeriodType,
             LoanApiConstants.submittedOnDateParameterName, LoanApiConstants.submittedOnNoteParameterName,
             LoanApiConstants.localeParameterName, LoanApiConstants.dateFormatParameterName, LoanApiConstants.chargesParameterName,
             LoanApiConstants.collateralParameterName, LoanApiConstants.syncDisbursementWithMeetingParameterName,
@@ -104,6 +105,17 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
         final String repaymentEveryFrequencyTypeParameterName = "repaymentFrequencyType";
         final Integer repaymentEveryType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(repaymentEveryFrequencyTypeParameterName,
                 element);
+
+        final String specificGraceOnInterestPaymentPeriod = "specificGraceOnInterestPaymentPeriod";
+        final Integer specificGracePeriod = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(specificGraceOnInterestPaymentPeriod,
+                element);
+
+        final String specificGraceOnInterestPaymentPeriodType = "specificGraceOnInterestPaymentPeriodType";
+        final Integer specificGracePeriodPaymentPeriodType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(specificGraceOnInterestPaymentPeriodType,
+                element);
+
+        validateSpecificMoratoriumPeriod(dataValidationErrors,
+                specificGracePeriod, specificGracePeriodPaymentPeriodType);
 
         // FIXME - KW - this constraint doesnt really need to be here. should be
         // possible to express loan term as say 12 months whilst also saying
@@ -163,6 +175,17 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
                         "expectedDisbursementDate", expectedDisbursementDate, repaymentsStartingFromDate);
                 dataValidationErrors.add(error);
             }
+        }
+    }
+
+    public void validateSpecificMoratoriumPeriod(final List<ApiParameterError> dataValidationErrors,
+                                                             final Integer specificGracePeriod, final Integer specificGracePeriodPaymentPeriodType) {
+        if (specificGracePeriod != null && specificGracePeriodPaymentPeriodType == null) {
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "validation.msg.loan.gracePeriodType.is.empty",
+                    "The parameters specificGracePeriod and period type must both be provided.", "gracePeriodType",
+                    specificGracePeriodPaymentPeriodType);
+            dataValidationErrors.add(error);
         }
     }
 }

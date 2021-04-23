@@ -170,6 +170,8 @@ public class LoanAssembler {
         final Boolean syncDisbursementWithMeeting = this.fromApiJsonHelper.extractBooleanNamed("syncDisbursementWithMeeting", element);
         final Boolean createStandingInstructionAtDisbursement = this.fromApiJsonHelper.extractBooleanNamed(
                 "createStandingInstructionAtDisbursement", element);
+        final Integer specificGraceOnInterestPaymentPeriod = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("specificGraceOnInterestPaymentPeriod", element);
+        final Integer specificGraceOnInterestPaymentPeriodType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("specificGraceOnInterestPaymentPeriodType", element);
 
         final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
         if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
@@ -282,6 +284,10 @@ public class LoanAssembler {
             }
         }
 
+        if(specificGraceOnInterestPaymentPeriod!=null){
+            loanApplication.updateMoratoriumPeriod(specificGraceOnInterestPaymentPeriod);
+            loanApplication.updateMoratoriumPeriodType(specificGraceOnInterestPaymentPeriodType);
+        }
 
         final LoanApplicationTerms loanApplicationTerms = this.loanScheduleAssembler.assembleLoanTerms(element);
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();

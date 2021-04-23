@@ -55,6 +55,9 @@ public interface LoanApiConstants {
     public static final String graceOnInterestChargedParameterName = "graceOnInterestCharged";
     public static final String graceOnInterestPaymentParameterName = "graceOnInterestPayment";
     public static final String graceOnPrincipalPaymentParameterName = "graceOnPrincipalPayment";
+    public static final String specificGraceOnInterestPaymentPeriod = "specificGraceOnInterestPaymentPeriod";
+    public static final String specificGraceOnInterestPaymentPeriodType = "specificGraceOnInterestPaymentPeriodType";
+
     public static final String repaymentsStartingFromDateParameterName = "repaymentsStartingFromDate";
     public static final String interestRateFrequencyTypeParameterName = "interestRateFrequencyType";
     public static final String interestCalculationPeriodTypeParameterName = "interestCalculationPeriodType";

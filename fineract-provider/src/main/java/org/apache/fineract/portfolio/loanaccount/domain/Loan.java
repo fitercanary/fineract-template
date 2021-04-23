@@ -296,6 +296,12 @@ public class Loan extends AbstractPersistableCustom<Long> {
     @Column(name = "loan_product_counter")
     private Integer loanProductCounter;
 
+    @Column(name = "moratorium_period", nullable = true)
+    private Integer moratoriumPeriod;
+
+    @Column(name = "moratorium_period_enum", nullable = true)
+    private Integer moratoriumPeriodType;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<LoanCharge> charges = new HashSet<>();
 
@@ -4625,6 +4631,22 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
     public void setLoanStatus(final Integer loanStatus) {
         this.loanStatus = loanStatus;
+    }
+
+    public Integer getMoratoriumPeriod() {
+        return moratoriumPeriod;
+    }
+
+    public void updateMoratoriumPeriod(Integer moratoriumPeriod) {
+        this.moratoriumPeriod = moratoriumPeriod;
+    }
+
+    public Integer getMoratoriumPeriodType() {
+        return moratoriumPeriodType;
+    }
+
+    public void updateMoratoriumPeriodType(Integer moratoriumPeriodType) {
+        this.moratoriumPeriodType = moratoriumPeriodType;
     }
 
     public void validateExpectedDisbursementForHolidayAndNonWorkingDay(final WorkingDays workingDays,

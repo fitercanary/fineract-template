@@ -75,7 +75,9 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             LoanProductConstants.allowPartialPeriodInterestCalcualtionParamName, LoanApiConstants.interestRateFrequencyTypeParameterName,
             LoanApiConstants.disbursementDateParameterName, LoanApiConstants.repaymentsStartingFromDateParameterName,
             LoanApiConstants.graceOnPrincipalPaymentParameterName, LoanApiConstants.graceOnInterestPaymentParameterName,
-            LoanApiConstants.graceOnInterestChargedParameterName, LoanApiConstants.interestChargedFromDateParameterName,
+            LoanApiConstants.graceOnInterestChargedParameterName,
+            LoanApiConstants.specificGraceOnInterestPaymentPeriod, LoanApiConstants.specificGraceOnInterestPaymentPeriodType,
+            LoanApiConstants.interestChargedFromDateParameterName,
             LoanApiConstants.submittedOnDateParameterName, LoanApiConstants.submittedOnNoteParameterName,
             LoanApiConstants.accountNoParameterName, LoanApiConstants.externalIdParameterName, LoanApiConstants.fundIdParameterName,
             LoanApiConstants.loanOfficerIdParameterName, // optional

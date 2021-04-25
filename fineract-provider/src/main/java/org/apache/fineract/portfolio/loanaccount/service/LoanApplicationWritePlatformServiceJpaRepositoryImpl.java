@@ -840,6 +840,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 final LoanScheduleModel loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query, false);
                 existingLoanApplication.updateLoanSchedule(loanSchedule, currentUser);
                 existingLoanApplication.recalculateAllCharges();
+
+                final Integer specificGraceOnInterestPaymentPeriod = this.fromJsonHelper.extractIntegerWithLocaleNamed("specificGraceOnInterestPaymentPeriod", command.parsedJson());
+                final Integer specificGraceOnInterestPaymentPeriodType = this.fromJsonHelper.extractIntegerWithLocaleNamed("specificGraceOnInterestPaymentPeriodType", command.parsedJson());
+                if(specificGraceOnInterestPaymentPeriod !=null){
+                    existingLoanApplication.updateMoratoriumPeriod(specificGraceOnInterestPaymentPeriod);
+                    existingLoanApplication.updateMoratoriumPeriodType(specificGraceOnInterestPaymentPeriodType);
+                }
             }
 
             this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(existingLoanApplication.getTermFrequency(),

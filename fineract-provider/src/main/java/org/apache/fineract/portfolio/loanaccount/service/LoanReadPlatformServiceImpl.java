@@ -612,6 +612,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " l.fixed_emi_amount as fixedEmiAmount,"
                     + " l.max_outstanding_loan_balance as outstandingLoanBalance,"
                     + " l.loan_sub_status_id as loanSubStatusId,"
+                    + " l.moratorium_period as specificGraceOnInterestPaymentPeriod,"
+                    + " l.moratorium_period_enum as specificGraceOnInterestPaymentPeriodType,"
                     + " la.principal_overdue_derived as principalOverdue,"
                     + " la.interest_overdue_derived as interestOverdue,"
                     + " la.fee_charges_overdue_derived as feeChargesOverdue,"
@@ -783,6 +785,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Integer graceOnInterestPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnInterestPayment");
             final Integer graceOnInterestCharged = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnInterestCharged");
             final Integer graceOnArrearsAgeing = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnArrearsAgeing");
+            final Integer specificGraceOnInterestPaymentPeriod = JdbcSupport.getIntegerDefaultToNullIfZero(rs,"specificGraceOnInterestPaymentPeriod");
+            final Integer specificPeriodType = JdbcSupport.getInteger(rs, "specificGraceOnInterestPaymentPeriodType");
+            final EnumOptionData specificGraceOnInterestPaymentPeriodType = LoanEnumerations.termFrequencyType(specificPeriodType);
+
 
             final Integer termFrequency = JdbcSupport.getInteger(rs, "termFrequency");
             final Integer termPeriodFrequencyTypeInt = JdbcSupport.getInteger(rs, "termPeriodFrequencyType");
@@ -970,7 +976,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     transactionStrategyName, amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate,
                     interestType, isFloatingInterestRate, interestRateDifferential, interestCalculationPeriodType,
                     allowPartialPeriodInterestCalcualtion, expectedFirstRepaymentOnDate, graceOnPrincipalPayment,
-                    recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate,
+                    recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment, graceOnInterestCharged, specificGraceOnInterestPaymentPeriod, specificGraceOnInterestPaymentPeriodType, interestChargedFromDate,
                     timeline, loanSummary, feeChargesDueAtDisbursementCharged, syncDisbursementWithMeeting, loanCounter,
                     loanProductCounter, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount, outstandingLoanBalance, inArrears,
                     graceOnArrearsAgeing, isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,

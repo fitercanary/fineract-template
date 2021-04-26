@@ -39,4 +39,4 @@ CREATE TABLE `m_transaction_request` (
   `transaction_id` bigint(20) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_savings_transaction` (`transaction_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=349 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=349 DEFAULT CHARSET=latin1;

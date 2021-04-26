@@ -787,7 +787,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Integer graceOnArrearsAgeing = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnArrearsAgeing");
             final Integer specificGraceOnInterestPaymentPeriod = JdbcSupport.getIntegerDefaultToNullIfZero(rs,"specificGraceOnInterestPaymentPeriod");
             final Integer specificPeriodType = JdbcSupport.getInteger(rs, "specificGraceOnInterestPaymentPeriodType");
-            final EnumOptionData specificGraceOnInterestPaymentPeriodType = LoanEnumerations.termFrequencyType(specificPeriodType);
+            EnumOptionData specificGraceOnInterestPaymentPeriodType = null;
+            if(specificPeriodType != null) {
+                specificGraceOnInterestPaymentPeriodType = LoanEnumerations.termFrequencyType(specificPeriodType);
+            }
 
 
             final Integer termFrequency = JdbcSupport.getInteger(rs, "termFrequency");

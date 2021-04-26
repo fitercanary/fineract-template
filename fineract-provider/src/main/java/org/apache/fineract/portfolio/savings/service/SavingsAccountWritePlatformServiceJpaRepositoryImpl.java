@@ -1992,7 +1992,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 //savingsAccountCharge.updateNextDueDateForRecurringFees();
                 LocalDate nextDueDate = savingsAccountCharge.getDueLocalDate();
                 //savingsAccountCharge.getDueLocalDate().plusMonths(savingsAccountCharge.getFeeInterval());
-                LocalDate startDate = nextDueDate.minusMonths(savingsAccountCharge.getFeeInterval()).withDayOfMonth(1);
+                LocalDate startDate = nextDueDate.minusMonths(savingsAccountCharge.getFeeInterval());
 
 
                 // get total withdrawals for period i.e if due date is 1st Feb and interval is 1 Month

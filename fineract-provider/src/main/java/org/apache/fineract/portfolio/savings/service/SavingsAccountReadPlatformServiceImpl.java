@@ -268,6 +268,20 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             throw new SavingsAccountNotFoundException(accountId);
         }
     }
+    
+       @Override
+    public SavingsAccountData retrieveOneByAccount(final Long accountNumber) {
+
+        try {
+            final String sql = "select " + this.savingAccountMapper.schema() + " where sa.account_no = ?";
+
+            SavingsAccountData savingsAccount = this.jdbcTemplate.queryForObject(sql, this.savingAccountMapper, accountNumber);
+            this.clientReadPlatformService.validateUserHasAuthorityToViewClient(savingsAccount.getClientId());
+            return savingsAccount;
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(accountNumber);
+        }
+    }
 
     private static final class SavingAccountMapper implements RowMapper<SavingsAccountData> {
 

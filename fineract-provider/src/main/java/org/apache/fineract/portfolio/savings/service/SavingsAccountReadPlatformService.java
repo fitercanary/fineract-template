@@ -43,6 +43,8 @@ public interface SavingsAccountReadPlatformService {
             String currencyCode);
 
     SavingsAccountData retrieveOne(Long savingsId);
+    
+    SavingsAccountData retrieveOneByAccount(Long accountNumber);
 
     SavingsAccountData retrieveTemplate(Long clientId, Long groupId, Long productId, boolean staffInSelectedOfficeOnly);
 

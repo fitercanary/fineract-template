@@ -317,7 +317,7 @@ public class LoanScheduleAssembler {
         Integer graceOnPrincipalPayment = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnPrincipalPayment", element);
         final Integer recurringMoratoriumOnPrincipalPeriods = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("recurringMoratoriumOnPrincipalPeriods", element);
         Integer graceOnInterestPayment = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnInterestPayment", element);
-        final Integer graceOnInterestCharged = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnInterestCharged", element);
+        Integer graceOnInterestCharged = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnInterestCharged", element);
         LocalDate interestChargedFromDate = this.fromApiJsonHelper.extractLocalDateNamed("interestChargedFromDate", element);
 
         // TODO: check if grace is passed in terms of days and update interestChargedFromDate date,
@@ -327,6 +327,8 @@ public class LoanScheduleAssembler {
             //TODO: moratorium on interest and principle should atleast be an installment after the set repaymentPeriod
             graceOnInterestPayment = 1;
             graceOnPrincipalPayment = 1;
+            graceOnInterestCharged = 1;
+            isEqualAmortization = false;
         }
 
         final Boolean isInterestChargedFromDateSameAsDisbursalDateEnabled = this.configurationDomainService
@@ -1119,5 +1121,9 @@ public class LoanScheduleAssembler {
         final LocalDate minimumFirstRepaymentDate = disbursalDate.plusDays(minimumDaysBetweenDisbursalAndFirstRepayment);
         if (firstRepaymentDate.isBefore(minimumFirstRepaymentDate)) { throw new MinDaysBetweenDisbursalAndFirstRepaymentViolationException(
                 disbursalDate, firstRepaymentDate, minimumDaysBetweenDisbursalAndFirstRepayment); }
+    }
+
+    private void updateMoratoriumBasedOnSpecificDays(){
+
     }
 }

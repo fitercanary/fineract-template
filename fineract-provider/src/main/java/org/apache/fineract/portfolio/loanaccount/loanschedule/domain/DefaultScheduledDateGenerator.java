@@ -125,8 +125,6 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
      * @param adjustedDateDetailsDTO
      * @param loanApplicationTerms
      * @param holidayDetailDTO
-     * @param nextRepaymentPeriodDueDate
-     * @param rescheduleType
      * @param isFirstRepayment
      * @return
      */

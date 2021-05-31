@@ -192,6 +192,35 @@ public class SavingsAccountsApiResource {
         return this.toApiJsonSerializer.serialize(settings, savingsAccountTemplate,
                 SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
+    
+    @GET
+    @Path("account/{accountNumber}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveOneByAccount(@PathParam("accountNumber") final Long accountNumber,
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
+            @DefaultValue("all") @QueryParam("chargeStatus") final String chargeStatus, @QueryParam("pageNumber") final Integer pageNumber,
+            @QueryParam("pageSize") final Integer pageSize, @Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        if (!(is(chargeStatus, "all") || is(chargeStatus, "active") || is(chargeStatus, "inactive") || is(chargeStatus, "pageNumber")
+                || is(chargeStatus, "pageSize"))) {
+            throw new UnrecognizedQueryParamException("status", chargeStatus,
+                    new Object[] { "all", "active", "inactive", "pageNumber", "pageSize" });
+        }
+
+        final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOneByAccount(accountNumber);
+
+        final Set<String> mandatoryResponseParameters = new HashSet<>();
+        final SavingsAccountData savingsAccountTemplate = populateTemplateAndAssociations(savingsAccount.id(), savingsAccount,
+                staffInSelectedOfficeOnly, chargeStatus, uriInfo, mandatoryResponseParameters, pageNumber, pageSize);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
+                mandatoryResponseParameters);
+        return this.toApiJsonSerializer.serialize(settings, savingsAccountTemplate,
+                SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+    }
 
     @GET
     @Path("transaction/{accountId}")

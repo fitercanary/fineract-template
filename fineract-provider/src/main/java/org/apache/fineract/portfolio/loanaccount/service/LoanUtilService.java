@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
+import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.organisation.holiday.domain.Holiday;
 import org.apache.fineract.organisation.holiday.domain.HolidayRepository;
@@ -44,6 +45,7 @@ import org.apache.fineract.portfolio.calendar.domain.CalendarInstance;
 import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.service.CalendarReadPlatformService;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
+import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.floatingrates.data.FloatingRateDTO;
 import org.apache.fineract.portfolio.floatingrates.data.FloatingRatePeriodData;
 import org.apache.fineract.portfolio.floatingrates.exception.FloatingRateNotFoundException;
@@ -54,8 +56,11 @@ import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanDisbursementDetails;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRelatedDetail;
+import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -117,6 +122,7 @@ public class LoanUtilService {
         }
         LocalDate calculatedRepaymentsStartingFromDate = this.getCalculatedRepaymentsStartingFromDate(loan.getDisbursementDate(), loan,
                 calendarInstance, calendarHistoryDataWrapper);
+
         CalendarInstance restCalendarInstance = null;
         CalendarInstance compoundingCalendarInstance = null;
         Long overdurPenaltyWaitPeriod = null;
@@ -234,6 +240,15 @@ public class LoanUtilService {
                 return calculatedRepaymentsStartingFromDate;
             }
 
+            //Look into moratorium period
+            Integer moratoriumPeriod = loan.getMoratoriumPeriod();
+            Integer moratoriumPeriodType = loan.getMoratoriumPeriodType();
+            if(moratoriumPeriod != null){
+                final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
+                calculatedRepaymentsStartingFromDate = scheduledDateGenerator.getRepaymentPeriodDate(PeriodFrequencyType.fromInt(moratoriumPeriodType), moratoriumPeriod, actualDisbursementDate);
+            }
+
+
             // TODO: AA - user provided first repayment date takes precedence
             // over recalculated meeting date
             if (calculatedRepaymentsStartingFromDate == null) {
@@ -250,6 +265,7 @@ public class LoanUtilService {
                     Boolean isSkipRepaymentOnFirstMonth = false;
                     Integer numberOfDays = 0;
                     boolean isSkipRepaymentOnFirstMonthEnabled = this.configurationDomainService.isSkippingMeetingOnFirstDayOfMonthEnabled();
+
                     if(isSkipRepaymentOnFirstMonthEnabled){
                         numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue();
                         isSkipRepaymentOnFirstMonth = isLoanRepaymentsSyncWithMeeting(loan.group(), calendar);

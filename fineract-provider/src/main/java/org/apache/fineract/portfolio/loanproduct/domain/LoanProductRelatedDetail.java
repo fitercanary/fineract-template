@@ -504,6 +504,21 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             this.isEqualAmortization = newValue;
         }
 
+        final String specificGraceOnInterestPaymentPeriod = "specificGraceOnInterestPaymentPeriod";
+        if (command.parameterExists(specificGraceOnInterestPaymentPeriod)) {
+            final Integer newValue = command.integerValueOfParameterNamed(specificGraceOnInterestPaymentPeriod);
+            if(newValue > 0) {
+                actualChanges.put(graceOnInterestChargedParamName, 1);
+                actualChanges.put(graceOnInterestPaymentParamName, 1);
+                actualChanges.put(graceOnPrincipalPaymentParamName, 1);
+                this.graceOnInterestCharged = 1;
+                this.graceOnInterestPayment = 1;
+                this.graceOnPrincipalPayment = 1;
+                this.isEqualAmortization = false;
+                actualChanges.put("locale", localeAsInput);
+            }
+        }
+
         validateRepaymentPeriodWithGraceSettings();
 
         return actualChanges;

@@ -1397,6 +1397,23 @@ public class Loan extends AbstractPersistableCustom<Long> {
             actualChanges.put("recalculateLoanSchedule", true);
         }
 
+        final String specificGraceOnInterestPaymentPeriod = "specificGraceOnInterestPaymentPeriod";
+        if (command.isChangeInIntegerParameterNamed(specificGraceOnInterestPaymentPeriod, this.getMoratoriumPeriod())) {
+            final Integer newValue = command.integerValueOfParameterNamed(specificGraceOnInterestPaymentPeriod);
+            actualChanges.put(specificGraceOnInterestPaymentPeriod, newValue);
+            actualChanges.put("recalculateLoanSchedule", true);
+            this.moratoriumPeriod = newValue;
+        }
+
+        final String specificGraceOnInterestPaymentPeriodType = "specificGraceOnInterestPaymentPeriodType";
+        if (command.isChangeInIntegerParameterNamed(specificGraceOnInterestPaymentPeriodType, this.getMoratoriumPeriodType())) {
+            final Integer newValue = command.integerValueOfParameterNamed(specificGraceOnInterestPaymentPeriodType);
+            actualChanges.put(specificGraceOnInterestPaymentPeriodType, newValue);
+            actualChanges.put("recalculateLoanSchedule", true);
+            this.moratoriumPeriodType = newValue;
+        }
+
+
         final String isFloatingInterestRateParamName = "isFloatingInterestRate";
         if (command.isChangeInBooleanParameterNamed(isFloatingInterestRateParamName, this.isFloatingInterestRate)) {
             final Boolean newValue = command.booleanObjectValueOfParameterNamed(isFloatingInterestRateParamName);

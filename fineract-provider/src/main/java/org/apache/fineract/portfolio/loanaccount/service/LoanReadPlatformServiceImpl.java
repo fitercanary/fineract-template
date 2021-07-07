@@ -451,11 +451,18 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final BigDecimal outstandingLoanBalance = loanRepaymentScheduleInstallment.getPrincipalOutstanding(currency).getAmount();
         final BigDecimal unrecognizedIncomePortion = null;
         BigDecimal adjustedChargeAmount = adjustPrepayInstallmentCharge(loan, onDate);
+
+        BigDecimal outstandingBalance = loanRepaymentScheduleInstallment.getTotalOutstanding(currency).getAmount().subtract(adjustedChargeAmount);
+        BigDecimal principalOutstanding = loanRepaymentScheduleInstallment
+                        .getPrincipalOutstanding(currency).getAmount();
+        BigDecimal interestOutstanding = loanRepaymentScheduleInstallment.getInterestOutstanding(currency)
+                .getAmount();
+        BigDecimal feesOutstanding = loanRepaymentScheduleInstallment.getFeeChargesOutstanding(currency).getAmount().subtract(adjustedChargeAmount);
+        BigDecimal penaltiesOutstanding = loanRepaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).getAmount();
+
         return new LoanTransactionData(null, null, null, transactionType, null, currencyData, earliestUnpaidInstallmentDate,
-                loanRepaymentScheduleInstallment.getTotalOutstanding(currency).getAmount().subtract(adjustedChargeAmount), loanRepaymentScheduleInstallment
-                        .getPrincipalOutstanding(currency).getAmount(), loanRepaymentScheduleInstallment.getInterestOutstanding(currency)
-                        .getAmount(), loanRepaymentScheduleInstallment.getFeeChargesOutstanding(currency).getAmount().subtract(adjustedChargeAmount),
-                loanRepaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).getAmount(), null, unrecognizedIncomePortion,
+                outstandingBalance, principalOutstanding, interestOutstanding, feesOutstanding, penaltiesOutstanding
+                , null, unrecognizedIncomePortion,
                 paymentOptions, null, null, null, outstandingLoanBalance, false);
     }
 

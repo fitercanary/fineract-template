@@ -693,8 +693,11 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         }
 
         List<Long> transactionIds = new ArrayList<>();
-        final ChangedTransactionDetail changedTransactionDetail = loan.handleForeClosureTransactions(payment,
-                defaultLoanLifecycleStateMachine(), scheduleGeneratorDTO, appUser);
+        ChangedTransactionDetail changedTransactionDetail = null;
+        if(payment != null) {
+            changedTransactionDetail = loan.handleForeClosureTransactions(payment,
+                    defaultLoanLifecycleStateMachine(), scheduleGeneratorDTO, appUser);
+        }
 
         /***
          * TODO Vishwas Batch save is giving me a

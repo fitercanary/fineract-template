@@ -416,7 +416,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 }
 
                 BigDecimal loanOutstanding = this.loanReadPlatformService
-                        .retrieveLoanPrePaymentTemplate(loanIdToClose, actualDisbursementDate).getAmount();
+                        .retrieveLoanForeclosureTemplate(loanIdToClose, actualDisbursementDate).getAmount();
                 final BigDecimal firstDisbursalAmount = loan.getFirstDisbursalAmount();
                 if (loanOutstanding.compareTo(firstDisbursalAmount) > 0) {
                     throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",

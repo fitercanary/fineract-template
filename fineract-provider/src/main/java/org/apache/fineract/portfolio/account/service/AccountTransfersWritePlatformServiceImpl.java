@@ -603,12 +603,25 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(), accountTransferDTO.getPaymentDetail(),
                 accountTransferDTO.getNoteText(), accountTransferDTO.getTxnExternalId(), true);
 
-        LoanTransaction repayTransaction = this.loanAccountDomainService.makeRepayment(toLoanAccount, new CommandProcessingResultBuilder(),
-                accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(), accountTransferDTO.getPaymentDetail(),
-                null, null, false, isAccountTransfer, null, false, true);
+
+        //TODO handling loan closure here
+        LoanRescheduleRequest loanRescheduleRequest = null;
+        for (LoanDisbursementDetails loanDisbursementDetails : toLoanAccount.getDisbursementDetails()) {
+            if (!loanDisbursementDetails.expectedDisbursementDateAsLocalDate().isAfter(accountTransferDTO.getTransactionDate())
+                    && loanDisbursementDetails.actualDisbursementDate() == null) {
+                final String defaultUserMessage = "The loan with undisbursed tranche before foreclosure cannot be foreclosed.";
+                throw new LoanForeclosureException("loan.with.undisbursed.tranche.before.foreclosure.cannot.be.foreclosured",
+                        defaultUserMessage, accountTransferDTO.getTransactionDate());
+            }
+        }
+        this.loanScheduleHistoryWritePlatformService.createAndSaveLoanScheduleArchive(toLoanAccount.getRepaymentScheduleInstallments(), toLoanAccount,
+                loanRescheduleRequest);
+        final Map<String, Object> modifications = this.loanAccountDomainService.foreCloseLoan(toLoanAccount, accountTransferDTO.getTransactionDate(), accountTransferDTO.getNoteText(), true);
+        LoanTransaction loanRepaymentTransaction = (LoanTransaction) modifications.get("transaction");
+
 
         AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleLoanToLoanTransfer(accountTransferDTO,
-                fromLoanAccount, toLoanAccount, disburseTransaction, repayTransaction);
+                fromLoanAccount, toLoanAccount, disburseTransaction, loanRepaymentTransaction);
         this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
 
         return accountTransferDetails;

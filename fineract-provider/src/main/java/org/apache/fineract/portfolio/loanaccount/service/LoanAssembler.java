@@ -77,6 +77,9 @@ import org.apache.fineract.portfolio.loanproduct.domain.LoanTransactionProcessin
 import org.apache.fineract.portfolio.loanproduct.exception.InvalidCurrencyException;
 import org.apache.fineract.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.apache.fineract.portfolio.loanproduct.exception.LoanProductNotFoundException;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentType;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentTypeRepository;
+import org.apache.fineract.portfolio.paymenttype.exception.PaymentTypeNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +96,7 @@ public class LoanAssembler {
     private final ClientRepositoryWrapper clientRepository;
     private final GroupRepository groupRepository;
     private final FundRepository fundRepository;
+    private final PaymentTypeRepository paymentTypeRepository;
     private final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository;
     private final StaffRepository staffRepository;
     private final CodeValueRepositoryWrapper codeValueRepository;
@@ -109,7 +113,7 @@ public class LoanAssembler {
     @Autowired
     public LoanAssembler(final FromJsonHelper fromApiJsonHelper, final LoanRepositoryWrapper loanRepository,
             final LoanProductRepository loanProductRepository, final ClientRepositoryWrapper clientRepository,
-            final GroupRepository groupRepository, final FundRepository fundRepository,
+            final GroupRepository groupRepository, final FundRepository fundRepository, final PaymentTypeRepository paymentTypeRepository,
             final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository,
             final StaffRepository staffRepository, final CodeValueRepositoryWrapper codeValueRepository,
             final LoanScheduleAssembler loanScheduleAssembler, final LoanChargeAssembler loanChargeAssembler,
@@ -123,6 +127,7 @@ public class LoanAssembler {
         this.clientRepository = clientRepository;
         this.groupRepository = groupRepository;
         this.fundRepository = fundRepository;
+        this.paymentTypeRepository = paymentTypeRepository;
         this.loanTransactionProcessingStrategyRepository = loanTransactionProcessingStrategyRepository;
         this.staffRepository = staffRepository;
         this.codeValueRepository = codeValueRepository;
@@ -164,6 +169,7 @@ public class LoanAssembler {
         final String accountNo = this.fromApiJsonHelper.extractStringNamed("accountNo", element);
         final Long productId = this.fromApiJsonHelper.extractLongNamed("productId", element);
         final Long fundId = this.fromApiJsonHelper.extractLongNamed("fundId", element);
+        final Long paymentTypeId = this.fromApiJsonHelper.extractLongNamed("paymentTypeId", element);
         final Long loanOfficerId = this.fromApiJsonHelper.extractLongNamed("loanOfficerId", element);
         final Long transactionProcessingStrategyId = this.fromApiJsonHelper.extractLongNamed("transactionProcessingStrategyId", element);
         final Long loanPurposeId = this.fromApiJsonHelper.extractLongNamed("loanPurposeId", element);
@@ -177,6 +183,7 @@ public class LoanAssembler {
         if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
 
         final Fund fund = findFundByIdIfProvided(fundId);
+        final PaymentType paymentType = findPaymentTypeByIdIfProvided(paymentTypeId);
         final Staff loanOfficer = findLoanOfficerByIdIfProvided(loanOfficerId);
         final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
         CodeValue loanPurpose = null;
@@ -251,7 +258,7 @@ public class LoanAssembler {
             if (!group.hasClientAsMember(client)) { throw new ClientNotInGroupException(clientId, groupId); }
 
             loanApplication = Loan.newIndividualLoanApplicationFromGroup(accountNo, client, group, loanType.getId().intValue(),
-                    loanProduct, fund, loanOfficer, loanPurpose, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges,
+                    loanProduct, fund, paymentType, loanOfficer, loanPurpose, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges,
                     collateral, syncDisbursementWithMeeting, fixedEmiAmount, disbursementDetails, maxOutstandingLoanBalance,
                     createStandingInstructionAtDisbursement, isFloatingInterestRate, interestRateDifferential);
 
@@ -265,7 +272,7 @@ public class LoanAssembler {
         } else if (client != null) {
 
             loanApplication = Loan.newIndividualLoanApplication(accountNo, client, loanType.getId().intValue(), loanProduct, fund,
-                    loanOfficer, loanPurpose, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges, collateral,
+                    paymentType, loanOfficer, loanPurpose, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges, collateral,
                     fixedEmiAmount, disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement,
                     isFloatingInterestRate, interestRateDifferential);
 
@@ -324,6 +331,15 @@ public class LoanAssembler {
             if (fund == null) { throw new FundNotFoundException(fundId); }
         }
         return fund;
+    }
+
+    public PaymentType findPaymentTypeByIdIfProvided(final Long paymentTypeId) {
+        PaymentType paymentType = null;
+        if (paymentTypeId != null) {
+            paymentType = this.paymentTypeRepository.findOne(paymentTypeId);
+            if (paymentType == null) { throw new PaymentTypeNotFoundException(paymentTypeId); }
+        }
+        return paymentType;
     }
 
     public Staff findLoanOfficerByIdIfProvided(final Long loanOfficerId) {

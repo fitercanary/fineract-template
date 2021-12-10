@@ -46,13 +46,18 @@ public class PaymentDetailWritePlatformServiceJpaRepositoryImpl implements Payme
 
     @Override
     public PaymentDetail createPaymentDetail(final JsonCommand command, final Map<String, Object> changes) {
-        final Long paymentTypeId = command.longValueOfParameterNamed(PaymentDetailConstants.paymentTypeParamName);
-        if (paymentTypeId == null) { return null; }
+        Long paymentTypeId = command.longValueOfParameterNamed(PaymentDetailConstants.paymentTypeParamName);
+        if (paymentTypeId == null) {
+            if (changes.get("paymentTypeId") != null) {
+                paymentTypeId = Long.parseLong(String.valueOf(changes.get("paymentTypeId")));
+            } else {
+                return null; 
+            }
+        }
 
         final PaymentType paymentType = this.paymentTyperepositoryWrapper.findOneWithNotFoundDetection(paymentTypeId);
         final PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(paymentType, command, changes);
         return paymentDetail;
-
     }
 
     @Override

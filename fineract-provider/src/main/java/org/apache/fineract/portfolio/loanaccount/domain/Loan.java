@@ -131,6 +131,7 @@ import org.apache.fineract.portfolio.loanproduct.domain.LoanTransactionProcessin
 import org.apache.fineract.portfolio.loanproduct.domain.RecalculationFrequencyType;
 import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentType;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -178,6 +179,10 @@ public class Loan extends AbstractPersistableCustom<Long> {
     @ManyToOne(optional = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "fund_id", nullable = true)
     private Fund fund;
+
+    @ManyToOne(optional = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "payment_type_id", nullable = true)
+    private PaymentType paymentType;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "loan_officer_id", nullable = true)
@@ -401,7 +406,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
     private LoanTopupDetails loanTopupDetails;
 
     public static Loan newIndividualLoanApplication(final String accountNo, final Client client, final Integer loanType,
-            final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
+            final LoanProduct loanProduct, final Fund fund, final PaymentType paymentType, final Staff officer, final CodeValue loanPurpose,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Set<LoanCollateral> collateral, final BigDecimal fixedEmiAmount, final List<LoanDisbursementDetails> disbursementDetails,
@@ -410,7 +415,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         final LoanStatus status = null;
         final Group group = null;
         final Boolean syncDisbursementWithMeeting = null;
-        return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
+        return new Loan(accountNo, client, group, loanType, fund, paymentType, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
                 disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement, isFloatingInterestRate,
                 interestRateDifferential);
@@ -426,14 +431,14 @@ public class Loan extends AbstractPersistableCustom<Long> {
             final BigDecimal interestRateDifferential) {
         final LoanStatus status = null;
         final Client client = null;
-        return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
+        return new Loan(accountNo, client, group, loanType, fund, null, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
                 disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement, isFloatingInterestRate,
                 interestRateDifferential);
     }
 
     public static Loan newIndividualLoanApplicationFromGroup(final String accountNo, final Client client, final Group group,
-            final Integer loanType, final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
+            final Integer loanType, final LoanProduct loanProduct, final Fund fund, final PaymentType paymentType, final Staff officer, final CodeValue loanPurpose,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting, final BigDecimal fixedEmiAmount,
@@ -441,7 +446,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
             final Boolean createStandingInstructionAtDisbursement, final Boolean isFloatingInterestRate,
             final BigDecimal interestRateDifferential) {
         final LoanStatus status = null;
-        return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
+        return new Loan(accountNo, client, group, loanType, fund, paymentType, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
                 disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement, isFloatingInterestRate,
                 interestRateDifferential);
@@ -451,7 +456,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         this.client = null;
     }
 
-    private Loan(final String accountNo, final Client client, final Group group, final Integer loanType, final Fund fund,
+    private Loan(final String accountNo, final Client client, final Group group, final Integer loanType, final Fund fund, final PaymentType paymentType,
             final Staff loanOfficer, final CodeValue loanPurpose, final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProduct loanProduct, final LoanProductRelatedDetail loanRepaymentScheduleDetail, final LoanStatus loanStatus,
             final Set<LoanCharge> loanCharges, final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting,
@@ -475,6 +480,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         this.group = group;
         this.loanType = loanType;
         this.fund = fund;
+        this.paymentType = paymentType;
         this.loanOfficer = loanOfficer;
         this.loanPurpose = loanPurpose;
 
@@ -1118,6 +1124,10 @@ public class Loan extends AbstractPersistableCustom<Long> {
         this.fund = fund;
     }
 
+    public void updatePaymentType(final PaymentType paymentType) {
+        this.paymentType = paymentType;
+    }
+
     public void updateLoanPurpose(final CodeValue loanPurpose) {
         this.loanPurpose = loanPurpose;
     }
@@ -1436,6 +1446,16 @@ public class Loan extends AbstractPersistableCustom<Long> {
         if (command.isChangeInLongParameterNamed(fundIdParamName, existingFundId)) {
             final Long newValue = command.longValueOfParameterNamed(fundIdParamName);
             actualChanges.put(fundIdParamName, newValue);
+        }
+
+        Long existingPaymentTypeId = null;
+        if (this.paymentType != null) {
+            existingPaymentTypeId = this.paymentType.getId();
+        }
+        final String paymentTypeIdParamName = "paymentTypeId";
+        if (command.isChangeInLongParameterNamed(paymentTypeIdParamName, existingPaymentTypeId)) {
+            final Long newValue = command.longValueOfParameterNamed(paymentTypeIdParamName);
+            actualChanges.put(paymentTypeIdParamName, newValue);
         }
 
         Long existingLoanOfficerId = null;
@@ -4586,6 +4606,10 @@ public class Loan extends AbstractPersistableCustom<Long> {
                 throw new LoanApplicationDateException("repayment.date.on.holiday", errorMessage, repaymentDate);
             }
         }
+    }
+
+    public PaymentType getPaymentType() {
+        return this.paymentType;
     }
 
     public Group group() {

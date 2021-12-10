@@ -115,6 +115,7 @@ import org.apache.fineract.portfolio.loanproduct.exception.LoanProductNotFoundEx
 import org.apache.fineract.portfolio.loanproduct.serialization.LoanProductDataValidator;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.service.NubanAccountService;
@@ -806,6 +807,14 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 final Fund fund = this.loanAssembler.findFundByIdIfProvided(fundId);
 
                 existingLoanApplication.updateFund(fund);
+            }
+
+            final String paymentTypeIdParamName = "paymentTypeId";
+            if (changes.containsKey(paymentTypeIdParamName)) {
+                final Long paymentTypeId = command.longValueOfParameterNamed(paymentTypeIdParamName);
+                final PaymentType paymentType = this.loanAssembler.findPaymentTypeByIdIfProvided(paymentTypeId);
+
+                existingLoanApplication.updatePaymentType(paymentType);
             }
 
             final String loanPurposeIdParamName = "loanPurposeId";

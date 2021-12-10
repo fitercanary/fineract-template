@@ -80,7 +80,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             LoanApiConstants.interestChargedFromDateParameterName,
             LoanApiConstants.submittedOnDateParameterName, LoanApiConstants.submittedOnNoteParameterName,
             LoanApiConstants.accountNoParameterName, LoanApiConstants.externalIdParameterName, LoanApiConstants.fundIdParameterName,
-            LoanApiConstants.loanOfficerIdParameterName, // optional
+            LoanApiConstants.paymentTypeIdParameterName, LoanApiConstants.loanOfficerIdParameterName, // optional
             LoanApiConstants.loanPurposeIdParameterName, LoanApiConstants.inArrearsToleranceParameterName,
             LoanApiConstants.chargesParameterName, LoanApiConstants.collateralParameterName, // optional
             LoanApiConstants.transactionProcessingStrategyIdParameterName, // settings
@@ -565,6 +565,13 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             atLeastOneParameterPassedForUpdate = true;
             final Long fundId = this.fromApiJsonHelper.extractLongNamed(fundIdParameterName, element);
             baseDataValidator.reset().parameter(fundIdParameterName).value(fundId).ignoreIfNull().integerGreaterThanZero();
+        }
+
+        final String paymentTypeIdParameterName = "paymentTypeId";
+        if (this.fromApiJsonHelper.parameterExists(paymentTypeIdParameterName, element)) {
+            atLeastOneParameterPassedForUpdate = true;
+            final Long paymentTypeId = this.fromApiJsonHelper.extractLongNamed(paymentTypeIdParameterName, element);
+            baseDataValidator.reset().parameter(paymentTypeIdParameterName).value(paymentTypeId).ignoreIfNull().integerGreaterThanZero();
         }
 
         final String loanOfficerIdParameterName = "loanOfficerId";

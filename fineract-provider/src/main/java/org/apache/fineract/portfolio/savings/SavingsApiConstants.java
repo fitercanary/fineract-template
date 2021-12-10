@@ -152,6 +152,7 @@ public class    SavingsApiConstants {
     public static final String reversedParamName = "reversed";
     public static final String dateParamName = "date";
 	public static final String isManualTransactionParamName = "isManualTransaction";
+    public static final String glAccountIdParamName = "glAccountId";
 
 	// transaction request parameters
 	public static final String notesParamName = "notes";

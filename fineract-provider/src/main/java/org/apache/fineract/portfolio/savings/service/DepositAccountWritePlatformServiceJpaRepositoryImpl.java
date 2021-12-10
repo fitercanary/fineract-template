@@ -1154,11 +1154,11 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         if (savingsAccountTransaction.isDeposit()) {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
                     paymentDetail, savingsAccountTransaction.createdDate(), user, accountType, false);
-            transaction = account.deposit(transactionDTO);
+            transaction = account.deposit(transactionDTO, null);
         } else {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
                     paymentDetail, savingsAccountTransaction.createdDate(), user, accountType, false);
-            transaction = account.withdraw(transactionDTO, true);
+            transaction = account.withdraw(transactionDTO, true, null);
         }
         final Long newtransactionId = saveTransactionToGenerateTransactionId(transaction);
         boolean isInterestTransfer = false;
@@ -1832,7 +1832,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null);
     }
 
     @Transactional

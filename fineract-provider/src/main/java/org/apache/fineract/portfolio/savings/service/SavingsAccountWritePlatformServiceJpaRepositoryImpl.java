@@ -19,6 +19,8 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.accounting.glaccount.domain.GLAccount;
+import org.apache.fineract.accounting.glaccount.domain.GLAccountRepositoryWrapper;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
@@ -153,6 +155,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsTransactionRequestRepository savingsTransactionRequestRepository;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
+    final GLAccountRepositoryWrapper glAccountRepositoryWrapper;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -177,7 +180,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final BusinessEventNotifierService businessEventNotifierService,
             final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final CodeValueRepositoryWrapper codeValueRepositoryWrapper) {
+            final CodeValueRepositoryWrapper codeValueRepositoryWrapper, final GLAccountRepositoryWrapper glAccountRepositoryWrapper) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -206,6 +209,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.savingsTransactionRequestRepository = savingsTransactionRequestRepository;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
+        this.glAccountRepositoryWrapper = glAccountRepositoryWrapper;
     }
 
     @Transactional
@@ -292,13 +296,18 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
-
+        final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
+        
+        GLAccount glAccount = null;
+        if (glAccountId != null) {
+            glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
+        }
         final Map<String, Object> changes = new LinkedHashMap<>();
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate, postingDate,
-                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction, glAccount);
 
         this.saveTransactionRequest(command, deposit);
 
@@ -364,6 +373,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
+        final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
 
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
 
@@ -374,6 +384,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+
+        GLAccount glAccount = null;
+        if (glAccountId != null) {
+            glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
+        }
 
         checkClientOrGroupActive(account);
         final boolean isAccountTransfer = false;
@@ -386,7 +401,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance, isApplyOverdraftFee);
 
         final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate, postingDate,
-                transactionAmount, paymentDetail, transactionBooleanValues, false);
+                transactionAmount, paymentDetail, transactionBooleanValues, false, glAccount);
 
         this.saveTransactionRequest(command, withdrawal);
 
@@ -805,7 +820,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
             account.setMinRequiredBalance(BigDecimal.ZERO);
             this.savingsAccountDomainService.handleWithdrawal(account, fmt, closedDate, transactionAmount, paymentDetail,
-                    transactionBooleanValues, false);
+                    transactionBooleanValues, false, null);
 
         }
 
@@ -1308,7 +1323,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isAccountTransfer = false;
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null);
     }
 
     @Override

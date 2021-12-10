@@ -139,7 +139,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                 isRegularTransaction, applyWithdrawFee, isInterestTransfer, isWithdrawBalance);
         return this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate, transactionAmount, paymentDetail,
-                transactionBooleanValues, false);
+                transactionBooleanValues, false, null);
     }
 
     @Transactional
@@ -650,7 +650,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null);
     }
 
     private void updateAlreadyPostedTransactions(final Set<Long> existingTransactionIds, final SavingsAccount savingsAccount) {

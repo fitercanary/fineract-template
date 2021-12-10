@@ -97,18 +97,24 @@ public class SavingsAccountTransactionDataValidator {
                 .resource(SavingsApiConstants.SAVINGS_ACCOUNT_TRANSACTION_RESOURCE_NAME);
 
         final JsonElement element = command.parsedJson();
+        
+        final Long glAccountId = this.fromApiJsonHelper.extractLongNamed(SavingsApiConstants.glAccountIdParamName, element);
+
+        if (glAccountId == null) {
+            final LocalDate postingDate = this.fromApiJsonHelper.extractLocalDateNamed(postingDateName, element);
+            if(postingDate != null)
+                baseDataValidator.reset().parameter(postingDateName).value(postingDate);
+
+            validatePaymentTypeDetails(baseDataValidator, element);
+        } else {
+            baseDataValidator.reset().parameter(SavingsApiConstants.glAccountIdParamName).value(glAccountId).notNull();
+        }
 
         final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(transactionDateParamName, element);
-        baseDataValidator.reset().parameter(transactionDateParamName).value(transactionDate).notNull();
-
-        final LocalDate postingDate = this.fromApiJsonHelper.extractLocalDateNamed(postingDateName, element);
-        if(postingDate != null)
-            baseDataValidator.reset().parameter(postingDateName).value(postingDate);
+            baseDataValidator.reset().parameter(transactionDateParamName).value(transactionDate).notNull();
 
         final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(transactionAmountParamName, element);
         baseDataValidator.reset().parameter(transactionAmountParamName).value(transactionAmount).notNull().positiveAmount();
-
-        validatePaymentTypeDetails(baseDataValidator, element);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

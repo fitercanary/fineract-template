@@ -19,9 +19,10 @@
 package org.apache.fineract.accounting.journalentry.service;
 
 import org.apache.fineract.accounting.journalentry.data.SavingsDTO;
+import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 
 public interface AccountingProcessorForSavings {
 
-    void createJournalEntriesForSavings(SavingsDTO savingsDTO);
+    void createJournalEntriesForSavings(SavingsDTO savingsDTO, GLAccount glAccount);
 
 }

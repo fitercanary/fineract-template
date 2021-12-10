@@ -79,7 +79,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     private Integer typeOf;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "transaction_date", nullable = false)
+    @Column(name = "transaction_date", nullable = true)
     private Date dateOf;
 
     @Column(name = "amount", scale = 6, precision = 19, nullable = false)

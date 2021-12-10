@@ -24,6 +24,7 @@ import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.portfolio.account.data.AccountTransferData;
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
+import org.apache.fineract.accounting.glaccount.data.GLAccountData;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.domain.SavingsTransactionRequest;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
@@ -31,6 +32,7 @@ import org.joda.time.LocalDate;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Immutable data object representing a savings account transaction.
@@ -57,6 +59,7 @@ public class SavingsAccountTransactionData {
 
 	// templates
 	final Collection<PaymentTypeData> paymentTypeOptions;
+	final List<GLAccountData> glAccountOptions;
 
 	//import fields
 	private transient Integer rowIndex;
@@ -127,6 +130,7 @@ public class SavingsAccountTransactionData {
 		this.receiptNumber = receiptNumber;
 		this.bankNumber = bankNumber;
 		this.paymentTypeOptions = null;
+		this.glAccountOptions = null;
 		this.submittedByUsername = null;
 		this.note = note;
 	}
@@ -148,8 +152,9 @@ public class SavingsAccountTransactionData {
 													   final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount, final BigDecimal runningBalance, final boolean reversed,
 													   final AccountTransferData transfer, final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
 		final Collection<PaymentTypeData> paymentTypeOptions = null;
+		final List<GLAccountData> glAccountOptions = null;
 		return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency,
-				amount, outstandingChargeAmount, runningBalance, reversed, transfer, paymentTypeOptions, interestedPostedAsOn, submittedByUsername, note);
+				amount, outstandingChargeAmount, runningBalance, reversed, transfer, paymentTypeOptions, interestedPostedAsOn, submittedByUsername, note, glAccountOptions);
 	}
 
 	public static SavingsAccountTransactionData create(final Long id, final SavingsAccountTransactionEnumData transactionType,
@@ -158,9 +163,10 @@ public class SavingsAccountTransactionData {
 													   final BigDecimal runningBalance, final boolean reversed, final AccountTransferData transfer, final LocalDate submittedOnDate,
 													   final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
 		final Collection<PaymentTypeData> paymentTypeOptions = null;
+		final List<GLAccountData> glAccountOptions = null;
 		return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency,
 				amount, outstandingChargeAmount, runningBalance, reversed, transfer, paymentTypeOptions, submittedOnDate,
-				interestedPostedAsOn, submittedByUsername, note);
+				interestedPostedAsOn, submittedByUsername, note, glAccountOptions);
 	}
 
 	public static SavingsAccountTransactionData template(final Long savingsId, final String savingsAccountNo,
@@ -176,35 +182,37 @@ public class SavingsAccountTransactionData {
 		final boolean interestedPostedAsOn = false;
 		final String submittedByUsername = null;
 		final String note = null;
+		final List<GLAccountData> glAccountOptions = null;
 		return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, defaultLocalDate,
-				currency, amount, outstandingChargeAmount, runningBalance, reversed, null, null, interestedPostedAsOn, submittedByUsername, note);
+				currency, amount, outstandingChargeAmount, runningBalance, reversed, null, null, interestedPostedAsOn, submittedByUsername, note, glAccountOptions);
 	}
 
 	public static SavingsAccountTransactionData templateOnTop(final SavingsAccountTransactionData savingsAccountTransactionData,
-															  final Collection<PaymentTypeData> paymentTypeOptions) {
+															  final Collection<PaymentTypeData> paymentTypeOptions, final List<GLAccountData> glAccountOptions) {
 		return new SavingsAccountTransactionData(savingsAccountTransactionData.id, savingsAccountTransactionData.transactionType,
 				savingsAccountTransactionData.paymentDetailData, savingsAccountTransactionData.accountId,
 				savingsAccountTransactionData.accountNo, savingsAccountTransactionData.date, savingsAccountTransactionData.currency,
 				savingsAccountTransactionData.amount, savingsAccountTransactionData.outstandingChargeAmount, savingsAccountTransactionData.runningBalance, savingsAccountTransactionData.reversed,
 				savingsAccountTransactionData.transfer, paymentTypeOptions, savingsAccountTransactionData.interestedPostedAsOn,
-				savingsAccountTransactionData.submittedByUsername, savingsAccountTransactionData.note);
+				savingsAccountTransactionData.submittedByUsername, savingsAccountTransactionData.note, glAccountOptions);
 	}
 
 	private SavingsAccountTransactionData(final Long id, final SavingsAccountTransactionEnumData transactionType,
 										  final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
 										  final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount,
 										  final BigDecimal runningBalance, final boolean reversed, final AccountTransferData transfer,
-										  final Collection<PaymentTypeData> paymentTypeOptions, final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
+										  final Collection<PaymentTypeData> paymentTypeOptions, final boolean interestedPostedAsOn, final String submittedByUsername, final String note,
+										  final List<GLAccountData> glAccountOptions) {
 
 		this(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency, amount, outstandingChargeAmount,
-				runningBalance, reversed, transfer, paymentTypeOptions, null, interestedPostedAsOn, submittedByUsername, note);
+				runningBalance, reversed, transfer, paymentTypeOptions, null, interestedPostedAsOn, submittedByUsername, note, glAccountOptions);
 	}
 
 	private SavingsAccountTransactionData(final Long id, final SavingsAccountTransactionEnumData transactionType,
 										  final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
 										  final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount, final BigDecimal runningBalance, final boolean reversed,
 										  final AccountTransferData transfer, final Collection<PaymentTypeData> paymentTypeOptions, final LocalDate submittedOnDate,
-										  final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
+										  final boolean interestedPostedAsOn, final String submittedByUsername, final String note, final List<GLAccountData> glAccountOptions) {
 		this.id = id;
 		this.transactionType = transactionType;
 		this.paymentDetailData = paymentDetailData;
@@ -218,6 +226,7 @@ public class SavingsAccountTransactionData {
 		this.reversed = reversed;
 		this.transfer = transfer;
 		this.paymentTypeOptions = paymentTypeOptions;
+		this.glAccountOptions = glAccountOptions;
 		this.submittedOnDate = submittedOnDate;
 		this.interestedPostedAsOn = interestedPostedAsOn;
 		this.submittedByUsername = submittedByUsername;
@@ -237,7 +246,8 @@ public class SavingsAccountTransactionData {
 				savingsAccountTransactionData.amount, savingsAccountTransactionData.outstandingChargeAmount,
 				savingsAccountTransactionData.runningBalance, savingsAccountTransactionData.reversed,
 				savingsAccountTransactionData.transfer, savingsAccountTransactionData.paymentTypeOptions,
-				savingsAccountTransactionData.interestedPostedAsOn, savingsAccountTransactionData.submittedByUsername, savingsAccountTransactionData.note);
+				savingsAccountTransactionData.interestedPostedAsOn, savingsAccountTransactionData.submittedByUsername, savingsAccountTransactionData.note,
+				savingsAccountTransactionData.glAccountOptions);
 	}
 
 	public void setTransactionRequest(SavingsTransactionRequest savingsTransactionRequest) {
@@ -289,6 +299,7 @@ public class SavingsAccountTransactionData {
 		this.paymentTypeOptions = null;
 		this.submittedByUsername = null;
 		this.note = null;
+		this.glAccountOptions = null;
 		this.officeId = officeId;
 		this.paymentDetailId = paymentDetailId;
 		this.typeOf = typeOf;

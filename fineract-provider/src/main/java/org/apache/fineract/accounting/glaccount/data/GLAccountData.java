@@ -74,11 +74,49 @@ public class GLAccountData {
     //import fields
     private transient Integer rowIndex;
 
+    public static GLAccountData instance(final Long id, final String name, final String glCode, final String description) {
+        return new GLAccountData(id, name, glCode, description);
+    }
+
     public static GLAccountData importInstance(String name, Long parentId, String glCode, Boolean manualEntriesAllowed,
             EnumOptionData type, EnumOptionData usage, String description, CodeValueData tagId,
             Integer rowIndex){
         return new GLAccountData(name,parentId,glCode,manualEntriesAllowed,type,
                 usage,description,tagId,rowIndex);
+    }
+
+    private GLAccountData(Long id, String name, String glCode, String description) {
+        this.id = id;
+        this.name = name;
+        this.glCode = glCode;
+        this.description = description;
+        this.parentId = null;
+        this.manualEntriesAllowed = null;
+        this.type = null;
+        this.usage = null;
+        this.tagId = null;
+        this.rowIndex = null;
+        this.disabled = null;
+        this.nameDecorated = null;
+        this.organizationRunningBalance = null;
+        this.accountTypeOptions = null;
+        this.usageOptions = null;
+        this.assetHeaderAccountOptions = null;
+        this.liabilityHeaderAccountOptions = null;
+        this.equityHeaderAccountOptions = null;
+        this.incomeHeaderAccountOptions = null;
+        this.expenseHeaderAccountOptions = null;
+        this.allowedAssetsTagOptions = null;
+        this.allowedLiabilitiesTagOptions = null;
+        this.allowedEquityTagOptions = null;
+        this.allowedIncomeTagOptions = null;
+        this.allowedExpensesTagOptions = null;
+        this.cbnCategories = null;
+        this.cbnSubCategories = null;
+        this.bankCode = null;
+        this.bankName = null;
+        this.cbnCategory = null;
+        this.cbnSubCategory = null;
     }
 
     private GLAccountData(String name, Long parentId, String glCode, Boolean manualEntriesAllowed,

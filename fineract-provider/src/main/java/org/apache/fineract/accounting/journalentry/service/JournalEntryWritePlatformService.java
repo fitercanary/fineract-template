@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.accounting.journalentry.service;
 
+import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.provisioning.domain.ProvisioningEntry;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -34,7 +35,7 @@ public interface JournalEntryWritePlatformService {
 
 	void createJournalEntriesForLoan(Map<String, Object> accountingBridgeData);
 
-	void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData);
+	void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData, GLAccount glAccount);
 
 	void createJournalEntriesForClientTransactions(Map<String, Object> accountingBridgeData);
 

@@ -127,7 +127,7 @@ public class RecurringDepositAccountTransactionsApiResource {
         }
 
         final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
-        savingsAccount = SavingsAccountTransactionData.templateOnTop(savingsAccount, paymentTypeOptions);
+        savingsAccount = SavingsAccountTransactionData.templateOnTop(savingsAccount, paymentTypeOptions, null);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, savingsAccount,
@@ -147,7 +147,7 @@ public class RecurringDepositAccountTransactionsApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (settings.isTemplate()) {
             final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
-            transactionData = SavingsAccountTransactionData.templateOnTop(transactionData, paymentTypeOptions);
+            transactionData = SavingsAccountTransactionData.templateOnTop(transactionData, paymentTypeOptions, null);
         }
 
 		return this.toApiJsonSerializer.serialize(settings, transactionData,

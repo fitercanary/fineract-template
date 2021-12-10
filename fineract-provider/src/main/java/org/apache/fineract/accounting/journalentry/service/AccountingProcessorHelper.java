@@ -471,7 +471,7 @@ public class AccountingProcessorHelper {
     public void createCashBasedJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,
             final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
             final Long paymentTypeId, final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount,
-            final Boolean isReversal) {
+            final Boolean isReversal, final GLAccount glAccount, final String action) {
         int accountTypeToDebitId = accountTypeToBeDebited;
         int accountTypeToCreditId = accountTypeToBeCredited;
         // reverse debits and credits for reversals
@@ -480,13 +480,13 @@ public class AccountingProcessorHelper {
             accountTypeToCreditId = accountTypeToBeDebited;
         }
         createJournalEntriesForSavings(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, paymentTypeId,
-                loanId, transactionId, transactionDate, amount);
+                loanId, transactionId, transactionDate, amount, glAccount, action);
     }
 
     public void createAccrualBasedJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,
             final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
             final Long paymentTypeId, final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount,
-            final Boolean isReversal) {
+            final Boolean isReversal, final GLAccount glAccount, final String action) {
         int accountTypeToDebitId = accountTypeToBeDebited;
         int accountTypeToCreditId = accountTypeToBeCredited;
         // reverse debits and credits for reversals
@@ -495,7 +495,7 @@ public class AccountingProcessorHelper {
             accountTypeToCreditId = accountTypeToBeDebited;
         }
         createJournalEntriesForSavings(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, paymentTypeId,
-                loanId, transactionId, transactionDate, amount);
+                loanId, transactionId, transactionDate, amount, glAccount, action);
     }
 
     /**
@@ -584,11 +584,21 @@ public class AccountingProcessorHelper {
 
     private void createJournalEntriesForSavings(final Office office, final String currencyCode, final int accountTypeToDebitId,
             final int accountTypeToCreditId, final Long savingsProductId, final Long paymentTypeId, final Long savingsId,
-            final String transactionId, final Date transactionDate, final BigDecimal amount) {
+            final String transactionId, final Date transactionDate, final BigDecimal amount, final GLAccount glAccount, final String action) {
         final GLAccount debitAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToDebitId, paymentTypeId);
         final GLAccount creditAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToCreditId, paymentTypeId);
-        createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
-        createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
+        if (glAccount == null) {
+            createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
+            createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
+            return;
+        }
+        if (action == "deposit") {
+            createDebitJournalEntryForSavings(office, currencyCode, glAccount, savingsId, transactionId, transactionDate, amount);
+            createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
+        } else if (action == "withdrawal") {
+            createCreditJournalEntryForSavings(office, currencyCode, glAccount, savingsId, transactionId, transactionDate, amount);
+            createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
+        }
     }
 
     /**

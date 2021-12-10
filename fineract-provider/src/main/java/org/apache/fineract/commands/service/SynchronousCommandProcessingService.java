@@ -91,7 +91,6 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             commandSourceResult.markAsChecked(maker, DateTime.now());
         } else {
             commandSourceResult = CommandSource.fullEntryFrom(wrapper, command, maker);
-          
         }
         commandSourceResult.updateResourceId(result.resourceId());
         commandSourceResult.updateForAudit(result.getOfficeId(), result.getGroupId(), result.getClientId(), result.getLoanId(),

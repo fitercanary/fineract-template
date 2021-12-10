@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.fineract.accounting.closure.domain.GLClosure;
 import org.apache.fineract.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_SAVINGS;
 import org.apache.fineract.accounting.common.AccountingConstants.FINANCIAL_ACTIVITY;
+import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.journalentry.data.ChargePaymentDTO;
 import org.apache.fineract.accounting.journalentry.data.SavingsDTO;
 import org.apache.fineract.accounting.journalentry.data.SavingsTransactionDTO;
@@ -43,11 +44,12 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
     }
 
     @Override
-    public void createJournalEntriesForSavings(final SavingsDTO savingsDTO) {
+    public void createJournalEntriesForSavings(final SavingsDTO savingsDTO, final GLAccount glAccount) {
         final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(savingsDTO.getOfficeId());
         final Long savingsProductId = savingsDTO.getSavingsProductId();
         final Long savingsId = savingsDTO.getSavingsId();
         final String currencyCode = savingsDTO.getCurrencyCode();
+        String action = null;
         for (final SavingsTransactionDTO savingsTransactionDTO : savingsDTO.getNewSavingsTransactions()) {
             final Date transactionDate = savingsTransactionDTO.getTransactionDate();
             final String transactionId = savingsTransactionDTO.getTransactionId();
@@ -66,23 +68,23 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(),
                             FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(), savingsProductId, paymentTypeId, savingsId, transactionId,
-                            transactionDate, overdraftAmount, isReversal);
+                            transactionDate, overdraftAmount, isReversal, null, null);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(),
                                 savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate,
-                                amount.subtract(overdraftAmount), isReversal);
+                                amount.subtract(overdraftAmount), isReversal, null, null);
                     }
                 } else {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(),
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(), savingsProductId, paymentTypeId, savingsId,
-                            transactionId, transactionDate, overdraftAmount, isReversal);
+                            transactionId, transactionDate, overdraftAmount, isReversal, null, null);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(), savingsProductId, paymentTypeId, savingsId,
-                                transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal);
+                                transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal, null, null);
                     }
                 }
             } else if (savingsTransactionDTO.getTransactionType().isDeposit() && savingsTransactionDTO.isOverdraftTransaction()) {
@@ -90,37 +92,38 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(),
                             CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
-                            transactionId, transactionDate, overdraftAmount, isReversal);
+                            transactionId, transactionDate, overdraftAmount, isReversal, null, null);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
                                 savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate,
-                                amount.subtract(overdraftAmount), isReversal);
+                                amount.subtract(overdraftAmount), isReversal, null, null);
                     }
                 } else {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(),
                             CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
-                            transactionId, transactionDate, overdraftAmount, isReversal);
+                            transactionId, transactionDate, overdraftAmount, isReversal, null, null);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(),
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
-                                transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal);
+                                transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal, null, null);
                     }
                 }
             }
 
             /** Handle Deposits and reversals of deposits **/
             else if (savingsTransactionDTO.getTransactionType().isDeposit()) {
+                action = "deposit";
                 if (savingsTransactionDTO.isAccountTransfer()) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
-                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
                 } else {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
-                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, glAccount, action);
                 }
             }
 
@@ -128,25 +131,26 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
             else if (savingsTransactionDTO.getTransactionType().isDividendPayout()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         FINANCIAL_ACTIVITY.PAYABLE_DIVIDENDS.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
-                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
             }
             /** Handle withdrawals and reversals of withdrawals **/
             else if (savingsTransactionDTO.getTransactionType().isWithdrawal()) {
+                action = "withdrawal";
                 if (savingsTransactionDTO.isAccountTransfer()) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(),
-                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
                 } else {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(),
-                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, glAccount, action);
                 }
             }
 
             else if (savingsTransactionDTO.getTransactionType().isEscheat()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                 		CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.ESCHEAT_LIABILITY.getValue(),
-                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
             }
             /**
              * Handle Interest Applications and reversals of Interest
@@ -159,12 +163,12 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(),
                             CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
-                            transactionId, transactionDate, overdraftAmount, isReversal);
+                            transactionId, transactionDate, overdraftAmount, isReversal, null, null);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(),
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
-                                transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal);
+                                transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal, null, null);
                     }
                 }
             }
@@ -175,7 +179,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
-                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
                 }
             }
 
@@ -231,7 +235,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
             else if (savingsTransactionDTO.getTransactionType().isInitiateTransfer()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.getValue(),
-                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
             }
 
             /** Handle Transfer Withdrawal or Acceptance **/
@@ -239,19 +243,19 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                     || savingsTransactionDTO.getTransactionType().isApproveTransfer()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
-                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
             }
 
             /** overdraft **/
             else if (savingsTransactionDTO.getTransactionType().isOverdraftInterest()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST.getValue(),
-                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                        savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, null, null);
             } else if (savingsTransactionDTO.getTransactionType().isWrittenOff()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                         CASH_ACCOUNTS_FOR_SAVINGS.LOSSES_WRITTEN_OFF.getValue(),
                         CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
-                        transactionId, transactionDate, amount, isReversal);
+                        transactionId, transactionDate, amount, isReversal, null, null);
             } else if (savingsTransactionDTO.getTransactionType().isOverdraftFee()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavingsCharges(office, currencyCode,
                         CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL, CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES, savingsProductId,

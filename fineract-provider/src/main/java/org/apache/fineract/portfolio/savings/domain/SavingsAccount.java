@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.savings.domain;
 import com.google.gson.JsonArray;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -980,15 +981,19 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public SavingsAccountTransaction deposit(final SavingsAccountTransactionDTO transactionDTO) {
-        return deposit(transactionDTO, SavingsAccountTransactionType.DEPOSIT);
+        return deposit(transactionDTO, SavingsAccountTransactionType.DEPOSIT, null);
+    }
+
+    public SavingsAccountTransaction deposit(final SavingsAccountTransactionDTO transactionDTO, final GLAccount glAccount) {
+        return deposit(transactionDTO, SavingsAccountTransactionType.DEPOSIT, glAccount);
     }
 
     public SavingsAccountTransaction dividendPayout(final SavingsAccountTransactionDTO transactionDTO) {
-        return deposit(transactionDTO, SavingsAccountTransactionType.DIVIDEND_PAYOUT);
+        return deposit(transactionDTO, SavingsAccountTransactionType.DIVIDEND_PAYOUT, null);
     }
 
     public SavingsAccountTransaction deposit(final SavingsAccountTransactionDTO transactionDTO,
-            final SavingsAccountTransactionType savingsAccountTransactionType) {
+            final SavingsAccountTransactionType savingsAccountTransactionType, final GLAccount glAccount) {
         final String resourceTypeName = depositAccountType().resourceName();
         if (isNotActive()) {
             final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
@@ -1002,43 +1007,31 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
 
-        if (isDateInTheFuture(transactionDTO.getTransactionDate())) {
-            final String defaultUserMessage = "Transaction date cannot be in the future.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg." + resourceTypeName + ".transaction.in.the.future",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-
-        if (isDateBeforeLastTransaction(transactionDTO.getTransactionDate())) {
-            final String defaultUserMessage = "Transaction date cannot be in the past from last transaction date.";
-            final ApiParameterError error = ApiParameterError.parameterError(
-                    "error.msg." + resourceTypeName + ".transaction.date.in.the.past.from.last.transaction.date", defaultUserMessage,
-                    "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-
-        if (transactionDTO.getTransactionDate().isBefore(getActivationLocalDate())) {
-            final Object[] defaultUserArgs = Arrays.asList(transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
-                    getActivationLocalDate().toString(transactionDTO.getFormatter())).toArray();
-            final String defaultUserMessage = "Transaction date cannot be before accounts activation date.";
-            final ApiParameterError error = ApiParameterError.parameterError(
-                    "error.msg." + resourceTypeName + ".transaction.before.activation.date", defaultUserMessage, "transactionDate",
-                    defaultUserArgs);
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-        validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_DEPOSIT, transactionDTO.getTransactionDate());
+            if (isDateInTheFuture(transactionDTO.getTransactionDate())) {
+                final String defaultUserMessage = "Transaction date cannot be in the future.";
+                final ApiParameterError error = ApiParameterError.parameterError("error.msg." + resourceTypeName + ".transaction.in.the.future",
+                        defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+    
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
+    
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+    
+            if (transactionDTO.getTransactionDate().isBefore(getActivationLocalDate())) {
+                final Object[] defaultUserArgs = Arrays.asList(transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
+                        getActivationLocalDate().toString(transactionDTO.getFormatter())).toArray();
+                final String defaultUserMessage = "Transaction date cannot be before accounts activation date.";
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "error.msg." + resourceTypeName + ".transaction.before.activation.date", defaultUserMessage, "transactionDate",
+                        defaultUserArgs);
+    
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
+    
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+            validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_DEPOSIT, transactionDTO.getTransactionDate());
 
         final Money amount = Money.of(this.currency, transactionDTO.getTransactionAmount());
 
@@ -1075,8 +1068,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return startInterestCalculationLocalDate;
     }
 
+    public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee) {
+                return withdraw(transactionDTO, applyWithdrawFee, null);
+            }
+
     public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee,
-            final boolean applyOverdraftFee) {
+            final boolean applyOverdraftFee, final GLAccount glAccount) {
         BigDecimal overdraftAmount;
         final MathContext mc = MathContext.DECIMAL64;
         final BigDecimal transactionAmount = transactionDTO.getTransactionAmount();
@@ -1093,7 +1090,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
         final BigDecimal overdraftTransactionAmount = overdraftAmount;
-        SavingsAccountTransaction withdraw = withdraw(transactionDTO, applyWithdrawFee);
+        SavingsAccountTransaction withdraw = withdraw(transactionDTO, applyWithdrawFee, glAccount);
 
         if (applyOverdraftFee) {
 
@@ -1102,71 +1099,59 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return withdraw;
     }
 
-    public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee) {
+    public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee, final GLAccount glAccount) {
+        if (glAccount == null) {
+            if (!isTransactionsAllowed()) {
 
-        if (!isTransactionsAllowed()) {
-
-            final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.account.is.not.active",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
+                final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
+                final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.account.is.not.active",
+                        defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+    
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
+    
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+    
+            if (isDateInTheFuture(transactionDTO.getTransactionDate())) {
+                final String defaultUserMessage = "Transaction date cannot be in the future.";
+                final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.in.the.future",
+                        defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
+    
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
+    
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+    
+            if (transactionDTO.getTransactionDate().isBefore(getActivationLocalDate())) {
+                final Object[] defaultUserArgs = Arrays.asList(transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
+                        getActivationLocalDate().toString(transactionDTO.getFormatter())).toArray();
+                final String defaultUserMessage = "Transaction date cannot be before accounts activation date.";
+                final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.before.activation.date",
+                        defaultUserMessage, "transactionDate", defaultUserArgs);
+    
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
+    
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            } 
+            if (isAccountLocked(transactionDTO.getTransactionDate())) {
+                final String defaultUserMessage = "Withdrawal is not allowed. No withdrawals are allowed until after "
+                        + getLockedInUntilLocalDate().toString(transactionDTO.getFormatter());
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "error.msg.savingsaccount.transaction.withdrawals.blocked.during.lockin.period", defaultUserMessage, "transactionDate",
+                        transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
+                        getLockedInUntilLocalDate().toString(transactionDTO.getFormatter()));
+    
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
+    
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+            validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_WITHDRAWAL, transactionDTO.getTransactionDate());   
         }
-
-        if (isDateInTheFuture(transactionDTO.getTransactionDate())) {
-            final String defaultUserMessage = "Transaction date cannot be in the future.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.in.the.future",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-
-        if (isDateBeforeLastTransaction(transactionDTO.getTransactionDate())) {
-            final String defaultUserMessage = "Transaction date cannot be in the past from last transaction date.";
-            final ApiParameterError error = ApiParameterError.parameterError(
-                    "error.msg.savingsaccount.transaction.date.in.the.past.from.last.transaction.date", defaultUserMessage,
-                    "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-
-        if (transactionDTO.getTransactionDate().isBefore(getActivationLocalDate())) {
-            final Object[] defaultUserArgs = Arrays.asList(transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
-                    getActivationLocalDate().toString(transactionDTO.getFormatter())).toArray();
-            final String defaultUserMessage = "Transaction date cannot be before accounts activation date.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.before.activation.date",
-                    defaultUserMessage, "transactionDate", defaultUserArgs);
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-
-        if (isAccountLocked(transactionDTO.getTransactionDate())) {
-            final String defaultUserMessage = "Withdrawal is not allowed. No withdrawals are allowed until after "
-                    + getLockedInUntilLocalDate().toString(transactionDTO.getFormatter());
-            final ApiParameterError error = ApiParameterError.parameterError(
-                    "error.msg.savingsaccount.transaction.withdrawals.blocked.during.lockin.period", defaultUserMessage, "transactionDate",
-                    transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
-                    getLockedInUntilLocalDate().toString(transactionDTO.getFormatter()));
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-        validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_WITHDRAWAL, transactionDTO.getTransactionDate());
-
+        
         final Money transactionAmountMoney = Money.of(this.currency, transactionDTO.getTransactionAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.withdrawal(this, office(),
                 transactionDTO.getPaymentDetail(), transactionDTO.getTransactionDate(), transactionAmountMoney,

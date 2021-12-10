@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.api;
 
 import java.util.Collection;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -45,6 +46,8 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
+import org.apache.fineract.accounting.glaccount.data.GLAccountData;
+import org.apache.fineract.accounting.glaccount.service.GLAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
@@ -69,6 +72,7 @@ public class SavingsAccountTransactionsApiResource {
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
+    private final GLAccountReadPlatformService glAccountReadPlatformService;
 
     @Autowired
     public SavingsAccountTransactionsApiResource(final PlatformSecurityContext context,
@@ -77,7 +81,8 @@ public class SavingsAccountTransactionsApiResource {
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+            PaymentTypeReadPlatformService paymentTypeReadPlatformService,
+            GLAccountReadPlatformService glAccountReadPlatformService) {
         this.context = context;
         this.toSavingsAccountApiJsonSerializer = toSavingsAccountApiJsonSerializer;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -85,6 +90,7 @@ public class SavingsAccountTransactionsApiResource {
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
+        this.glAccountReadPlatformService = glAccountReadPlatformService;
     }
 
     private boolean is(final String commandParam, final String commandValue) {
@@ -146,7 +152,9 @@ public class SavingsAccountTransactionsApiResource {
         SavingsAccountTransactionData savingsAccount = this.savingsAccountReadPlatformService.retrieveDepositTransactionTemplate(savingsId,
                 DepositAccountType.SAVINGS_DEPOSIT);
         final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
-        savingsAccount = SavingsAccountTransactionData.templateOnTop(savingsAccount, paymentTypeOptions);
+        final List<GLAccountData> glAccountOptions = this.glAccountReadPlatformService.retrieveAllEnabledDetailGLAccounts();
+
+        savingsAccount = SavingsAccountTransactionData.templateOnTop(savingsAccount, paymentTypeOptions, glAccountOptions);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, savingsAccount,
@@ -166,7 +174,8 @@ public class SavingsAccountTransactionsApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (settings.isTemplate()) {
             final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
-            transactionData = SavingsAccountTransactionData.templateOnTop(transactionData, paymentTypeOptions);
+            final List<GLAccountData> glAccountOptions = this.glAccountReadPlatformService.retrieveAllEnabledDetailGLAccounts();
+            transactionData = SavingsAccountTransactionData.templateOnTop(transactionData, paymentTypeOptions, glAccountOptions);
         }
 
         return this.toApiJsonSerializer.serialize(settings, transactionData,
@@ -182,10 +191,10 @@ public class SavingsAccountTransactionsApiResource {
             final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
 
             CommandProcessingResult result = null;
-            if (is(commandParam, "deposit")) {
+            if (is(commandParam, "deposit") || is(commandParam, "depositFromGL")) {
                 final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "withdrawal")) {
+            } else if (is(commandParam, "withdrawal") || is(commandParam, "withdrawalToGL")) {
                 final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "postInterestAsOn")) {

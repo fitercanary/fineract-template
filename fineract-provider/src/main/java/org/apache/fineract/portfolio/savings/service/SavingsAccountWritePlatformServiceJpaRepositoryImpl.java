@@ -296,7 +296,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+        final String noteText = command.stringValueOfParameterNamed("note");
         final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
+        
         
         GLAccount glAccount = null;
         if (glAccountId != null) {
@@ -307,11 +309,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate, postingDate,
-                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction, glAccount);
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction, glAccount, noteText);
 
         this.saveTransactionRequest(command, deposit);
 
-        final String noteText = command.stringValueOfParameterNamed("note");
         if (StringUtils.isNotBlank(noteText)) {
             final Note note = Note.savingsTransactionNote(account, deposit, noteText);
             this.noteRepository.save(note);
@@ -374,9 +375,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
         final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
-
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
-
+        final String noteText = command.stringValueOfParameterNamed("note");
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
 
@@ -401,11 +401,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance, isApplyOverdraftFee);
 
         final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate, postingDate,
-                transactionAmount, paymentDetail, transactionBooleanValues, false, glAccount);
+                transactionAmount, paymentDetail, transactionBooleanValues, false, glAccount, noteText);
 
         this.saveTransactionRequest(command, withdrawal);
 
-        final String noteText = command.stringValueOfParameterNamed("note");
         if (StringUtils.isNotBlank(noteText)) {
             final Note note = Note.savingsTransactionNote(account, withdrawal, noteText);
             this.noteRepository.save(note);
@@ -820,7 +819,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
             account.setMinRequiredBalance(BigDecimal.ZERO);
             this.savingsAccountDomainService.handleWithdrawal(account, fmt, closedDate, transactionAmount, paymentDetail,
-                    transactionBooleanValues, false, null);
+                    transactionBooleanValues, false, null, null);
 
         }
 
@@ -1323,7 +1322,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isAccountTransfer = false;
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null, null);
     }
 
     @Override

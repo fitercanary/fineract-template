@@ -542,7 +542,7 @@ public class
 
         generateAccountNumber(account);
         // post journal entries for activation charges
-        this.savingsAccountDomainService.postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, null);
+        this.savingsAccountDomainService.postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, null, null);
 
         return new CommandProcessingResultBuilder() //
                 .withSavingsId(account.getId()) //

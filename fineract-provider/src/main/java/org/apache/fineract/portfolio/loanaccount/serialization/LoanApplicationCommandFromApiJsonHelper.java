@@ -90,7 +90,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             LoanApiConstants.emiAmountParameterName, LoanApiConstants.maxOutstandingBalanceParameterName,
             LoanProductConstants.graceOnArrearsAgeingParameterName, LoanApiConstants.createStandingInstructionAtDisbursementParameterName,
             LoanApiConstants.isTopup, LoanApiConstants.loanIdToClose, LoanApiConstants.datatables,
-            LoanApiConstants.isEqualAmortizationParam));
+            LoanApiConstants.isEqualAmortizationParam, LoanApiConstants.principalPortionParameterName, 
+            LoanApiConstants.interestPortionParameterName, LoanApiConstants.installmentDateParameterName));
 
     private final FromJsonHelper fromApiJsonHelper;
     private final LoanRepository loanRepository;

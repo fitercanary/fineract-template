@@ -1319,7 +1319,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         this.actualMaturityDate = determineExpectedMaturityDate().toDate();
     }
 
-    private void updateLoanSummaryDerivedFields() {
+    public void updateLoanSummaryDerivedFields() {
 
         if (isNotDisbursed()) {
             this.summary.zeroFields();
@@ -3004,6 +3004,26 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return changedTransactionDetail;
     }
 
+    public void makeScheduleModification(final LocalDate repaymentDate, final BigDecimal modifiedPrincipalDue, final BigDecimal modifiedInterestDue) {
+        final LoanRepaymentScheduleInstallment currentInstallment = fetchLoanRepaymentScheduleInstallment(repaymentDate);
+        
+        if (currentInstallment != null) {
+            if (modifiedPrincipalDue != null) {
+                currentInstallment.modifyPrincipalComponent(modifiedPrincipalDue);
+            } 
+            if (modifiedInterestDue != null) {
+                currentInstallment.modifyInterestComponent(modifiedInterestDue);
+            }
+        }
+    }
+
+    public Boolean isCurrentInstallment(LoanRepaymentScheduleInstallment currentInstallment, LoanRepaymentScheduleInstallment installment) {
+        if (currentInstallment.getInstallmentNumber() == installment.getInstallmentNumber()) {
+            return true;
+        }
+        return false;
+    }
+
     public void makeChargePayment(final Long chargeId, final LoanLifecycleStateMachine loanLifecycleStateMachine,
             final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds,
             final HolidayDetailDTO holidayDetailDTO, final LoanTransaction paymentTransaction, final Integer installmentNumber) {
@@ -3139,6 +3159,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
         final LoanRepaymentScheduleInstallment currentInstallment = fetchLoanRepaymentScheduleInstallment(
                 loanTransaction.getTransactionDate());
+
         boolean reprocess = true;
 
         if (!isForeclosure() && isTransactionChronologicallyLatest && adjustedTransaction == null
@@ -3180,7 +3201,6 @@ public class Loan extends AbstractPersistableCustom<Long> {
              * transactions first and then new transactions.
              */
             this.loanTransactions.addAll(changedTransactionDetail.getNewTransactionMappings().values());
-
         }
         updateLoanSummaryDerivedFields();
 
@@ -3208,7 +3228,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return changedTransactionDetail;
     }
 
-    private LoanRepaymentScheduleInstallment fetchLoanRepaymentScheduleInstallment(LocalDate dueDate) {
+    public LoanRepaymentScheduleInstallment fetchLoanRepaymentScheduleInstallment(LocalDate dueDate) {
         LoanRepaymentScheduleInstallment installment = null;
         List<LoanRepaymentScheduleInstallment> installments = getRepaymentScheduleInstallments();
         for (LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : installments) {

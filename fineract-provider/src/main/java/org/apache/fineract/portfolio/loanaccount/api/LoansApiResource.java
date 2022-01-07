@@ -667,9 +667,7 @@ public class LoansApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String calculateLoanScheduleOrSubmitLoanApplication(@QueryParam("command") final String commandParam,
             @Context final UriInfo uriInfo, final String apiRequestBodyAsJson) {
-
         if (is(commandParam, "calculateLoanSchedule")) {
-
             final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
             final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
 
@@ -678,7 +676,6 @@ public class LoansApiResource {
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.loanScheduleToApiJsonSerializer.serialize(settings, loanSchedule.toData(), new HashSet<String>());
         }
-
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createLoanApplication().withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
@@ -760,6 +757,9 @@ public class LoansApiResource {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "recoverGuarantees")) {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().recoverFromGuarantor(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "modifyschedule")) {
+            final CommandWrapper commandRequest = builder.modifyLoanRepaymentSchedule(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 

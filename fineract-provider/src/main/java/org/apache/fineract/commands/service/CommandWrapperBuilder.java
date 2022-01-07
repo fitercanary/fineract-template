@@ -980,6 +980,16 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+
+    public CommandWrapperBuilder modifyLoanRepaymentSchedule(final Long loanId) {
+        this.actionName = "MODIFYSCHEDULE";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId;
+        return this;
+    }
+
     public CommandWrapperBuilder assignLoanOfficersInBulk() {
         this.actionName = "BULKREASSIGN";
         this.entityName = "LOAN";

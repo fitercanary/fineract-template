@@ -173,7 +173,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
-                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip, null);
+                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip, null, null);
 
             this.savingsAccountWritePlatformService.saveTransactionRequest(command, withdrawal);
 
@@ -214,7 +214,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             }
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
-                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip, null);
+                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip, null, null);
 
             final Boolean isHolidayValidationDone = false;
             final HolidayDetailDTO holidayDetailDto = null;
@@ -301,7 +301,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             }
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
-                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip, null);
+                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues, limitValidationSkip, null, null);
 
             LoanTransaction loanRepaymentTransaction = null;
             
@@ -469,7 +469,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
-                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, false, null);
+                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, false, null, null);
 
             LoanTransaction loanTransaction = null;
 
@@ -524,7 +524,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
-                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, true, null);
+                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, true, null, null);
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),

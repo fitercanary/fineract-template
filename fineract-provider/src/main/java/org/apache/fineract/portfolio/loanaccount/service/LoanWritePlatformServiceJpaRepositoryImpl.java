@@ -37,6 +37,7 @@ import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.api.JsonQuery;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -163,6 +164,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.DefaultSche
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleCalculationPlatformService;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationCommandFromApiJsonHelper;
@@ -243,6 +245,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final CodeValueRepositoryWrapper codeValueRepository;
     private final CashierTransactionDataValidator cashierTransactionDataValidator;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+    private final LoanScheduleCalculationPlatformService calculationPlatformService;
+    private final FromJsonHelper fromJsonHelper;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -274,7 +278,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
             final CashierTransactionDataValidator cashierTransactionDataValidator,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
+            final SavingsAccountTransactionRepository savingsAccountTransactionRepository, 
+            final LoanScheduleCalculationPlatformService calculationPlatformService, final FromJsonHelper fromJsonHelper) {
 
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
@@ -317,6 +322,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.cashierTransactionDataValidator = cashierTransactionDataValidator;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
+        this.calculationPlatformService = calculationPlatformService;
+        this.fromJsonHelper = fromJsonHelper;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -876,6 +883,33 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .withLoanId(loanId) //
                 .with(changes) //
                 .build();
+    }
+
+    @Override
+    public CommandProcessingResult makeLoanScheduleModification(Long loanId, JsonCommand command) {
+        final Loan existingLoanApplication = retrieveLoanBy(loanId);
+        final JsonElement parsedQuery = this.fromJsonHelper.parse(command.json());
+        final JsonQuery query = JsonQuery.from(command.json(), parsedQuery, this.fromJsonHelper);
+        final Map<String, Object> changes = new LinkedHashMap<>();
+
+        changes.put("expectedDisbursementDate", command.stringValueOfParameterNamed("expectedDisbursementDate"));
+        changes.put("principalPortion", command.stringValueOfParameterNamed("principalPortion"));
+        changes.put("interestPortion", command.stringValueOfParameterNamed("interestPortion"));
+        changes.put("locale", command.locale());
+        changes.put("dateFormat", command.dateFormat());
+
+        final LoanScheduleModel loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query, true, loanId);
+
+        return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
+                .withLoanId(loanId) //
+                .with(changes) //
+                .build();
+    }
+
+    private Loan retrieveLoanBy(final Long loanId) {
+        final Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanId, true);
+        loan.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper, this.transactionProcessingStrategy);
+        return loan;
     }
 
     @Transactional

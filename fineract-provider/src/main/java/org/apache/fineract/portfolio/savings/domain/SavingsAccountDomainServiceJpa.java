@@ -106,15 +106,16 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Override
     public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotTransferToOtherAccount, final GLAccount glAccount) {
+            final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotTransferToOtherAccount, final GLAccount glAccount, final String note) {
         return handleWithdrawal(account, fmt, transactionDate, transactionDate, transactionAmount, paymentDetail,
-        transactionBooleanValues, isNotTransferToOtherAccount, glAccount);
+        transactionBooleanValues, isNotTransferToOtherAccount, glAccount, note);
     }
 
     @Override
     public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
                                                       final LocalDate transactionDate, final LocalDate postingDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-                                                      final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotTransferToOtherAccount, final GLAccount glAccount) {
+                                                      final SavingsTransactionBooleanValues transactionBooleanValues, final boolean isNotTransferToOtherAccount, final GLAccount glAccount,
+                                                      final String note) {
 
         AppUser user = getAppUserIfPresent();
         account.validateForAccountBlock();
@@ -169,7 +170,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         if(postingDate!=null && !transactionDate.equals(postingDate))
             account.setPostingDate(postingDate.toDate());
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,
                 constructEntityMap(withdrawal));
         return withdrawal;
@@ -209,20 +210,22 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final boolean isAccountTransfer, final boolean isRegularTransaction) {
         final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DEPOSIT;
         return handleDeposit(account, fmt, transactionDate, transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,
-                savingsAccountTransactionType, null);
+                savingsAccountTransactionType, null, null);
     }
 
     @Override
-    public SavingsAccountTransaction handleDeposit(SavingsAccount account, DateTimeFormatter fmt, LocalDate transactionDate, LocalDate postingDate, BigDecimal transactionAmount, PaymentDetail paymentDetail, boolean isAccountTransfer, boolean isRegularTransaction, final GLAccount glAccount) {
+    public SavingsAccountTransaction handleDeposit(SavingsAccount account, DateTimeFormatter fmt, LocalDate transactionDate, LocalDate postingDate, 
+            BigDecimal transactionAmount, PaymentDetail paymentDetail, boolean isAccountTransfer, boolean isRegularTransaction, final GLAccount glAccount,
+            final String note) {
         final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DEPOSIT;
         return handleDeposit(account, fmt, transactionDate, postingDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,
-                savingsAccountTransactionType, glAccount);
+                savingsAccountTransactionType, glAccount, note);
     }
 
     private SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final LocalDate postingDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final boolean isAccountTransfer, final boolean isRegularTransaction,
-            final SavingsAccountTransactionType savingsAccountTransactionType, final GLAccount glAccount) {
+            final SavingsAccountTransactionType savingsAccountTransactionType, final GLAccount glAccount, final String note) {
         AppUser user = getAppUserIfPresent();
 
         account.validateForAccountBlock();
@@ -271,7 +274,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             account.setPostingDate(postingDate.toDate());
 
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT, constructEntityMap(deposit));
         return deposit;
     }
@@ -289,7 +292,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final boolean isRegularTransaction = true;
         final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DIVIDEND_PAYOUT;
         return handleDeposit(account, null, transactionDate, transactionDate, transactionAmount, null, isAccountTransfer, isRegularTransaction,
-                savingsAccountTransactionType, null);
+                savingsAccountTransactionType, null, null);
     }
 
     private Long saveTransactionToGenerateTransactionId(final SavingsAccountTransaction transaction) {
@@ -322,14 +325,14 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Transactional
     @Override
     public void postJournalEntries(final SavingsAccount account, final Set<Long> existingTransactionIds,
-            final Set<Long> existingReversedTransactionIds, GLAccount customGLAccount) {
+            final Set<Long> existingReversedTransactionIds, final GLAccount customGLAccount, final String note) {
 
         final MonetaryCurrency currency = account.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
 
         final Map<String, Object> accountingBridgeData = account.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, customGLAccount);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, customGLAccount, note);
     }
 
     private Map<BUSINESS_ENTITY, Object> constructEntityMap(Object entity) {

@@ -246,18 +246,6 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         return Money.of(currency, this.interestWrittenOff);
     }
 
-    // public Money getInterestOutstanding(final MonetaryCurrency currency) {
-    // final Money interestAccountedFor =
-    // getInterestPaid(currency).plus(getInterestWaived(currency))
-    // .plus(getInterestWrittenOff(currency));
-    // Money interestOutstanding =
-    // getInterestAccrued(currency).minus(interestAccountedFor);
-    // if(interestOutstanding.isLessThanZero()) {
-    // return Money.zero(currency);
-    // }
-    // return interestOutstanding;
-    // }
-
     public Money getInterestOutstanding(final MonetaryCurrency currency) {
         final Money interestAccountedFor = getInterestPaid(currency).plus(getInterestWaived(currency))
                 .plus(getInterestWrittenOff(currency));
@@ -480,6 +468,16 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         trackAdvanceAndLateTotalsForRepaymentPeriod(transactionDate, currency, principalPortionOfTransaction);
 
         return principalPortionOfTransaction;
+    }
+
+    public void modifyPrincipalComponent(final BigDecimal updatedPrincipalAmount) {
+        this.principal = updatedPrincipalAmount;
+        this.principal = defaultToNullIfZero(this.principal);
+    }
+
+    public void modifyInterestComponent(final BigDecimal updatedInterestAmount) {
+        this.interestCharged = updatedInterestAmount;
+        this.interestCharged = defaultToNullIfZero(this.interestCharged);
     }
 
     public Money waiveInterestComponent(final LocalDate transactionDate, final Money transactionAmountRemaining) {

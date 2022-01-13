@@ -41,6 +41,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanDisbursementDetails;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
@@ -52,8 +53,10 @@ import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationCo
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRepository;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.apache.fineract.portfolio.loanproduct.serialization.LoanProductDataValidator;
 import org.joda.time.LocalDate;
@@ -75,6 +78,7 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
     private final ConfigurationDomainService configurationDomainService;
     private final CurrencyReadPlatformService currencyReadPlatformService;
     private final LoanUtilService loanUtilService;
+    private final LoanRepositoryWrapper loanRepositoryWrapper;
 
     @Autowired
     public LoanScheduleCalculationPlatformServiceImpl(final CalculateLoanScheduleQueryFromApiJsonHelper fromApiJsonDeserializer,
@@ -84,7 +88,7 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
             final LoanAssembler loanAssembler,
             final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
             final ConfigurationDomainService configurationDomainService, final CurrencyReadPlatformService currencyReadPlatformService,
-            final LoanUtilService loanUtilService) {
+            final LoanUtilService loanUtilService, final LoanRepositoryWrapper loanRepositoryWrapper) {
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.loanScheduleAssembler = loanScheduleAssembler;
         this.fromJsonHelper = fromJsonHelper;
@@ -97,6 +101,70 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
         this.configurationDomainService = configurationDomainService;
         this.currencyReadPlatformService = currencyReadPlatformService;
         this.loanUtilService = loanUtilService;
+        this.loanRepositoryWrapper = loanRepositoryWrapper;
+    }
+
+    @Override
+    public LoanScheduleModel calculateLoanSchedule(final JsonQuery query, Boolean validateParams, Long loanId) {
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        final BigDecimal principalPortion = this.fromJsonHelper.extractBigDecimalWithLocaleNamed("principalPortion", query.parsedJson());
+        final BigDecimal interestPortion = this.fromJsonHelper.extractBigDecimalWithLocaleNamed("interestPortion", query.parsedJson());
+        final LocalDate repaymentDate = this.fromJsonHelper.extractLocalDateNamed("expectedDisbursementDate", query.parsedJson());
+        final String modifyInstallmentAction = this.fromJsonHelper.extractStringNamed("modifyInstallmentAction", query.parsedJson());
+        final LoanRepaymentScheduleInstallment currentInstallment = loan.fetchLoanRepaymentScheduleInstallment(repaymentDate);
+                
+        final MonetaryCurrency currency = loan.getCurrency();
+        List<LoanRepaymentScheduleInstallment> installments = null;
+        LoanScheduleModel loanSchedule = null;
+
+        if (modifyInstallmentAction.equals("updatePrincipal")) {
+
+            // update principal portion of modified installment
+            loan.makeScheduleModification(currentInstallment.getDueDate(), principalPortion, null);
+            loanSchedule = this.calculateLoanSchedule(query, validateParams);
+            final Collection<LoanSchedulePeriodData> periods = loanSchedule.toData().getPeriods();
+
+            // update all future installments
+            installments = loan.getRepaymentScheduleInstallments();
+            for (LoanRepaymentScheduleInstallment installment : installments) {
+                if (installment.getInstallmentNumber() > currentInstallment.getInstallmentNumber()) {
+                    for(LoanSchedulePeriodData period : periods) {
+                        if (installment.getDueDate().equals(period.periodDueDate())) {
+                            loan.makeScheduleModification(installment.getDueDate(), period.principalDue(), null);                       
+                        }                       
+                    }
+                }
+            }
+            loan.updateLoanSummaryDerivedFields();
+            this.loanRepositoryWrapper.save(loan);
+        } else if (modifyInstallmentAction.equals("updateInterest")) {
+            // validate interestPortion must be less than previous interest amount
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            if (Money.of(currency, interestPortion).isGreaterThan(currentInstallment.getInterestCharged(currency))) {
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "validation.msg.loan.interestPortion.not.less.than.previous.interest.amount",
+                        "Interest portion must be less than previous interest amount.", "interestPortion",
+                        interestPortion, currentInstallment.getInterestCharged(currency));
+                dataValidationErrors.add(error);
+            }
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                "Validation errors exist.", dataValidationErrors); }
+
+            // calculate accumulatedInterest
+            installments = loan.getRepaymentScheduleInstallments();
+            for (LoanRepaymentScheduleInstallment installment : installments) {
+                if (installment.getInstallmentNumber().equals(currentInstallment.getInstallmentNumber()+1)) {
+                    final Money accumulatedInterest = currentInstallment.getInterestCharged(currency).minus(interestPortion)
+                        .plus(installment.getInterestCharged(currency));
+                    loan.makeScheduleModification(installment.getDueDate(), null, accumulatedInterest.getAmount());
+                }
+            }
+
+            // update currentInstallment interest
+            loan.makeScheduleModification(currentInstallment.getDueDate(), null, interestPortion);
+            loanSchedule = this.calculateLoanSchedule(query, validateParams);
+        }
+        return loanSchedule;
     }
 
     @Override

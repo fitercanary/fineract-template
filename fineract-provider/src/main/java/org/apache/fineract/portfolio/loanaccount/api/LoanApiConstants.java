@@ -24,9 +24,13 @@ public interface LoanApiConstants {
     public static final String maxOutstandingBalanceParameterName = "maxOutstandingLoanBalance";
     public static final String disbursementDataParameterName = "disbursementData";
     public static final String disbursementDateParameterName = "expectedDisbursementDate";
+    public static final String installmentDateParameterName = "installmentDate";
     public static final String disbursementPrincipalParameterName = "principal";
     public static final String updatedDisbursementDateParameterName = "updatedExpectedDisbursementDate";
     public static final String updatedDisbursementPrincipalParameterName = "updatedPrincipal";
+    public static final String principalPortionParameterName = "principalPortion";
+    public static final String interestPortionParameterName = "interestPortion";
+    public static final String modifyInstallmentActionParameterName = "modifyInstallmentAction";
     public static final String disbursementIdParameterName = "id";
     public static final String loanChargeIdParameterName = "loanChargeId";
     public static final String principalDisbursedParameterName = "transactionAmount";

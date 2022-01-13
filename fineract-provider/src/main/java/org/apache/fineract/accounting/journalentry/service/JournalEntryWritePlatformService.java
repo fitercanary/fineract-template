@@ -35,7 +35,7 @@ public interface JournalEntryWritePlatformService {
 
 	void createJournalEntriesForLoan(Map<String, Object> accountingBridgeData);
 
-	void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData, GLAccount glAccount);
+	void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData, GLAccount glAccount, String note);
 
 	void createJournalEntriesForClientTransactions(Map<String, Object> accountingBridgeData);
 

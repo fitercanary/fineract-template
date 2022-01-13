@@ -23,6 +23,6 @@ import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 
 public interface AccountingProcessorForSavings {
 
-    void createJournalEntriesForSavings(SavingsDTO savingsDTO, GLAccount glAccount);
+    void createJournalEntriesForSavings(SavingsDTO savingsDTO, GLAccount glAccount, String note);
 
 }

@@ -1832,7 +1832,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null, null);
     }
 
     @Transactional

@@ -71,8 +71,9 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
             LoanApiConstants.isFloatingInterestRateParameterName, LoanApiConstants.interestRateDifferentialParameterName,
             LoanApiConstants.repaymentFrequencyNthDayTypeParameterName, LoanApiConstants.repaymentFrequencyDayOfWeekTypeParameterName,
             LoanApiConstants.isTopup, LoanApiConstants.loanIdToClose, LoanApiConstants.datatables, LoanApiConstants.isEqualAmortizationParam,
-            LoanApiConstants.principalPortionParameterName, LoanApiConstants.interestPortionParameterName, LoanApiConstants.installmentDateParameterName));
-
+            LoanApiConstants.principalPortionParameterName, LoanApiConstants.interestPortionParameterName, 
+            LoanApiConstants.installmentDateParameterName, LoanApiConstants.modifyInstallmentActionParameterName));
+            
     private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired

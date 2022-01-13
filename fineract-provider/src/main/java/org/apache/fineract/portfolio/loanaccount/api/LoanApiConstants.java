@@ -30,6 +30,7 @@ public interface LoanApiConstants {
     public static final String updatedDisbursementPrincipalParameterName = "updatedPrincipal";
     public static final String principalPortionParameterName = "principalPortion";
     public static final String interestPortionParameterName = "interestPortion";
+    public static final String modifyInstallmentActionParameterName = "modifyInstallmentAction";
     public static final String disbursementIdParameterName = "id";
     public static final String loanChargeIdParameterName = "loanChargeId";
     public static final String principalDisbursedParameterName = "transactionAmount";

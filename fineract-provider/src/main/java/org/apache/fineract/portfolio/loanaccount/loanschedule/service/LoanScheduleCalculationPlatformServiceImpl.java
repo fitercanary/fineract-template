@@ -107,33 +107,63 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
     @Override
     public LoanScheduleModel calculateLoanSchedule(final JsonQuery query, Boolean validateParams, Long loanId) {
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
-        final LocalDate repaymentDate = this.fromJsonHelper.extractLocalDateNamed("expectedDisbursementDate", query.parsedJson());
         final BigDecimal principalPortion = this.fromJsonHelper.extractBigDecimalWithLocaleNamed("principalPortion", query.parsedJson());
         final BigDecimal interestPortion = this.fromJsonHelper.extractBigDecimalWithLocaleNamed("interestPortion", query.parsedJson());
-
+        final LocalDate repaymentDate = this.fromJsonHelper.extractLocalDateNamed("expectedDisbursementDate", query.parsedJson());
+        final String modifyInstallmentAction = this.fromJsonHelper.extractStringNamed("modifyInstallmentAction", query.parsedJson());
         final LoanRepaymentScheduleInstallment currentInstallment = loan.fetchLoanRepaymentScheduleInstallment(repaymentDate);
                 
-        // update principal portion of modified installment
-        loan.makeScheduleModification(currentInstallment.getDueDate(), principalPortion, interestPortion);
+        final MonetaryCurrency currency = loan.getCurrency();
+        List<LoanRepaymentScheduleInstallment> installments = null;
+        LoanScheduleModel loanSchedule = null;
 
-        LoanScheduleModel loanSchedule = this.calculateLoanSchedule(query, validateParams);
-        final Collection<LoanSchedulePeriodData> periods = loanSchedule.toData().getPeriods();
+        if (modifyInstallmentAction.equals("updatePrincipal")) {
 
-        // update all future installments
-        List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
+            // update principal portion of modified installment
+            loan.makeScheduleModification(currentInstallment.getDueDate(), principalPortion, null);
+            loanSchedule = this.calculateLoanSchedule(query, validateParams);
+            final Collection<LoanSchedulePeriodData> periods = loanSchedule.toData().getPeriods();
 
-        for (LoanRepaymentScheduleInstallment installment : installments) {
-            if (installment.getInstallmentNumber() > currentInstallment.getInstallmentNumber()) {
-                for(LoanSchedulePeriodData period : periods) {
-                    if (installment.getDueDate().equals(period.periodDueDate())) {
-                        loan.makeScheduleModification(installment.getDueDate(), period.principalDue(), period.interestDue());                       
+            // update all future installments
+            installments = loan.getRepaymentScheduleInstallments();
+            for (LoanRepaymentScheduleInstallment installment : installments) {
+                if (installment.getInstallmentNumber() > currentInstallment.getInstallmentNumber()) {
+                    for(LoanSchedulePeriodData period : periods) {
+                        if (installment.getDueDate().equals(period.periodDueDate())) {
+                            loan.makeScheduleModification(installment.getDueDate(), period.principalDue(), null);                       
+                        }                       
                     }
                 }
             }
-        }
-        loan.updateLoanSummaryDerivedFields();
-        this.loanRepositoryWrapper.save(loan);
+            loan.updateLoanSummaryDerivedFields();
+            this.loanRepositoryWrapper.save(loan);
+        } else if (modifyInstallmentAction.equals("updateInterest")) {
+            // validate interestPortion must be less than previous interest amount
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            if (Money.of(currency, interestPortion).isGreaterThan(currentInstallment.getInterestCharged(currency))) {
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "validation.msg.loan.interestPortion.not.less.than.previous.interest.amount",
+                        "Interest portion must be less than previous interest amount.", "interestPortion",
+                        interestPortion, currentInstallment.getInterestCharged(currency));
+                dataValidationErrors.add(error);
+            }
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                "Validation errors exist.", dataValidationErrors); }
 
+            // calculate accumulatedInterest
+            installments = loan.getRepaymentScheduleInstallments();
+            for (LoanRepaymentScheduleInstallment installment : installments) {
+                if (installment.getInstallmentNumber().equals(currentInstallment.getInstallmentNumber()+1)) {
+                    final Money accumulatedInterest = currentInstallment.getInterestCharged(currency).minus(interestPortion)
+                        .plus(installment.getInterestCharged(currency));
+                    loan.makeScheduleModification(installment.getDueDate(), null, accumulatedInterest.getAmount());
+                }
+            }
+
+            // update currentInstallment interest
+            loan.makeScheduleModification(currentInstallment.getDueDate(), null, interestPortion);
+            loanSchedule = this.calculateLoanSchedule(query, validateParams);
+        }
         return loanSchedule;
     }
 

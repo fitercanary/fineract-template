@@ -17,4 +17,4 @@
 -- under the License.
 --
 
-INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES ('transaction_loan', 'MODIFYSCHEDULE_LOOAN', 'LOAN', 'MODIFYSCHEDULE', '0');
+INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES ('transaction_loan', 'MODIFYSCHEDULE_LOAN', 'LOAN', 'MODIFYSCHEDULE', '0');

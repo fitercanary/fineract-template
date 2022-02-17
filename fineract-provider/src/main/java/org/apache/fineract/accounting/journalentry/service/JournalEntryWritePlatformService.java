@@ -24,12 +24,13 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
 public interface JournalEntryWritePlatformService {
 
-	CommandProcessingResult createJournalEntry(JsonCommand command);
+	CommandProcessingResult createJournalEntry(JsonCommand command, ArrayList<Long> savingsCreditTransactionId, ArrayList<Long> savingsDebitTransactionId);
 
 	CommandProcessingResult revertJournalEntry(JsonCommand command);
 

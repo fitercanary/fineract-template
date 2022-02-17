@@ -38,6 +38,8 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult deposit(Long savingsId, JsonCommand command);
 
+    CommandProcessingResult makeMultiplePostings(JsonCommand command);
+
     void saveTransactionRequest(JsonCommand command, SavingsAccountTransaction transaction);
 
     CommandProcessingResult withdrawal(Long savingsId, JsonCommand command);

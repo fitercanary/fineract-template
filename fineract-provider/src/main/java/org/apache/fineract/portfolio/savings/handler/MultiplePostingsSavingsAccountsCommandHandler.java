@@ -16,32 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.accounting.journalentry.handler;
+package org.apache.fineract.portfolio.savings.handler;
 
-import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.commands.annotation.CommandType;
 import org.apache.fineract.commands.handler.NewCommandSourceHandler;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@CommandType(entity = "JOURNALENTRY", action = "CREATE")
-public class CreateJournalEntryCommandHandler implements NewCommandSourceHandler {
+@CommandType(entity = "SAVINGSACCOUNT", action = "MULTIPLEPOSTINGS")
+public class MultiplePostingsSavingsAccountsCommandHandler implements NewCommandSourceHandler {
 
-    private final JournalEntryWritePlatformService writePlatformService;
+    private final SavingsAccountWritePlatformService writePlatformService;
 
     @Autowired
-    public CreateJournalEntryCommandHandler(final JournalEntryWritePlatformService writePlatformService) {
+    public MultiplePostingsSavingsAccountsCommandHandler(final SavingsAccountWritePlatformService writePlatformService) {
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-
-        return this.writePlatformService.createJournalEntry(command, null, null);
+        return this.writePlatformService.makeMultiplePostings(command);
     }
 }

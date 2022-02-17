@@ -74,7 +74,6 @@ public class JournalEntryCommand {
         this.receiptNumber = receiptNumber;
         this.bankNumber = bankNumber;
         this.routingCode = routingCode;
-
     }
 
     public void validateForCreate() {
@@ -135,8 +134,6 @@ public class JournalEntryCommand {
      */
     private void validateSingleDebitOrCredit(final DataValidatorBuilder baseDataValidator, final String paramSuffix, final int arrayPos,
             final SingleDebitOrCreditEntryCommand credit) {
-        baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].glAccountId").value(credit.getGlAccountId()).notNull()
-                .integerGreaterThanZero();
         baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].amount").value(credit.getAmount()).notNull()
                 .zeroOrPositiveAmount();
     }

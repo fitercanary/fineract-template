@@ -1295,6 +1295,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder savingsAccountMultiplePostings() {
+        this.actionName = "MULTIPLEPOSTINGS";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = null;
+        this.href = "/savingsaccounts/transactions" + "?command=makeMultiplePostings";
+        return this;
+    }
+
     public CommandWrapperBuilder savingsAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";
         this.entityName = "SAVINGSACCOUNT";

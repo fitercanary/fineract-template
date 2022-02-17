@@ -231,6 +231,14 @@ public class SavingsAccountData {
         return clientId;
     }
 
+    public Long getProductId() {
+        return productId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
     public String getSavingsProductName() {
         return savingsProductName;
     }

@@ -169,6 +169,8 @@ public class    SavingsApiConstants {
     public static final String debitsParamName = "debits";
     public static final String savingsCreditsParamName = "savingsCredits";
     public static final String savingsDebitsParamName = "savingsDebits";
+    public static final String referenceNumberParamName = "referenceNumber";
+    public static final String commentsParamName = "comments";
 
     // charges parameters
     public static final String chargeIdParamName = "chargeId";

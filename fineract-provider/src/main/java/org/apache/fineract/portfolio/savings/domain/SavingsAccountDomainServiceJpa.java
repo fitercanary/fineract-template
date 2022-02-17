@@ -170,7 +170,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         if(postingDate!=null && !transactionDate.equals(postingDate))
             account.setPostingDate(postingDate.toDate());
 
-        // postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
+        if (transactionBooleanValues.isRegularTransaction()) {
+            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
+        }
+
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,
                 constructEntityMap(withdrawal));
         return withdrawal;

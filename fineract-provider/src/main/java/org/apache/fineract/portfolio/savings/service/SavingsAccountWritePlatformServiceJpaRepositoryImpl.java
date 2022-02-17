@@ -21,6 +21,8 @@ package org.apache.fineract.portfolio.savings.service;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.glaccount.domain.GLAccountRepositoryWrapper;
+import org.apache.fineract.accounting.journalentry.data.JournalEntryData;
+import org.apache.fineract.accounting.journalentry.service.JournalEntryReadPlatformService;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
@@ -159,6 +161,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
     final GLAccountRepositoryWrapper glAccountRepositoryWrapper;
+    private final JournalEntryReadPlatformService journalEntryReadPlatformService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -183,7 +186,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final BusinessEventNotifierService businessEventNotifierService,
             final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final CodeValueRepositoryWrapper codeValueRepositoryWrapper, final GLAccountRepositoryWrapper glAccountRepositoryWrapper) {
+            final CodeValueRepositoryWrapper codeValueRepositoryWrapper, final GLAccountRepositoryWrapper glAccountRepositoryWrapper,
+            final JournalEntryReadPlatformService journalEntryReadPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -213,6 +217,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
         this.glAccountRepositoryWrapper = glAccountRepositoryWrapper;
+        this.journalEntryReadPlatformService = journalEntryReadPlatformService;
     }
 
     @Transactional
@@ -613,6 +618,20 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
+    }
+
+    @Transactional
+    @Override
+    public CommandProcessingResult revertMultipleTransactions(final JsonCommand command) {
+        final String transactionId = command.stringValueOfParameterNamed("transactionId");
+        List<JournalEntryData> jlEntries = this.journalEntryReadPlatformService.retrieveJournalEntriesByTransactionId(transactionId).getPageItems();
+        System.out.println(jlEntries.size());
+        for (JournalEntryData entry : jlEntries) {
+            if (entry.getSavingsAccountId() != null && entry.getSavingsAccountId() > 0) {
+                undoTransaction(entry.getSavingsAccountId(), entry.getSavingsTransactionId(), false);
+            }
+        }
+        return this.journalEntryWritePlatformService.revertJournalEntry(command);
     }
 
     @Override

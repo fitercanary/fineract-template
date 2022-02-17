@@ -30,25 +30,18 @@ public class SingleDebitOrCreditEntryCommand {
     private final BigDecimal amount;
     private final String comments;
     private Long savingsTransactionId;
+    private final Boolean isSavings;
 
     private final Set<String> parametersPassedInRequest;
 
     public SingleDebitOrCreditEntryCommand(final Set<String> parametersPassedInRequest, final Long glAccountId, final BigDecimal amount,
-            final String comments) {
+            final String comments, final Boolean isSavings) {
         this.parametersPassedInRequest = parametersPassedInRequest;
         this.glAccountId = glAccountId;
         this.amount = amount;
         this.comments = comments;
+        this.isSavings = isSavings;
         this.savingsTransactionId = null;
-    }
-
-    public SingleDebitOrCreditEntryCommand(final Set<String> parametersPassedInRequest, final Long glAccountId, final BigDecimal amount,
-            final String comments, final Long savingsTransactionId) {
-        this.parametersPassedInRequest = parametersPassedInRequest;
-        this.glAccountId = glAccountId;
-        this.amount = amount;
-        this.comments = comments;
-        this.savingsTransactionId = savingsTransactionId;
     }
 
     public boolean isGlAccountIdChanged() {
@@ -77,6 +70,10 @@ public class SingleDebitOrCreditEntryCommand {
 
     public Long getSavingsTransactionId() {
         return this.savingsTransactionId;
+    }
+
+    public Boolean isSavings() {
+        return this.isSavings;
     }
 
     public Set<String> getParametersPassedInRequest() {

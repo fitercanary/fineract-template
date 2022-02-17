@@ -35,5 +35,7 @@ public interface JournalEntryReadPlatformService {
 
     OfficeOpeningBalancesData retrieveOfficeOpeningBalances(Long officeId, String currencyCode);
 
-    Page<JournalEntryData> retrieveJournalEntriesByEntityId(String transactionId, Long entityId, Integer entityType) ;
+    Page<JournalEntryData> retrieveJournalEntriesByEntityId(String transactionId, Long entityId, Integer entityType);
+
+    Page<JournalEntryData> retrieveJournalEntriesByTransactionId(String transactionId);
 }

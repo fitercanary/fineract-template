@@ -100,15 +100,20 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
             }
             
             // cbn
+            CodeValue cbnCategory = null;
+            CodeValue cbnSubCategory = null;
             
             final Long cbnCategoryId = command.longValueOfParameterNamed(GLAccountJsonInputParams.CBN_CATEGORY_ID.getValue());
-            CodeValue cbnCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+            if (cbnCategoryId != null) {
+                cbnCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
                     AccountingConstants.CBN_CATEGORY_OPTION_CODE_NAME, cbnCategoryId);
+            }
             
             final Long cbnSubCategoryId = command.longValueOfParameterNamed(GLAccountJsonInputParams.CBN_SUB_CATEGORY_ID.getValue());
-            CodeValue cbnSubCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+            if (cbnSubCategory != null) {
+                cbnSubCategory = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
                     AccountingConstants.CBN_SUB_CATEGORY_OPTION_CODE_NAME, cbnSubCategoryId);
-            
+            }
 
             final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glAccountTagType, cbnCategory, cbnSubCategory);
 

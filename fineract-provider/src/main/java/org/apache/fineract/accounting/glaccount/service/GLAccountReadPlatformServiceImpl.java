@@ -114,12 +114,20 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             final String bankName = rs.getString("bankName");
             final String bankCode = rs.getString("bankCode");
             
-            final Long cbnCategoryId = rs.wasNull() ? null : rs.getLong("cbnCategoryId");
+            Long cbnCategoryId = null;
+            if (rs.getLong("cbnCategoryId") > 0) {
+                cbnCategoryId = rs.getLong("cbnCategoryId");
+            }
+
             final String cbnCategoryValue = rs.getString("cbnCategoryValue");
             
-            final CodeValueData cbnCategory = CodeValueData.instance(codeId, cbnCategoryValue);
+            final CodeValueData cbnCategory = CodeValueData.instance(cbnCategoryId, cbnCategoryValue);
             
-            final Long cbnSubCategoryId = rs.wasNull() ? null : rs.getLong("cbnSubCategoryId");
+            Long cbnSubCategoryId = null;
+            if (rs.getLong("cbnSubCategoryId") > 0) {
+                cbnSubCategoryId = rs.getLong("cbnSubCategoryId");
+            }
+
             final String cbnSubCategoryValue = rs.getString("cbnSubCategoryValue");
             
             final CodeValueData cbnSubCategory = CodeValueData.instance(cbnSubCategoryId, cbnSubCategoryValue);

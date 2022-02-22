@@ -38,6 +38,8 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult deposit(Long savingsId, JsonCommand command);
 
+    CommandProcessingResult makeMultiplePostings(JsonCommand command);
+
     void saveTransactionRequest(JsonCommand command, SavingsAccountTransaction transaction);
 
     CommandProcessingResult withdrawal(Long savingsId, JsonCommand command);
@@ -45,6 +47,8 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult applyAnnualFee(final Long savingsAccountChargeId, final Long accountId);
 
     CommandProcessingResult calculateInterest(Long savingsId);
+
+    CommandProcessingResult revertMultipleTransactions(final JsonCommand command);
 
     CommandProcessingResult undoTransaction(Long savingsId, Long transactionId, boolean allowAccountTransferModification);
 

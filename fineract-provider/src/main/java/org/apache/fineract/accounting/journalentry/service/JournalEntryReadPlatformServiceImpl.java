@@ -129,7 +129,9 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" pd.payment_type_id as paymentTypeId,").append(" pd.bank_number as bankNumber, ")
                         .append(" pd.routing_code as routingCode, ").append(" note.id as noteId, ")
                         .append(" note.note as transactionNote, ").append(" lt.transaction_type_enum as loanTransactionType, ")
-                        .append(" st.transaction_type_enum as savingsTransactionType ");
+                        .append(" st.transaction_type_enum as savingsTransactionType, ")
+                        .append(" st.id as savingsTransactionId, ")
+                        .append(" st.savings_account_id as savingsAccountId ");
             }
             sb.append(" from acc_gl_journal_entry as journalEntry ")
                     .append(" left join acc_gl_account as glAccount on glAccount.id = journalEntry.account_id")
@@ -139,7 +141,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             if (associationParametersData.isTransactionDetailsRequired()) {
                 sb.append(" left join m_loan_transaction as lt on journalEntry.loan_transaction_id = lt.id ")
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
-                        .append(" left join m_payment_detail as pd on lt.payment_detail_id = pd.id or st.payment_detail_id = pd.id or journalEntry.payment_details_id = pd.id")
+                        .append(" left join m_payment_detail as pd on lt.payment_detail_id = pd.id or journalEntry.payment_details_id = pd.id")
                         .append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ")
                         .append(" left join m_note as note on lt.id = note.loan_transaction_id or st.id = note.savings_account_transaction_id ");
             }
@@ -164,6 +166,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             final int entryTypeId = JdbcSupport.getInteger(rs, "entryType");
             final EnumOptionData entryType = AccountingEnumerations.journalEntryType(entryTypeId);
             final String transactionId = rs.getString("transactionId");
+            Long savingsTransactionId = null;
+            Long savingsAccountId = null;
             final Integer entityTypeId = JdbcSupport.getInteger(rs, "entityType");
             EnumOptionData entityType = null;
             if (entityTypeId != null) {
@@ -198,7 +202,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             }
             TransactionDetailData transactionDetailData = null;
 
-            if (associationParametersData.isTransactionDetailsRequired()) {
+            if (associationParametersData.isTransactionDetailsRequired()) {                
                 PaymentDetailData paymentDetailData = null;
                 final Long paymentTypeId = JdbcSupport.getLong(rs, "paymentTypeId");
                 if (paymentTypeId != null) {
@@ -219,11 +223,16 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     noteData = new NoteData(noteId, null, null, null, null, null, null, null, note, null, null, null, null, null, null);
                 }
                 Long transaction = null;
-                if (entityType != null) {
+                if (entityType != null && entityId != null) {
                     transaction = Long.parseLong(transactionId.substring(1).trim());
                 }
 
                 TransactionTypeEnumData transactionTypeEnumData = null;
+
+                System.out.println("----------checking is savings acc-----");
+                System.out.println(entityTypeId);
+                System.out.println(PortfolioAccountType.fromInt(entityTypeId).isSavingsAccount());
+                System.out.println("----------checking is savings acc end-----");
 
                 if (PortfolioAccountType.fromInt(entityTypeId).isLoanAccount()) {
                     final LoanTransactionEnumData loanTransactionType = LoanEnumerations.transactionType(JdbcSupport.getInteger(rs,
@@ -231,6 +240,9 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     transactionTypeEnumData = new TransactionTypeEnumData(loanTransactionType.id(), loanTransactionType.getCode(),
                             loanTransactionType.getValue());
                 } else if (PortfolioAccountType.fromInt(entityTypeId).isSavingsAccount()) {
+                    savingsTransactionId = rs.getLong("savingsTransactionId");
+                    savingsAccountId = rs.getLong("savingsAccountId");
+
                     final SavingsAccountTransactionEnumData savingsTransactionType = SavingsEnumerations.transactionType(JdbcSupport
                             .getInteger(rs, "savingsTransactionType"));
                     transactionTypeEnumData = new TransactionTypeEnumData(savingsTransactionType.getId(), savingsTransactionType.getCode(),
@@ -239,10 +251,20 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
 
                 transactionDetailData = new TransactionDetailData(transaction, paymentDetailData, noteData, transactionTypeEnumData);
             }
-            return new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
+            System.out.println("----------checking retrieved savings-----");
+            System.out.println(savingsTransactionId);
+            System.out.println(savingsAccountId);
+            System.out.println(associationParametersData.isTransactionDetailsRequired());
+            System.out.println("----------end checking retrieved savings-----");
+
+            System.out.println("----------this is final entity type-----");
+                System.out.println(entityTypeId);
+                System.out.println(PortfolioAccountType.fromInt(entityTypeId).isSavingsAccount());
+                System.out.println("----------this is final entity type end-----");
+                return new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
                     entryType, amount, transactionId, manualEntry, entityType, entityId, createdByUserId, createdDate, createdByUserName,
                     comments, reversed, referenceNumber, officeRunningBalance, organizationRunningBalance, runningBalanceComputed,
-                    transactionDetailData, currency);
+                    transactionDetailData, currency, savingsTransactionId, savingsAccountId);
         }
     }
 
@@ -535,6 +557,21 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sql, data, rm);
         } catch (final EmptyResultDataAccessException e) {
             throw new JournalEntriesNotFoundException(entityId);
+        }
+    }
+
+    @Override
+    public Page<JournalEntryData> retrieveJournalEntriesByTransactionId(String transactionId) {
+        JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(true,
+                true);
+        try {
+            final GLJournalEntryMapper rm = new GLJournalEntryMapper(associationParametersData);
+            final String sql = "select " + rm.schema() + " where journalEntry.transaction_id = ?";
+            final String sqlCountRows = "SELECT FOUND_ROWS()";
+            Object[] data = {transactionId};
+            return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sql, data, rm);
+        } catch (final EmptyResultDataAccessException e) {
+            throw new JournalEntriesNotFoundException(transactionId);
         }
     }
 }

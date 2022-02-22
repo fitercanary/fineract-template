@@ -165,6 +165,10 @@ public class JournalEntriesApiResource {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().defineOpeningBalanceForJournalEntry()
                     .withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "makeMultiplePostings")) {
+            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonRequestBody);
+            final CommandWrapper commandRequest = builder.savingsAccountMultiplePostings().build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().createJournalEntry().withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);

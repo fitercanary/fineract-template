@@ -21,6 +21,8 @@ package org.apache.fineract.portfolio.savings.service;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.glaccount.domain.GLAccountRepositoryWrapper;
+import org.apache.fineract.accounting.journalentry.data.JournalEntryData;
+import org.apache.fineract.accounting.journalentry.service.JournalEntryReadPlatformService;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
@@ -114,6 +116,9 @@ import java.math.MathContext;
 import java.time.ZoneId;
 import java.util.*;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
 import org.joda.time.MonthDay;
 
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
@@ -156,6 +161,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
     final GLAccountRepositoryWrapper glAccountRepositoryWrapper;
+    private final JournalEntryReadPlatformService journalEntryReadPlatformService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -180,7 +186,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final BusinessEventNotifierService businessEventNotifierService,
             final SavingsTransactionRequestRepository savingsTransactionRequestRepository,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final CodeValueRepositoryWrapper codeValueRepositoryWrapper, final GLAccountRepositoryWrapper glAccountRepositoryWrapper) {
+            final CodeValueRepositoryWrapper codeValueRepositoryWrapper, final GLAccountRepositoryWrapper glAccountRepositoryWrapper,
+            final JournalEntryReadPlatformService journalEntryReadPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -210,6 +217,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
         this.glAccountRepositoryWrapper = glAccountRepositoryWrapper;
+        this.journalEntryReadPlatformService = journalEntryReadPlatformService;
     }
 
     @Transactional
@@ -282,6 +290,44 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
     @Transactional
     @Override
+    public CommandProcessingResult makeMultiplePostings(final JsonCommand command) {
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final ArrayList<Long> savingsCreditTransactionId = new ArrayList<>();
+        final ArrayList<Long> savingsDebitTransactionId = new ArrayList<>();
+
+        final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
+        if (savingsCredits.size() > 0) {
+            // make deposit for each savings account
+            for (int i = 0; i < savingsCredits.size(); i++) {
+                final JsonElement savingsAccountId = savingsCredits.get(i).getAsJsonObject()
+                    .get("savingsAccountId");
+                final JsonElement transactionAmount = savingsCredits.get(i).getAsJsonObject()
+                    .get("amount");
+                if (savingsAccountId != null) {
+                    CommandProcessingResult deposit = deposit(savingsAccountId.getAsLong(), command);
+                    savingsCreditTransactionId.add(deposit.resourceId());
+                }
+            }
+        }
+        final JsonArray savingsDebits = command.arrayOfParameterNamed("savingsDebits");
+        if (savingsDebits.size() > 0) {
+            // make withdrawal for each savings account
+            for (int i = 0; i < savingsDebits.size(); i++) {
+                final JsonElement savingsAccountId = savingsDebits.get(i).getAsJsonObject()
+                    .get("savingsAccountId");
+                final JsonElement transactionAmount = savingsDebits.get(i).getAsJsonObject()
+                    .get("amount");
+                if (savingsAccountId != null) {
+                    CommandProcessingResult withdrawal = withdrawal(savingsAccountId.getAsLong(), command);
+                    savingsDebitTransactionId.add(withdrawal.resourceId());                
+                }
+            }
+        }
+        return this.journalEntryWritePlatformService.createJournalEntry(command, savingsCreditTransactionId, savingsDebitTransactionId);
+    }
+
+    @Transactional
+    @Override
     public CommandProcessingResult deposit(final Long savingsId, final JsonCommand command) {
 
         this.context.authenticatedUser();
@@ -295,10 +341,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
-        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+        BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String noteText = command.stringValueOfParameterNamed("note");
         final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
-        
+        final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
         
         GLAccount glAccount = null;
         if (glAccountId != null) {
@@ -308,6 +354,18 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
+
+        if (command.hasParameter("isManualTransaction")) {
+            isRegularTransaction = !command.booleanPrimitiveValueOfParameterNamed("isManualTransaction");
+        }
+        
+        if (savingsCredits != null && savingsCredits.size() > 0) {
+            for (int i = 0; i < savingsCredits.size(); i++) {
+                if (savingsCredits.get(i).getAsJsonObject().get("savingsAccountId").getAsLong() == savingsId) {
+                    transactionAmount = savingsCredits.get(i).getAsJsonObject().get("amount").getAsBigDecimal();
+                }
+            }
+        }
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate, postingDate,
                 transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction, glAccount, noteText);
 
@@ -375,10 +433,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
         final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
-        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+        BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String noteText = command.stringValueOfParameterNamed("note");
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+        final JsonArray savingsDebits = command.arrayOfParameterNamed("savingsDebits");
 
         final Map<String, Object> changes = new LinkedHashMap<>();
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
@@ -389,14 +448,25 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         if (glAccountId != null) {
             glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
         }
+        if (savingsDebits != null && savingsDebits.size() > 0) {
+            for (int i = 0; i < savingsDebits.size(); i++) {
+                if (savingsDebits.get(i).getAsJsonObject().get("savingsAccountId").getAsLong() == savingsId) {
+                    transactionAmount = savingsDebits.get(i).getAsJsonObject().get("amount").getAsBigDecimal();
+                }
+            }
+        }
 
         checkClientOrGroupActive(account);
         final boolean isAccountTransfer = false;
-        final boolean isRegularTransaction = true;
         final boolean isApplyWithdrawFee = true;
         final boolean isInterestTransfer = false;
         final boolean isWithdrawBalance = false;
         final boolean isApplyOverdraftFee = true;
+        boolean isRegularTransaction = true;
+
+        if (command.hasParameter("isManualTransaction")) {
+            isRegularTransaction = !command.booleanPrimitiveValueOfParameterNamed("isManualTransaction");
+        }
         final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                 isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance, isApplyOverdraftFee);
 
@@ -548,6 +618,20 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
+    }
+
+    @Transactional
+    @Override
+    public CommandProcessingResult revertMultipleTransactions(final JsonCommand command) {
+        final String transactionId = command.stringValueOfParameterNamed("transactionId");
+        List<JournalEntryData> jlEntries = this.journalEntryReadPlatformService.retrieveJournalEntriesByTransactionId(transactionId).getPageItems();
+        System.out.println(jlEntries.size());
+        for (JournalEntryData entry : jlEntries) {
+            if (entry.getSavingsAccountId() != null && entry.getSavingsAccountId() > 0) {
+                undoTransaction(entry.getSavingsAccountId(), entry.getSavingsTransactionId(), false);
+            }
+        }
+        return this.journalEntryWritePlatformService.revertJournalEntry(command);
     }
 
     @Override

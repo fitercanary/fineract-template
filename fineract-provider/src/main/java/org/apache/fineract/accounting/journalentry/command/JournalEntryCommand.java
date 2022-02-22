@@ -74,7 +74,6 @@ public class JournalEntryCommand {
         this.receiptNumber = receiptNumber;
         this.bankNumber = bankNumber;
         this.routingCode = routingCode;
-
     }
 
     public void validateForCreate() {
@@ -97,31 +96,6 @@ public class JournalEntryCommand {
 
         baseDataValidator.reset().parameter("paymentTypeId").value(this.paymentTypeId).ignoreIfNull().longGreaterThanZero();
 
-        // validation for credit array elements
-        if (this.credits != null) {
-            if (this.credits.length == 0) {
-                validateSingleDebitOrCredit(baseDataValidator, "credits", 0, new SingleDebitOrCreditEntryCommand(null, null, null, null));
-            } else {
-                int i = 0;
-                for (final SingleDebitOrCreditEntryCommand credit : this.credits) {
-                    validateSingleDebitOrCredit(baseDataValidator, "credits", i, credit);
-                    i++;
-                }
-            }
-        }
-
-        // validation for debit array elements
-        if (this.debits != null) {
-            if (this.debits.length == 0) {
-                validateSingleDebitOrCredit(baseDataValidator, "debits", 0, new SingleDebitOrCreditEntryCommand(null, null, null, null));
-            } else {
-                int i = 0;
-                for (final SingleDebitOrCreditEntryCommand debit : this.debits) {
-                    validateSingleDebitOrCredit(baseDataValidator, "debits", i, debit);
-                    i++;
-                }
-            }
-        }
         baseDataValidator.reset().parameter("amount").value(this.amount).ignoreIfNull().zeroOrPositiveAmount();
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
@@ -133,13 +107,6 @@ public class JournalEntryCommand {
      * @param i
      * @param credit
      */
-    private void validateSingleDebitOrCredit(final DataValidatorBuilder baseDataValidator, final String paramSuffix, final int arrayPos,
-            final SingleDebitOrCreditEntryCommand credit) {
-        baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].glAccountId").value(credit.getGlAccountId()).notNull()
-                .integerGreaterThanZero();
-        baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].amount").value(credit.getAmount()).notNull()
-                .zeroOrPositiveAmount();
-    }
 
     public Long getOfficeId() {
         return this.officeId;

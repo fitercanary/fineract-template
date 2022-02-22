@@ -66,6 +66,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transact
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.postingDateName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.isManualTransactionParamName;
 
 @Component
 public class SavingsAccountTransactionDataValidator {
@@ -114,7 +115,10 @@ public class SavingsAccountTransactionDataValidator {
             baseDataValidator.reset().parameter(transactionDateParamName).value(transactionDate).notNull();
 
         final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(transactionAmountParamName, element);
-        baseDataValidator.reset().parameter(transactionAmountParamName).value(transactionAmount).notNull().positiveAmount();
+        baseDataValidator.reset().parameter(transactionAmountParamName).value(transactionAmount);
+
+        final Boolean isManualTransaction = this.fromApiJsonHelper.extractBooleanNamed(isManualTransactionParamName, element);
+            baseDataValidator.reset().parameter(isManualTransactionParamName).value(isManualTransaction);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

@@ -58,6 +58,8 @@ public class JournalEntryData {
     private final EnumOptionData entityType;
     @SuppressWarnings("unused")
     private final Long entityId;
+    private final Long savingsTransactionId;
+    private final Long savingsAccountId;
     @SuppressWarnings("unused")
     private final Long createdByUserId;
     @SuppressWarnings("unused")
@@ -135,6 +137,8 @@ public class JournalEntryData {
         this.manualEntry = null;
         this.entityType = null;
         this.entityId = null;
+        this.savingsTransactionId = null;
+        this.savingsAccountId = null;
         this.createdByUserId = null;
         this.createdDate = null;
         this.createdByUserName = null;
@@ -158,8 +162,6 @@ public class JournalEntryData {
 
         this.debits.add(debit);
     }
-
-
 
     public void addCredits(CreditDebit credit) {
         this.credits.add(credit);
@@ -186,6 +188,45 @@ public class JournalEntryData {
         this.manualEntry = manualEntry;
         this.entityType = entityType;
         this.entityId = entityId;
+        this.savingsTransactionId = null;
+        this.savingsAccountId = null;
+        this.createdByUserId = createdByUserId;
+        this.createdDate = createdDate;
+        this.createdByUserName = createdByUserName;
+        this.comments = comments;
+        this.reversed = reversed;
+        this.referenceNumber = referenceNumber;
+        this.officeRunningBalance = officeRunningBalance;
+        this.organizationRunningBalance = organizationRunningBalance;
+        this.runningBalanceComputed = runningBalanceComputed;
+        this.transactionDetails = transactionDetailData;
+        this.currency = currency;
+    }
+
+    public JournalEntryData(final Long id, final Long officeId, final String officeName, final String glAccountName,
+            final Long glAccountId, final String glAccountCode, final EnumOptionData glAccountClassification,
+            final LocalDate transactionDate, final EnumOptionData entryType, final BigDecimal amount, final String transactionId,
+            final Boolean manualEntry, final EnumOptionData entityType, final Long entityId, final Long createdByUserId,
+            final LocalDate createdDate, final String createdByUserName, final String comments, final Boolean reversed,
+            final String referenceNumber, final BigDecimal officeRunningBalance, final BigDecimal organizationRunningBalance,
+            final Boolean runningBalanceComputed, final TransactionDetailData transactionDetailData, final CurrencyData currency,
+            final Long savingsTransactionId, final Long savingsAccountId) {
+        this.id = id;
+        this.officeId = officeId;
+        this.officeName = officeName;
+        this.glAccountName = glAccountName;
+        this.glAccountId = glAccountId;
+        this.glAccountCode = glAccountCode;
+        this.glAccountType = glAccountClassification;
+        this.transactionDate = transactionDate;
+        this.entryType = entryType;
+        this.amount = amount;
+        this.transactionId = transactionId;
+        this.manualEntry = manualEntry;
+        this.entityType = entityType;
+        this.entityId = entityId;
+        this.savingsTransactionId = savingsTransactionId;
+        this.savingsAccountId = savingsAccountId;
         this.createdByUserId = createdByUserId;
         this.createdDate = createdDate;
         this.createdByUserName = createdByUserName;
@@ -215,6 +256,8 @@ public class JournalEntryData {
         final Boolean manualEntry = null;
         final EnumOptionData entityType = null;
         final Long entityId = null;
+        final Long savingsTransactionId = null;
+        final Long savingsAccountId = null;
         final Long createdByUserId = null;
         final LocalDate createdDate = null;
         final String createdByUserName = null;
@@ -258,5 +301,13 @@ public class JournalEntryData {
 
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public Long getSavingsTransactionId() {
+        return this.savingsTransactionId;
+    }
+
+    public Long getSavingsAccountId() {
+        return this.savingsAccountId;
     }
 }

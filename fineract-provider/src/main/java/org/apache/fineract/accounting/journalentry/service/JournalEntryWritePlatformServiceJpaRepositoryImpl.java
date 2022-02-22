@@ -77,6 +77,8 @@ import org.apache.fineract.organisation.office.domain.OrganisationCurrencyReposi
 import org.apache.fineract.portfolio.client.domain.ClientTransaction;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -86,6 +88,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import com.google.gson.JsonArray;
 
 @Service
 public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements JournalEntryWritePlatformService {
@@ -108,6 +112,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     private final PaymentDetailWritePlatformService paymentDetailWritePlatformService;
     private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
     private final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions;
+    private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
 
     @Autowired
     public JournalEntryWritePlatformServiceJpaRepositoryImpl(final GLClosureRepository glClosureRepository,
@@ -121,7 +126,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final OrganisationCurrencyRepositoryWrapper organisationCurrencyRepository, final PlatformSecurityContext context,
             final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
             final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper,
-            final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions) {
+            final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions,
+            final SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
         this.glClosureRepository = glClosureRepository;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
         this.glJournalEntryRepository = glJournalEntryRepository;
@@ -138,11 +144,12 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         this.paymentDetailWritePlatformService = paymentDetailWritePlatformService;
         this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
         this.accountingProcessorForClientTransactions = accountingProcessorForClientTransactions;
+        this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult createJournalEntry(final JsonCommand command) {
+    public CommandProcessingResult createJournalEntry(final JsonCommand command, final ArrayList<Long> savingsCreditTransactionId, final ArrayList<Long> savingsDebitTransactionId) {
         try {
             final JournalEntryCommand journalEntryCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
             journalEntryCommand.validateForCreate();
@@ -163,6 +170,17 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final Date transactionDate = command.DateValueOfParameterNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue());
             final String transactionId = generateTransactionId(officeId);
             final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
+
+            final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
+            if (savingsCredits.size() > 0) {
+                addSavingsTransactionId(journalEntryCommand.getCredits(), savingsCreditTransactionId);
+            }
+
+
+            final JsonArray savingsDebits = command.arrayOfParameterNamed("savingsDebits");
+            if (savingsDebits.size() > 0) {
+                addSavingsTransactionId(journalEntryCommand.getDebits(), savingsDebitTransactionId);
+            }
 
             if (accountRuleId != null) {
 
@@ -221,6 +239,18 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         } catch (final DataIntegrityViolationException dve) {
             handleJournalEntryDataIntegrityIssues(dve);
             return null;
+        }
+    }
+
+    private void addSavingsTransactionId(SingleDebitOrCreditEntryCommand[] debitOrCredits,
+            final ArrayList<Long> savingsTransactionId) {
+        Integer elementIndx = 0;
+        for (int i = 0; i < debitOrCredits.length; i++) {
+            System.out.println(debitOrCredits[i].isSavings());
+            if (debitOrCredits[i].isSavings()) {
+                debitOrCredits[i].updateSavingsTransactionId(savingsTransactionId.get(elementIndx));
+                elementIndx = elementIndx + 1;
+            }
         }
     }
 
@@ -565,7 +595,6 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                     .determineProcessor(savingsDTO);
             accountingProcessorForSavings.createJournalEntriesForSavings(savingsDTO, glAccount, noteText);
         }
-
     }
 
     @Transactional
@@ -668,11 +697,20 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             /** Validate current code is appropriate **/
             this.organisationCurrencyRepository.findOneWithNotFoundDetection(currencyCode);
 
+            Integer entityType = null;
+            Long entityId = null;
+            SavingsAccountTransaction savingsAccountTransaction = null;
             final ClientTransaction clientTransaction = null;
             final Long shareTransactionId = null;
+
+            if(singleDebitOrCreditEntryCommand.getSavingsTransactionId() != null) {
+                entityType = PortfolioProductType.SAVING.getValue();
+                savingsAccountTransaction = this.savingsAccountTransactionRepository.findOne(singleDebitOrCreditEntryCommand.getSavingsTransactionId());
+                // entityId = savingsAccountTransaction.getSavingsAccount().getId();
+            }
             final JournalEntry glJournalEntry = JournalEntry.createNew(office, paymentDetail, glAccount, currencyCode, transactionId,
-                    manualEntry, transactionDate, type, singleDebitOrCreditEntryCommand.getAmount(), comments, null, null, referenceNumber,
-                    null, null, clientTransaction, shareTransactionId);
+                    manualEntry, transactionDate, type, singleDebitOrCreditEntryCommand.getAmount(), comments, entityType, entityId, referenceNumber,
+                    null, savingsAccountTransaction, clientTransaction, shareTransactionId);
             this.glJournalEntryRepository.saveAndFlush(glJournalEntry);
         }
     }

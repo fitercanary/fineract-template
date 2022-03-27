@@ -124,6 +124,7 @@ import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargeData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargePaidByData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanInstallmentChargeData;
+import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
 import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.ChangedTransactionDetail;
 import org.apache.fineract.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
@@ -844,6 +845,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
         final Boolean isPrepay = command.booleanObjectValueOfParameterNamed("isPrepay");
+        final Boolean isPartLiquidate = command.booleanObjectValueOfParameterNamed("isPartLiquidate");
         String paymentTypeId = command.stringValueOfParameterNamed("paymentTypeId");
 
         final Map<String, Object> changes = new LinkedHashMap<>();
@@ -875,6 +877,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         installment.setInterestCharged(installment.getInterestAccrued(loan.getCurrency()).getAmount());
                 }
             }
+        } else if (isPartLiquidate != null) {
+            if (isPartLiquidate) {
+                makeLoanScheduleModification(loanId, command);
+            }
         }
         this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, transactionDate, transactionAmount, paymentDetail,
                 noteText, txnExternalId, isRecoveryRepayment, isAccountTransfer, holidayDetailDto, isHolidayValidationDone);
@@ -887,7 +893,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
     @Override
     public CommandProcessingResult makeLoanScheduleModification(Long loanId, JsonCommand command) {
-        final Loan existingLoanApplication = retrieveLoanBy(loanId);
         final JsonElement parsedQuery = this.fromJsonHelper.parse(command.json());
         final JsonQuery query = JsonQuery.from(command.json(), parsedQuery, this.fromJsonHelper);
         final Map<String, Object> changes = new LinkedHashMap<>();
@@ -898,7 +903,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         changes.put("locale", command.locale());
         changes.put("dateFormat", command.dateFormat());
 
-        final LoanScheduleModel loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query, true, loanId);
+        this.calculationPlatformService.calculateLoanSchedule(query, false, loanId);
 
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
                 .withLoanId(loanId) //

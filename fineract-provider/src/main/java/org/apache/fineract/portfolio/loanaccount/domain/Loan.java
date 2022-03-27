@@ -6595,6 +6595,21 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return retData.size() > 0 ? retData : null;
     }
 
+    public Integer getTotalPaidInstallments() {
+        List<LoanRepaymentScheduleInstallment> installments = this.getRepaymentScheduleInstallments();
+        Integer number = 0;
+        for (LoanRepaymentScheduleInstallment installment : installments) {
+            if (installment.isObligationsMet()) {
+                number++;
+            }
+        }
+        return number;        
+    }
+
+    public void setRepaymentScheduleInstallments(final List<LoanRepaymentScheduleInstallment> scheduleInstallments) {
+        this.repaymentScheduleInstallments = scheduleInstallments;
+    }
+
     public void setIsTopup(final boolean isTopup) {
         this.isTopup = isTopup;
     }

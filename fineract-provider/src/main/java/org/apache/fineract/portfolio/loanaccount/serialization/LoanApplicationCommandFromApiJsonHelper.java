@@ -92,7 +92,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             LoanApiConstants.isTopup, LoanApiConstants.loanIdToClose, LoanApiConstants.datatables,
             LoanApiConstants.isEqualAmortizationParam, LoanApiConstants.principalPortionParameterName, 
             LoanApiConstants.interestPortionParameterName, LoanApiConstants.installmentDateParameterName,
-            LoanApiConstants.modifyInstallmentActionParameterName));
+            LoanApiConstants.modifyInstallmentActionParameterName, 
+            LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.transactionDateParamName, LoanApiConstants.isPartLiquidateParameterName));
             
     private final FromJsonHelper fromApiJsonHelper;
     private final LoanRepository loanRepository;

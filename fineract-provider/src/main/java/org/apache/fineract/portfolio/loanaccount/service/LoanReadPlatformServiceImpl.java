@@ -480,6 +480,33 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 	}
 
     @Override
+    public LoanTransactionData retrieveLoanPartLiquidationTemplate(final Long loanId, LocalDate onDate) {
+
+        this.context.authenticatedUser();
+
+        final Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanId, true);
+        loan.setHelpers(null, null, loanRepaymentScheduleTransactionProcessorFactory);
+
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+
+        final CurrencyData currencyData = applicationCurrency.toData();
+
+        final LocalDate earliestUnpaidInstallmentDate = DateUtils.getLocalDateOfTenant();
+        final LocalDate recalculateFrom = null;
+        final ScheduleGeneratorDTO scheduleGeneratorDTO = loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
+        final LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment = loan.fetchPrepaymentDetail(scheduleGeneratorDTO, onDate);
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.REPAYMENT);
+        final Collection<PaymentTypeData> paymentOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
+        final BigDecimal outstandingLoanBalance = loanRepaymentScheduleInstallment.getPrincipalOutstanding(currency).getAmount();
+
+        return new LoanTransactionData(null, null, null, transactionType, null, currencyData, earliestUnpaidInstallmentDate,
+                null, loanRepaymentScheduleInstallment.getPrincipalOutstanding(currency).getAmount(), 
+                loanRepaymentScheduleInstallment.getInterestOutstanding(currency).getAmount(), null, null, null, null, paymentOptions, null, 
+                null, null, outstandingLoanBalance, false);
+    }
+
+    @Override
     public LoanTransactionData retrieveWaiveInterestDetails(final Long loanId) {
 
         AppUser currentUser = this.context.authenticatedUser();

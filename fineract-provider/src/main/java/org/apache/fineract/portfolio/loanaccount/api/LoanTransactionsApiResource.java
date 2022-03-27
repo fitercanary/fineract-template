@@ -125,6 +125,14 @@ public class LoanTransactionsApiResource {
                 transactionDate = LocalDate.fromDateFields(transactionDateParam.getDate("transactionDate", dateFormat, locale));
             }
             transactionData = this.loanReadPlatformService.retrieveLoanPrePaymentTemplate(loanId, transactionDate);
+        } else if (is(commandParam, "partliquidateLoan")) {
+            LocalDate transactionDate = null;
+            if (transactionDateParam == null) {
+                transactionDate = DateUtils.getLocalDateOfTenant();
+            } else {
+                transactionDate = LocalDate.fromDateFields(transactionDateParam.getDate("transactionDate", dateFormat, locale));
+            }
+            transactionData = this.loanReadPlatformService.retrieveLoanPrePaymentTemplate(loanId, transactionDate);
         } else if (is(commandParam, "refundbycash")) {
             transactionData = this.loanReadPlatformService.retrieveRefundByCashTemplate(loanId);
         } else if (is(commandParam, "refundbytransfer")) {

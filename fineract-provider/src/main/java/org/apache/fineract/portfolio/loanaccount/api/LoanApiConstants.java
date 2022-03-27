@@ -53,6 +53,7 @@ public interface LoanApiConstants {
     public static final String accountNoParameterName = "accountNo";
     public static final String productIdParameterName = "productId";
     public static final String calendarIdParameterName = "calendarId";
+    public static final String isPartLiquidateParameterName = "isPartLiquidate";
     public static final String loanTypeParameterName = "loanType";
     public static final String groupIdParameterName = "groupId";
     public static final String clientIdParameterName = "clientId";

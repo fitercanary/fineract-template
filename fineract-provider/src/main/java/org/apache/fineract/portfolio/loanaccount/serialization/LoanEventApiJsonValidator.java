@@ -157,7 +157,10 @@ public final class LoanEventApiJsonValidator {
 
         final Set<String> transactionParameters = new HashSet<>(Arrays.asList("transactionDate", "transactionAmount", "externalId",
                 "note", "locale", "dateFormat", "paymentTypeId", "accountNumber", "checkNumber", "routingCode", "receiptNumber",
-                "bankNumber", "isPrepay"));
+                "bankNumber", "isPrepay", "isPartLiquidate", "expectedDisbursementDate", "modifyInstallmentAction", "numberOfRepayments", 
+                "principal", "principalPortion", "productId", "amortizationType", "interestCalculationPeriodType", "interestRatePerPeriod",
+                "loanTermFrequency", "loanTermFrequencyType", "repaymentFrequencyType", "repaymentEvery", "interestType", 
+                "syncDisbursementWithMeeting", "interestPortion"));
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, transactionParameters);

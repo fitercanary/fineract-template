@@ -79,4 +79,4 @@ jobs:
           ECR_REPOSITORY: fineract-rest-canary
           IMAGE_TAG: "${{ steps.extract_branch.outputs.branch }}-${{ steps.slug.outputs.sha8 }}"
         run: |
-          kubectl set image deploy/backend-fineract-rest fineract-rest=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          kubectl set image deploy/backend-fineract-rest fineract-rest=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -n application

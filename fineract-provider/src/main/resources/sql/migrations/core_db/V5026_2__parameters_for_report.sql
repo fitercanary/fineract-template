@@ -17,4 +17,4 @@
 -- under the License.
 --
 
-INSERT INTO `stretchy_report_parameter` (`report_id`, `parameter_id`, `report_parameter_name`) VALUES ('193', '1005', 'productId');
+INSERT IGNORE INTO `stretchy_report_parameter` (`report_id`, `parameter_id`, `report_parameter_name`) VALUES ('193', '1005', 'productId');

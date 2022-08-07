@@ -19,6 +19,7 @@
 
 -- drop tables in base-schema
 SET foreign_key_checks = 0;
+set session sql_mode='';
 
 -- drop accounting subsystem
 DROP TABLE IF EXISTS `acc_gl_account`;

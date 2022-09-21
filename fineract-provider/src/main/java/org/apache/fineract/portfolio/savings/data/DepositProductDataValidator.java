@@ -19,28 +19,7 @@
 package org.apache.fineract.portfolio.savings.data;
 
 import static org.apache.fineract.portfolio.interestratechart.InterestRateChartApiConstants.idParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_PRODUCT_REQUEST_DATA_PARAMETERS;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_PRODUCT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_PRODUCT_REQUEST_DATA_PARAMETERS;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.chartsParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositMaxAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositMinAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.isMandatoryDepositParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeApplicableParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosureChargeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.*;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.descriptionParamName;
@@ -122,6 +101,8 @@ public class DepositProductDataValidator {
         validatePreClosureDetailForCreate(element, baseDataValidator);
 
         validateDepositTermDetailForCreate(element, baseDataValidator);
+
+        validateMaturityTermDetailForCreate(element, baseDataValidator);
 
         validateChartsData(element, baseDataValidator);
 
@@ -407,6 +388,32 @@ public class DepositProductDataValidator {
             baseDataValidator.reset().parameter(inMultiplesOfDepositTermTypeIdParamName).value(inMultiplesOfDepositTermType)
                     .cantBeBlankWhenParameterProvidedIs(inMultiplesOfDepositTermParamName, inMultiplesOfDepositTerm)
                     .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
+        }
+    }
+
+    /**
+     * validate maturity notification details
+     * @param element
+     * @param baseDataValidator
+     */
+    public void validateMaturityTermDetailForCreate(JsonElement element, DataValidatorBuilder baseDataValidator) {
+
+        final Boolean notifyAssetMaturity = fromApiJsonHelper.extractBooleanNamed(notifyAssetMaturityParamName, element);
+        baseDataValidator.reset().parameter(notifyAssetMaturityParamName).value(notifyAssetMaturity).notNull().validateForBooleanValue();
+
+        final Boolean enableMaturitySmsAlerts = fromApiJsonHelper.extractBooleanNamed(enableMaturitySmsAlertsParamName, element);
+        baseDataValidator.reset().parameter(enableMaturitySmsAlertsParamName).value(enableMaturitySmsAlerts).notNull().validateForBooleanValue();
+
+        if (fromApiJsonHelper.parameterExists(notifyMaturityPeriodParamName, element)) {
+            final Integer notifyMaturityPeriod = fromApiJsonHelper.extractIntegerWithLocaleNamed(notifyMaturityPeriodParamName, element);
+            baseDataValidator.reset().parameter(notifyMaturityPeriodParamName).value(notifyMaturityPeriod).ignoreIfNull()
+                    .integerZeroOrGreater();
+        }
+
+        if (fromApiJsonHelper.parameterExists(notificationTermIdParamName, element)) {
+            final Integer notificationTermId = fromApiJsonHelper.extractIntegerSansLocaleNamed(notificationTermIdParamName,
+                    element);
+            baseDataValidator.reset().parameter(notificationTermIdParamName).value(notificationTermId).inMinMaxRange(0, 3);
         }
     }
 

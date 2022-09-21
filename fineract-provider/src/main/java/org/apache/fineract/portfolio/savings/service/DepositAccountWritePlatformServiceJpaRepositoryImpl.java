@@ -85,22 +85,7 @@ import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountDomainService;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountRecurringDetail;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountTermAndPreClosure;
-import org.apache.fineract.portfolio.savings.domain.DepositProductTermAndPreClosure;
-import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
-import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeRepositoryWrapper;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.domain.*;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
@@ -137,13 +122,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.changeTenureParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.closedOnDateParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.liquidationAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.*;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
@@ -179,6 +158,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService;
     private final SavingsAccountActionService savingsAccountActionService;
     private final FromJsonHelper fromJsonHelper;
+    private final FixedDepositAccountRepository fixedDepositAccountRepository;
 
     @Autowired
     public DepositAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -202,7 +182,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             final AccountAssociationsRepository accountAssociationsRepository,
             final DepositApplicationProcessWritePlatformService depositApplicationProcessWritePlatformService,
             final SavingsAccountActionService savingsAccountActionService,
-            final FromJsonHelper fromJsonHelper) {
+            final FromJsonHelper fromJsonHelper,
+            final FixedDepositAccountRepository fixedDepositAccountRepository) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -230,6 +211,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.depositApplicationProcessWritePlatformService = depositApplicationProcessWritePlatformService;
         this.savingsAccountActionService = savingsAccountActionService;
         this.fromJsonHelper = fromJsonHelper;
+        this.fixedDepositAccountRepository = fixedDepositAccountRepository;
     }
 
     @Transactional
@@ -2044,7 +2026,53 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         
         return withholdTransactions;
     }
-    
+
+    @Override
+    public CommandProcessingResult updateMaturityNotificationSettings(JsonCommand command) {
+        System.out.println("\n\n\n\n\n\n\n==================>account data\n\n"+ fromJsonHelper.toJson(command));
+        Long accountId = command.getSavingsId();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).
+                resource(DepositAccountType.FIXED_DEPOSIT.resourceName());
+        this.depositAccountTransactionDataValidator.validateNotificationMaturity(baseDataValidator, command);
+
+        FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(accountId,
+                DepositAccountType.FIXED_DEPOSIT);
+        DepositAccountTermAndPreClosure accountTermAndPreClosure = account.getAccountTermAndPreClosure();
+
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(5);
+
+        if (command.isChangeInIntegerParameterNamed(notifyMaturityPeriodParamName, accountTermAndPreClosure.getMaturityNotificationPeriod())) {
+            final Integer newValue = command.integerValueOfParameterNamed(notifyMaturityPeriodParamName);
+            actualChanges.put(notifyMaturityPeriodParamName, newValue);
+            accountTermAndPreClosure.setMaturityNotificationPeriod(newValue);
+        }
+        if (command.isChangeInBooleanParameterNamed(enableMaturitySmsAlertsParamName, accountTermAndPreClosure.getMaturitySmsNotification())) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(enableMaturitySmsAlertsParamName);
+            actualChanges.put(enableMaturitySmsAlertsParamName, newValue);
+            accountTermAndPreClosure.setMaturitySmsNotification(newValue);
+        }
+
+        if (command.isChangeInIntegerParameterNamed(notificationTermIdParamName, accountTermAndPreClosure.getMaturityNotificationFrequency())) {
+            final Integer newValue = command.integerValueOfParameterNamed(notificationTermIdParamName);
+            actualChanges.put(notificationTermIdParamName, SavingsEnumerations.depositTermFrequencyType(newValue));
+            accountTermAndPreClosure.setMaturityNotificationFrequency(newValue);
+        }
+        account.setAccountTermAndPreClosure(accountTermAndPreClosure);
+
+        this.fixedDepositAccountRepository.saveAndFlush(account);
+
+
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(accountId) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(accountId) //
+                .with(actualChanges) //
+                .build();
+    }
+
 
     private List<SavingsAccountCharge> calculatePreClosureCharges(SavingsAccount account, final DepositAccountOnClosureType closureType,
             Boolean applyWithdrawalFeeForTransfer) {

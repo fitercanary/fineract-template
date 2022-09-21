@@ -89,7 +89,7 @@ rat {
   xmlOutput = false
   htmlOutput = false
   plainOutput = true
-  verbose = false 
+  verbose = false
 //  inputDir = './..'
   reportDir = new File(buildDir,'reports/rat')
  excludes = [

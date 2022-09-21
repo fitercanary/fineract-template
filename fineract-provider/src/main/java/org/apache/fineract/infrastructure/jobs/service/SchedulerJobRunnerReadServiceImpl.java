@@ -88,6 +88,9 @@ public class SchedulerJobRunnerReadServiceImpl implements SchedulerJobRunnerRead
                 sqlBuilder.append(' ').append(searchParameters.getSortOrder());
                 this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getSortOrder());
             }
+        }else{
+            //in-case no order set, order by runtime
+            sqlBuilder.append(" order by runStartTime desc");
         }
 
         if (searchParameters.isLimited()) {

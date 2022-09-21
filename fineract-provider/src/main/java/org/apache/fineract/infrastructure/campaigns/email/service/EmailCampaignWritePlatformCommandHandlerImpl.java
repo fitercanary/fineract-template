@@ -23,6 +23,8 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.organisation.staff.domain.Staff;
+import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.joda.time.DateTimeZone;
@@ -698,9 +700,30 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     }
 
     /**
+     * creates and que up message it up for sending out the email alert
+     * @param depositAccount
+     */
+    @Override
+    public void notifyFixedDepositMaturity(DepositAccountData depositAccount) {
+
+        Map<String, Object> params = new HashMap<>();
+        String message = this.compileEmailTemplate("messageTemplate", "campaignName", params);
+
+        Client client = clientRepositoryWrapper.findOneWithNotFoundDetection(depositAccount.clientId());
+        String emailAddress = client.emailAddress();
+
+        if (emailAddress!=null && isValidEmail(emailAddress)){
+            EmailMessage emailMessage = EmailMessage.pendingEmail(
+                    null,client, client.getStaff(),null,
+                    "INVESTMENT MATURITY NOTIFICATION",message,client.emailAddress(),"EmailCampaign");
+            this.emailMessageRepository.save(emailMessage);
+        }
+    }
+
+    /**
      * This generates the the report and converts it to a file by passing the
      * parameters below
-     * 
+     *
      * @param emailCampaign
      * @param emailAttachmentFileFormat
      * @param reportParams
@@ -745,7 +768,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     /**
      * This matches the the actual values to the key in the report stretchy
      * parameters map
-     * 
+     *
      * @param stretchyParams
      * @param client
      * @return

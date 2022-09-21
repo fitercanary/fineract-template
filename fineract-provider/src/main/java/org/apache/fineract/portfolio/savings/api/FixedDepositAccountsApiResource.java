@@ -368,6 +368,10 @@ public class FixedDepositAccountsApiResource {
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, account,
                     DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+        }else if (is(commandParam, "updateMaturityNotification")) {
+            final CommandWrapper commandRequest = builder.updateMaturityNotificationSettings(accountId).withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            System.out.println("\n\n\n final result: \n\n\n"+ result.toString());
         }
 
         if (result == null) {

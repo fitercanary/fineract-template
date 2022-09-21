@@ -2196,6 +2196,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder updateMaturityNotificationSettings(final Long accountId) {
+        this.actionName = "UPDATE_MATURITY_NOTIFICATION";
+        this.entityName = "FIXEDDEPOSITACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/fixeddepositaccounts/" + accountId + "?command=updateMaturityNotification";
+        return this;
+    }
+
     public CommandWrapperBuilder createRecurringDepositAccount() {
         this.actionName = "CREATE";
         this.entityName = "RECURRINGDEPOSITACCOUNT";

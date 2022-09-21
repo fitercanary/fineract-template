@@ -550,6 +550,8 @@ public class RecurringDepositAccountData extends DepositAccountData {
         return recurringDepositAccountData;
     }
 
+    //TODO to confirm if Same implementation for fixed deposits maturity alerts applies here too
+
     private RecurringDepositAccountData(final Long id, final String accountNo, final String externalId, final Long groupId,
             final String groupName, final Long clientId, final String clientName, final Long productId, final String productName,
             final Long fieldofficerId, final String fieldofficerName, final SavingsAccountStatusEnumData status,

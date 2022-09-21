@@ -19,13 +19,7 @@
 
 package org.apache.fineract.portfolio.savings.request;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.chartIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.expectedFirstDepositOnDateParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.isCalendarInheritedParamName;
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transferInterestToSavingsParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.*;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountNoParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.clientIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.externalIdParamName;
@@ -95,6 +89,10 @@ public class FixedDepositApplicationReq {
     private RecurringAccountDetailReq recurringAccountDetailReq;
     private FixedDepositApplicationTermsReq fixedDepositApplicationTermsReq;
     private FixedDepositApplicationPreClosureReq fixedDepositApplicationPreClosureReq;
+    private Boolean notifyAssetMaturity;
+    private Boolean enableMaturitySmsAlerts;
+    private Integer maturityPeriod;
+    private SavingsPeriodFrequencyType maturityPeriodFrequency;
 
     public static FixedDepositApplicationReq instance(JsonCommand command) {
         FixedDepositApplicationReq instance = new FixedDepositApplicationReq();
@@ -155,6 +153,11 @@ public class FixedDepositApplicationReq {
         instance.recurringAccountDetailReq = RecurringAccountDetailReq.instance(command);
         instance.fixedDepositApplicationTermsReq = FixedDepositApplicationTermsReq.instance(command);
         instance.fixedDepositApplicationPreClosureReq = FixedDepositApplicationPreClosureReq.instance(command);
+        instance.notifyAssetMaturity = command.booleanPrimitiveValueOfParameterNamed(notifyAssetMaturityParamName);
+        instance.enableMaturitySmsAlerts = command.booleanPrimitiveValueOfParameterNamed(enableMaturitySmsAlertsParamName);
+        instance.maturityPeriod = command.integerValueOfParameterNamed(notifyMaturityPeriodParamName);
+        instance.maturityPeriodFrequency = SavingsPeriodFrequencyType.fromInt(
+                command.integerValueOfParameterNamed(notificationTermIdParamName));
         return instance;
     }
 
@@ -444,5 +447,37 @@ public class FixedDepositApplicationReq {
 
     public void setInterestCarriedForward(BigDecimal interestCarriedForward) {
         this.interestCarriedForward = interestCarriedForward;
+    }
+
+    public Boolean getNotifyAssetMaturity() {
+        return notifyAssetMaturity;
+    }
+
+    public void setNotifyAssetMaturity(Boolean notifyAssetMaturity) {
+        this.notifyAssetMaturity = notifyAssetMaturity;
+    }
+
+    public Boolean getEnableMaturitySmsAlerts() {
+        return enableMaturitySmsAlerts;
+    }
+
+    public void setEnableMaturitySmsAlerts(Boolean enableMaturitySmsAlerts) {
+        this.enableMaturitySmsAlerts = enableMaturitySmsAlerts;
+    }
+
+    public Integer getMaturityPeriod() {
+        return maturityPeriod;
+    }
+
+    public void setMaturityPeriod(Integer maturityPeriod) {
+        this.maturityPeriod = maturityPeriod;
+    }
+
+    public SavingsPeriodFrequencyType getMaturityPeriodFrequency() {
+        return maturityPeriodFrequency;
+    }
+
+    public void setMaturityPeriodFrequency(SavingsPeriodFrequencyType maturityPeriodFrequency) {
+        this.maturityPeriodFrequency = maturityPeriodFrequency;
     }
 }

@@ -403,9 +403,6 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         final Collection<DepositAccountData> depositAccounts = this.depositAccountReadPlatformService.retrieveForMaturityNotification();
         StringBuilder errorMsg = new StringBuilder();
 
-        System.out.printf("\n\n\nn=====>deposit accounts expired: %s%n <==============" +
-                "\n\n\n", fromApiJsonHelper.toJson(depositAccounts));
-
         for (final DepositAccountData depositAccount : depositAccounts) {
             try {
 //                final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());

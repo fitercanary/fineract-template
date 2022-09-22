@@ -85,7 +85,23 @@ import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
-import org.apache.fineract.portfolio.savings.domain.*;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountDomainService;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountRecurringDetail;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountTermAndPreClosure;
+import org.apache.fineract.portfolio.savings.domain.DepositProductTermAndPreClosure;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
+import org.apache.fineract.portfolio.savings.domain.RecurringDepositAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
@@ -122,7 +138,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.*;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.changeTenureParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.closedOnDateParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.enableMaturitySmsAlertsParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.liquidationAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notificationTermIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyMaturityPeriodParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
@@ -1858,16 +1883,16 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     public CommandProcessingResult updateDepositPeriodForRDAccount(Long savingsId, JsonCommand command) {
         this.depositAccountTransactionDataValidator.validateDepositPeriodUpdate(command);
 
-        final Integer depositPeriod = command.integerValueOfParameterNamed(DepositsApiConstants.depositPeriodParamName);
+        final Integer depositPeriod = command.integerValueOfParameterNamed(depositPeriodParamName);
 
         final Integer depositPeriodFrequencyType = command
-                .integerValueOfParameterNamed(DepositsApiConstants.depositPeriodFrequencyIdParamName);
+                .integerValueOfParameterNamed(depositPeriodFrequencyIdParamName);
 
         final RecurringDepositAccount recurringDepositAccount = (RecurringDepositAccount) this.depositAccountAssembler
                 .assembleFrom(savingsId, DepositAccountType.RECURRING_DEPOSIT);
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
-        actualChanges.put(DepositsApiConstants.depositPeriodParamName, depositPeriod);
+        actualChanges.put(depositPeriodParamName, depositPeriod);
 
         recurringDepositAccount.updateDepositPeriod(depositPeriod);
         recurringDepositAccount.updateDepositPeriodFrequencyType(depositPeriodFrequencyType);

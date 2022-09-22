@@ -17,11 +17,11 @@
 -- under the License.
 --
 
-ALTER TABLE `mifostenant-default`.`m_deposit_account_term_and_preclosure`
+ALTER TABLE `m_deposit_account_term_and_preclosure`
 ADD COLUMN `maturity_notification_period` int(11) NULL AFTER `pre_closure_charge_applicable`,
 ADD COLUMN `maturity_notification_frequency` int(11) NULL AFTER `maturity_notification_period`,
 ADD COLUMN `next_maturity_notification_date` date NULL AFTER `maturity_notification_frequency`,
 ADD COLUMN `maturity_sms_notification` tinyint(1) NULL DEFAULT 0 AFTER `next_maturity_notification_date`;
 
 
-INSERT INTO `mifostenant-default`.`job` (`name`, `display_name`, `cron_expression`, `create_time`, `task_priority`, `group_name`, `previous_run_start_time`, `next_run_time`, `job_key`, `initializing_errorlog`, `is_active`, `currently_running`, `updates_allowed`, `scheduler_group`, `is_misfired`) VALUES ('Notify Deposit Accounts Maturity', 'Notify Deposit Accounts Maturity', '0 0 0 1/1 * ? *', NOW(), 5, NULL, null, NOW(), 'Notify Deposit Accounts MaturityJobDetail1 _ DEFAULT', NULL, 1, 0, 1, 0, 0);
+INSERT INTO `job` (`name`, `display_name`, `cron_expression`, `create_time`, `task_priority`, `group_name`, `previous_run_start_time`, `next_run_time`, `job_key`, `initializing_errorlog`, `is_active`, `currently_running`, `updates_allowed`, `scheduler_group`, `is_misfired`) VALUES ('Notify Deposit Accounts Maturity', 'Notify Deposit Accounts Maturity', '0 0 0 1/1 * ? *', NOW(), 5, NULL, null, NOW(), 'Notify Deposit Accounts MaturityJobDetail1 _ DEFAULT', NULL, 1, 0, 1, 0, 0);

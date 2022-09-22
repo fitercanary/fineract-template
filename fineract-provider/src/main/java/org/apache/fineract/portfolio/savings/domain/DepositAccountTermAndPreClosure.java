@@ -18,6 +18,17 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.dateFormatParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.enableMaturitySmsAlertsParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.expectedFirstDepositOnDateParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.localeParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notificationTermIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyMaturityPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transferInterestToSavingsParamName;
+
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -43,8 +54,6 @@ import org.joda.time.LocalDate;
 import org.joda.time.Months;
 import org.joda.time.Weeks;
 import org.joda.time.Years;
-
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.*;
 
 @Entity
 @Table(name = "m_deposit_account_term_and_preclosure")

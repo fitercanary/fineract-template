@@ -19,7 +19,17 @@
 
 package org.apache.fineract.portfolio.savings.request;
 
-import static org.apache.fineract.portfolio.savings.DepositsApiConstants.*;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.chartIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.enableMaturitySmsAlertsParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.expectedFirstDepositOnDateParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.isCalendarInheritedParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notificationTermIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyAssetMaturityParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyMaturityPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transferInterestToSavingsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountNoParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.clientIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.externalIdParamName;

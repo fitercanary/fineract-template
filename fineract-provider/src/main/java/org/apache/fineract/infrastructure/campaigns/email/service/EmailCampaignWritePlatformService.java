@@ -23,6 +23,8 @@ import org.apache.fineract.infrastructure.core.api.JsonQuery;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.campaigns.email.data.PreviewCampaignMessage;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 
 public interface EmailCampaignWritePlatformService {
 
@@ -44,4 +46,5 @@ public interface EmailCampaignWritePlatformService {
 
     void sendEmailMessage() throws JobExecutionException;
 
+    void notifyFixedDepositMaturity(DepositAccountData depositAccount);
 }

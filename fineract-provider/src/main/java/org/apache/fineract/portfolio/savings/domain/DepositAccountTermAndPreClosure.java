@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -22,8 +22,11 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.dateFor
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.enableMaturitySmsAlertsParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.expectedFirstDepositOnDateParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.localeParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notificationTermIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyMaturityPeriodParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.transferInterestToSavingsParamName;
 
 import java.math.BigDecimal;
@@ -79,6 +82,18 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     @Column(name = "on_account_closure_enum")
     private Integer onAccountClosureType;
 
+    @Column(name = "maturity_notification_period")
+    private Integer maturityNotificationPeriod;
+
+    @Column(name = "maturity_sms_notification")
+    private boolean maturitySmsNotification;
+
+    @Column(name = "maturity_notification_frequency")
+    private Integer maturityNotificationFrequency;
+
+    @Column(name = "next_maturity_notification_date")
+    private Date nextMaturityNotificationDate;
+
     @Embedded
     private DepositPreClosureDetail preClosureDetail;
 
@@ -105,19 +120,26 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         super();
     }
 
-    public static DepositAccountTermAndPreClosure createNew(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
+    public static DepositAccountTermAndPreClosure createNew(
+            DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
             SavingsAccount account, BigDecimal depositAmount, BigDecimal maturityAmount, final LocalDate maturityDate,
             Integer depositPeriod, final SavingsPeriodFrequencyType depositPeriodFrequency, final LocalDate expectedFirstDepositOnDate,
-            final DepositAccountOnClosureType accountOnClosureType, Boolean transferInterest, BigDecimal interestCarriedForwardOnTopUp) {
+            final DepositAccountOnClosureType accountOnClosureType, Boolean transferInterest, BigDecimal interestCarriedForwardOnTopUp,
+            Integer maturityPeriod, SavingsPeriodFrequencyType maturityPeriodFrequency,Boolean enableMaturitySmsAlerts) {
 
-        return new DepositAccountTermAndPreClosure(preClosureDetail, depositTermDetail, account, depositAmount, maturityAmount,
-                maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType, transferInterest, interestCarriedForwardOnTopUp);
+        return new DepositAccountTermAndPreClosure(
+                preClosureDetail, depositTermDetail, account, depositAmount, maturityAmount, maturityDate, depositPeriod,
+                depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType, transferInterest,
+                interestCarriedForwardOnTopUp, maturityPeriod, maturityPeriodFrequency,enableMaturitySmsAlerts);
     }
 
-    private DepositAccountTermAndPreClosure(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
+    private DepositAccountTermAndPreClosure(
+            DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
             SavingsAccount account, BigDecimal depositAmount, BigDecimal maturityAmount, final LocalDate maturityDate,
-            Integer depositPeriod, final SavingsPeriodFrequencyType depositPeriodFrequency, final LocalDate expectedFirstDepositOnDate,
-            final DepositAccountOnClosureType accountOnClosureType, Boolean transferInterest, BigDecimal interestCarriedForwardOnTopUp) {
+            Integer depositPeriod, final SavingsPeriodFrequencyType depositPeriodFrequency,
+            final LocalDate expectedFirstDepositOnDate,final DepositAccountOnClosureType accountOnClosureType,
+            Boolean transferInterest, BigDecimal interestCarriedForwardOnTopUp,
+            Integer maturityPeriod,final SavingsPeriodFrequencyType maturityPeriodFrequency, Boolean enableMaturitySmsAlerts) {
         this.depositAmount = depositAmount;
         this.maturityAmount = maturityAmount;
         this.maturityDate = (maturityDate == null) ? null : maturityDate.toDate();
@@ -130,6 +152,11 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         this.onAccountClosureType = (accountOnClosureType == null) ? null : accountOnClosureType.getValue();
         this.transferInterestToLinkedAccount = transferInterest;
         this.interestCarriedForwardOnTopUp = interestCarriedForwardOnTopUp;
+        this.maturitySmsNotification = enableMaturitySmsAlerts;
+        this.maturityNotificationPeriod = maturityPeriod;
+        this.setMaturityNotificationFrequency((maturityPeriodFrequency == null) ?
+                null : maturityPeriodFrequency.getValue());
+
     }
 
     public Map<String, Object> update(final JsonCommand command, final DataValidatorBuilder baseDataValidator) {
@@ -177,6 +204,26 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         if (this.depositTermDetail != null) {
             actualChanges.putAll(this.depositTermDetail.update(command, baseDataValidator));
         }
+
+
+        if (command.isChangeInIntegerParameterNamed(notifyMaturityPeriodParamName, this.maturityNotificationPeriod)) {
+            final Integer newValue = command.integerValueOfParameterNamed(notifyMaturityPeriodParamName);
+            actualChanges.put(notifyMaturityPeriodParamName, newValue);
+            this.maturityNotificationPeriod = newValue;
+        }
+        if (command.isChangeInBooleanParameterNamed(enableMaturitySmsAlertsParamName, this.maturitySmsNotification)) {
+            System.out.println("updating maturity notification");
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(enableMaturitySmsAlertsParamName);
+            actualChanges.put(enableMaturitySmsAlertsParamName, newValue);
+            this.maturitySmsNotification = newValue;
+        }
+
+        if (command.isChangeInIntegerParameterNamed(notificationTermIdParamName, this.getMaturityNotificationFrequency())) {
+            final Integer newValue = command.integerValueOfParameterNamed(notificationTermIdParamName);
+            actualChanges.put(notificationTermIdParamName, SavingsEnumerations.depositTermFrequencyType(newValue));
+            this.setMaturityNotificationFrequency(newValue);
+        }
+
         return actualChanges;
     }
 
@@ -204,6 +251,10 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         return SavingsPeriodFrequencyType.fromInt(depositPeriodFrequency);
     }
 
+    public SavingsPeriodFrequencyType maturityNotificationPeriodFrequencyType() {
+        return SavingsPeriodFrequencyType.fromInt(getMaturityNotificationFrequency());
+    }
+
     public void updateAccountReference(final SavingsAccount account) {
         this.account = account;
     }
@@ -213,12 +264,17 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         this.maturityDate = maturityDate.toDate();
     }
 
-    public void updateMaturityDetails(final BigDecimal depositAmount, final BigDecimal interestPayable, final LocalDate maturityDate) {
+    public void updateMaturityDetails(final BigDecimal depositAmount, final BigDecimal interestPayable,
+                                      final LocalDate maturityDate) {
         this.depositAmount = depositAmount;
         this.maturityAmount = this.depositAmount.add(interestPayable);
         this.maturityDate = maturityDate.toDate();
     }
-    
+
+    public void updateMaturityNotificationDate(final LocalDate nextNotificationDate) {
+        this.nextMaturityNotificationDate = nextNotificationDate.toDate();
+    }
+
     public void updateDepositAmount(final BigDecimal depositAmount) {
         this.depositAmount = depositAmount;
     }
@@ -241,7 +297,9 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     }
 
     public boolean isPreClosurePenalApplicable() {
-        if (this.preClosureDetail != null) { return this.preClosureDetail.isPreClosurePenalApplicable(); }
+        if (this.preClosureDetail != null) {
+            return this.preClosureDetail.isPreClosurePenalApplicable();
+        }
         return false;
     }
 
@@ -252,25 +310,27 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         if (depositFromDate == null) depositFromDate = this.account.accountSubmittedOrActivationDate();
 
         Integer actualDepositPeriod = this.depositPeriod;
-        if (depositFromDate == null || getMaturityLocalDate() == null || interestPostingUpToDate.isEqual(getMaturityLocalDate())) { return actualDepositPeriod; }
+        if (depositFromDate == null || getMaturityLocalDate() == null || interestPostingUpToDate.isEqual(getMaturityLocalDate())) {
+            return actualDepositPeriod;
+        }
 
         final SavingsPeriodFrequencyType depositPeriodFrequencyType = periodFrequencyType;
         switch (depositPeriodFrequencyType) {
             case DAYS:
                 actualDepositPeriod = Days.daysBetween(depositFromDate, interestPostingUpToDate).getDays();
-            break;
+                break;
             case WEEKS:
                 actualDepositPeriod = Weeks.weeksBetween(depositFromDate, interestPostingUpToDate).getWeeks();
-            break;
+                break;
             case MONTHS:
                 actualDepositPeriod = Months.monthsBetween(depositFromDate, interestPostingUpToDate).getMonths();
-            break;
+                break;
             case YEARS:
                 actualDepositPeriod = Years.yearsBetween(depositFromDate, interestPostingUpToDate).getYears();
-            break;
+                break;
             case INVALID:
                 actualDepositPeriod = this.depositPeriod;// default value
-            break;
+                break;
         }
         return actualDepositPeriod;
     }
@@ -301,11 +361,14 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         final DepositPreClosureDetail preClosureDetail = this.preClosureDetail.copy();
         final DepositTermDetail depositTermDetail = this.depositTermDetail.copy();
         final LocalDate expectedFirstDepositOnDate = null;
+        final Boolean maturitySmsNotification = this.maturitySmsNotification;
+        final Integer maturityNotificationPeriod = this.maturityNotificationPeriod;
+        final SavingsPeriodFrequencyType maturityNotificationFrequency = SavingsPeriodFrequencyType.fromInt(this.getMaturityNotificationFrequency());
 
         final DepositAccountOnClosureType accountOnClosureType = null;
         return DepositAccountTermAndPreClosure.createNew(preClosureDetail, depositTermDetail, account, actualDepositAmount, maturityAmount,
                 maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType,
-                false, null);
+                false, null, maturityNotificationPeriod,maturityNotificationFrequency,maturitySmsNotification);
     }
 
     public void updateExpectedFirstDepositDate(final LocalDate expectedFirstDepositOnDate) {
@@ -331,6 +394,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
     public void updateDepositPeriod(final Integer depositPeriod) {
         this.depositPeriod = depositPeriod;
     }
+
     public void updateDepositPeriodFrequencyType(final Integer depositPeriodFrequencyType) {
         this.depositPeriodFrequency = depositPeriodFrequencyType;
     }
@@ -357,5 +421,32 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
 
     public BigDecimal getTargetMaturityAmount() {
         return targetMaturityAmount;
+    }
+
+    public Integer getMaturityNotificationPeriod() {
+        return maturityNotificationPeriod;
+    }
+
+    public void setMaturityNotificationPeriod(Integer maturityNotificationPeriod) {
+        this.maturityNotificationPeriod = maturityNotificationPeriod;
+    }
+    public boolean getMaturitySmsNotification() {
+        return maturitySmsNotification;
+    }
+
+    public void setMaturitySmsNotification(boolean maturitySmsNotification) {
+        this.maturitySmsNotification = maturitySmsNotification;
+    }
+
+    public Integer getMaturityNotificationFrequency() {
+        return maturityNotificationFrequency;
+    }
+
+    public Date getNextMaturityNotificationDate() {
+        return nextMaturityNotificationDate;
+    }
+
+    public void setMaturityNotificationFrequency(Integer maturityNotificationFrequency) {
+        this.maturityNotificationFrequency = maturityNotificationFrequency;
     }
 }

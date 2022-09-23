@@ -210,9 +210,9 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     @Override
     public CommandProcessingResult submitFDApplication(final JsonCommand command) {
         try {
-
             this.depositAccountDataValidator.validateFixedDepositForSubmit(command.json());
             FixedDepositApplicationReq fixedDepositApplicationReq = FixedDepositApplicationReq.instance(command);
+
             Long productId = fixedDepositApplicationReq.getProductId();
             SavingsProduct product = this.fixedDepositProductRepository.findOne(productId);
             if (product == null) {

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -23,6 +23,12 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.organisation.staff.domain.Staff;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.data.DepositAccountData;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.joda.time.DateTimeZone;
@@ -96,16 +102,20 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     private final FromJsonHelper fromJsonHelper;
     private final LoanRepository loanRepository;
     private final SavingsAccountRepository savingsAccountRepository;
+    private final DepositAccountAssembler depositAccountAssembler;
     private final EmailMessageJobEmailService emailMessageJobEmailService;
 
     @Autowired
-    public EmailCampaignWritePlatformCommandHandlerImpl(final PlatformSecurityContext context,
+    public EmailCampaignWritePlatformCommandHandlerImpl(
+            final PlatformSecurityContext context,
             final EmailCampaignRepository emailCampaignRepository, final EmailCampaignValidator emailCampaignValidator,
             final EmailCampaignReadPlatformService emailCampaignReadPlatformService, final ReportRepository reportRepository,
             final EmailMessageRepository emailMessageRepository, final ClientRepositoryWrapper clientRepositoryWrapper,
             final ReadReportingService readReportingService, final GenericDataService genericDataService,
             final FromJsonHelper fromJsonHelper, final LoanRepository loanRepository,
-            final SavingsAccountRepository savingsAccountRepository, final EmailMessageJobEmailService emailMessageJobEmailService) {
+            final SavingsAccountRepository savingsAccountRepository,
+            final DepositAccountAssembler depositAccountAssembler,
+            final EmailMessageJobEmailService emailMessageJobEmailService) {
         this.context = context;
         this.emailCampaignRepository = emailCampaignRepository;
         this.emailCampaignValidator = emailCampaignValidator;
@@ -119,6 +129,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         this.loanRepository = loanRepository;
         this.savingsAccountRepository = savingsAccountRepository;
         this.emailMessageJobEmailService = emailMessageJobEmailService;
+        this.depositAccountAssembler = depositAccountAssembler;
     }
 
     @Transactional
@@ -132,12 +143,16 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         final Long businessRuleId = command.longValueOfParameterNamed(EmailCampaignValidator.businessRuleId);
 
         final Report businessRule = this.reportRepository.findOne(businessRuleId);
-        if (businessRule == null) { throw new ReportNotFoundException(businessRuleId); }
+        if (businessRule == null) {
+            throw new ReportNotFoundException(businessRuleId);
+        }
 
         final Long reportId = command.longValueOfParameterNamed(EmailCampaignValidator.stretchyReportId);
 
         final Report report = this.reportRepository.findOne(reportId);
-        if (report == null) { throw new ReportNotFoundException(reportId); }
+        if (report == null) {
+            throw new ReportNotFoundException(reportId);
+        }
         // find all report parameters and store them as json string
         final Set<ReportParameterUsage> reportParameterUsages = report.getReportParameterUsages();
         final Map<String, String> stretchyReportParams = new HashMap<>();
@@ -167,14 +182,20 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
             this.emailCampaignValidator.validateForUpdate(command.json());
             final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(resourceId);
 
-            if (emailCampaign == null) { throw new EmailCampaignNotFound(resourceId); }
-            if (emailCampaign.isActive()) { throw new EmailCampaignMustBeClosedToEditException(emailCampaign.getId()); }
+            if (emailCampaign == null) {
+                throw new EmailCampaignNotFound(resourceId);
+            }
+            if (emailCampaign.isActive()) {
+                throw new EmailCampaignMustBeClosedToEditException(emailCampaign.getId());
+            }
             final Map<String, Object> changes = emailCampaign.update(command);
 
             if (changes.containsKey(EmailCampaignValidator.businessRuleId)) {
                 final Long newValue = command.longValueOfParameterNamed(EmailCampaignValidator.businessRuleId);
                 final Report reportId = this.reportRepository.findOne(newValue);
-                if (reportId == null) { throw new ReportNotFoundException(newValue); }
+                if (reportId == null) {
+                    throw new ReportNotFoundException(newValue);
+                }
                 emailCampaign.updateBusinessRuleId(reportId);
 
             }
@@ -200,8 +221,12 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         this.context.authenticatedUser();
         final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(resourceId);
 
-        if (emailCampaign == null) { throw new EmailCampaignNotFound(resourceId); }
-        if (emailCampaign.isActive()) { throw new EmailCampaignMustBeClosedToBeDeletedException(emailCampaign.getId()); }
+        if (emailCampaign == null) {
+            throw new EmailCampaignNotFound(resourceId);
+        }
+        if (emailCampaign.isActive()) {
+            throw new EmailCampaignMustBeClosedToBeDeletedException(emailCampaign.getId());
+        }
 
         /*
          * Do not delete but set a boolean is_visible to zero
@@ -216,13 +241,15 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     }
 
     private void insertDirectCampaignIntoEmailOutboundTable(final String emailParams, final String emailSubject,
-            final String messageTemplate, final String campaignName, final Long campaignId) {
+                                                            final String messageTemplate, final String campaignName, final Long campaignId) {
         try {
             HashMap<String, String> campaignParams = new ObjectMapper().readValue(emailParams,
-                    new TypeReference<HashMap<String, String>>() {});
+                    new TypeReference<HashMap<String, String>>() {
+                    });
 
             HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(emailParams,
-                    new TypeReference<HashMap<String, String>>() {});
+                    new TypeReference<HashMap<String, String>>() {
+                    });
 
             List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(campaignParams.get("reportName"),
                     queryParamForRunReport);
@@ -286,7 +313,9 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
     private void updateTriggerDates(Long campaignId) {
         final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(campaignId);
-        if (emailCampaign == null) { throw new EmailCampaignNotFound(campaignId); }
+        if (emailCampaign == null) {
+            throw new EmailCampaignNotFound(campaignId);
+        }
         LocalDateTime nextTriggerDate = emailCampaign.getNextTriggerDate();
         emailCampaign.setLastTriggerDate(nextTriggerDate.toDate());
         // calculate new trigger date and insert into next trigger date
@@ -298,15 +327,15 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         LocalDate nextRuntime = CalendarUtils.getNextRecurringDate(emailCampaign.getRecurrence(),
                 emailCampaign.getNextTriggerDate().toLocalDate(), nextTriggerDate.toLocalDate());
         if (nextRuntime.isBefore(DateUtils.getLocalDateOfTenant())) { // means
-                                                                      // next
-                                                                      // run
-                                                                      // time is
-                                                                      // in the
-                                                                      // past
-                                                                      // calculate
-                                                                      // a new
-                                                                      // future
-                                                                      // date
+            // next
+            // run
+            // time is
+            // in the
+            // past
+            // calculate
+            // a new
+            // future
+            // date
             nextRuntime = CalendarUtils.getNextRecurringDate(emailCampaign.getRecurrence(),
                     emailCampaign.getNextTriggerDate().toLocalDate(), DateUtils.getLocalDateOfTenant());
         }
@@ -329,7 +358,9 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
         final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(campaignId);
 
-        if (emailCampaign == null) { throw new EmailCampaignNotFound(campaignId); }
+        if (emailCampaign == null) {
+            throw new EmailCampaignNotFound(campaignId);
+        }
 
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
@@ -388,7 +419,9 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         this.emailCampaignValidator.validateClosedDate(command.json());
 
         final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(campaignId);
-        if (emailCampaign == null) { throw new EmailCampaignNotFound(campaignId); }
+        if (emailCampaign == null) {
+            throw new EmailCampaignNotFound(campaignId);
+        }
 
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
@@ -405,7 +438,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     }
 
     private String compileEmailTemplate(final String textMessageTemplate, final String campaignName,
-            final Map<String, Object> emailParams) {
+                                        final Map<String, Object> emailParams) {
         final MustacheFactory mf = new DefaultMustacheFactory();
         final Mustache mustache = mf.compile(new StringReader(textMessageTemplate), campaignName);
 
@@ -415,7 +448,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         return stringWriter.toString();
     }
 
-    @SuppressWarnings({ "unused", "rawtypes" })
+    @SuppressWarnings({"unused", "rawtypes"})
     private List<HashMap<String, Object>> getRunReportByServiceImpl(final String reportName, final Map<String, String> queryParams)
             throws IOException {
         final String reportType = "report";
@@ -424,7 +457,8 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         final GenericResultsetData results = this.readReportingService.retrieveGenericResultSetForSmsEmailCampaign(reportName, reportType,
                 queryParams);
         final String response = this.genericDataService.generateJsonFromGenericResultsetData(results);
-        resultList = new ObjectMapper().readValue(response, new TypeReference<List<HashMap<String, Object>>>() {});
+        resultList = new ObjectMapper().readValue(response, new TypeReference<List<HashMap<String, Object>>>() {
+        });
         // loop changes array date to string date
         for (HashMap<String, Object> entry : resultList) {
             for (Map.Entry<String, Object> map : entry.entrySet()) {
@@ -450,10 +484,12 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
         try {
             HashMap<String, String> campaignParams = new ObjectMapper().readValue(emailParams,
-                    new TypeReference<HashMap<String, String>>() {});
+                    new TypeReference<HashMap<String, String>>() {
+                    });
 
             HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(emailParams,
-                    new TypeReference<HashMap<String, String>>() {});
+                    new TypeReference<HashMap<String, String>>() {
+                    });
 
             List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(campaignParams.get("reportName"),
                     queryParamForRunReport);
@@ -487,7 +523,9 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
         final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(campaignId);
 
-        if (emailCampaign == null) { throw new EmailCampaignNotFound(campaignId); }
+        if (emailCampaign == null) {
+            throw new EmailCampaignNotFound(campaignId);
+        }
 
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
@@ -526,7 +564,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     }
 
     private void handleDataIntegrityIssues(@SuppressWarnings("unused") final JsonCommand command,
-            final DataIntegrityViolationException dve) {
+                                           final DataIntegrityViolationException dve) {
         final Throwable realCause = dve.getMostSpecificCause();
 
         throw new PlatformDataIntegrityException("error.msg.email.campaign.unknown.data.integrity.issue",
@@ -550,13 +588,13 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     @CronTarget(jobName = JobName.EXECUTE_EMAIL)
     public void sendEmailMessage() throws JobExecutionException {
         if (IPv4Helper.applicationIsNotRunningOnLocalMachine()) { // remove when
-                                                                  // testing
-                                                                  // locally
+            // testing
+            // locally
             final List<EmailMessage> emailMessages = this.emailMessageRepository
                     .findByStatusType(EmailMessageStatusType.PENDING.getValue()); // retrieve
-                                                                                  // all
-                                                                                  // pending
-                                                                                  // message
+            // all
+            // pending
+            // message
 
             for (final EmailMessage emailMessage : emailMessages) {
 
@@ -596,7 +634,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
                                 for (final Loan loan : loans) {
                                     if (loan.isOpen()) { // only send attachment
-                                                         // for active loan
+                                        // for active loan
 
                                         if (reportStretchyParams.containsKey("selectLoan")) {
 
@@ -667,16 +705,16 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
                             emailMessage.getEmailAddress(), emailMessage.getMessage(), emailMessage.getEmailSubject(), attachmentList);
 
                     if (!attachmentList.isEmpty() && attachmentList.size() > 0) { // only
-                                                                                  // send
-                                                                                  // email
-                                                                                  // message
-                                                                                  // if
-                                                                                  // there
-                                                                                  // is
-                                                                                  // an
-                                                                                  // attachment
-                                                                                  // to
-                                                                                  // it
+                        // send
+                        // email
+                        // message
+                        // if
+                        // there
+                        // is
+                        // an
+                        // attachment
+                        // to
+                        // it
 
                         this.emailMessageJobEmailService.sendEmailWithAttachment(emailMessageWithAttachmentData);
 
@@ -698,9 +736,37 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     }
 
     /**
+     * creates and que up message it up for sending out the email alert
+     * @param depositAccount
+     */
+    @Override
+    public void notifyFixedDepositMaturity(DepositAccountData depositAccount) {
+
+        Map<String, Object> params = new HashMap<>();
+        String message = this.compileEmailTemplate("messageTemplate", "campaignName", params);
+
+        final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(depositAccount.id(),
+                DepositAccountType.FIXED_DEPOSIT);
+
+        Client client = account.getClient();
+        String emailAddress = client.emailAddress();
+
+        if (emailAddress != null && isValidEmail(emailAddress)) {
+            EmailMessage emailMessage = EmailMessage.pendingEmail(
+                    null, client, client.getStaff(), null,
+                    "INVESTMENT MATURITY NOTIFICATION", message, client.emailAddress(), "EmailCampaign");
+            System.out.println("\n\n ====================> Email message:\n "+ fromJsonHelper.toJson(emailMessage));
+            this.emailMessageRepository.saveAndFlush(emailMessage);
+        }
+        if (account.getAccountTermAndPreClosure().getMaturitySmsNotification()){
+            //TODO IMPLEMENT SMS MODULE
+        }
+    }
+
+    /**
      * This generates the the report and converts it to a file by passing the
      * parameters below
-     * 
+     *
      * @param emailCampaign
      * @param emailAttachmentFileFormat
      * @param reportParams
@@ -709,7 +775,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
      * @return
      */
     private File generateAttachments(final EmailCampaign emailCampaign, final ScheduledEmailAttachmentFileFormat emailAttachmentFileFormat,
-            final Map<String, String> reportParams, final String reportName, final StringBuilder errorLog) {
+                                     final Map<String, String> reportParams, final String reportName, final StringBuilder errorLog) {
 
         try {
             final ByteArrayOutputStream byteArrayOutputStream = this.readReportingService.generatePentahoReportAsOutputStream(reportName,
@@ -745,13 +811,13 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     /**
      * This matches the the actual values to the key in the report stretchy
      * parameters map
-     * 
+     *
      * @param stretchyParams
      * @param client
      * @return
      */
     private HashMap<String, String> replaceStretchyParamsWithActualClientParams(final HashMap<String, String> stretchyParams,
-            final Client client) {
+                                                                                final Client client) {
 
         HashMap<String, String> actualParams = new HashMap<>();
 
@@ -787,10 +853,9 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
         if (!StringUtils.isEmpty(stretchyParams)) {
             try {
-                stretchyReportParamHashMap = new ObjectMapper().readValue(stretchyParams, new TypeReference<HashMap<String, String>>() {});
-            }
-
-            catch (Exception e) {
+                stretchyReportParamHashMap = new ObjectMapper().readValue(stretchyParams, new TypeReference<HashMap<String, String>>() {
+                });
+            } catch (Exception e) {
                 stretchyReportParamHashMap = null;
             }
         }

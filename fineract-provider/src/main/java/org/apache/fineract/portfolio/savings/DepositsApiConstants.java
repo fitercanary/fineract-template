@@ -93,6 +93,12 @@ public class DepositsApiConstants {
     public static final String receiptNumberParamName = "receiptNumber";
     public static final String bankNumberParamName = "bankNumber";
 
+    //MATURITY NOTIFICATION TERM PARAMS
+    public static final String notifyAssetMaturityParamName = "notifyAssetMaturity";
+    public static final String notifyMaturityPeriodParamName = "notifyMaturityPeriod";
+    public static final String notificationTermIdParamName = "notificationTermId";
+    public static final String enableMaturitySmsAlertsParamName = "enableMaturitySmsAlerts";
+
     // Preclosure parameters
     public static final String preClosurePenalApplicableParamName = "preClosurePenalApplicable";
     public static final String preClosurePenalInterestParamName = "preClosurePenalInterest";
@@ -301,7 +307,8 @@ public class DepositsApiConstants {
             interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,
             chargesParamName, chartsParamName, depositAmountParamName, depositPeriodParamName, depositPeriodFrequencyIdParamName,
             savingsAccounts, expectedFirstDepositOnDateParamName, SavingsApiConstants.withHoldTaxParamName,
-            SavingsApiConstants.withdrawalFeeForTransfersParamName, SavingsApiConstants.nicknameParamName));
+            SavingsApiConstants.withdrawalFeeForTransfersParamName, SavingsApiConstants.nicknameParamName,
+            notifyAssetMaturityParamName,notifyMaturityPeriodParamName,notificationTermIdParamName,enableMaturitySmsAlertsParamName));
 
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_REQUEST_DATA_PARAMETERS = fixedDepositAccountRequestData();
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS = fixedDepositAccountResponseData();

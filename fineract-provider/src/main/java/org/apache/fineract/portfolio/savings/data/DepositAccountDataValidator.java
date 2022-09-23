@@ -54,6 +54,7 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.allowWi
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositAmountParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.enableMaturitySmsAlertsParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.inMultiplesOfDepositTermTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.isCalendarInheritedParamName;
@@ -64,6 +65,9 @@ import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepo
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.maxDepositTermTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.minDepositTermTypeIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notificationTermIdParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyAssetMaturityParamName;
+import static org.apache.fineract.portfolio.savings.DepositsApiConstants.notifyMaturityPeriodParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.apache.fineract.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
@@ -307,6 +311,29 @@ public class DepositAccountDataValidator {
             baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).notNull().longGreaterThanZero();
         } else {
             baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).ignoreIfNull().longGreaterThanZero();
+        }
+
+        boolean notifyMaturity = false;
+        if (fromApiJsonHelper.parameterExists(notifyAssetMaturityParamName, element)) {
+            notifyMaturity = fromApiJsonHelper.extractBooleanNamed(notifyAssetMaturityParamName, element);
+        }
+
+        //if we have notify maturity, check the notification period is less than the investment term
+        if (notifyMaturity){
+
+            boolean enableSMSMaturityNotification = fromApiJsonHelper.extractBooleanNamed(enableMaturitySmsAlertsParamName, element);
+
+            final Integer notificationPeriod = fromApiJsonHelper.extractIntegerSansLocaleNamed(notifyMaturityPeriodParamName, element);
+            baseDataValidator.reset().parameter(notifyMaturityPeriodParamName).value(notificationPeriod).notNull().integerGreaterThanZero();
+
+            final Integer depositPeriodFrequencyId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(depositPeriodFrequencyIdParamName,
+                    element);
+            final Integer notificationTermId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(notificationTermIdParamName,
+                    element);
+
+            baseDataValidator.reset().parameter(notificationTermIdParamName).value(notificationTermId)
+                    .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues())
+                    .inMinMaxRange(0,(depositPeriodFrequencyId-1));
         }
     }
 
@@ -663,6 +690,17 @@ public class DepositAccountDataValidator {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final ApiParameterError error = ApiParameterError.parameterError(
                 "validation.msg.fixeddepositaccount.linkAccountId.cannot.be.blank", "Linked Savings account required", "linkAccountId");
+        dataValidationErrors.add(error);
+        throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                dataValidationErrors);
+    }
+
+    public void throwMaturityInvestmentTermInvalid() {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final ApiParameterError error = ApiParameterError.parameterError(
+                "validation.msg.fixeddepositaccount.notification.period.cannot.be.less",
+                "Notification period cannot be the same frequency with OR greater than the investment term ",
+                "linkAccountId");
         dataValidationErrors.add(error);
         throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                 dataValidationErrors);

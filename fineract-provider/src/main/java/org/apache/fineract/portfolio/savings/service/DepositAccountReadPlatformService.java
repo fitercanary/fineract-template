@@ -52,6 +52,8 @@ public interface DepositAccountReadPlatformService {
 
     Collection<DepositAccountData> retrieveForMaturityUpdate();
 
+    Collection<DepositAccountData> retrieveForMaturityNotification();
+
     SavingsAccountTransactionData retrieveRecurringAccountDepositTransactionTemplate(final Long accountId);
 
     Collection<AccountTransferDTO> retrieveDataForInterestTransfer();

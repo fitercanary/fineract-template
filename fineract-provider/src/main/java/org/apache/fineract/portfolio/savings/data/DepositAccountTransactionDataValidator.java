@@ -97,6 +97,10 @@ public class DepositAccountTransactionDataValidator {
             DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName,
             DepositsApiConstants.depositAmountParamName, DepositsApiConstants.changeTenureParamName, DepositsApiConstants.interestRateParamName));
 
+    private static final Set<String> MATURITY_NOTIFICATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
+            DepositsApiConstants.notificationTermIdParamName, DepositsApiConstants.notifyMaturityPeriodParamName,
+            DepositsApiConstants.notifyAssetMaturityParamName, DepositsApiConstants.enableMaturitySmsAlertsParamName));
+
     private static final Set<String> DEPOSIT_ACCOUNT_RECOMMENDED_DEPOSIT_PERIOD_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(DepositsApiConstants.localeParamName, DepositsApiConstants.depositPeriodParamName, DepositsApiConstants.depositPeriodFrequencyIdParamName));
 
@@ -302,6 +306,14 @@ public class DepositAccountTransactionDataValidator {
         baseDataValidator.reset().parameter(DepositsApiConstants.depositAmountParamName).value(depositAmount).notLessThanMin(BigDecimal.ONE).notNull();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    /**
+     * validate notification maturity data parameters
+     * @param command
+     */
+    public void validateNotificationMaturity(DataValidatorBuilder baseDataValidator,JsonCommand command) {
+        this.checkForUnsupportedParameters(command, MATURITY_NOTIFICATION_REQUEST_DATA_PARAMETERS);
     }
 
     private void validateDepositPeriod(DataValidatorBuilder baseDataValidator, JsonElement element) {

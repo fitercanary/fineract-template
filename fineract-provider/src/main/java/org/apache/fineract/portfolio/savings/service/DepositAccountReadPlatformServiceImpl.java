@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -114,6 +115,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
     private final RecurringDepositAccountMapper recurringDepositAccountRowMapper = new RecurringDepositAccountMapper();
     private final DepositAccountLookupMapper depositAccountLookupsRowMapper = new DepositAccountLookupMapper();
     private final DepositAccountForMaturityMapper depositAccountForMaturityRowMapper = new DepositAccountForMaturityMapper();
+    private final DepositAccountForMaturityNotificationMapper depositAccountForMaturityNotificationMapper
+            = new DepositAccountForMaturityNotificationMapper();
     private final PaginationParametersDataValidator paginationParametersDataValidator;
     private final PaginationHelper<DepositAccountData> paginationHelper = new PaginationHelper<>();
     private final SavingsAccountTransactionsMapper transactionsMapper;
@@ -243,6 +246,27 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                 SavingsAccountStatusType.ACTIVE.getValue());
     }
 
+    /**
+     * retrieving the fixed assets accounts that need to be notified.
+     * @return
+     */
+    @Override
+    public Collection<DepositAccountData> retrieveForMaturityNotification() {
+
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("SELECT ");
+        sqlBuilder.append(this.depositAccountForMaturityNotificationMapper.schema());
+        sqlBuilder.append(" WHERE da.deposit_type_enum in (?, ?) and da.status_enum = ?");
+
+        LocalDate today = DateUtils.getLocalDateOfTenant();
+        System.out.println("\n\ndate today: \n\n"+today);
+
+        return this.jdbcTemplate.query(sqlBuilder.toString(), this.depositAccountForMaturityNotificationMapper, formatter.print(today),
+                DepositAccountType.FIXED_DEPOSIT.getValue(), DepositAccountType.RECURRING_DEPOSIT.getValue(),
+                SavingsAccountStatusType.ACTIVE.getValue());
+    }
+
+    //TODO---to remove comment
     @Override
     public DepositAccountData retrieveOne(final DepositAccountType depositAccountType, final Long accountId) {
         try {
@@ -309,6 +333,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
     @Override
     public DepositAccountData retrieveOneWithChartSlabs(final DepositAccountType depositAccountType, Long accountId) {
+
         DepositAccountData depositAccount = this.retrieveOne(depositAccountType, accountId);
         DepositAccountInterestRateChartData chart = this.accountChartReadPlatformService.retrieveOneWithSlabsOnAccountId(accountId);
 
@@ -824,6 +849,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
             final CodeValueData blockNarration = CodeValueData.instance(blockNarrationId, blockNarrationValue);
 
+
             DepositAccountData depositAccountData = DepositAccountData.instance(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -859,7 +885,11 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("datp.deposit_period_frequency_enum as depositPeriodFrequencyTypeId, ");
             sqlBuilder.append("datp.on_account_closure_enum as onAccountClosureId, ");
             sqlBuilder.append("datp.transfer_interest_to_linked_account as transferInterestToSavings, ");
-            sqlBuilder.append("datp.interest_carried_forward_on_top_up as interestCarriedForward ");
+            sqlBuilder.append("datp.interest_carried_forward_on_top_up as interestCarriedForward, ");
+            sqlBuilder.append("datp.maturity_notification_period as notificationPeriod, ");
+            sqlBuilder.append("datp.maturity_notification_frequency as notificationPeriodTermId, ");
+            sqlBuilder.append("datp.next_maturity_notification_date as nextMaturityNotificationDate, ");
+            sqlBuilder.append("datp.maturity_sms_notification as enableMaturitySmsAlerts ");
 
             sqlBuilder.append(super.selectTablesSql());
 
@@ -908,11 +938,27 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Boolean transferInterestToSavings = rs.getBoolean("transferInterestToSavings");
             final BigDecimal interestCarriedForward = rs.getBigDecimal("interestCarriedForward");
 
+
+            LocalDate nextMaturityDate = JdbcSupport.getLocalDate(rs, "nextMaturityNotificationDate");
+            boolean notifyAssetMaturity = false;
+            boolean enableMaturitySmsAlerts = false;
+            EnumOptionData notificationTerm = null;
+            Integer notifyMaturityPeriod = null;
+
+            if (nextMaturityDate!=null){
+                notifyAssetMaturity = true;
+                enableMaturitySmsAlerts = rs.getBoolean("enableMaturitySmsAlerts");
+                notifyMaturityPeriod = JdbcSupport.getInteger(rs,"notificationPeriod");
+                Integer notificationPeriodTermId = JdbcSupport.getInteger(rs,"notificationPeriodTermId");
+                notificationTerm = SavingsEnumerations.lockinPeriodFrequencyType(notificationPeriodTermId);
+
+            }
+
             FixedDepositAccountData fixedDepositAccountData = FixedDepositAccountData.instance(depositAccountData,
                     preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm,
                     minDepositTermType, maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount,
                     maturityAmount, maturityDate, depositPeriod, depositPeriodFrequencyType, onAccountClosureType,
-                    transferInterestToSavings);
+                    transferInterestToSavings,notificationTerm,notifyAssetMaturity,enableMaturitySmsAlerts,notifyMaturityPeriod,nextMaturityDate);
             fixedDepositAccountData.setAccruedInterestCarriedForward(interestCarriedForward);
             return fixedDepositAccountData;
         }
@@ -1356,10 +1402,18 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = null;
             final Boolean transferInterestToSavings = false;
 
+
+            LocalDate nextMaturityDate = null;
+            boolean notifyAssetMaturity = false;
+            boolean enableMaturitySmsAlerts = false;
+            EnumOptionData notificationTerm = null;
+            Integer notifyMaturityPeriod = null;
+
             return FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
-                    depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings);
+                    depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings,notificationTerm,
+                    notifyAssetMaturity,enableMaturitySmsAlerts,notifyMaturityPeriod,nextMaturityDate);
         }
     }
 
@@ -1475,6 +1529,39 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("FROM m_savings_account da ");
             sqlBuilder.append("inner join m_deposit_account_term_and_preclosure dat on dat.savings_account_id = da.id ");
             sqlBuilder.append("and dat.maturity_date is not null and dat.maturity_date <= ? ");
+
+            this.schemaSql = sqlBuilder.toString();
+        }
+
+        public String schema() {
+            return this.schemaSql;
+        }
+
+        @Override
+        public DepositAccountData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            final Long id = rs.getLong("id");
+            final String name = rs.getString("accountNumber");
+            final Integer depositTypeId = JdbcSupport.getInteger(rs, "depositTypeId");
+            final EnumOptionData depositType = (depositTypeId == null) ? null : SavingsEnumerations.depositType(depositTypeId);
+
+            return DepositAccountData.lookup(id, name, depositType);
+        }
+    }
+
+    private static final class DepositAccountForMaturityNotificationMapper implements RowMapper<DepositAccountData> {
+
+        private final String schemaSql;
+
+
+        public DepositAccountForMaturityNotificationMapper() {
+            final StringBuilder sqlBuilder = new StringBuilder(200);
+            sqlBuilder.append("da.id as id, ");
+            sqlBuilder.append("da.account_no as accountNumber, ");
+            sqlBuilder.append("da.deposit_type_enum as depositTypeId ");
+            sqlBuilder.append("FROM m_savings_account da ");
+            sqlBuilder.append("inner join m_deposit_account_term_and_preclosure dat on dat.savings_account_id = da.id ");
+            sqlBuilder.append("and dat.next_maturity_notification_date is not null and dat.next_maturity_notification_date <= ? ");
 
             this.schemaSql = sqlBuilder.toString();
         }

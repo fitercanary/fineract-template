@@ -34,7 +34,6 @@ import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
-import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
@@ -257,6 +256,7 @@ public class FixedDepositAccount extends SavingsAccount {
             final boolean isPreMatureClosure, final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
             final Integer financialYearBeginningMonth) {
         final LocalDate maturityDate = calculateMaturityDate();
+        final LocalDate notificationDate = calculateMaturityNotificationDate(maturityDate);
         final LocalDate interestCalculationUpto = maturityDate.minusDays(1);
 
         // set end of day balance to maturity date for maturity interest
@@ -280,6 +280,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final Money maturityAmount = depositAmount.plus(totalInterestPayable);
 
         this.accountTermAndPreClosure.updateMaturityDetails(maturityAmount.getAmount(), maturityDate);
+        this.accountTermAndPreClosure.updateMaturityNotificationDate(notificationDate);
     }
 
     public void updateMaturityStatus(final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth) {
@@ -324,6 +325,35 @@ public class FixedDepositAccount extends SavingsAccount {
         }
 
         return maturityDate;
+    }
+
+    /**
+     * calculate date notification of maturity is going out.
+     * @return
+     * @param maturityDate
+     */
+    public LocalDate calculateMaturityNotificationDate(LocalDate maturityDate) {
+
+        LocalDate notificationData = null;
+        final Integer notificationPeriod = this.accountTermAndPreClosure.getMaturityNotificationPeriod();
+        switch (this.accountTermAndPreClosure.maturityNotificationPeriodFrequencyType()) {
+            case DAYS:
+                notificationData = maturityDate.minusDays(notificationPeriod);
+            break;
+            case WEEKS:
+                notificationData = maturityDate.minusWeeks(notificationPeriod);
+            break;
+            case MONTHS:
+                notificationData = maturityDate.minusMonths(notificationPeriod);
+            break;
+            case YEARS:
+                notificationData = maturityDate.minusYears(notificationPeriod);
+            break;
+            case INVALID:
+            break;
+        }
+
+        return notificationData;
     }
 
     private List<PostingPeriod> calculateInterestPayable(final MathContext mc, final LocalDate maturityDate,
@@ -860,6 +890,9 @@ public class FixedDepositAccount extends SavingsAccount {
 
     public DepositAccountTermAndPreClosure getAccountTermAndPreClosure() {
         return accountTermAndPreClosure;
+    }
+    public void setAccountTermAndPreClosure(DepositAccountTermAndPreClosure accountTermAndPreClosure) {
+        this.accountTermAndPreClosure = accountTermAndPreClosure;
     }
 
     public boolean shouldApplyPreclosureCharges() {

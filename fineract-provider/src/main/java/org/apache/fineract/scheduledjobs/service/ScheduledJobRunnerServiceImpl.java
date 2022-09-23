@@ -32,6 +32,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalidException;
+import org.apache.fineract.infrastructure.campaigns.email.service.EmailCampaignWritePlatformService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -102,6 +103,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final FromJsonHelper fromApiJsonHelper;
     private final VfdServiceApi vfdServiceApi;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
+    private final EmailCampaignWritePlatformService emailCampaignWritePlatformService;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -116,7 +118,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                          final TransactionClassificationReadPlatformService transactionClassificationReadPlatformService,
                                          final MessagingConfiguration messagingConfiguration,
                                          final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final FromJsonHelper fromApiJsonHelper,
-                                         final VfdServiceApi vfdServiceApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
+                                         final VfdServiceApi vfdServiceApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
+                                         final EmailCampaignWritePlatformService emailCampaignWritePlatformService) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -132,6 +135,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.vfdServiceApi = vfdServiceApi;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
+        this.emailCampaignWritePlatformService = emailCampaignWritePlatformService;
     }
 
     @Transactional
@@ -389,6 +393,35 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         }
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Deposit accounts affected by update: " + depositAccounts.size());
+    }
+
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.NOTIFY_CLIENT_ON_FIXED_DEPOSIT_MATURITY)
+    public void notifyMaturityDetailsOfDepositAccounts() {
+
+        final Collection<DepositAccountData> depositAccounts = this.depositAccountReadPlatformService.retrieveForMaturityNotification();
+        StringBuilder errorMsg = new StringBuilder();
+
+        for (final DepositAccountData depositAccount : depositAccounts) {
+            try {
+//                final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());
+                this.emailCampaignWritePlatformService.notifyFixedDepositMaturity(depositAccount);
+            } catch (final PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Maturity notification failed for account:" + depositAccount.accountNo() + " with message "
+                            + error.getDeveloperMessage());
+                }
+            } catch (final Exception ex) {
+                logger.error("Notification for fixed asset maturity failed for account number :" + depositAccount.accountNo()
+                        + " with message " + ex.getLocalizedMessage());
+                errorMsg.append("Notification for fixed asset maturity failed for account number :").append(depositAccount.accountNo())
+                        .append(" with message ").append(ex.getLocalizedMessage());
+            }
+        }
+
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Fixed Assets maturity alerts sent out: " + depositAccounts.size());
     }
 
     @Override

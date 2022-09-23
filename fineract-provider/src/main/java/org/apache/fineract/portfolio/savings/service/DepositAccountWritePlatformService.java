@@ -111,4 +111,5 @@ public interface DepositAccountWritePlatformService {
     
     List<SavingsAccountTransaction> getTaxTransactions(Long savingsId, DepositAccountType type, JsonQuery query);
 
+    CommandProcessingResult updateMaturityNotificationSettings(JsonCommand command);
 }

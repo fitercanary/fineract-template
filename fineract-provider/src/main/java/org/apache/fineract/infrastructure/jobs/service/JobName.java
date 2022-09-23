@@ -53,7 +53,8 @@ public enum JobName {
     CHECK_VALIDITY_OF_OVERDRAFT("Check Validity Of Overdraft"),
     POSTACCRUALINTERESTFORSAVINGS("Post Accrual Interest for Savings"),
     SAVINGSTRANSACTIONCLASSIFICATION("Savings Transaction Classification"), //
-    PROCESS_ACCOUNT_TRANSFERS("Process Account Transfers");
+    PROCESS_ACCOUNT_TRANSFERS("Process Account Transfers"),
+    NOTIFY_CLIENT_ON_FIXED_DEPOSIT_MATURITY("Notify Deposit Accounts Maturity");
 
     private final String name;
 

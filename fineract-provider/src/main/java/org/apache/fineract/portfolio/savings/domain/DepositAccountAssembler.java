@@ -114,7 +114,6 @@ public class DepositAccountAssembler {
      * {@link SavingsProduct}.
      */
     public SavingsAccount assembleFrom(FixedDepositApplicationReq fixedDepositApplicationReq, SavingsProduct product, DepositAccountType depositAccountType) {
-
         final AppUser submittedBy = this.context.authenticatedUser();
         final String accountNo = fixedDepositApplicationReq.getAccountNo();
         final String externalId = fixedDepositApplicationReq.getExternalId();
@@ -310,11 +309,15 @@ public class DepositAccountAssembler {
         final SavingsPeriodFrequencyType depositPeriodFrequency = fixedDepositApplicationReq.getDepositPeriodFrequency();
         final LocalDate expectedFirstDepositOnDate = fixedDepositApplicationReq.getExpectedFirstDepositOnDate();
         final Boolean transferInterest = fixedDepositApplicationReq.getTransferInterest();
-
+        final Integer maturityPeriod = fixedDepositApplicationReq.getMaturityPeriod();
+        final Boolean enableMaturitySmsAlerts = fixedDepositApplicationReq.getEnableMaturitySmsAlerts();
+        final SavingsPeriodFrequencyType maturityPeriodFrequency = fixedDepositApplicationReq.getMaturityPeriodFrequency();
+//        Boolean notifyAssetMaturity = fixedDepositApplicationReq.getNotifyAssetMaturity();
         // maturityAmount and maturityDate are calculated and updated in the account
+
         return DepositAccountTermAndPreClosure.createNew(updatedProductPreClosure, updatedProductTerm, null, depositAmount,
                 null, null, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, null,
-                transferInterest, fixedDepositApplicationReq.getInterestCarriedForward());
+                transferInterest, fixedDepositApplicationReq.getInterestCarriedForward(), maturityPeriod, maturityPeriodFrequency,enableMaturitySmsAlerts);
     }
 
     public DepositAccountRecurringDetail assembleAccountRecurringDetail(RecurringAccountDetailReq recurringAccountDetailReq,

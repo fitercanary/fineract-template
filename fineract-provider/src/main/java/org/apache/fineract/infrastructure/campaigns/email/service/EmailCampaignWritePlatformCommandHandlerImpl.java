@@ -23,6 +23,9 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
+import org.apache.fineract.infrastructure.sms.domain.SmsMessageRepository;
+import org.apache.fineract.infrastructure.sms.scheduler.SmsMessageScheduledJobService;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
@@ -104,6 +107,8 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     private final SavingsAccountRepository savingsAccountRepository;
     private final DepositAccountAssembler depositAccountAssembler;
     private final EmailMessageJobEmailService emailMessageJobEmailService;
+    private final SmsMessageRepository smsMessageRepository;
+    private final SmsMessageScheduledJobService smsMessageScheduledJobService;
 
     @Autowired
     public EmailCampaignWritePlatformCommandHandlerImpl(
@@ -115,6 +120,8 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
             final FromJsonHelper fromJsonHelper, final LoanRepository loanRepository,
             final SavingsAccountRepository savingsAccountRepository,
             final DepositAccountAssembler depositAccountAssembler,
+            final SmsMessageRepository smsMessageRepository,
+            final SmsMessageScheduledJobService smsMessageScheduledJobService,
             final EmailMessageJobEmailService emailMessageJobEmailService) {
         this.context = context;
         this.emailCampaignRepository = emailCampaignRepository;
@@ -130,6 +137,8 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         this.savingsAccountRepository = savingsAccountRepository;
         this.emailMessageJobEmailService = emailMessageJobEmailService;
         this.depositAccountAssembler = depositAccountAssembler;
+        this.smsMessageRepository = smsMessageRepository;
+        this.smsMessageScheduledJobService = smsMessageScheduledJobService;
     }
 
     @Transactional
@@ -755,11 +764,17 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
             EmailMessage emailMessage = EmailMessage.pendingEmail(
                     null, client, client.getStaff(), null,
                     "INVESTMENT MATURITY NOTIFICATION", message, client.emailAddress(), "EmailCampaign");
-            System.out.println("\n\n ====================> Email message:\n "+ fromJsonHelper.toJson(emailMessage));
             this.emailMessageRepository.saveAndFlush(emailMessage);
         }
         if (account.getAccountTermAndPreClosure().getMaturitySmsNotification()){
+
             //TODO IMPLEMENT SMS MODULE
+            String compileSms = "Message Maturity Notification Message";
+            SmsMessage smsMessage = SmsMessage.pendingSms("",null,client,null,compileSms,
+                    client.mobileNo(),null,false);
+            this.smsMessageRepository.save(smsMessage);
+//            smsMessageScheduledJobService.sendTriggeredMessage(Collections.singleton(smsMessage),
+//                    configurationService.getSMSProviderId());
         }
     }
 

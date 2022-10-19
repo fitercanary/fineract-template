@@ -16,11 +16,8 @@
 -- specific language governing permissions and limitations
 -- under the License.
 --
-ALTER TABLE `m_loan_transaction_repayment_schedule_mapping_history`
-    ADD COLUMN `installment_number` int NULL AFTER `new_loan_repayment_schedule_id`;
-
 ALTER TABLE `m_loan_transaction_repayment_schedule_mapping_history` DROP FOREIGN KEY `FK_mappings_history_m_repayment_schedule_new`;
 
 ALTER TABLE `m_loan_transaction_repayment_schedule_mapping_history`
-    MODIFY COLUMN `loan_transaction_id` bigint(20) NULL AFTER `id`,
+    MODIFY COLUMN `original_loan_repayment_schedule_id` bigint(20) NULL AFTER `loan_transaction_id`,
     ADD CONSTRAINT `FK_mappings_history_m_repayment_schedule_new` FOREIGN KEY (`new_loan_repayment_schedule_id`) REFERENCES `m_loan_repayment_schedule` (`id`) ON DELETE SET NULL ON UPDATE SET NULL;

@@ -1,0 +1,61 @@
+fineract-rest:
+  replicaCount: 1
+  repository: 814938215759.dkr.ecr.eu-west-2.amazonaws.com/fineract-rest-canary
+  pullPolicy: IfNotPresent
+  secretMounts:
+    - mountPath: "/usr/local/tomcat/bin/setenv.sh"
+      mountFileName: "setenv.sh"
+    - mountPath: "/usr/local/tomcat/conf/server.xml"
+      mountFileName: "server.xml"
+  tag: "canary-dev-0574e67d"
+  env:
+      # JPDA_ADDRESS: "8000"
+      JPDA_TRANSPORT: "dt_socket"
+      brokerUrl: "tcp://activemq:61616"
+  
+  service:
+    type: ClusterIP
+    servicePorts:
+      - port: 8080
+        containerPort: 8080
+        protocol: TCP
+        name: http
+      - port: 8443
+        containerPort: 8443
+        protocol: TCP
+        name: job-port
+        # service_disabled: true
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  serviceAccount:
+    name: application-sa
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 1024m
+      memory: 2048Mi
+    limits:
+      cpu: 2048m
+      memory: 4096Mi
+  # livenessProbe:
+  #   failureThreshold: 3
+  #   httpGet:
+  #     path: /fineract-provider/actuator/health/ 
+  #     port: 8080
+  #     scheme: HTTP
+  #   initialDelaySeconds: 90
+  #   periodSeconds: 120
+  #   successThreshold: 1
+  #   timeoutSeconds: 10
+  # startupProbe:
+  #   httpGet:
+  #     path: fineract-provider/actuator/health
+  #     port: http
+  #     scheme: HTTP
+  #   failureThreshold: 5
+  #   periodSeconds: 60

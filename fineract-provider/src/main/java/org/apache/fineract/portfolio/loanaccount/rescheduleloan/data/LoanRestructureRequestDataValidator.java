@@ -244,15 +244,15 @@ public class LoanRestructureRequestDataValidator {
             if (rescheduleFromDate != null) {
                  installment = loan.getRepaymentScheduleInstallment(rescheduleFromDate);
 
-                if (installment == null) {
-                    dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(
-                            "loan.repayment.schedule.installment.does.not.exist", "Repayment schedule installment does not exist");
-                }
+//                if (installment == null) { TODO -- we can restructure starting from already paid installments.
+//                    dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(
+//                            "loan.repayment.schedule.installment.does.not.exist", "Repayment schedule installment does not exist");
+//                }
 
-                if (installment != null && installment.isObligationsMet()) {
-                    dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(
-                            "loan.repayment.schedule.installment." + "obligation.met", "Repayment schedule installment obligation met");
-                }
+//                if (installment != null && installment.isObligationsMet()) {
+//                    dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(
+//                            "loan.repayment.schedule.installment." + "obligation.met", "Repayment schedule installment obligation met");
+//                }
             }
         }
 

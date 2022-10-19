@@ -110,9 +110,9 @@ public class LoanTransactionToRepaymentScheduleMapping extends AbstractPersistab
             transactionsScheduleHistory.add(historyMapping);
         }
 
-        transaction.updateLoanTransactionToRepaymentScheduleMappings(transactionScheduleMappings);
+//        transaction.updateLoanTransactionToRepaymentScheduleMappings(transactionScheduleMappings);
         transaction.updateLoanTransactionToRepaymentScheduleMappingsHistory(transactionsScheduleHistory);
-        transaction.getLoanTransactionToRepaymentScheduleMappings().clear();
+        transaction.reverse();
     }
 
     private BigDecimal defaultToZeroIfNull(final BigDecimal value) {

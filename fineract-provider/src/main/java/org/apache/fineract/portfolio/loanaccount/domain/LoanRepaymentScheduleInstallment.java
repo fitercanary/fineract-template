@@ -550,6 +550,16 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         return principalDue;
     }
 
+    public Money writeOffPaidPrincipal(final LocalDate transactionDate, final MonetaryCurrency currency) {
+
+        final Money principalDue = getPrincipalCompleted(currency);
+        this.principalWrittenOff = defaultToNullIfZero(principalDue.getAmount());
+
+        checkIfRepaymentPeriodObligationsAreMet(transactionDate, currency);
+
+        return principalDue;
+    }
+
     public Money writeOffOutstandingInterest(final LocalDate transactionDate, final MonetaryCurrency currency) {
 
         final Money interestDue = getInterestOutstanding(currency);
@@ -558,6 +568,16 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         checkIfRepaymentPeriodObligationsAreMet(transactionDate, currency);
 
         return interestDue;
+    }
+
+    public Money writeOffPaidInterest(final LocalDate transactionDate, final MonetaryCurrency currency) {
+
+        final Money interestPaid = getInterestPaid(currency);
+        this.interestWrittenOff = defaultToNullIfZero(interestPaid.getAmount());
+
+        checkIfRepaymentPeriodObligationsAreMet(transactionDate, currency);
+
+        return interestPaid;
     }
 
     public Money writeOffOutstandingFeeCharges(final LocalDate transactionDate, final MonetaryCurrency currency) {
@@ -687,6 +707,14 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 
     public void updatePrincipal(final BigDecimal principal) {
         this.principal = principal;
+    }
+
+    public void updatePrincipalCompleted(final BigDecimal principalCompleted) {
+        this.principalCompleted = principalCompleted;
+    }
+
+    public void updateInterestCompleted(final BigDecimal interestCompleted) {
+        this.interestPaid = interestCompleted;
     }
 
     public static Comparator<LoanRepaymentScheduleInstallment> installmentNumberComparator = new Comparator<LoanRepaymentScheduleInstallment>() {

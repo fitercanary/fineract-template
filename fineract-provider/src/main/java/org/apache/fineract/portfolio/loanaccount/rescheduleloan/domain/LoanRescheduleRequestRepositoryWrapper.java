@@ -18,10 +18,13 @@
  */
 package org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain;
 
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.exception.LoanRescheduleRequestNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class LoanRescheduleRequestRepositoryWrapper {
@@ -36,6 +39,14 @@ public class LoanRescheduleRequestRepositoryWrapper {
     public LoanRescheduleRequest findOneWithNotFoundDetection(final Long id) {
         return this.findOneWithNotFoundDetection(id, false);
     }
+
+    public LoanRescheduleRequest findExistingRestructureRequest(final Loan loan, final Integer status) {
+        List<LoanRescheduleRequest> allByLoan = this.loanRescheduleRequestRepository.findAllByLoanAndStatusEnum(loan, status);
+        if (allByLoan!=null && allByLoan.size()>0){
+            return allByLoan.get(0);
+        }else return null;
+    }
+
 
     @Transactional(readOnly = true)
     public LoanRescheduleRequest findOneWithNotFoundDetection(final Long id, boolean loadLazyCollections) {

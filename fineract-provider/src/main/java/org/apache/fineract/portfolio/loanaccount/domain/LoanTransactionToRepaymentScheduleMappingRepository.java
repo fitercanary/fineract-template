@@ -16,19 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain;
+package org.apache.fineract.portfolio.loanaccount.domain;
 
-import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface LoanRescheduleRequestRepository extends JpaRepository<LoanRescheduleRequest, Long>, JpaSpecificationExecutor<LoanRescheduleRequest> {
-    List<LoanRescheduleRequest> findAllByLoanAndStatusEnum(Loan loan,Integer status);
+public interface LoanTransactionToRepaymentScheduleMappingRepository extends JpaRepository<LoanTransactionToRepaymentScheduleMapping, Long>,
+        JpaSpecificationExecutor<LoanTransactionToRepaymentScheduleMapping> {
+    // no added behaviour
 
-    LoanRescheduleRequest getLoanRescheduleRequestById(Long requestId);
-
+    List<LoanTransactionToRepaymentScheduleMapping> findAllByloanRepaymentscheduleInstallment(LoanRepaymentScheduleInstallment installment);
 }

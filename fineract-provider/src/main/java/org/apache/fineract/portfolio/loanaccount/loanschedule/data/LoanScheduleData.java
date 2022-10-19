@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 
 /**
  * Immutable data object to represent aspects of a loan schedule such as:
@@ -63,6 +64,7 @@ public class LoanScheduleData {
     private final Collection<LoanSchedulePeriodData> periods;
 
     private Collection<LoanSchedulePeriodData> futurePeriods;
+    private LoanRescheduleRequest loanRescheduleRequest;
 
     public LoanScheduleData(final CurrencyData currency, final Collection<LoanSchedulePeriodData> periods, final Integer loanTermInDays,
             final BigDecimal totalPrincipalDisbursed, final BigDecimal totalPrincipalExpected, final BigDecimal totalPrincipalPaid,
@@ -115,5 +117,9 @@ public class LoanScheduleData {
 
     public void updateFuturePeriods(Collection<LoanSchedulePeriodData> futurePeriods) {
         this.futurePeriods = futurePeriods;
+    }
+
+    public void updateLoanRescheduleRequest(LoanRescheduleRequest loanRescheduleRequest) {
+        this.loanRescheduleRequest= loanRescheduleRequest;
     }
 }

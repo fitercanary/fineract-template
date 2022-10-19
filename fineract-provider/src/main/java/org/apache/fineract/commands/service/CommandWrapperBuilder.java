@@ -2474,11 +2474,27 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createLoanRestructureRequest(final String entityName) {
+        this.actionName = "CREATE";
+        this.entityName = entityName;
+        this.entityId = null;
+        this.href = "/restructureloans";
+        return this;
+    }
+
     public CommandWrapperBuilder approveLoanRescheduleRequest(final String entityName, final Long requestId) {
         this.actionName = "APPROVE";
         this.entityName = entityName;
         this.entityId = requestId;
         this.href = "/rescheduleloans/" + requestId + "?command=approve";
+        return this;
+    }
+
+    public CommandWrapperBuilder approveLoanRestructureRequest(final String entityName, final Long requestId) {
+        this.actionName = "APPROVE";
+        this.entityName = entityName;
+        this.entityId = requestId;
+        this.href = "/restructureloans/" + requestId + "?command=approve";
         return this;
     }
 

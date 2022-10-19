@@ -30,12 +30,15 @@ import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformSer
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
+import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.RescheduleLoansApiConstants;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestData;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestEnumerations;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestStatusEnumData;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestTimelineData;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureScheduleDetails;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -174,7 +177,7 @@ public class LoanRescheduleRequestReadPlatformServiceImpl implements LoanResched
 
             return LoanRescheduleRequestData.instance(id, loanId, statusEnum, rescheduleFromInstallment, rescheduleFromDate,
                     rescheduleReasonCodeValue, rescheduleReasonComment, timeline, clientName, loanAccountNumber, clientId,
-                    recalculateInterest, rescheduleReasons, loanTermVariations);
+                    recalculateInterest, rescheduleReasons, loanTermVariations, null,null,null);
         }
         
         private LoanTermVariationsData fetchLoanTermVariation(final ResultSet rs) throws SQLException {
@@ -257,7 +260,8 @@ public class LoanRescheduleRequestReadPlatformServiceImpl implements LoanResched
     }
 
     @Override
-    public LoanRescheduleRequestData retrieveAllRescheduleReasons(String loanRescheduleReason) {
+    public LoanRescheduleRequestData retrieveAllRescheduleReasons(String loanRescheduleReason,final LoanTransactionData loanTransactionData, final LoanRestructureScheduleDetails restructureScheduleDetails,
+                                                                  final LoanRescheduleRequest loanRescheduleRequest) {
         final List<CodeValueData> rescheduleReasons = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(loanRescheduleReason));
         final Long id = null;
@@ -274,9 +278,10 @@ public class LoanRescheduleRequestReadPlatformServiceImpl implements LoanResched
         final Boolean recalculateInterest = null;
         final Collection<LoanTermVariationsData> loanTermVariationsData = null;
 
+        
         return LoanRescheduleRequestData.instance(id, loanId, statusEnum, rescheduleFromInstallment, rescheduleFromDate,
                 rescheduleReasonCodeValue, rescheduleReasonComment, timeline, clientName, loanAccountNumber, clientId, recalculateInterest,
-                rescheduleReasons, loanTermVariationsData);
+                rescheduleReasons, loanTermVariationsData,loanTransactionData,restructureScheduleDetails,loanRescheduleRequest);
     }
 
     @Override

@@ -458,6 +458,14 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         return this.startDate;
     }
 
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
     public Date getEndDate() {
         return this.endDate;
     }

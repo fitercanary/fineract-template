@@ -27,6 +27,7 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanSchedulePeriodData;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 
 /**
  * Domain representation of a Loan Schedule (not used for persistence)
@@ -44,6 +45,7 @@ public final class LoanScheduleModel {
     private final BigDecimal totalPenaltyChargesCharged;
     private final BigDecimal totalRepaymentExpected;
     private final BigDecimal totalOutstanding;
+    private final LoanRescheduleRequest loanRescheduleRequest;
 
     public static LoanScheduleModel from(final Collection<LoanScheduleModelPeriod> periods, final ApplicationCurrency applicationCurrency,
             final int loanTermInDays, final Money principalDisbursed, final BigDecimal totalPrincipalExpected,
@@ -72,6 +74,15 @@ public final class LoanScheduleModel {
                 loanScheduleModel.totalInterestCharged, loanScheduleModel.totalFeeChargesCharged,
                 loanScheduleModel.totalPenaltyChargesCharged, loanScheduleModel.totalRepaymentExpected, loanScheduleModel.totalOutstanding);
     }
+    public static LoanScheduleModel withLoanRestructureModelPeriods(final Collection<LoanScheduleModelPeriod> periods,
+            final LoanScheduleModel loanScheduleModel,final LoanRescheduleRequest loanRescheduleRequest) {
+
+        return new LoanScheduleModel(periods, loanScheduleModel.applicationCurrency, loanScheduleModel.loanTermInDays,
+                loanScheduleModel.totalPrincipalDisbursed, loanScheduleModel.totalPrincipalExpected, loanScheduleModel.totalPrincipalPaid,
+                loanScheduleModel.totalInterestCharged, loanScheduleModel.totalFeeChargesCharged,
+                loanScheduleModel.totalPenaltyChargesCharged, loanScheduleModel.totalRepaymentExpected,
+                loanScheduleModel.totalOutstanding, loanRescheduleRequest);
+    }
 
     private LoanScheduleModel(final Collection<LoanScheduleModelPeriod> periods, final ApplicationCurrency applicationCurrency,
             final int loanTermInDays, final Money principalDisbursed, final BigDecimal totalPrincipalExpected,
@@ -88,6 +99,26 @@ public final class LoanScheduleModel {
         this.totalPenaltyChargesCharged = totalPenaltyChargesCharged;
         this.totalRepaymentExpected = totalRepaymentExpected;
         this.totalOutstanding = totalOutstanding;
+        this.loanRescheduleRequest = null;
+    }
+
+    private LoanScheduleModel(final Collection<LoanScheduleModelPeriod> periods, final ApplicationCurrency applicationCurrency,
+            final int loanTermInDays, final Money principalDisbursed, final BigDecimal totalPrincipalExpected,
+            final BigDecimal totalPrincipalPaid, final BigDecimal totalInterestCharged, final BigDecimal totalFeeChargesCharged,
+            final BigDecimal totalPenaltyChargesCharged, final BigDecimal totalRepaymentExpected, final BigDecimal totalOutstanding,
+            final LoanRescheduleRequest loanRescheduleRequest) {
+        this.periods = periods;
+        this.applicationCurrency = applicationCurrency;
+        this.loanTermInDays = loanTermInDays;
+        this.totalPrincipalDisbursed = principalDisbursed;
+        this.totalPrincipalExpected = totalPrincipalExpected;
+        this.totalPrincipalPaid = totalPrincipalPaid;
+        this.totalInterestCharged = totalInterestCharged;
+        this.totalFeeChargesCharged = totalFeeChargesCharged;
+        this.totalPenaltyChargesCharged = totalPenaltyChargesCharged;
+        this.totalRepaymentExpected = totalRepaymentExpected;
+        this.totalOutstanding = totalOutstanding;
+        this.loanRescheduleRequest = loanRescheduleRequest;
     }
 
     public LoanScheduleData toData() {
@@ -107,10 +138,12 @@ public final class LoanScheduleModel {
         final BigDecimal totalPaidInAdvance = null;
         final BigDecimal totalPaidLate = null;
 
-        return new LoanScheduleData(currency, periodsData, this.loanTermInDays, this.totalPrincipalDisbursed.getAmount(),
+        LoanScheduleData loanScheduleData = new LoanScheduleData(currency, periodsData, this.loanTermInDays, this.totalPrincipalDisbursed.getAmount(),
                 this.totalPrincipalExpected, this.totalPrincipalPaid, this.totalInterestCharged, this.totalFeeChargesCharged,
                 this.totalPenaltyChargesCharged, totalWaived, totalWrittenOff, this.totalRepaymentExpected, totalRepayment,
                 totalPaidInAdvance, totalPaidLate, this.totalOutstanding);
+//        loanScheduleData.updateLoanRescheduleRequest(loanRescheduleRequest);
+        return loanScheduleData;
     }
 
     public Collection<LoanScheduleModelPeriod> getPeriods() {
@@ -125,6 +158,6 @@ public final class LoanScheduleModel {
     public BigDecimal getTotalInterestCharged() {
         return this.totalInterestCharged;
     }
-    
+
     
 }

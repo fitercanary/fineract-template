@@ -5572,6 +5572,70 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return loanApplicationTerms;
     }
 
+    /**
+     * Loan application terms for restructuring loans
+     * @param scheduleGeneratorDTO
+     * @return
+     */
+    public LoanApplicationTerms constructLoanRestructureTerms(final ScheduleGeneratorDTO scheduleGeneratorDTO) {
+        final Integer loanTermFrequency = this.termFrequency;
+        final PeriodFrequencyType loanTermPeriodFrequencyType = PeriodFrequencyType.fromInt(this.termPeriodFrequencyType);
+        NthDayType nthDayType = null;
+        DayOfWeekType dayOfWeekType = null;
+        final List<DisbursementData> disbursementData = new ArrayList<>();
+        for (LoanDisbursementDetails disbursementDetails : this.disbursementDetails) {
+            disbursementData.add(disbursementDetails.toData());
+        }
+
+        Calendar calendar = scheduleGeneratorDTO.getCalendar();
+        if (calendar != null) {
+            nthDayType = CalendarUtils.getRepeatsOnNthDayOfMonth(calendar.getRecurrence());
+            dayOfWeekType = DayOfWeekType.fromInt(CalendarUtils.getRepeatsOnDay(calendar.getRecurrence()).getValue());
+        }
+        HolidayDetailDTO holidayDetailDTO = scheduleGeneratorDTO.getHolidayDetailDTO();
+        CalendarInstance restCalendarInstance = null;
+        CalendarInstance compoundingCalendarInstance = null;
+        RecalculationFrequencyType recalculationFrequencyType = null;
+        InterestRecalculationCompoundingMethod compoundingMethod = null;
+        RecalculationFrequencyType compoundingFrequencyType = null;
+        LoanRescheduleStrategyMethod rescheduleStrategyMethod = null;
+        CalendarHistoryDataWrapper calendarHistoryDataWrapper = null;
+        boolean allowCompoundingOnEod = false;
+        if (this.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
+            restCalendarInstance = scheduleGeneratorDTO.getCalendarInstanceForInterestRecalculation();
+            compoundingCalendarInstance = scheduleGeneratorDTO.getCompoundingCalendarInstance();
+            recalculationFrequencyType = this.loanInterestRecalculationDetails.getRestFrequencyType();
+            compoundingMethod = this.loanInterestRecalculationDetails.getInterestRecalculationCompoundingMethod();
+            compoundingFrequencyType = this.loanInterestRecalculationDetails.getCompoundingFrequencyType();
+            rescheduleStrategyMethod = this.loanInterestRecalculationDetails.getRescheduleStrategyMethod();
+            allowCompoundingOnEod = this.loanInterestRecalculationDetails.allowCompoundingOnEod();
+            calendarHistoryDataWrapper = scheduleGeneratorDTO.getCalendarHistoryDataWrapper();
+        }
+        calendar = scheduleGeneratorDTO.getCalendar();
+        calendarHistoryDataWrapper = scheduleGeneratorDTO.getCalendarHistoryDataWrapper();
+
+        BigDecimal annualNominalInterestRate = this.loanRepaymentScheduleDetail.getAnnualNominalInterestRate();
+        FloatingRateDTO floatingRateDTO = scheduleGeneratorDTO.getFloatingRateDTO();
+        List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
+        annualNominalInterestRate = constructLoanTermVariations(floatingRateDTO, annualNominalInterestRate, loanTermVariations);
+        LocalDate interestChargedFromDate = getInterestChargedFromDate();
+        if (interestChargedFromDate == null && scheduleGeneratorDTO.isInterestChargedFromDateAsDisbursementDateEnabled()) {
+            interestChargedFromDate = scheduleGeneratorDTO.getRecalculateFrom();
+        }
+
+        final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFromRestructure(scheduleGeneratorDTO.getApplicationCurrency(),
+                loanTermFrequency, loanTermPeriodFrequencyType, nthDayType, dayOfWeekType, scheduleGeneratorDTO.getRecalculateFrom(),
+                getExpectedFirstRepaymentOnDate(), scheduleGeneratorDTO.getCalculatedRepaymentsStartingFromDate(), getInArrearsTolerance(),
+                this.loanRepaymentScheduleDetail, this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount, disbursementData,
+                this.maxOutstandingLoanBalance, interestChargedFromDate, this.loanProduct.getPrincipalThresholdForLastInstallment(),
+                this.loanProduct.getInstallmentAmountInMultiplesOf(), recalculationFrequencyType, restCalendarInstance, compoundingMethod,
+                compoundingCalendarInstance, compoundingFrequencyType, this.loanProduct.preCloseInterestCalculationStrategy(),
+                rescheduleStrategyMethod, calendar, getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations,
+                calendarHistoryDataWrapper, scheduleGeneratorDTO.getNumberOfdays(), scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(),
+                holidayDetailDTO, allowCompoundingOnEod, summary);
+        return loanApplicationTerms;
+    }
+
     public BigDecimal constructLoanTermVariations(FloatingRateDTO floatingRateDTO, BigDecimal annualNominalInterestRate,
             List<LoanTermVariationsData> loanTermVariations) {
         for (LoanTermVariations variationTerms : this.loanTermVariations) {

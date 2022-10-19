@@ -233,6 +233,7 @@ public class LoanAccountData {
 
 	private Integer specificGraceOnInterestPaymentPeriod;
 	private EnumOptionData specificGraceOnInterestPaymentPeriodType;
+	private Integer rescheduleRequestId;
 
 	public static LoanAccountData importInstanceIndividual(EnumOptionData loanTypeEnumOption, Long clientId, Long productId,
 														   Long loanOfficerId, LocalDate submittedOnDate,

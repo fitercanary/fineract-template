@@ -98,8 +98,16 @@ public class LoanRescheduleRequest extends AbstractPersistableCustom<Long> {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch=FetchType.EAGER)
     @JoinColumn(name = "loan_reschedule_request_id", nullable = false)
     private Set<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings = new HashSet<>();
-	
-    /**
+
+	@Column(name = "is_restructure_request")
+	private Boolean restructureRequest;
+
+	@Temporal(TemporalType.DATE)
+	@Column(name = "reschedule_to_date")
+	private Date rescheduleToDate;
+
+
+	/**
      * LoanRescheduleRequest constructor
      **/
     protected LoanRescheduleRequest() {}
@@ -110,7 +118,7 @@ public class LoanRescheduleRequest extends AbstractPersistableCustom<Long> {
     private LoanRescheduleRequest(final Loan loan, final Integer statusEnum, final Integer rescheduleFromInstallment,
             final Date rescheduleFromDate, final Boolean recalculateInterest, final CodeValue rescheduleReasonCodeValue,
             final String rescheduleReasonComment, final Date submittedOnDate, final AppUser submittedByUser, final Date approvedOnDate,
-            final AppUser approvedByUser, final Date rejectedOnDate, AppUser rejectedByUser) {
+            final AppUser approvedByUser, final Date rejectedOnDate, AppUser rejectedByUser,final Boolean restructureRequest,final Date rescheduleToDate) {
         this.loan = loan;
         this.statusEnum = statusEnum;
         this.rescheduleFromInstallment = rescheduleFromInstallment;
@@ -124,6 +132,8 @@ public class LoanRescheduleRequest extends AbstractPersistableCustom<Long> {
         this.rejectedOnDate = rejectedOnDate;
         this.rejectedByUser = rejectedByUser;
         this.recalculateInterest = recalculateInterest;
+        this.restructureRequest = restructureRequest;
+        this.rescheduleToDate = rescheduleToDate;
     }
 	
     /**
@@ -132,11 +142,12 @@ public class LoanRescheduleRequest extends AbstractPersistableCustom<Long> {
     public static LoanRescheduleRequest instance(final Loan loan, final Integer statusEnum, final Integer rescheduleFromInstallment,
             final Date rescheduleFromDate, final Boolean recalculateInterest, final CodeValue rescheduleReasonCodeValue,
             final String rescheduleReasonComment, final Date submittedOnDate, final AppUser submittedByUser, final Date approvedOnDate,
-            final AppUser approvedByUser, final Date rejectedOnDate, AppUser rejectedByUser) {
+            final AppUser approvedByUser, final Date rejectedOnDate, AppUser rejectedByUser,final Boolean restructureRequest,
+			final Date rescheduleToDate) {
 
         return new LoanRescheduleRequest(loan, statusEnum, rescheduleFromInstallment, rescheduleFromDate, recalculateInterest,
                 rescheduleReasonCodeValue, rescheduleReasonComment, submittedOnDate, submittedByUser, approvedOnDate, approvedByUser,
-                rejectedOnDate, rejectedByUser);
+                rejectedOnDate, rejectedByUser, restructureRequest, rescheduleToDate);
     }
 	
 	/** 
@@ -173,7 +184,22 @@ public class LoanRescheduleRequest extends AbstractPersistableCustom<Long> {
 		
 		return localDate;
 	}
-	
+
+	/**
+	 * get new end date incase of change of maturity date
+	 * @return
+	 */
+	public LocalDate getRescheduleToDate() {
+
+		LocalDate localDate = null;
+
+		if(this.rescheduleToDate != null) {
+			localDate = new LocalDate(this.rescheduleToDate);
+		}
+
+		return localDate;
+	}
+
 	/** 
 	 * @return the reschedule reason code value object 
 	 **/
@@ -253,7 +279,19 @@ public class LoanRescheduleRequest extends AbstractPersistableCustom<Long> {
 		
 		return recalculateInterest;
 	}
-	
+		/**
+	 * @return the recalculate interest option (true/false)
+	 **/
+	public Boolean getRestructureRequest() {
+		boolean restructureRequest = false;
+
+		if(this.restructureRequest != null) {
+			restructureRequest = this.restructureRequest;
+		}
+
+		return restructureRequest;
+	}
+
 	/** 
 	 * @return the user that rejected the request 
 	 **/

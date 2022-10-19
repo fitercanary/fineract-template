@@ -134,4 +134,7 @@ public class LoanRepaymentScheduleHistory extends AbstractPersistableCustom<Long
 
     }
 
+    public Integer getInstallmentNumber() {
+        return installmentNumber;
+    }
 }

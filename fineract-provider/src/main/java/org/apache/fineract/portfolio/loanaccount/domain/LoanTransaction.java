@@ -38,7 +38,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
@@ -144,6 +143,10 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "loan_transaction_id", referencedColumnName = "id", nullable = false)
     private Set<LoanTransactionToRepaymentScheduleMapping> loanTransactionToRepaymentScheduleMappings = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "loan_transaction_id", referencedColumnName = "id", nullable = false)
+    private Set<LoanTransactionToRepaymentScheduleMappingHistory> loanTransactionToRepaymentScheduleMappingsHistory = new HashSet<>();
 
     @Column(name = "is_account_transfer", nullable = false)
     private Boolean isAccountTransfer = false;
@@ -777,6 +780,18 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         this.loanTransactionToRepaymentScheduleMappings.retainAll(retainMappings);
     }
 
+    /**
+     * save transactions history.
+     * @param mappings
+     */
+    public void updateLoanTransactionToRepaymentScheduleMappingsHistory(final Collection<LoanTransactionToRepaymentScheduleMappingHistory> mappings) {
+        Collection<LoanTransactionToRepaymentScheduleMappingHistory> retainMappings = new ArrayList<>();
+        for (LoanTransactionToRepaymentScheduleMappingHistory updatedrepaymentScheduleMapping : mappings) {
+            updateMapingHistoryDetail(retainMappings, updatedrepaymentScheduleMapping);
+        }
+        this.loanTransactionToRepaymentScheduleMappingsHistory.retainAll(retainMappings);
+    }
+
     private boolean updateMapingDetail(final Collection<LoanTransactionToRepaymentScheduleMapping> retainMappings,
             final LoanTransactionToRepaymentScheduleMapping updatedrepaymentScheduleMapping) {
         boolean isMappingUpdated = false;
@@ -799,8 +814,31 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         return isMappingUpdated;
     }
 
+    //update history of mappings
+    private boolean updateMapingHistoryDetail(final Collection<LoanTransactionToRepaymentScheduleMappingHistory> retainMappings,
+            final LoanTransactionToRepaymentScheduleMappingHistory updatedrepaymentScheduleMapping) {
+        boolean isMappingUpdated = false;
+        for (LoanTransactionToRepaymentScheduleMappingHistory repaymentScheduleMapping : this.loanTransactionToRepaymentScheduleMappingsHistory) {
+                repaymentScheduleMapping.setComponents(updatedrepaymentScheduleMapping.getPrincipalPortion(),
+                        updatedrepaymentScheduleMapping.getInterestPortion(), updatedrepaymentScheduleMapping.getFeeChargesPortion(),
+                        updatedrepaymentScheduleMapping.getPenaltyChargesPortion());
+                isMappingUpdated = true;
+                retainMappings.add(repaymentScheduleMapping);
+                break;
+        }
+        if (!isMappingUpdated) {
+            this.loanTransactionToRepaymentScheduleMappingsHistory.add(updatedrepaymentScheduleMapping);
+            retainMappings.add(updatedrepaymentScheduleMapping);
+        }
+        return isMappingUpdated;
+    }
+
     public Set<LoanTransactionToRepaymentScheduleMapping> getLoanTransactionToRepaymentScheduleMappings() {
         return this.loanTransactionToRepaymentScheduleMappings;
+    }
+
+    public Set<LoanTransactionToRepaymentScheduleMappingHistory> getLoanTransactionToRepaymentScheduleMappingsHistory() {
+        return this.loanTransactionToRepaymentScheduleMappingsHistory;
     }
 
     public Boolean isAllowTypeTransactionAtTheTimeOfLastUndo() {

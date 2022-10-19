@@ -18,12 +18,9 @@
  */
 package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
 
-import java.math.MathContext;
-import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
+import com.google.gson.Gson;
+import org.apache.fineract.infrastructure.core.serialization.FromApiJsonDeserializer;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
@@ -45,24 +42,32 @@ import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanResch
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.exception.LoanRescheduleRequestNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.joda.time.LocalDate;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 @Service
-public class LoanReschedulePreviewPlatformServiceImpl implements LoanReschedulePreviewPlatformService {
+public class LoanRestructurePreviewPlatformServiceImpl implements LoanRestructurePreviewPlatformService {
 
     private final LoanRescheduleRequestRepositoryWrapper loanRescheduleRequestRepository;
     private final LoanUtilService loanUtilService;
     private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
     private final LoanScheduleGeneratorFactory loanScheduleFactory;
     private final LoanSummaryWrapper loanSummaryWrapper;
+    private FromJsonHelper fromJsonHelper;
     private final DefaultScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
 
     @Autowired
-    public LoanReschedulePreviewPlatformServiceImpl(final LoanRescheduleRequestRepositoryWrapper loanRescheduleRequestRepository,
-            final LoanUtilService loanUtilService,
-            final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
-            final LoanScheduleGeneratorFactory loanScheduleFactory, final LoanSummaryWrapper loanSummaryWrapper) {
+    public LoanRestructurePreviewPlatformServiceImpl(final LoanRescheduleRequestRepositoryWrapper loanRescheduleRequestRepository,
+                                                     final LoanUtilService loanUtilService,
+                                                     final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
+                                                     final LoanScheduleGeneratorFactory loanScheduleFactory, final LoanSummaryWrapper loanSummaryWrapper) {
         this.loanRescheduleRequestRepository = loanRescheduleRequestRepository;
         this.loanUtilService = loanUtilService;
         this.loanRepaymentScheduleTransactionProcessorFactory = loanRepaymentScheduleTransactionProcessorFactory;
@@ -71,7 +76,7 @@ public class LoanReschedulePreviewPlatformServiceImpl implements LoanRescheduleP
     }
 
     @Override
-    public LoanScheduleModel previewLoanReschedule(Long requestId) {
+    public LoanScheduleModel previewLoanRestructure(Long requestId) {
         final LoanRescheduleRequest loanRescheduleRequest = this.loanRescheduleRequestRepository.findOneWithNotFoundDetection(
                 requestId, true);
 
@@ -79,11 +84,11 @@ public class LoanReschedulePreviewPlatformServiceImpl implements LoanRescheduleP
 
         Loan loan = loanRescheduleRequest.getLoan();
 
-        ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan,
-                loanRescheduleRequest.getRescheduleFromDate());
+        ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildRestructureScheduleGeneratorDTO(loan,
+                loanRescheduleRequest.getRescheduleFromDate(), loanRescheduleRequest.getRescheduleToDate());
         LocalDate rescheduleFromDate = null;
         List<LoanTermVariationsData> removeLoanTermVariationsData = new ArrayList<>();
-        final LoanApplicationTerms loanApplicationTerms = loan.constructLoanApplicationTerms(scheduleGeneratorDTO);
+        final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);
         LoanTermVariations dueDateVariationInCurrentRequest = loanRescheduleRequest.getDueDateTermVariationIfExists();
         if(dueDateVariationInCurrentRequest != null){
             for (LoanTermVariationsData loanTermVariation : loanApplicationTerms.getLoanTermVariations().getDueDateVariation()) {
@@ -133,13 +138,12 @@ public class LoanReschedulePreviewPlatformServiceImpl implements LoanRescheduleP
         final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
         final LoanLifecycleStateMachine loanLifecycleStateMachine = null;
         loan.setHelpers(loanLifecycleStateMachine, this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
-        final LoanScheduleDTO loanSchedule = loanScheduleGenerator.rescheduleNextInstallments(mathContext, loanApplicationTerms,
+        final LoanScheduleDTO loanSchedule = loanScheduleGenerator.rescheduleNextInstallmentsRestructure(mathContext, loanApplicationTerms,
                 loan, loanApplicationTerms.getHolidayDetailDTO(),
-                loanRepaymentScheduleTransactionProcessor, rescheduleFromDate);
+                loanRepaymentScheduleTransactionProcessor, rescheduleFromDate, loanRescheduleRequest.getRescheduleToDate());
         final LoanScheduleModel loanScheduleModel = loanSchedule.getLoanScheduleModel();
-        LoanScheduleModel loanScheduleModels = LoanScheduleModel.withLoanScheduleModelPeriods(loanScheduleModel.getPeriods(),
-                loanScheduleModel);
-        
+        LoanScheduleModel loanScheduleModels = LoanScheduleModel.withLoanRestructureModelPeriods(loanScheduleModel.getPeriods(),
+                loanScheduleModel,loanRescheduleRequest);
         return loanScheduleModels;
     }
 

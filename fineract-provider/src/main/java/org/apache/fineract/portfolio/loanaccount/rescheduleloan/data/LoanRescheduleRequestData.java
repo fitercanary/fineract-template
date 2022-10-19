@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -22,6 +22,8 @@ import java.util.Collection;
 
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
+import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.joda.time.LocalDate;
 
 /**
@@ -45,16 +47,24 @@ public class LoanRescheduleRequestData {
     private final Collection<CodeValueData> rescheduleReasons;
     @SuppressWarnings("unused")
     private final Collection<LoanTermVariationsData> loanTermVariationsData;
-    
+
+    private LoanTransactionData loanTransactionData;
+    private LoanRestructureScheduleDetails restructureScheduleDetails;
+    private LoanRescheduleRequest loanRescheduleRequest;
+
     /**
      * LoanRescheduleRequestData constructor
+     *
      * @param loanTermVariationsData TODO
      **/
-    private LoanRescheduleRequestData(Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum,
+    private LoanRescheduleRequestData(
+            Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum,
             Integer rescheduleFromInstallment, LocalDate rescheduleFromDate, CodeValueData rescheduleReasonCodeValue,
             String rescheduleReasonComment, LoanRescheduleRequestTimelineData timeline, final String clientName,
             final String loanAccountNumber, final Long clientId, final Boolean recalculateInterest,
-            Collection<CodeValueData> rescheduleReasons, final Collection<LoanTermVariationsData> loanTermVariationsData) {
+            Collection<CodeValueData> rescheduleReasons, final Collection<LoanTermVariationsData> loanTermVariationsData,
+            final LoanTransactionData loanTransactionData, final LoanRestructureScheduleDetails restructureScheduleDetails,
+            final LoanRescheduleRequest loanRescheduleRequest) {
 
         this.id = id;
         this.loanId = loanId;
@@ -68,34 +78,39 @@ public class LoanRescheduleRequestData {
         this.loanAccountNumber = loanAccountNumber;
         this.clientId = clientId;
         this.recalculateInterest = recalculateInterest;
-        this.rescheduleReasons = rescheduleReasons ;
+        this.rescheduleReasons = rescheduleReasons;
         this.loanTermVariationsData = loanTermVariationsData;
+        this.loanTransactionData = loanTransactionData;
+        this.restructureScheduleDetails = restructureScheduleDetails;
+        this.loanRescheduleRequest = loanRescheduleRequest;
     }
 
     /**
      * @param loanTermVariationsData TODO
      * @return an instance of the LoanRescheduleRequestData class
      **/
-    public static LoanRescheduleRequestData instance(Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum,
+    public static LoanRescheduleRequestData instance(
+            Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum,
             Integer rescheduleFromInstallment, LocalDate rescheduleFromDate, CodeValueData rescheduleReasonCodeValue,
             String rescheduleReasonComment, LoanRescheduleRequestTimelineData timeline, final String clientName,
             final String loanAccountNumber, final Long clientId, final Boolean recalculateInterest,
-            Collection<CodeValueData> rescheduleReasons, final Collection<LoanTermVariationsData> loanTermVariationsData) {
+            Collection<CodeValueData> rescheduleReasons, final Collection<LoanTermVariationsData> loanTermVariationsData,
+            final LoanTransactionData loanTransactionData, final LoanRestructureScheduleDetails restructureScheduleDetails,
+            final LoanRescheduleRequest loanRescheduleRequest) {
 
         return new LoanRescheduleRequestData(id, loanId, statusEnum, rescheduleFromInstallment, rescheduleFromDate,
                 rescheduleReasonCodeValue, rescheduleReasonComment, timeline, clientName, loanAccountNumber, clientId, recalculateInterest,
-                rescheduleReasons, loanTermVariationsData);
+                rescheduleReasons, loanTermVariationsData,loanTransactionData,restructureScheduleDetails,loanRescheduleRequest);
     }
-    
+
     /**
      * LoanRescheduleRequestData constructor
-     * 
-     * @param loanTermVariationsData
-     *            TODO
+     * <p>
+     * TODO
      **/
     private LoanRescheduleRequestData(Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum, final String clientName,
-            final String loanAccountNumber, final Long clientId, final LocalDate rescheduleFromDate,
-            final CodeValueData rescheduleReasonCodeValue) {
+                                      final String loanAccountNumber, final Long clientId, final LocalDate rescheduleFromDate,
+                                      final CodeValueData rescheduleReasonCodeValue) {
 
         this.id = id;
         this.loanId = loanId;
@@ -117,12 +132,13 @@ public class LoanRescheduleRequestData {
      * @return an instance of the LoanRescheduleRequestData class
      **/
     public static LoanRescheduleRequestData instance(Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum,
-            final String clientName, final String loanAccountNumber, final Long clientId, final LocalDate rescheduleFromDate,
-            final CodeValueData rescheduleReasonCodeValue) {
+                                                     final String clientName, final String loanAccountNumber, final Long clientId, final LocalDate rescheduleFromDate,
+                                                     final CodeValueData rescheduleReasonCodeValue) {
 
         return new LoanRescheduleRequestData(id, loanId, statusEnum, clientName, loanAccountNumber, clientId, rescheduleFromDate,
                 rescheduleReasonCodeValue);
     }
+
     /**
      * @return the id
      */
@@ -212,4 +228,18 @@ public class LoanRescheduleRequestData {
 
         return value;
     }
+
+    public LoanTransactionData getLoanTransactionData() {
+        return loanTransactionData;
+    }
+
+    public LoanRestructureScheduleDetails getRestructureScheduleDetails() {
+        return restructureScheduleDetails;
+    }
+
+
+    public LoanRescheduleRequest getLoanRescheduleRequest() {
+        return loanRescheduleRequest;
+    }
+
 }

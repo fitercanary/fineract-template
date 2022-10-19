@@ -152,6 +152,62 @@ public class LoanUtilService {
                return scheduleGeneratorDTO;
     }
 
+    /**
+     * restructure schedule generatorDTO
+     * @param loan
+     * @param recalculateFrom
+     * @param rescheduleToDate
+     * @return
+     */
+    public ScheduleGeneratorDTO buildRestructureScheduleGeneratorDTO(final Loan loan, final LocalDate recalculateFrom,
+        LocalDate rescheduleToDate) {
+        final HolidayDetailDTO holidayDetails = constructHolidayDTO(loan);;
+
+        final MonetaryCurrency currency = loan.getCurrency();
+        ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final CalendarInstance calendarInstance = this.calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
+                CalendarEntityType.LOANS.getValue());
+        Calendar calendar = null;
+        CalendarHistoryDataWrapper calendarHistoryDataWrapper = null;
+        if (calendarInstance != null) {
+            calendar = calendarInstance.getCalendar();
+            calendar.setStartDate(recalculateFrom.toDate());
+            calendar.setEndDate(rescheduleToDate.toDate());
+            Set<CalendarHistory> calendarHistory = calendar.getCalendarHistory();
+            calendarHistoryDataWrapper = new CalendarHistoryDataWrapper(calendarHistory);
+        }
+        LocalDate calculatedRepaymentsStartingFromDate = this.getCalculatedRepaymentsStartingFromDate(recalculateFrom, loan,
+                calendarInstance, calendarHistoryDataWrapper);
+
+        CalendarInstance restCalendarInstance = null;
+        CalendarInstance compoundingCalendarInstance = null;
+        Long overdurPenaltyWaitPeriod = null;
+        if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
+            restCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.loanInterestRecalculationDetailId(),
+                    CalendarEntityType.LOAN_RECALCULATION_REST_DETAIL.getValue());
+            compoundingCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
+                    loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_COMPOUNDING_DETAIL.getValue());
+            overdurPenaltyWaitPeriod = this.configurationDomainService.retrievePenaltyWaitPeriod();
+        }
+        final Boolean isInterestChargedFromDateAsDisbursementDateEnabled = this.configurationDomainService.isInterestChargedFromDateSameAsDisbursementDate();
+        FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
+        Boolean isSkipRepaymentOnFirstMonth = false;
+        Integer numberOfDays = 0;
+        boolean isSkipRepaymentOnFirstMonthEnabled = configurationDomainService.isSkippingMeetingOnFirstDayOfMonthEnabled();
+        if(isSkipRepaymentOnFirstMonthEnabled){
+            isSkipRepaymentOnFirstMonth = isLoanRepaymentsSyncWithMeeting(loan.group(), calendar);
+            if(isSkipRepaymentOnFirstMonth) { numberOfDays = configurationDomainService.retrievePeriodInNumberOfDaysForSkipMeetingDate().intValue(); }
+        }
+        final Boolean isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled = this.configurationDomainService.isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled();
+
+        ScheduleGeneratorDTO scheduleGeneratorDTO = new ScheduleGeneratorDTO(loanScheduleFactory, applicationCurrency,
+                calculatedRepaymentsStartingFromDate, holidayDetails, restCalendarInstance, compoundingCalendarInstance, recalculateFrom,
+                overdurPenaltyWaitPeriod, floatingRateDTO, calendar, calendarHistoryDataWrapper, isInterestChargedFromDateAsDisbursementDateEnabled,
+                numberOfDays, isSkipRepaymentOnFirstMonth, isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled);
+
+               return scheduleGeneratorDTO;
+    }
+
 	public Boolean isLoanRepaymentsSyncWithMeeting(final Group group, final Calendar calendar) {
 		Boolean isSkipRepaymentOnFirstMonth = false;
 		Long entityId = null;

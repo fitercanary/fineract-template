@@ -20,7 +20,10 @@ package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
 
 import java.util.List;
 
+import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestData;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureScheduleDetails;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 
 public interface LoanRescheduleRequestReadPlatformService {
 
@@ -56,9 +59,11 @@ public interface LoanRescheduleRequestReadPlatformService {
      * 
      * @param loanRescheduleReason
      *            the loan reschedule reason
+     * @param loanRescheduleRequest
      * @return list of LoanRescheduleRequestData objects
      **/
-    public LoanRescheduleRequestData retrieveAllRescheduleReasons(String loanRescheduleReason);
+    public LoanRescheduleRequestData retrieveAllRescheduleReasons(String loanRescheduleReason, final LoanTransactionData loanTransactionData, final LoanRestructureScheduleDetails restructureScheduleDetails,
+                                                                  final LoanRescheduleRequest loanRescheduleRequest);
     /**
      * get all loan reschedule request
      * 

@@ -93,7 +93,8 @@ public class RescheduleLoansApiResource {
 
         LoanRescheduleRequestData loanRescheduleReasons = null;
         loanRescheduleReasons = this.loanRescheduleRequestReadPlatformService
-                .retrieveAllRescheduleReasons(RescheduleLoansApiConstants.LOAN_RESCHEDULE_REASON);
+                .retrieveAllRescheduleReasons(RescheduleLoansApiConstants.LOAN_RESCHEDULE_REASON,
+                        null,null, null);
 
         return this.loanRescheduleRequestToApiJsonSerializer.serialize(settings, loanRescheduleReasons);
     }

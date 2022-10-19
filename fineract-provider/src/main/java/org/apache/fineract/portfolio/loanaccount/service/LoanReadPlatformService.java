@@ -39,6 +39,7 @@ import org.apache.fineract.portfolio.loanaccount.data.RepaymentScheduleRelatedLo
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanSchedulePeriodData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureScheduleDetails;
 import org.joda.time.LocalDate;
 
 import com.lowagie.text.List;
@@ -139,4 +140,6 @@ public interface LoanReadPlatformService {
     LoanAccountData retrieveLoanByLoanAccount(String loanAccountNumber);
     
     Collection<Long> retriveActiveAndClosedLoans();
+
+    LoanRestructureScheduleDetails retrieveInstallmentDetails(Long loanId, Integer statusEnum);
 }

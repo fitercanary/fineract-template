@@ -86,6 +86,7 @@ public class LoanRestructurePreviewPlatformServiceImpl implements LoanRestructur
 
         ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildRestructureScheduleGeneratorDTO(loan,
                 loanRescheduleRequest.getRescheduleFromDate(), loanRescheduleRequest.getRescheduleToDate());
+
         LocalDate rescheduleFromDate = null;
         List<LoanTermVariationsData> removeLoanTermVariationsData = new ArrayList<>();
         final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);

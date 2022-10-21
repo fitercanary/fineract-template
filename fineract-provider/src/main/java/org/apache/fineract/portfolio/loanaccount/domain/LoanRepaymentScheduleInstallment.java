@@ -716,6 +716,12 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     public void updateInterestCompleted(final BigDecimal interestCompleted) {
         this.interestPaid = interestCompleted;
     }
+    public void updateChargesPaid(final BigDecimal feeChargesPaid) {
+        this.feeChargesPaid = feeChargesPaid;
+    }
+    public void updatePenaltiesPaid(final BigDecimal penaltyChargesPaid) {
+        this.penaltyChargesPaid = penaltyChargesPaid;
+    }
 
     public static Comparator<LoanRepaymentScheduleInstallment> installmentNumberComparator = new Comparator<LoanRepaymentScheduleInstallment>() {
 

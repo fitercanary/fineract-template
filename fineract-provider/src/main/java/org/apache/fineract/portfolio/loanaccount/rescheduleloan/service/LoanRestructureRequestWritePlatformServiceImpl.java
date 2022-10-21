@@ -61,6 +61,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepayme
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistoryRepository;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.RestructureLoansApiConstants;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureRequestDataValidator;
@@ -445,25 +446,45 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             loan.constructLoanTermVariations(scheduleGeneratorDTO.getFloatingRateDTO(), annualNominalInterestRate, loanTermVariations);
             loanApplicationTerms.getLoanTermVariations().setExceptionData(loanTermVariations);
 
-            /*for (LoanTermVariationsData loanTermVariation : loanApplicationTerms.getLoanTermVariations().getDueDateVariation()) {
+            List<LoanTermVariationsData> loanTermVariationsData = new ArrayList<>();
+            LocalDate adjustedApplicableDate = null;
+
+            Set<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings = loanRescheduleRequest.getLoanRescheduleRequestToTermVariationMappings();
+            if (!loanRescheduleRequestToTermVariationMappings.isEmpty()) {
+                for (LoanRescheduleRequestToTermVariationMapping loanRescheduleRequestToTermVariationMapping : loanRescheduleRequestToTermVariationMappings) {
+                    if (loanRescheduleRequestToTermVariationMapping.getLoanTermVariations().getTermType().isDueDateVariation()
+                            && rescheduleFromDate != null) {
+                        adjustedApplicableDate = loanRescheduleRequestToTermVariationMapping.getLoanTermVariations().fetchDateValue();
+                        loanRescheduleRequestToTermVariationMapping.getLoanTermVariations().setTermApplicableFrom(
+                                rescheduleFromDate.toDate());
+                    }
+                    loanTermVariationsData.add(loanRescheduleRequestToTermVariationMapping.getLoanTermVariations().toData());
+                }
+            }
+
+            for (LoanTermVariationsData loanTermVariation : loanApplicationTerms.getLoanTermVariations().getDueDateVariation()) {
                 if (rescheduleFromDate.isBefore(loanTermVariation.getTermApplicableFrom())) {
-                    LocalDate applicableDate = this.scheduledDateGenerator.generateNextRepaymentDate(rescheduleFromDate,
-                            loanApplicationTerms, false, loanApplicationTerms.getHolidayDetailDTO());
+                    LocalDate applicableDate = this.scheduledDateGenerator.generateNextRepaymentDate(rescheduleFromDate, loanApplicationTerms,
+                            false);
                     if (loanTermVariation.getTermApplicableFrom().equals(applicableDate)) {
                         LocalDate adjustedDate = this.scheduledDateGenerator.generateNextRepaymentDate(adjustedApplicableDate,
-                                loanApplicationTerms, false, loanApplicationTerms.getHolidayDetailDTO());
+                                loanApplicationTerms, false);
                         loanTermVariation.setApplicableFromDate(adjustedDate);
+                        loanTermVariationsData.add(loanTermVariation);
                     }
                 }
-            }*/
+            }
 
+            loanApplicationTerms.getLoanTermVariations().updateLoanTermVariationsData(loanTermVariationsData);
             final RoundingMode roundingMode = MoneyHelper.getRoundingMode();
             final MathContext mathContext = new MathContext(8, roundingMode);
             final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.loanRepaymentScheduleTransactionProcessorFactory
                     .determineProcessor(loan.transactionProcessingStrategy());
             final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
             final LoanLifecycleStateMachine loanLifecycleStateMachine = null;
+
             loan.setHelpers(loanLifecycleStateMachine, this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
+
             final LoanScheduleDTO loanSchedule = loanScheduleGenerator.rescheduleNextInstallmentsRestructure(
                     mathContext,
                     loanApplicationTerms,
@@ -474,8 +495,10 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                     loanRescheduleRequest.getRescheduleToDate()
             );
 
+
             loan.updateLoanSchedule(loanSchedule.getInstallments(), appUser);
-            loan.recalculateAllCharges();
+
+//            loan.recalculateAllCharges();
             ChangedTransactionDetail changedTransactionDetail =  loan.processTransactions();
 
             for (LoanRepaymentScheduleHistory loanRepaymentScheduleHistory : loanRepaymentScheduleHistoryList) {
@@ -496,6 +519,38 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 
             // update the status of the request
             loanRescheduleRequest.approve(appUser, approvedOnDate);
+            //update installment numbers.
+            for (int i=0; i<loan.getRepaymentScheduleInstallments().size(); i++) {
+                loan.getRepaymentScheduleInstallments().get(i).updateInstallmentNumber(i+1);
+            }
+
+            //clear off the first installment
+            LoanRepaymentScheduleInstallment installment = loan.getRepaymentScheduleInstallments().get(0);
+
+            loan.getRepaymentScheduleInstallments().get(0).updatePrincipalCompleted(
+                    installment.getPrincipal(loan.getCurrency()).getAmount()
+            );
+            loan.getRepaymentScheduleInstallments().get(0).updateInterestCompleted(
+                    installment.getInterestCharged(loan.getCurrency()).getAmount()
+            );
+
+            loan.getRepaymentScheduleInstallments().get(0).updateInterestCompleted(
+                    installment.getInterestCharged(loan.getCurrency()).getAmount()
+            );
+            loan.getRepaymentScheduleInstallments().get(0).updateChargesPaid(
+                    installment.getFeeChargesCharged(loan.getCurrency()).getAmount()
+            );
+            loan.getRepaymentScheduleInstallments().get(0).updatePenaltiesPaid(
+                    installment.getPenaltyChargesCharged(loan.getCurrency()).getAmount()
+            );
+
+            loan.getRepaymentScheduleInstallments().get(0).updateObligationMet(true);
+            //TODO -to be changed to use make loan payment method to create all necessary transactions on the laon
+
+            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingPenaltyCharges(approvedOnDate, loan.getCurrency());
+            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingInterest(approvedOnDate, loan.getCurrency());
+            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingFeeCharges(approvedOnDate, loan.getCurrency());
+            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingPrincipal(approvedOnDate, loan.getCurrency());
 
             // update the loan object
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);

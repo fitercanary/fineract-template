@@ -280,7 +280,9 @@ public class FixedDepositAccount extends SavingsAccount {
         final Money maturityAmount = depositAmount.plus(totalInterestPayable);
 
         this.accountTermAndPreClosure.updateMaturityDetails(maturityAmount.getAmount(), maturityDate);
-        this.accountTermAndPreClosure.updateMaturityNotificationDate(notificationDate);
+        if (notificationDate !=null){
+            this.accountTermAndPreClosure.updateMaturityNotificationDate(notificationDate);
+        }
     }
 
     public void updateMaturityStatus(final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth) {

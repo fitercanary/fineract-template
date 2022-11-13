@@ -25,6 +25,7 @@ import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.data.ReferralStatusData;
+import org.apache.fineract.portfolio.client.domain.ClientContactInformation;
 
 public interface ClientReadPlatformService {
 
@@ -61,4 +62,7 @@ public interface ClientReadPlatformService {
     void validateUserHasAuthorityToViewClient(Long clientId);
     
     boolean doesClientRequireAuthrorization(Long clientId);
+
+    ClientContactInformation getClientConcatInfo(Long client);
+
 }

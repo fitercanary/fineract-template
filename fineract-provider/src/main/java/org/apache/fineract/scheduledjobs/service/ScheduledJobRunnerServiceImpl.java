@@ -49,6 +49,8 @@ import org.apache.fineract.notification.config.VfdServiceApi;
 import org.apache.fineract.notification.domain.VfdTransferNotification;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
+import org.apache.fineract.portfolio.client.domain.ClientContactInformation;
+import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
 import org.apache.fineract.portfolio.savings.classification.data.TransactionClassificationData;
@@ -104,6 +106,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final VfdServiceApi vfdServiceApi;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
     private final EmailCampaignWritePlatformService emailCampaignWritePlatformService;
+    private final ClientReadPlatformService clientReadPlatformService;
+    private final DepositAccountAssembler depositAccountAssembler;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -119,7 +123,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                                          final MessagingConfiguration messagingConfiguration,
                                          final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final FromJsonHelper fromApiJsonHelper,
                                          final VfdServiceApi vfdServiceApi, final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
-                                         final EmailCampaignWritePlatformService emailCampaignWritePlatformService) {
+                                         final EmailCampaignWritePlatformService emailCampaignWritePlatformService,
+                                         final ClientReadPlatformService clientReadPlatformService,
+                                         final DepositAccountAssembler depositAccountAssembler) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -136,6 +142,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.vfdServiceApi = vfdServiceApi;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.emailCampaignWritePlatformService = emailCampaignWritePlatformService;
+        this.clientReadPlatformService = clientReadPlatformService;
+        this.depositAccountAssembler = depositAccountAssembler;
     }
 
     @Transactional
@@ -405,8 +413,13 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         for (final DepositAccountData depositAccount : depositAccounts) {
             try {
+
+                final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(depositAccount.id(),
+                        DepositAccountType.FIXED_DEPOSIT);
+                ClientContactInformation contactInfo = this.clientReadPlatformService.getClientConcatInfo(account.getClient().getId());
+                System.out.println("Client contact: "+contactInfo.getEmail());
 //                final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());
-                this.emailCampaignWritePlatformService.notifyFixedDepositMaturity(depositAccount);
+                this.emailCampaignWritePlatformService.notifyFixedDepositMaturity(account,contactInfo);
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {

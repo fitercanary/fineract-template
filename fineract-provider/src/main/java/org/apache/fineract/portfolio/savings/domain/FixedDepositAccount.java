@@ -335,7 +335,7 @@ public class FixedDepositAccount extends SavingsAccount {
      * @param maturityDate
      */
     public LocalDate calculateMaturityNotificationDate(LocalDate maturityDate) {
-
+        //TODO -- RECALCULATE NOTIFICATION PERIOD DAYS TO NOT DAYS BEFORE
         LocalDate notificationData = null;
         final Integer notificationPeriod = this.accountTermAndPreClosure.getMaturityNotificationPeriod();
         switch (this.accountTermAndPreClosure.maturityNotificationPeriodFrequencyType()) {

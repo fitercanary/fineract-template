@@ -333,7 +333,7 @@ public class DepositAccountDataValidator {
 
             baseDataValidator.reset().parameter(notificationTermIdParamName).value(notificationTermId)
                     .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues())
-                    .inMinMaxRange(0,(depositPeriodFrequencyId-1));
+                    .inMinMaxRange(0,(depositPeriodFrequencyId));
         }
     }
 

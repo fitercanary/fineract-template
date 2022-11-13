@@ -64,6 +64,7 @@ import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
+import org.apache.fineract.portfolio.client.domain.ClientContactInformation;
 import org.apache.fineract.portfolio.client.domain.LegalForm;
 import org.apache.fineract.portfolio.client.domain.ReferralStatus;
 import org.apache.fineract.portfolio.client.domain.ReferralStatusRepository;
@@ -1071,5 +1072,14 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
         
         return client.doesRequireAuthorizationToView();
+    }
+
+    public ClientContactInformation getClientConcatInfo(Long clientId) {
+
+        ClientContactInformation rd = new ClientContactInformation(clientId);
+        String sql = "select * " +
+                "from `Contact Information` C " +
+                "where C.client_id =?";
+        return this.jdbcTemplate.queryForObject(sql,rd, new Object[]{clientId});
     }
 }

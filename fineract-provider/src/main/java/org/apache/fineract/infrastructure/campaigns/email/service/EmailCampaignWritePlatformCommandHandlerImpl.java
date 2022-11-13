@@ -23,15 +23,13 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.domain.EmailDetail;
+import org.apache.fineract.infrastructure.core.service.PlatformEmailService;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageRepository;
 import org.apache.fineract.infrastructure.sms.scheduler.SmsMessageScheduledJobService;
-import org.apache.fineract.organisation.staff.domain.Staff;
-import org.apache.fineract.portfolio.savings.DepositAccountType;
-import org.apache.fineract.portfolio.savings.data.DepositAccountData;
-import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
+import org.apache.fineract.portfolio.client.domain.ClientContactInformation;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
-import org.apache.fineract.portfolio.savings.domain.FixedDepositAccountRepository;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.joda.time.DateTimeZone;
@@ -105,10 +103,10 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     private final FromJsonHelper fromJsonHelper;
     private final LoanRepository loanRepository;
     private final SavingsAccountRepository savingsAccountRepository;
-    private final DepositAccountAssembler depositAccountAssembler;
     private final EmailMessageJobEmailService emailMessageJobEmailService;
     private final SmsMessageRepository smsMessageRepository;
     private final SmsMessageScheduledJobService smsMessageScheduledJobService;
+    private final PlatformEmailService emailService;
 
     @Autowired
     public EmailCampaignWritePlatformCommandHandlerImpl(
@@ -119,10 +117,11 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
             final ReadReportingService readReportingService, final GenericDataService genericDataService,
             final FromJsonHelper fromJsonHelper, final LoanRepository loanRepository,
             final SavingsAccountRepository savingsAccountRepository,
-            final DepositAccountAssembler depositAccountAssembler,
             final SmsMessageRepository smsMessageRepository,
             final SmsMessageScheduledJobService smsMessageScheduledJobService,
-            final EmailMessageJobEmailService emailMessageJobEmailService) {
+            final EmailMessageJobEmailService emailMessageJobEmailService,
+            final PlatformEmailService emailService
+            ) {
         this.context = context;
         this.emailCampaignRepository = emailCampaignRepository;
         this.emailCampaignValidator = emailCampaignValidator;
@@ -136,9 +135,9 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         this.loanRepository = loanRepository;
         this.savingsAccountRepository = savingsAccountRepository;
         this.emailMessageJobEmailService = emailMessageJobEmailService;
-        this.depositAccountAssembler = depositAccountAssembler;
         this.smsMessageRepository = smsMessageRepository;
         this.smsMessageScheduledJobService = smsMessageScheduledJobService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -746,36 +745,50 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
     /**
      * creates and que up message it up for sending out the email alert
-     * @param depositAccount
+     *  @param account
+     * @param contactInfo
      */
     @Override
-    public void notifyFixedDepositMaturity(DepositAccountData depositAccount) {
+    public void notifyFixedDepositMaturity(FixedDepositAccount account, ClientContactInformation contactInfo) {
 
-        Map<String, Object> params = new HashMap<>();
-        String message = this.compileEmailTemplate("messageTemplate", "campaignName", params);
+        try {
+            Map<String, Object> params = new HashMap<>();
 
-        final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(depositAccount.id(),
-                DepositAccountType.FIXED_DEPOSIT);
+            Client client = account.getClient();
+            System.out.println("contact info: " + contactInfo.getEmail());
+            String emailAddress = contactInfo.getEmail();
 
-        Client client = account.getClient();
-        String emailAddress = client.emailAddress();
+            if ((emailAddress == null || !isValidEmail(emailAddress)) && !account.getAccountTermAndPreClosure().getMaturitySmsNotification()) {
+                throw new JobExecutionException("No email provided on client data to execute the notification");
+            }
+            final String emailSubject = "INVESTMENT MATURITY NOTIFICATION";
+            final String emailBody = "Please Be notified that your Investment account is maturing on: "+
+                    account.getAccountTermAndPreClosure().getMaturityLocalDate();
+            if (emailAddress != null && isValidEmail(emailAddress)) {
+                EmailMessage emailMessage = EmailMessage.pendingEmail(
+                        null, client, client.getStaff(), null,
+                        emailSubject, emailBody, emailAddress, null);
+                this.emailMessageRepository.saveAndFlush(emailMessage);
+                //new impl
 
-        if (emailAddress != null && isValidEmail(emailAddress)) {
-            EmailMessage emailMessage = EmailMessage.pendingEmail(
-                    null, client, client.getStaff(), null,
-                    "INVESTMENT MATURITY NOTIFICATION", message, client.emailAddress(), "EmailCampaign");
-            this.emailMessageRepository.saveAndFlush(emailMessage);
-        }
-        if (account.getAccountTermAndPreClosure().getMaturitySmsNotification()){
+                final EmailDetail emailData = new EmailDetail(emailSubject, emailBody, emailAddress,
+                        client.getDisplayName());
+                emailService.sendDefinedEmail(emailData);
 
-            //TODO IMPLEMENT SMS MODULE
-            String compileSms = "Message Maturity Notification Message";
-            SmsMessage smsMessage = SmsMessage.pendingSms("",null,client,null,compileSms,
-                    client.mobileNo(),null,false);
-            this.smsMessageRepository.save(smsMessage);
+            } else if (account.getAccountTermAndPreClosure().getMaturitySmsNotification()) {
+
+                //TODO IMPLEMENT SMS MODULE
+                String compileSms = "Message Maturity Notification Message";
+                SmsMessage smsMessage = SmsMessage.pendingSms("", null, client, null, compileSms,
+                        client.mobileNo(), null, false);
+                this.smsMessageRepository.save(smsMessage);
 //            smsMessageScheduledJobService.sendTriggeredMessage(Collections.singleton(smsMessage),
 //                    configurationService.getSMSProviderId());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
     }
 
     /**

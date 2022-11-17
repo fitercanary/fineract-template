@@ -428,12 +428,13 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 }
                 throw new JobExecutionException(errorMsg.toString());
             } catch (final Exception ex) {
+                ex.printStackTrace();
                 logger.error("Notification for fixed asset maturity failed for account number :" + depositAccount.accountNo()
                         + " with message " + ex.getLocalizedMessage());
                 errorMsg.append("Notification for fixed asset maturity failed for account number :").append(depositAccount.accountNo())
                         .append(" with message ").append(ex.getLocalizedMessage());
 
-                throw new JobExecutionException(ex.getLocalizedMessage());
+                throw new JobExecutionException(errorMsg.toString());
             }
         }
 

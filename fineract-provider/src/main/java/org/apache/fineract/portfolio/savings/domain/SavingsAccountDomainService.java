@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
-import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
@@ -40,7 +39,7 @@ public interface SavingsAccountDomainService {
             boolean isSavingToLoanTransfer, GLAccount glAccount, String note);
 
     SavingsAccountTransaction handleDeposit(SavingsAccount account, DateTimeFormatter fmt, LocalDate transactionDate,
-            BigDecimal transactionAmount, PaymentDetail paymentDetail, boolean isAccountTransfer, boolean isRegularTransaction);
+                                            BigDecimal transactionAmount, PaymentDetail paymentDetail, boolean isAccountTransfer, boolean isRegularTransaction, String noteText);
 
     SavingsAccountTransaction handleDeposit(SavingsAccount account, DateTimeFormatter fmt, LocalDate transactionDate, LocalDate postingDate,
             BigDecimal transactionAmount, PaymentDetail paymentDetail, boolean isAccountTransfer, boolean isRegularTransaction, GLAccount glAccount, String note);

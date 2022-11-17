@@ -34,7 +34,7 @@ public interface ScheduledJobRunnerService {
 
     void updateMaturityDetailsOfDepositAccounts();
 
-    void notifyMaturityDetailsOfDepositAccounts();
+    void notifyMaturityDetailsOfDepositAccounts() throws JobExecutionException;
 
     void generateRDSchedule();
 

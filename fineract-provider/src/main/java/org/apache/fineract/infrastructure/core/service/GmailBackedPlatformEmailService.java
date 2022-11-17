@@ -65,17 +65,25 @@ public class GmailBackedPlatformEmailService implements PlatformEmailService {
         final String authuser = smtpCredentialsData.getUsername();
         final String authpwd = smtpCredentialsData.getPassword();
 
-        // Very Important, Don't use email.setAuthentication()
+//         Very Important, Don't use email.setAuthentication()
         email.setAuthenticator(new DefaultAuthenticator(authuser, authpwd));
         email.setDebug(false); // true if you want to debug
+//        email.setSSLOnConnect(true); // true if you want to debug
         email.setHostName(smtpCredentialsData.getHost());
+        email.setSmtpPort(Integer.parseInt(smtpCredentialsData.getPort()));
 
         try {
             if(smtpCredentialsData.isUseTLS()){
                 email.getMailSession().getProperties().put("mail.smtp.starttls.enable", "true");
-                email.getMailSession().getProperties().put("mail.smtp.starttls.required", "true");
+//                email.getMailSession().getProperties().put("mail.smtp.starttls.required", "true");
+                email.getMailSession().getProperties().put("mail.smtp.auth", "true");
                 email.getMailSession().getProperties().put("mail.smtp.ssl.protocols","TLSv1.2");
+//                email.getMailSession().getProperties().put("mail.smtp.ssl.trust","*");
+//                email.getMailSession().getProperties().put("mail.smtp.starttls.trust","*");
+//                email.getMailSession().getProperties().put("mail.smtp.starttls.checkserveridentity","false");
+//                email.getMailSession().getProperties().put("mail.smtp.ssl.checkserveridentity","false");
             }
+
             email.setFrom(authuser, authuserName);
 
             email.setSubject(emailDetails.getSubject());
@@ -86,5 +94,25 @@ public class GmailBackedPlatformEmailService implements PlatformEmailService {
         } catch (EmailException e) {
             throw new PlatformEmailSendException(e);
         }
+
+//        try {
+//            email.setHostName(smtpCredentialsData.getHost());
+//            email.setSmtpPort(Integer.parseInt(smtpCredentialsData.getPort()));
+//            email.setAuthenticator(new DefaultAuthenticator(authuserName, authpwd));
+//            email.setSSLOnConnect(true);
+//            email.setFrom(smtpCredentialsData.getUsername());
+//            email.setSubject(emailDetails.getSubject());
+//            email.setMsg(emailDetails.getBody());
+//            email.addTo(emailDetails.getAddress());
+//            email.getMailSession().getProperties().put("mail.smtp.ssl.protocols","TLSv1.2");
+//            email.getMailSession().getProperties().put("mail.smtp.ssl.trust","*");
+//            email.getMailSession().getProperties().put("mail.smtp.auth", "true");
+//
+//            email.send();
+//        }catch(Exception ex){
+//            ex.printStackTrace();
+//            System.out.println("Unable to send email");
+//            System.out.println(ex);
+//        }
     }
 }

@@ -406,7 +406,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @Transactional
     @Override
     @CronTarget(jobName = JobName.NOTIFY_CLIENT_ON_FIXED_DEPOSIT_MATURITY)
-    public void notifyMaturityDetailsOfDepositAccounts() {
+    public void notifyMaturityDetailsOfDepositAccounts() throws JobExecutionException {
 
         final Collection<DepositAccountData> depositAccounts = this.depositAccountReadPlatformService.retrieveForMaturityNotification();
         StringBuilder errorMsg = new StringBuilder();
@@ -417,20 +417,23 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(depositAccount.id(),
                         DepositAccountType.FIXED_DEPOSIT);
                 ClientContactInformation contactInfo = this.clientReadPlatformService.getClientConcatInfo(account.getClient().getId());
-                System.out.println("Client contact: "+contactInfo.getEmail());
 //                final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());
                 this.emailCampaignWritePlatformService.notifyFixedDepositMaturity(account,contactInfo);
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {
-                    logger.error("Maturity notification failed for account:" + depositAccount.accountNo() + " with message "
+                    errorMsg.append("Maturity notification failed for account:" + depositAccount.accountNo() + " with message "
                             + error.getDeveloperMessage());
+                    logger.error(errorMsg.toString());
                 }
+                throw new JobExecutionException(errorMsg.toString());
             } catch (final Exception ex) {
                 logger.error("Notification for fixed asset maturity failed for account number :" + depositAccount.accountNo()
                         + " with message " + ex.getLocalizedMessage());
                 errorMsg.append("Notification for fixed asset maturity failed for account number :").append(depositAccount.accountNo())
                         .append(" with message ").append(ex.getLocalizedMessage());
+
+                throw new JobExecutionException(ex.getLocalizedMessage());
             }
         }
 

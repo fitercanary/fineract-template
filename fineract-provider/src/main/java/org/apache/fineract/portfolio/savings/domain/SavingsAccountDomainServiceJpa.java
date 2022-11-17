@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
@@ -42,6 +43,8 @@ import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.apache.fineract.portfolio.common.service.BusinessEventNotifierService;
+import org.apache.fineract.portfolio.note.domain.Note;
+import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
@@ -75,6 +78,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ValidationLimitRepository validationLimitRepository;
     private final ClientReadPlatformService clientReadPlatformService;
+    private final NoteRepository noteRepository;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -86,7 +90,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final BusinessEventNotifierService businessEventNotifierService, final SavingsAccountAssembler savingAccountAssembler,
             SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
             final ClientRepositoryWrapper clientRepositoryWrapper, final ValidationLimitRepository validationLimitRepository,
-            ClientReadPlatformService clientReadPlatformService) {
+            ClientReadPlatformService clientReadPlatformService,final NoteRepository noteRepository) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -100,6 +104,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.clientRepositoryWrapper = clientRepositoryWrapper;
         this.validationLimitRepository = validationLimitRepository;
         this.clientReadPlatformService = clientReadPlatformService;
+        this.noteRepository = noteRepository;
     }
 
     @Transactional
@@ -209,11 +214,11 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Transactional
     @Override
     public SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
-            final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final boolean isAccountTransfer, final boolean isRegularTransaction) {
+                                                   final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
+                                                   final boolean isAccountTransfer, final boolean isRegularTransaction, String noteText) {
         final SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.DEPOSIT;
         return handleDeposit(account, fmt, transactionDate, transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,
-                savingsAccountTransactionType, null, null);
+                savingsAccountTransactionType, null, noteText);
     }
 
     @Override
@@ -228,7 +233,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final LocalDate postingDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final boolean isAccountTransfer, final boolean isRegularTransaction,
-            final SavingsAccountTransactionType savingsAccountTransactionType, final GLAccount glAccount, final String note) {
+            final SavingsAccountTransactionType savingsAccountTransactionType, final GLAccount glAccount, final String noteText) {
         AppUser user = getAppUserIfPresent();
 
         account.validateForAccountBlock();
@@ -253,6 +258,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
                 paymentDetail, new Date(), user, accountType, isAccountTransfer);
         final SavingsAccountTransaction deposit = account.deposit(transactionDTO, savingsAccountTransactionType, glAccount);
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, deposit, noteText);
+            this.noteRepository.save(note);
+        }
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), false, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -277,7 +286,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             account.setPostingDate(postingDate.toDate());
 
         if (isRegularTransaction) {
-            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
+            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, noteText);
         }
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT, constructEntityMap(deposit));

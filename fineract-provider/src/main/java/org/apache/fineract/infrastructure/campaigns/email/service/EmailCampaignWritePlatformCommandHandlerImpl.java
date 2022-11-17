@@ -752,10 +752,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
     public void notifyFixedDepositMaturity(FixedDepositAccount account, ClientContactInformation contactInfo) {
 
         try {
-            Map<String, Object> params = new HashMap<>();
-
             Client client = account.getClient();
-            System.out.println("contact info: " + contactInfo.getEmail());
             String emailAddress = contactInfo.getEmail();
 
             if ((emailAddress == null || !isValidEmail(emailAddress)) && !account.getAccountTermAndPreClosure().getMaturitySmsNotification()) {

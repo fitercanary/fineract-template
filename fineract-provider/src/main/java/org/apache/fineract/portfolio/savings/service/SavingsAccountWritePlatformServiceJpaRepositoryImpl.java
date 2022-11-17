@@ -113,7 +113,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.time.ZoneId;
 import java.util.*;
 
 import com.google.gson.JsonArray;
@@ -275,7 +274,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         if (amountForDeposit.isGreaterThanZero()) {
             boolean isAccountTransfer = false;
             this.savingsAccountDomainService.handleDeposit(account, fmt, account.getActivationLocalDate(), amountForDeposit.getAmount(),
-                    null, isAccountTransfer, isRegularTransaction);
+                    null, isAccountTransfer, isRegularTransaction, null);
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         }
         account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);

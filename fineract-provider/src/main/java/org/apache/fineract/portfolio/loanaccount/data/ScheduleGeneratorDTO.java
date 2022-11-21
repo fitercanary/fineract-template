@@ -35,6 +35,7 @@ public class ScheduleGeneratorDTO {
     final CalendarInstance calendarInstanceForInterestRecalculation;
     final CalendarInstance compoundingCalendarInstance;
     LocalDate recalculateFrom;
+    LocalDate recalculateTo;
     final Long overdurPenaltyWaitPeriod;
     final FloatingRateDTO floatingRateDTO;
     final Calendar calendar;
@@ -48,7 +49,7 @@ public class ScheduleGeneratorDTO {
     public ScheduleGeneratorDTO(final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency applicationCurrency,
             final LocalDate calculatedRepaymentsStartingFromDate, final HolidayDetailDTO holidayDetailDTO,
             final CalendarInstance calendarInstanceForInterestRecalculation, final CalendarInstance compoundingCalendarInstance,
-            final LocalDate recalculateFrom, final Long overdurPenaltyWaitPeriod, final FloatingRateDTO floatingRateDTO,
+            final LocalDate recalculateFrom,final LocalDate recalculateTo, final Long overdurPenaltyWaitPeriod, final FloatingRateDTO floatingRateDTO,
             final Calendar calendar, final CalendarHistoryDataWrapper calendarHistoryDataWrapper, 
             final Boolean isInterestChargedFromDateAsDisbursementDateEnabled, final Integer numberOfdays, final boolean isSkipRepaymentOnFirstDayofMonth,
             final Boolean isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled) {
@@ -63,6 +64,7 @@ public class ScheduleGeneratorDTO {
         this.holidayDetailDTO = holidayDetailDTO;
         this.floatingRateDTO = floatingRateDTO;
         this.calendar = calendar;
+        this.recalculateTo = recalculateTo;
         this.calendarHistoryDataWrapper  = calendarHistoryDataWrapper;
         this.isInterestChargedFromDateAsDisbursementDateEnabled = isInterestChargedFromDateAsDisbursementDateEnabled;
         this.numberOfdays = numberOfdays;

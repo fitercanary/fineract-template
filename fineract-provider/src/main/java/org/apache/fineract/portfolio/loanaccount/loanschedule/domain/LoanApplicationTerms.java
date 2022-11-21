@@ -383,6 +383,9 @@ public final class LoanApplicationTerms {
             final CalendarHistoryDataWrapper calendarHistoryDataWrapper, final HolidayDetailDTO holidayDetailDTO,
             final boolean allowCompoundingOnEod, LoanSummary summary, ScheduleGeneratorDTO scheduleGeneratorDTO) {
 
+        Integer numberOfNewRepayments = calculateNumberOfRePayments(scheduleGeneratorDTO, holidayDetailDTO,
+                loanCalendar, loanProductRelatedDetail, loanTermPeriodFrequencyType);
+        loanProductRelatedDetail.updateNumberOfRepayments(numberOfNewRepayments);
         final Integer numberOfRepayments = loanProductRelatedDetail.getNumberOfRepayments();
         final Integer repaymentEvery = loanProductRelatedDetail.getRepayEvery();
         final PeriodFrequencyType repaymentPeriodFrequencyType = loanProductRelatedDetail.getRepaymentPeriodFrequencyType();
@@ -419,6 +422,81 @@ public final class LoanApplicationTerms {
                 installmentAmountInMultiplesOf, loanPreClosureInterestCalculationStrategy, loanCalendar, approvedAmount,
                 loanTermVariations, calendarHistoryDataWrapper, isInterestChargedFromDateSameAsDisbursalDateEnabled, scheduleGeneratorDTO.getNumberOfdays(),
                 scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), holidayDetailDTO, allowCompoundingOnEod, isEqualAmortization);
+    }
+
+    private static Integer calculateNumberOfRePayments(ScheduleGeneratorDTO scheduleGeneratorDTO,
+                                                       HolidayDetailDTO holidayDetailDTO,
+                                                       Calendar loanCalendar, LoanProductRelatedDetail loanProductRelatedDetail, PeriodFrequencyType loanTermPeriodFrequencyType) {
+
+        LocalDate startDate = scheduleGeneratorDTO.getRecalculateFrom();
+        LocalDate endDate = scheduleGeneratorDTO.getRecalculateTo();
+        Integer numberOfPeriods = 0;
+        PeriodFrequencyType repaymentPeriodFrequencyType = loanProductRelatedDetail.getRepaymentPeriodFrequencyType();
+        switch (repaymentPeriodFrequencyType) {
+            case DAYS:
+                numberOfPeriods = Days.daysBetween(startDate, endDate).getDays();
+                break;
+            case WEEKS:
+                int numberOfWeeks = Weeks.weeksBetween(startDate, endDate).getWeeks();
+                int daysLeftAfterWeeks = Days.daysBetween(startDate.plusWeeks(numberOfWeeks), endDate).getDays();
+                numberOfPeriods = numberOfPeriods + numberOfWeeks + (daysLeftAfterWeeks / 7);
+                break;
+            case MONTHS:
+                int numberOfMonths = Months.monthsBetween(startDate, endDate).getMonths();
+                LocalDate startDateAfterConsideringMonths = null;
+                LocalDate endDateAfterConsideringMonths = null;
+                int diffDays = 0;
+                if (loanCalendar == null) {
+                    startDateAfterConsideringMonths = startDate.plusMonths(numberOfMonths);
+                    startDateAfterConsideringMonths = CalendarUtils.adjustDate(startDateAfterConsideringMonths, scheduleGeneratorDTO.getRecalculateFrom(),
+                            repaymentPeriodFrequencyType);
+                    endDateAfterConsideringMonths = startDate.plusMonths(numberOfMonths + 1);
+                    endDateAfterConsideringMonths = CalendarUtils.adjustDate(endDateAfterConsideringMonths, scheduleGeneratorDTO.getRecalculateFrom(),
+                            repaymentPeriodFrequencyType);
+                } else {
+                    LocalDate expectedStartDate = startDate;
+                    if (!CalendarUtils.isValidRedurringDate(loanCalendar.getRecurrence(),
+                            loanCalendar.getStartDateLocalDate().minusMonths(loanProductRelatedDetail.getRepayEvery()), startDate)) {
+                        expectedStartDate = CalendarUtils.getNewRepaymentMeetingDate(loanCalendar.getRecurrence(),
+                                startDate.minusMonths(loanProductRelatedDetail.getRepayEvery()), startDate.minusMonths(loanProductRelatedDetail.getRepayEvery()),
+                                loanProductRelatedDetail.getRepayEvery(),
+                                CalendarUtils.getMeetingFrequencyFromPeriodFrequencyType(loanTermPeriodFrequencyType),
+                                holidayDetailDTO.getWorkingDays(), scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), scheduleGeneratorDTO.getNumberOfdays());
+                    }
+                    if (!expectedStartDate.isEqual(startDate)) {
+                        diffDays = Days.daysBetween(startDate, expectedStartDate).getDays();
+                    }
+                    if (numberOfMonths == 0) {
+                        startDateAfterConsideringMonths = expectedStartDate;
+                    } else {
+                        startDateAfterConsideringMonths = CalendarUtils.getNewRepaymentMeetingDate(loanCalendar.getRecurrence(),
+                                expectedStartDate, expectedStartDate.plusMonths(numberOfMonths), loanProductRelatedDetail.getRepayEvery(),
+                                CalendarUtils.getMeetingFrequencyFromPeriodFrequencyType(loanTermPeriodFrequencyType),
+                                holidayDetailDTO.getWorkingDays(), scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), scheduleGeneratorDTO.getNumberOfdays());
+                    }
+                    endDateAfterConsideringMonths = CalendarUtils.getNewRepaymentMeetingDate(loanCalendar.getRecurrence(),
+                            startDateAfterConsideringMonths, startDateAfterConsideringMonths.plusDays(1), loanProductRelatedDetail.getRepayEvery(),
+                            CalendarUtils.getMeetingFrequencyFromPeriodFrequencyType(loanTermPeriodFrequencyType),
+                            holidayDetailDTO.getWorkingDays(), scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), scheduleGeneratorDTO.getNumberOfdays());
+                }
+                int daysLeftAfterMonths = Days.daysBetween(startDateAfterConsideringMonths, endDate).getDays() + diffDays;
+                int daysInPeriodAfterMonths = Days.daysBetween(startDateAfterConsideringMonths, endDateAfterConsideringMonths).getDays();
+                numberOfPeriods = numberOfPeriods+numberOfMonths+(daysLeftAfterMonths / daysInPeriodAfterMonths);
+                break;
+            case YEARS:
+                int numberOfYears = Years.yearsBetween(startDate, endDate).getYears();
+                LocalDate startDateAfterConsideringYears = startDate.plusYears(numberOfYears);
+                LocalDate endDateAfterConsideringYears = startDate.plusYears(numberOfYears + 1);
+                int daysLeftAfterYears = Days.daysBetween(startDateAfterConsideringYears, endDate).getDays();
+                int daysInPeriodAfterYears = Days.daysBetween(startDateAfterConsideringYears, endDateAfterConsideringYears).getDays();
+                numberOfPeriods = numberOfPeriods+numberOfYears+ (daysLeftAfterYears / daysInPeriodAfterYears);
+                break;
+            default:
+                break;
+        }
+        //Addding one extra period for the first installment that is in status cleared
+        return numberOfPeriods;
+
     }
 
     public static LoanApplicationTerms assembleFrom(final ApplicationCurrency applicationCurrency, final Integer loanTermFrequency,

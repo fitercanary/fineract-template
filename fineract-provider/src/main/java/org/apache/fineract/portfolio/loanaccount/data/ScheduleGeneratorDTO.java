@@ -92,6 +92,10 @@ public class ScheduleGeneratorDTO {
         return this.recalculateFrom;
     }
 
+    public LocalDate getRecalculateTo() {
+        return this.recalculateTo;
+    }
+
     public Long getOverdurPenaltyWaitPeriod() {
         return this.overdurPenaltyWaitPeriod;
     }

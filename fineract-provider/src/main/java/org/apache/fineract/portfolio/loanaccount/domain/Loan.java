@@ -5623,6 +5623,13 @@ public class Loan extends AbstractPersistableCustom<Long> {
             interestChargedFromDate = scheduleGeneratorDTO.getRecalculateFrom();
         }
 
+        Money totalOutstandingPrincipal = this.getTotalOutstandingOnLoan().getTotalOutstanding(this.getCurrency());
+        Money totalInterestOutstandingOnLoan = this.getTotalInterestOutstandingOnLoan();
+        Money totalInterestOverdueOnLoan = this.getTotalInterestOverdueOnLoan();
+
+        //TODO - ON RECALCULATION, TOTAL PRINCIPAL DUE LESS THE INTEREST DUE ON TOTAL LOAN
+//        this.loanRepaymentScheduleDetail.setPrincipal(totalOutstandingPrincipal.plus(totalInterestOutstandingOnLoan).getAmount());
+        this.loanRepaymentScheduleDetail.setPrincipal(totalOutstandingPrincipal.plus(totalInterestOverdueOnLoan).getAmount());
 
         final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFromRestructure(
                 loanTermFrequency, loanTermPeriodFrequencyType, nthDayType, dayOfWeekType,

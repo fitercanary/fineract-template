@@ -145,7 +145,7 @@ public class LoanUtilService {
         final Boolean isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled = this.configurationDomainService.isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled();
         
         ScheduleGeneratorDTO scheduleGeneratorDTO = new ScheduleGeneratorDTO(loanScheduleFactory, applicationCurrency,
-                calculatedRepaymentsStartingFromDate, holidayDetails, restCalendarInstance, compoundingCalendarInstance, recalculateFrom,
+                calculatedRepaymentsStartingFromDate, holidayDetails, restCalendarInstance, compoundingCalendarInstance, recalculateFrom,null,
                 overdurPenaltyWaitPeriod, floatingRateDTO, calendar, calendarHistoryDataWrapper, isInterestChargedFromDateAsDisbursementDateEnabled,
                 numberOfDays, isSkipRepaymentOnFirstMonth, isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled);
 
@@ -201,7 +201,8 @@ public class LoanUtilService {
         final Boolean isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled = this.configurationDomainService.isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled();
 
         ScheduleGeneratorDTO scheduleGeneratorDTO = new ScheduleGeneratorDTO(loanScheduleFactory, applicationCurrency,
-                calculatedRepaymentsStartingFromDate, holidayDetails, restCalendarInstance, compoundingCalendarInstance, recalculateFrom,
+                calculatedRepaymentsStartingFromDate, holidayDetails, restCalendarInstance, compoundingCalendarInstance,
+                recalculateFrom,rescheduleToDate,
                 overdurPenaltyWaitPeriod, floatingRateDTO, calendar, calendarHistoryDataWrapper, isInterestChargedFromDateAsDisbursementDateEnabled,
                 numberOfDays, isSkipRepaymentOnFirstMonth, isChangeEmiIfRepaymentDateSameAsDisbursementDateEnabled);
 

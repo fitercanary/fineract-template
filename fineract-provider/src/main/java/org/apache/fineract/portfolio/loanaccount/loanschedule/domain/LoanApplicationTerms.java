@@ -42,6 +42,7 @@ import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
 import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsDataWrapper;
+import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanInterestRecalculationDetails;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanSummary;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
@@ -335,14 +336,11 @@ public final class LoanApplicationTerms {
 
     /**
      * assemble loan appln terms. with different principal
-     * @param applicationCurrency
      * @param loanTermFrequency
      * @param loanTermPeriodFrequencyType
      * @param nthDay
      * @param dayOfWeek
-     * @param expectedDisbursementDate
      * @param repaymentsStartingFromDate
-     * @param calculatedRepaymentsStartingFromDate
      * @param inArrearsTolerance
      * @param loanProductRelatedDetail
      * @param multiDisburseLoan
@@ -364,18 +362,15 @@ public final class LoanApplicationTerms {
      * @param annualNominalInterestRate
      * @param loanTermVariations
      * @param calendarHistoryDataWrapper
-     * @param numberOfdays
-     * @param isSkipRepaymentOnFirstDayofMonth
      * @param holidayDetailDTO
      * @param allowCompoundingOnEod
      * @param summary
+     * @param scheduleGeneratorDTO
      * @return
      */
-    public static LoanApplicationTerms assembleFromRestructure(
-            final ApplicationCurrency applicationCurrency, final Integer loanTermFrequency,
+    public static LoanApplicationTerms assembleFromRestructure(final Integer loanTermFrequency,
             final PeriodFrequencyType loanTermPeriodFrequencyType, NthDayType nthDay, DayOfWeekType dayOfWeek,
-            final LocalDate expectedDisbursementDate, final LocalDate repaymentsStartingFromDate,
-            final LocalDate calculatedRepaymentsStartingFromDate, final Money inArrearsTolerance,
+            final LocalDate repaymentsStartingFromDate, final Money inArrearsTolerance,
             final LoanProductRelatedDetail loanProductRelatedDetail, final boolean multiDisburseLoan, final BigDecimal emiAmount,
             final List<DisbursementData> disbursementDatas, final BigDecimal maxOutstandingBalance,
             final LocalDate interestChargedFromDate, final BigDecimal principalThresholdForLastInstalment,
@@ -385,9 +380,8 @@ public final class LoanApplicationTerms {
             final LoanPreClosureInterestCalculationStrategy loanPreClosureInterestCalculationStrategy,
             final LoanRescheduleStrategyMethod rescheduleStrategyMethod, final Calendar loanCalendar, BigDecimal approvedAmount,
             BigDecimal annualNominalInterestRate, final List<LoanTermVariationsData> loanTermVariations,
-            final CalendarHistoryDataWrapper calendarHistoryDataWrapper, final Integer numberOfdays,
-            final boolean isSkipRepaymentOnFirstDayofMonth, final HolidayDetailDTO holidayDetailDTO,
-            final boolean allowCompoundingOnEod, LoanSummary summary) {
+            final CalendarHistoryDataWrapper calendarHistoryDataWrapper, final HolidayDetailDTO holidayDetailDTO,
+            final boolean allowCompoundingOnEod, LoanSummary summary, ScheduleGeneratorDTO scheduleGeneratorDTO) {
 
         final Integer numberOfRepayments = loanProductRelatedDetail.getNumberOfRepayments();
         final Integer repaymentEvery = loanProductRelatedDetail.getRepayEvery();
@@ -413,18 +407,18 @@ public final class LoanApplicationTerms {
         final boolean isInterestRecalculationEnabled = loanProductRelatedDetail.isInterestRecalculationEnabled();
         final boolean isInterestChargedFromDateSameAsDisbursalDateEnabled = false;
         final boolean isEqualAmortization = loanProductRelatedDetail.isEqualAmortization();
-        return new LoanApplicationTerms(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
+        return new LoanApplicationTerms(scheduleGeneratorDTO.getApplicationCurrency(), loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentPeriodFrequencyType, ((nthDay != null) ? nthDay.getValue() : null), dayOfWeek, amortizationMethod,
                 interestMethod, interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate,
-                interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, principalMoney, expectedDisbursementDate,
-                repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment,
+                interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, principalMoney, scheduleGeneratorDTO.getRecalculateFrom(),
+                repaymentsStartingFromDate, scheduleGeneratorDTO.getCalculatedRepaymentsStartingFromDate(), graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment,
                 graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance, multiDisburseLoan, emiAmount, disbursementDatas,
                 maxOutstandingBalance, loanProductRelatedDetail.getGraceOnDueDate(), daysInMonthType, daysInYearType,
                 isInterestRecalculationEnabled, rescheduleStrategyMethod, compoundingMethod, restCalendarInstance,
                 recalculationFrequencyType, compoundingCalendarInstance, compoundingFrequencyType, principalThresholdForLastInstalment,
                 installmentAmountInMultiplesOf, loanPreClosureInterestCalculationStrategy, loanCalendar, approvedAmount,
-                loanTermVariations, calendarHistoryDataWrapper, isInterestChargedFromDateSameAsDisbursalDateEnabled, numberOfdays,
-                isSkipRepaymentOnFirstDayofMonth, holidayDetailDTO, allowCompoundingOnEod, isEqualAmortization);
+                loanTermVariations, calendarHistoryDataWrapper, isInterestChargedFromDateSameAsDisbursalDateEnabled, scheduleGeneratorDTO.getNumberOfdays(),
+                scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), holidayDetailDTO, allowCompoundingOnEod, isEqualAmortization);
     }
 
     public static LoanApplicationTerms assembleFrom(final ApplicationCurrency applicationCurrency, final Integer loanTermFrequency,
@@ -1673,6 +1667,10 @@ public final class LoanApplicationTerms {
 
     public void updateTotalInterestDue(Money totalInterestDue) {
         this.totalInterestDue = totalInterestDue;
+    }
+
+    public void updatePricipal(Money newPrincipal) {
+        this.principal = newPrincipal;
     }
 
     public ApplicationCurrency getApplicationCurrency() {

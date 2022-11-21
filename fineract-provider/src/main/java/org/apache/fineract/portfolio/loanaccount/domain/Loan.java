@@ -5623,16 +5623,16 @@ public class Loan extends AbstractPersistableCustom<Long> {
             interestChargedFromDate = scheduleGeneratorDTO.getRecalculateFrom();
         }
 
-        final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFromRestructure(scheduleGeneratorDTO.getApplicationCurrency(),
-                loanTermFrequency, loanTermPeriodFrequencyType, nthDayType, dayOfWeekType, scheduleGeneratorDTO.getRecalculateFrom(),
-                getExpectedFirstRepaymentOnDate(), scheduleGeneratorDTO.getCalculatedRepaymentsStartingFromDate(), getInArrearsTolerance(),
+
+        final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFromRestructure(
+                loanTermFrequency, loanTermPeriodFrequencyType, nthDayType, dayOfWeekType,
+                getExpectedFirstRepaymentOnDate(), getInArrearsTolerance(),
                 this.loanRepaymentScheduleDetail, this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount, disbursementData,
                 this.maxOutstandingLoanBalance, interestChargedFromDate, this.loanProduct.getPrincipalThresholdForLastInstallment(),
                 this.loanProduct.getInstallmentAmountInMultiplesOf(), recalculationFrequencyType, restCalendarInstance, compoundingMethod,
                 compoundingCalendarInstance, compoundingFrequencyType, this.loanProduct.preCloseInterestCalculationStrategy(),
                 rescheduleStrategyMethod, calendar, getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations,
-                calendarHistoryDataWrapper, scheduleGeneratorDTO.getNumberOfdays(), scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(),
-                holidayDetailDTO, allowCompoundingOnEod, summary);
+                calendarHistoryDataWrapper,holidayDetailDTO, allowCompoundingOnEod, summary, scheduleGeneratorDTO);
         return loanApplicationTerms;
     }
 

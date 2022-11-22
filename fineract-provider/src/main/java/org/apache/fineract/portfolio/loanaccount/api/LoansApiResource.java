@@ -96,6 +96,7 @@ import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
 import org.apache.fineract.portfolio.loanaccount.data.PaidInAdvanceData;
 import org.apache.fineract.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTermVariationType;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanTemplateTypeRequiredException;
 import org.apache.fineract.portfolio.loanaccount.exception.NotSupportedLoanTemplateTypeException;
@@ -105,6 +106,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleD
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleCalculationPlatformService;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryReadPlatformService;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureScheduleDetails;
 import org.apache.fineract.portfolio.loanaccount.service.LoanChargeReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
@@ -401,6 +403,8 @@ public class LoansApiResource {
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         LoanAccountData loanBasicDetails = this.loanReadPlatformService.retrieveOne(loanId);
+        LoanRestructureScheduleDetails restructureScheduleDetails = this.loanReadPlatformService.retrieveInstallmentDetails(loanId, LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue());
+
         if (loanBasicDetails.isInterestRecalculationEnabled()) {
             Collection<CalendarData> interestRecalculationCalendarDatas = this.calendarReadPlatformService
                     .retrieveCalendarsByEntity(loanBasicDetails.getInterestRecalculationDetailId(),
@@ -499,6 +503,16 @@ public class LoansApiResource {
                             loanId, repaymentScheduleRelatedData, disbursementData);
                     loanBasicDetails = LoanAccountData.withOriginalSchedule(loanBasicDetails, loanScheduleData);
                 }
+
+                //IF LOAN IS RESTRUCTURED-- DISPLAY ORIGINAL SCHEDULE TOO. TODO
+
+//                if (associationParameters.contains("originalSchedule") && ((loanBasicDetails.isInterestRecalculationEnabled()
+//                        && loanBasicDetails.isActive())|| restructureScheduleDetails.getRestructureRequestId()!=null) ) {
+//                    mandatoryResponseParameters.add("originalSchedule");
+//                    LoanScheduleData loanScheduleData = this.loanScheduleHistoryReadPlatformService.retrieveRepaymentArchiveSchedule(
+//                            loanId, repaymentScheduleRelatedData, disbursementData);
+//                    loanBasicDetails = LoanAccountData.withOriginalSchedule(loanBasicDetails, loanScheduleData);
+//                }
             }
 
             if (associationParameters.contains("charges")) {

@@ -525,32 +525,32 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             }
 
             //clear off the first installment
-            LoanRepaymentScheduleInstallment installment = loan.getRepaymentScheduleInstallments().get(0);
-
-            loan.getRepaymentScheduleInstallments().get(0).updatePrincipalCompleted(
-                    installment.getPrincipal(loan.getCurrency()).getAmount()
-            );
-            loan.getRepaymentScheduleInstallments().get(0).updateInterestCompleted(
-                    installment.getInterestCharged(loan.getCurrency()).getAmount()
-            );
-
-            loan.getRepaymentScheduleInstallments().get(0).updateInterestCompleted(
-                    installment.getInterestCharged(loan.getCurrency()).getAmount()
-            );
-            loan.getRepaymentScheduleInstallments().get(0).updateChargesPaid(
-                    installment.getFeeChargesCharged(loan.getCurrency()).getAmount()
-            );
-            loan.getRepaymentScheduleInstallments().get(0).updatePenaltiesPaid(
-                    installment.getPenaltyChargesCharged(loan.getCurrency()).getAmount()
-            );
-
-            loan.getRepaymentScheduleInstallments().get(0).updateObligationMet(true);
-            //TODO -to be changed to use make loan payment method to create all necessary transactions on the laon
-
-            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingPenaltyCharges(approvedOnDate, loan.getCurrency());
-            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingInterest(approvedOnDate, loan.getCurrency());
-            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingFeeCharges(approvedOnDate, loan.getCurrency());
-            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingPrincipal(approvedOnDate, loan.getCurrency());
+//            LoanRepaymentScheduleInstallment installment = loan.getRepaymentScheduleInstallments().get(0);
+//
+//            loan.getRepaymentScheduleInstallments().get(0).updatePrincipalCompleted(
+//                    installment.getPrincipal(loan.getCurrency()).getAmount()
+//            );
+//            loan.getRepaymentScheduleInstallments().get(0).updateInterestCompleted(
+//                    installment.getInterestCharged(loan.getCurrency()).getAmount()
+//            );
+//
+//            loan.getRepaymentScheduleInstallments().get(0).updateInterestCompleted(
+//                    installment.getInterestCharged(loan.getCurrency()).getAmount()
+//            );
+//            loan.getRepaymentScheduleInstallments().get(0).updateChargesPaid(
+//                    installment.getFeeChargesCharged(loan.getCurrency()).getAmount()
+//            );
+//            loan.getRepaymentScheduleInstallments().get(0).updatePenaltiesPaid(
+//                    installment.getPenaltyChargesCharged(loan.getCurrency()).getAmount()
+//            );
+//
+//            loan.getRepaymentScheduleInstallments().get(0).updateObligationMet(true);
+//            //TODO -to be changed to use make loan payment method to create all necessary transactions on the laon
+//
+//            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingPenaltyCharges(approvedOnDate, loan.getCurrency());
+//            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingInterest(approvedOnDate, loan.getCurrency());
+//            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingFeeCharges(approvedOnDate, loan.getCurrency());
+//            loan.getRepaymentScheduleInstallments().get(0).writeOffOutstandingPrincipal(approvedOnDate, loan.getCurrency());
 
             // update the loan object
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);

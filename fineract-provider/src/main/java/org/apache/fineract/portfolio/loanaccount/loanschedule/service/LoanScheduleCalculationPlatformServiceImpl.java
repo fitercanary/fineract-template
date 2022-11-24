@@ -19,9 +19,9 @@
 package org.apache.fineract.portfolio.loanaccount.loanschedule.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
+import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.organisation.monetary.service.CurrencyReadPlatformService;
 import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
@@ -55,10 +56,8 @@ import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationCo
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
-import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRepository;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.apache.fineract.portfolio.loanproduct.serialization.LoanProductDataValidator;
 import org.joda.time.LocalDate;
@@ -115,6 +114,8 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
 
     @Override
     public LoanScheduleModel calculateLoanSchedule(final JsonQuery query, Boolean validateParams, Long loanId) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
         BigDecimal principalPortion = this.fromJsonHelper.extractBigDecimalWithLocaleNamed("principalPortion",
                 query.parsedJson());
@@ -126,6 +127,24 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
                 query.parsedJson());
         final Boolean isPartLiquidate = this.fromJsonHelper.extractBooleanNamed("isPartLiquidate", query.parsedJson());
         LoanRepaymentScheduleInstallment currentInstallment = loan.fetchLoanRepaymentScheduleInstallment(repaymentDate);
+        if (currentInstallment==null){
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "validation.msg.loan.installment.date.not.found",
+                    "No installment with specific date was found", "expectedDisbursementDate",
+                    repaymentDate.toString());
+            dataValidationErrors.add(error);
+        }
+        if (currentInstallment.getTotalPaid(loan.getCurrency()).getAmount().compareTo(BigDecimal.ZERO)>0){
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "validation.msg.loan.installment.already.paid",
+                    "Installment selected already has a payment on it and can not be modified", "expectedDisbursementDate",
+                    repaymentDate.toString());
+            dataValidationErrors.add(error);
+        }
+
+        if (!dataValidationErrors.isEmpty())
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                "Validation errors exist.", dataValidationErrors);
 
         final MonetaryCurrency currency = loan.getCurrency();
         List<LoanRepaymentScheduleInstallment> installments = null;
@@ -167,11 +186,15 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
             loan.updateLoanSummaryDerivedFields();
             this.loanRepositoryWrapper.save(loan);
         } else if (modifyInstallmentAction.equals("updatePrincipal")) {
+            Money distributionPrincipalTotal = currentInstallment.getPrincipalOutstanding(currency).minus(Money.of(currency,principalPortion));
+
             // update principal portion of modified installment
             loan.makeScheduleModification(currentInstallment.getDueDate(), principalPortion, null);
             loanSchedule = this.calculateLoanSchedule(query, validateParams);
             final Collection<LoanSchedulePeriodData> periods = loanSchedule.toData().getPeriods();
 
+            RoundingMode mode = MoneyHelper.getRoundingMode();
+            Money principalPortionPerInstallment = distributionPrincipalTotal.dividedBy((periods.size()-1), mode);
             // update all future installments
             installments = loan.getRepaymentScheduleInstallments();
 
@@ -179,16 +202,18 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
                 if (installment.getInstallmentNumber() > currentInstallment.getInstallmentNumber()) {
                     for (LoanSchedulePeriodData period : periods) {
                         if (installment.getDueDate().equals(period.periodDueDate())) {
-                            loan.makeScheduleModification(installment.getDueDate(), period.principalDue(), null);
+
+                            BigDecimal modifiedPrincipalDue = period.principalDue().add(principalPortionPerInstallment.getAmount());
+                            loan.makeScheduleModification(installment.getDueDate(), modifiedPrincipalDue, null);
                         }
                     }
                 }
             }
             loan.updateLoanSummaryDerivedFields();
             this.loanRepositoryWrapper.save(loan);
+            loanSchedule = this.calculateLoanSchedule(query, validateParams);
         } else if (modifyInstallmentAction.equals("updateInterest")) {
             // validate interestPortion must be less than previous interest amount
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             if (Money.of(currency, interestPortion).isGreaterThan(currentInstallment.getInterestCharged(currency))) {
                 final ApiParameterError error = ApiParameterError.parameterError(
                         "validation.msg.loan.interestPortion.not.less.than.previous.interest.amount",

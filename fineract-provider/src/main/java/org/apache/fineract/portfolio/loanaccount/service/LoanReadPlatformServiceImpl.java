@@ -430,6 +430,21 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
 
     @Override
+    public LoanTransactionData modifyInstallment(Long loanId) {
+        this.context.authenticatedUser();
+
+        RepaymentTransactionTemplateMapper mapper = new RepaymentTransactionTemplateMapper();
+        String sql = "select " + mapper.modifySchema() + " where l.id =?";
+        System.out.println("full sql = \n\n"+ sql);
+        LoanTransactionData loanTransactionData = this.jdbcTemplate.queryForObject(sql, mapper, LoanTransactionType.REPAYMENT.getValue(),
+                loanId, loanId);
+
+//        final Collection<PaymentTypeData> paymentOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
+        Collection<PaymentTypeData> paymentOptions = null;
+        return LoanTransactionData.templateOnTop(loanTransactionData, paymentOptions);
+    }
+
+    @Override
     public LoanTransactionData retrieveLoanPrePaymentTemplate(final Long loanId, LocalDate onDate) {
 
         this.context.authenticatedUser();
@@ -1955,7 +1970,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final BigDecimal outstandingLoanBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "outstandingLoanBalance");
 
             return new LoanTransactionData(id, transactionType, date, totalAmount, principalPortion, interestPortion, feeChargesPortion,
-                    penaltyChargesPortion, overPaymentPortion, unrecognizedIncomePortion, outstandingLoanBalance, false);
+                    penaltyChargesPortion, overPaymentPortion, unrecognizedIncomePortion, outstandingLoanBalance, false,null);
         }
     }
 
@@ -2232,8 +2247,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     .append("ls.fee_charges_amount - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0) - IFNULL(ls.fee_charges_waived_derived,0) as feeDue,");
             sqlBuilder
                     .append("ls.penalty_charges_amount - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0) as penaltyDue,");
-            sqlBuilder
-                    .append("ls.installment as installment,");
+            sqlBuilder.append("ls.installment as installment, ");
+            sqlBuilder.append("0 as total_payments_made, ");
             sqlBuilder
                     .append(" l.currency_code as currencyCode, l.currency_digits as currencyDigits, l.currency_multiplesof as inMultiplesOf, rc.`name` as currencyName, ");
             sqlBuilder
@@ -2243,6 +2258,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             sqlBuilder.append(" LEFT JOIN m_loan_transaction tr ON tr.loan_id = l.id AND tr.transaction_type_enum = ? and tr.is_reversed = 0");
             sqlBuilder.append(" join m_currency rc on rc.`code` = l.currency_code ");
             sqlBuilder.append(" JOIN m_loan_repayment_schedule ls ON ls.loan_id = l.id AND ls.completed_derived = 0 ");
+            sqlBuilder.append(" LEFT JOIN m_loan_repayment_schedule lsn ON lsn.loan_id = l.id AND lsn.completed_derived = 0 AND lsn.installment= (ls.installment+1) ");
             sqlBuilder.append(" join( ");
             sqlBuilder.append(" (select min(ls.duedate) datedue,ls.loan_id from m_loan_repayment_schedule ls  ");
             sqlBuilder.append(" where ls.loan_id = ? and  ls.completed_derived = 0)");
@@ -2255,8 +2271,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.REPAYMENT);
             final CurrencyData currencyData = this.currencyMapper.mapRow(rs, rowNum);
             final LocalDate date = JdbcSupport.getLocalDate(rs, "transactionDate");
-            final BigDecimal principalPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalDue");
+            LocalDate nextInstallmentDueDate = null;
+            BigDecimal principalPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalDue");
             final BigDecimal interestDue = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestDue");
+            BigDecimal interestPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestDue");
             final BigDecimal feeDue = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeDue");
             final BigDecimal penaltyDue = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyDue");
             final BigDecimal totalDue = principalPortion.add(interestDue).add(feeDue).add(penaltyDue);
@@ -2272,11 +2290,53 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final String externalId = null;
             final AccountTransferData transfer = null;
             final BigDecimal fixedEmiAmount = null;
+            final BigDecimal totalPaymentsMade = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "total_payments_made");
+            if (totalPaymentsMade!=null && totalPaymentsMade.compareTo(BigDecimal.ZERO)>0){
+                nextInstallmentDueDate = JdbcSupport.getLocalDate(rs, "next_installment_due_date");
+                principalPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "next_installment_principal_amount");
+                interestPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "next_installment_interest_amount");
+            }
+
             return new LoanTransactionData(id, officeId, officeName, transactionType, paymentDetailData, currencyData, date, totalDue,
                     principalPortion, interestDue, feeDue, penaltyDue, overPaymentPortion, externalId, transfer, fixedEmiAmount,
-                    outstandingLoanBalance, installment, unrecognizedIncomePortion, manuallyReversed);
+                    outstandingLoanBalance, installment, unrecognizedIncomePortion, manuallyReversed, nextInstallmentDueDate);
         }
 
+        public String modifySchema() {
+            StringBuilder sqlBuilder = new StringBuilder();
+
+            sqlBuilder.append("if(max(tr.transaction_date)>ls.dueDate,max(tr.transaction_date),ls.dueDate) as transactionDate,");
+            sqlBuilder
+                    .append("ls.principal_amount - IFNULL(ls.principal_writtenoff_derived,0) - IFNULL(ls.principal_completed_derived,0) as principalDue,");
+            sqlBuilder
+                    .append("ls.interest_amount - IFNULL(ls.interest_completed_derived,0) - IFNULL(ls.interest_waived_derived,0) - IFNULL(ls.interest_writtenoff_derived,0) as interestDue,");
+            sqlBuilder
+                    .append("ls.fee_charges_amount - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0) - IFNULL(ls.fee_charges_waived_derived,0) as feeDue,");
+            sqlBuilder
+                    .append("ls.penalty_charges_amount - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0) as penaltyDue,");
+            sqlBuilder.append("(COALESCE(ls.principal_completed_derived,0) + " +
+                    "COALESCE(ls.interest_completed_derived,0) + COALESCE(ls.fee_charges_completed_derived,0) +" +
+                    "COALESCE(ls.penalty_charges_completed_derived,0)) as total_payments_made,");
+            sqlBuilder.append("ls.installment as installment, ");
+            sqlBuilder.append("lsn.duedate AS next_installment_due_date, ");
+            sqlBuilder.append("lsn.principal_amount AS next_installment_principal_amount, ");
+            sqlBuilder.append("lsn.interest_amount AS next_installment_interest_amount, ");
+            sqlBuilder
+                    .append(" l.currency_code as currencyCode, l.currency_digits as currencyDigits, l.currency_multiplesof as inMultiplesOf, rc.`name` as currencyName, ");
+            sqlBuilder
+                    .append(" l.principal_outstanding_derived as outstandingLoanBalance, ");
+            sqlBuilder.append(" rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode ");
+            sqlBuilder.append(" FROM m_loan l");
+            sqlBuilder.append(" LEFT JOIN m_loan_transaction tr ON tr.loan_id = l.id AND tr.transaction_type_enum = ? and tr.is_reversed = 0");
+            sqlBuilder.append(" join m_currency rc on rc.`code` = l.currency_code ");
+            sqlBuilder.append(" JOIN m_loan_repayment_schedule ls ON ls.loan_id = l.id AND ls.completed_derived = 0 ");
+            sqlBuilder.append(" LEFT JOIN m_loan_repayment_schedule lsn ON lsn.loan_id = l.id AND lsn.completed_derived = 0 AND lsn.installment= (ls.installment+1) ");
+            sqlBuilder.append(" join( ");
+            sqlBuilder.append(" (select min(ls.duedate) datedue,ls.loan_id from m_loan_repayment_schedule ls  ");
+            sqlBuilder.append(" where ls.loan_id = ? and  ls.completed_derived = 0)");
+            sqlBuilder.append(" )asq on asq.loan_id = ls.loan_id and asq.datedue = ls.duedate");
+            return sqlBuilder.toString();
+        }
     }
 
     @Override

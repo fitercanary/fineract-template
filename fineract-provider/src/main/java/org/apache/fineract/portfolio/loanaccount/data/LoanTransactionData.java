@@ -62,6 +62,8 @@ public class LoanTransactionData {
 	@SuppressWarnings("unused")
 	private final LocalDate possibleNextRepaymentDate;
 
+	private LocalDate nextInstallmentDate;
+
 	// templates
 	final Collection<PaymentTypeData> paymentTypeOptions;
 
@@ -120,6 +122,7 @@ public class LoanTransactionData {
 		this.possibleNextRepaymentDate = null;
 		this.paymentTypeOptions = null;
 		this.writeOffReasonOptions = null;
+		this.nextInstallmentDate = null;
 	}
 
 	public static LoanTransactionData importInstance(BigDecimal repaymentAmount, LocalDate repaymentDate,
@@ -173,6 +176,7 @@ public class LoanTransactionData {
 		this.possibleNextRepaymentDate = null;
 		this.paymentTypeOptions = null;
 		this.writeOffReasonOptions = null;
+		this.nextInstallmentDate = null;
 	}
 
 	public Integer getAccountId() {
@@ -191,8 +195,19 @@ public class LoanTransactionData {
 				loanTransactionData.feeChargesPortion, loanTransactionData.penaltyChargesPortion, loanTransactionData.overpaymentPortion,
 				loanTransactionData.unrecognizedIncomePortion, paymentTypeOptions, loanTransactionData.externalId,
 				loanTransactionData.transfer, loanTransactionData.fixedEmiAmount, loanTransactionData.outstandingLoanBalance, loanTransactionData.installment,
-				loanTransactionData.manuallyReversed);
+				loanTransactionData.manuallyReversed,loanTransactionData.nextInstallmentDate);
 
+	}
+
+	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
+							   final PaymentDetailData paymentDetailData, final CurrencyData currency, final LocalDate date, final BigDecimal amount,
+							   final BigDecimal principalPortion, final BigDecimal interestPortion, final BigDecimal feeChargesPortion,
+							   final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, final String externalId,
+							   final AccountTransferData transfer, BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, Integer installment,
+							   final BigDecimal unrecognizedIncomePortion, final boolean manuallyReversed, LocalDate nextInstallmentDate) {
+		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
+				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, null, externalId, transfer,
+				fixedEmiAmount, outstandingLoanBalance, installment, manuallyReversed, nextInstallmentDate);
 	}
 
 	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
@@ -214,7 +229,7 @@ public class LoanTransactionData {
 							   final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, boolean manuallyReversed) {
 		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
 				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions, externalId,
-				transfer, fixedEmiAmount, outstandingLoanBalance, null, null, manuallyReversed);
+				transfer, fixedEmiAmount, outstandingLoanBalance, null, null, manuallyReversed,null);
 	}
 
 	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
@@ -225,7 +240,19 @@ public class LoanTransactionData {
 							   final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, Integer installment, boolean manuallyReversed) {
 		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
 				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions, externalId,
-				transfer, fixedEmiAmount, outstandingLoanBalance, installment, null, manuallyReversed);
+				transfer, fixedEmiAmount, outstandingLoanBalance, installment, null, manuallyReversed, null);
+	}
+
+	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
+							   final PaymentDetailData paymentDetailData, final CurrencyData currency, final LocalDate date, final BigDecimal amount,
+							   final BigDecimal principalPortion, final BigDecimal interestPortion, final BigDecimal feeChargesPortion,
+							   final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, BigDecimal unrecognizedIncomePortion,
+							   final Collection<PaymentTypeData> paymentTypeOptions, final String externalId, final AccountTransferData transfer,
+							   final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, Integer installment, boolean manuallyReversed,
+							   LocalDate nextInstallmentDate) {
+		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
+				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions, externalId,
+				transfer, fixedEmiAmount, outstandingLoanBalance, installment, null, manuallyReversed, nextInstallmentDate);
 	}
 
 	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
@@ -236,7 +263,7 @@ public class LoanTransactionData {
 							   LocalDate submittedOnDate, final boolean manuallyReversed) {
 		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
 				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, null, externalId, transfer,
-				fixedEmiAmount, outstandingLoanBalance, null, submittedOnDate, manuallyReversed);
+				fixedEmiAmount, outstandingLoanBalance, null, submittedOnDate, manuallyReversed, null);
 	}
 
 	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
@@ -245,7 +272,7 @@ public class LoanTransactionData {
 							   final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, final BigDecimal unrecognizedIncomePortion,
 							   final Collection<PaymentTypeData> paymentTypeOptions, final String externalId, final AccountTransferData transfer,
 							   final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, final Integer installment, final LocalDate submittedOnDate, 
-							   final boolean manuallyReversed) {
+							   final boolean manuallyReversed,LocalDate nextInstallmentDueDate) {
 		this.id = id;
 		this.officeId = officeId;
 		this.officeName = officeName;
@@ -269,14 +296,17 @@ public class LoanTransactionData {
 		this.manuallyReversed = manuallyReversed;
 		this.installment = installment;
 		this.possibleNextRepaymentDate = null;
+		this.nextInstallmentDate = nextInstallmentDueDate;
 	}
 
 	public LoanTransactionData(Long id, LoanTransactionEnumData transactionType, LocalDate date, BigDecimal totalAmount,
 							   BigDecimal principalPortion, BigDecimal interestPortion, BigDecimal feeChargesPortion, BigDecimal penaltyChargesPortion,
-							   BigDecimal overPaymentPortion, BigDecimal unrecognizedIncomePortion, BigDecimal outstandingLoanBalance, final boolean manuallyReversed) {
+							   BigDecimal overPaymentPortion, BigDecimal unrecognizedIncomePortion,
+							   BigDecimal outstandingLoanBalance, final boolean manuallyReversed, LocalDate nextInstallmentDate) {
 		this(id, null, null, transactionType, null, null, date, totalAmount, principalPortion, interestPortion, feeChargesPortion,
-				penaltyChargesPortion, overPaymentPortion, unrecognizedIncomePortion, null, null, null, null, outstandingLoanBalance, null, null,
-				manuallyReversed);
+				penaltyChargesPortion, overPaymentPortion, unrecognizedIncomePortion, null, null, null,
+				null, outstandingLoanBalance, null, null,
+				manuallyReversed, nextInstallmentDate);
 	}
 
 	public static LoanTransactionData LoanTransactionDataForDisbursalTemplate(final LoanTransactionEnumData transactionType, final LocalDate expectedDisbursedOnLocalDateForTemplate,
@@ -301,7 +331,7 @@ public class LoanTransactionData {
 		final boolean manuallyReversed = false;
 		return new LoanTransactionData(id, officeId, officeName, transactionType, paymentDetailData, currency, expectedDisbursedOnLocalDateForTemplate,
 				disburseAmountForTemplate, principalPortion, interestPortion, feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion,
-				paymentOptions, transfer, externalId, retriveLastEmiAmount, outstandingLoanBalance, submittedOnDate, manuallyReversed, possibleNextRepaymentDate);
+				paymentOptions, transfer, externalId, retriveLastEmiAmount, outstandingLoanBalance, submittedOnDate, manuallyReversed, possibleNextRepaymentDate,null);
 
 	}
 
@@ -309,7 +339,8 @@ public class LoanTransactionData {
 								final CurrencyData currency, final LocalDate date, BigDecimal amount, final BigDecimal principalPortion, final BigDecimal interestPortion,
 								final BigDecimal feeChargesPortion, final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, BigDecimal unrecognizedIncomePortion, Collection<PaymentTypeData> paymentOptions,
 								final AccountTransferData transfer, final String externalId, final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance,
-								final LocalDate submittedOnDate, final boolean manuallyReversed, final LocalDate possibleNextRepaymentDate) {
+								final LocalDate submittedOnDate, final boolean manuallyReversed, final LocalDate possibleNextRepaymentDate,
+								LocalDate nextInstallmentDate) {
 		this.id = id;
 		this.officeId = officeId;
 		this.officeName = officeName;
@@ -333,6 +364,7 @@ public class LoanTransactionData {
 		this.submittedOnDate = submittedOnDate;
 		this.manuallyReversed = manuallyReversed;
 		this.possibleNextRepaymentDate = possibleNextRepaymentDate;
+		this.nextInstallmentDate = nextInstallmentDate;
 	}
 
 	public LocalDate dateOf() {
@@ -360,5 +392,17 @@ public class LoanTransactionData {
 
 	public void setWriteOffReasonOptions(Collection<CodeValueData> writeOffReasonOptions) {
 		this.writeOffReasonOptions = writeOffReasonOptions;
+	}
+
+	public LocalDate getNextInstallmentDate() {
+		return nextInstallmentDate;
+	}
+
+	public void setNextInstallmentDate(LocalDate nextInstallmentDate) {
+		this.nextInstallmentDate =nextInstallmentDate ;
+	}
+
+	public Integer getInstallment(){
+		return this.installment;
 	}
 }

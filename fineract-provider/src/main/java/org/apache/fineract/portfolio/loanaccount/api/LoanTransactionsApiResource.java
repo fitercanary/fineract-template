@@ -145,6 +145,8 @@ public class LoanTransactionsApiResource {
                 transactionDate = LocalDate.fromDateFields(transactionDateParam.getDate("transactionDate", dateFormat, locale));
             }
             transactionData = this.loanReadPlatformService.retrieveLoanForeclosureTemplate(loanId, transactionDate);
+        } else if (is(commandParam, "modifyInstallment")) {
+            transactionData = this.loanReadPlatformService.modifyInstallment(loanId);
         } else {
             throw new UnrecognizedQueryParamException("command", commandParam);
         }

@@ -18,12 +18,15 @@
  */
 package org.apache.fineract.infrastructure.documentmanagement.contentrepository;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.fineract.infrastructure.core.domain.Base64EncodedImage;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.documentmanagement.command.DocumentCommand;
@@ -42,6 +45,12 @@ public class FileSystemContentRepository implements ContentRepository {
     private final static Logger logger = LoggerFactory.getLogger(FileSystemContentRepository.class);
 
     public static final String FINERACT_BASE_DIR = System.getProperty("user.home") + File.separator + ".fineract";
+
+    private final FileSystemContentPathSanitizer pathSanitizer;
+
+    public FileSystemContentRepository(final FileSystemContentPathSanitizer pathSanitizer) {
+        this.pathSanitizer = pathSanitizer;
+    }
 
     @Override
     public String saveFile(final InputStream uploadedInputStream, final DocumentCommand documentCommand) {
@@ -106,7 +115,9 @@ public class FileSystemContentRepository implements ContentRepository {
     }
 
     private boolean deleteFile(final String documentPath) {
-        final File fileToBeDeleted = new File(documentPath);
+        String path = pathSanitizer.sanitize(documentPath);
+
+        final File fileToBeDeleted = new File(path);
         return fileToBeDeleted.delete();
     }
 
@@ -117,13 +128,17 @@ public class FileSystemContentRepository implements ContentRepository {
 
     @Override
     public FileData fetchFile(final DocumentData documentData) {
-        final File file = new File(documentData.fileLocation());
+        String path = pathSanitizer.sanitize(documentData.fileLocation());
+
+        final File file = new File(path);
         return new FileData(file, documentData.fileName(), documentData.contentType());
     }
 
     @Override
     public ImageData fetchImage(final ImageData imageData) {
-        final File file = new File(imageData.location());
+        String path = pathSanitizer.sanitize(imageData.location());
+
+        final File file = new File(path);
         imageData.updateContent(file);
         return imageData;
     }
@@ -160,16 +175,10 @@ public class FileSystemContentRepository implements ContentRepository {
     }
 
     private void writeFileToFileSystem(final String fileName, final InputStream uploadedInputStream, final String fileLocation) {
-        try {
-            final OutputStream out = new FileOutputStream(new File(fileLocation));
-            int read = 0;
-            final byte[] bytes = new byte[1024];
-
-            while ((read = uploadedInputStream.read(bytes)) != -1) {
-                out.write(bytes, 0, read);
-            }
-            out.flush();
-            out.close();
+        try (BufferedInputStream bis = new BufferedInputStream(uploadedInputStream)) {
+            String sanitizedPath = pathSanitizer.sanitize(fileLocation, bis);
+            makeDirectories(sanitizedPath);
+            FileUtils.copyInputStreamToFile(bis, new File(sanitizedPath)); // NOSONAR
         } catch (final IOException ioException) {
             throw new ContentManagementException(fileName, ioException.getMessage());
         }

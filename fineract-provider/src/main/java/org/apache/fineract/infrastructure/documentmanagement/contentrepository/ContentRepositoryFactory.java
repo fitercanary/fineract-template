@@ -32,22 +32,26 @@ public class ContentRepositoryFactory {
     private final ApplicationContext applicationContext;
     private final ExternalServicesPropertiesReadPlatformService externalServicesReadPlatformService;
 
+    private final FileSystemContentPathSanitizer contentPathSanitizer;
+
     @Autowired
     public ContentRepositoryFactory(final ApplicationContext applicationContext,
-            final ExternalServicesPropertiesReadPlatformService externalServicesReadPlatformService) {
+            final ExternalServicesPropertiesReadPlatformService externalServicesReadPlatformService,
+            final FileSystemContentPathSanitizer contentPathSanitizer) {
         this.applicationContext = applicationContext;
         this.externalServicesReadPlatformService = externalServicesReadPlatformService;
+        this.contentPathSanitizer = contentPathSanitizer;
     }
 
     public ContentRepository getRepository() {
         final ConfigurationDomainService configurationDomainServiceJpa = this.applicationContext.getBean("configurationDomainServiceJpa",
                 ConfigurationDomainService.class);
         if (configurationDomainServiceJpa.isAmazonS3Enabled()) { return createS3DocumentStore(); }
-        return new FileSystemContentRepository();
+        return new FileSystemContentRepository(contentPathSanitizer);
     }
 
     public ContentRepository getRepository(final StorageType documentStoreType) {
-        if (documentStoreType == StorageType.FILE_SYSTEM) { return new FileSystemContentRepository(); }
+        if (documentStoreType == StorageType.FILE_SYSTEM) { return new FileSystemContentRepository(contentPathSanitizer); }
         return createS3DocumentStore();
     }
 

@@ -32,4 +32,8 @@ public class ContentManagementException extends AbstractPlatformDomainRuleExcept
                 / (1024 * 1024) + " MB exceeds the max permissable file size  of " + maxFileSize + " MB", name, fileSize);
     }
 
+    public ContentManagementException(String filename, String message, Exception exception) {
+        super("error.msg.document.save", "Error while manipulating file " + filename + " due to a File system / Amazon S3 issue " + message,
+                filename, message, exception);
+    }
 }

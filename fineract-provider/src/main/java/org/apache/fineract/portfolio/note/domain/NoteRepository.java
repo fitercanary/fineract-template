@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.note.domain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -44,4 +45,10 @@ public interface NoteRepository extends JpaRepository<Note, Long>, JpaSpecificat
 
     @Query(value = "SELECT * FROM m_note n WHERE n.savings_account_transaction_id = ?1", nativeQuery = true)
     List<Note> findBySavingsTransactionId(Long transactionId);
+
+    @Query(value = "SELECT * FROM m_note n WHERE n.savings_account_id = ?1 ORDER BY id DESC limit 1", nativeQuery = true)
+    List<Note> findOneSavingsTransactionId(Long transactionId);
+
+//    @Query(value = "SELECT * from  m_note where savingsAccount.id = :accountId ORDER BY id desc LIMIT 1")
+//    Note findOneSavingsTransactionId(@Param("accountId") Long accountId);
 }

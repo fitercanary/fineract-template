@@ -500,6 +500,14 @@ public class AccountingProcessorHelper {
                 savingsProductId, paymentTypeId, loanId, transactionId, transactionDate, amount, isReversal, null, null, null);
     }
 
+     public void createAccrualBasedJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,
+            final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
+            final Long paymentTypeId, final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount,
+            final Boolean isReversal, String noteText) {
+        createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited, accountTypeToBeCredited,
+                savingsProductId, paymentTypeId, loanId, transactionId, transactionDate, amount, isReversal, null, null, noteText);
+    }
+
     public void createAccrualBasedJournalEntriesAndReversalsForSavingsWithNote(final Office office, final String currencyCode,
             final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
             final Long paymentTypeId, final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount,

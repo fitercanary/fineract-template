@@ -266,6 +266,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         final Map<String, Object> changes = account.activate(user, fixedDepositActivationReq);
         Money activationChargeAmount = getActivationCharge(account);
+        String noteText = null;
         if (!changes.isEmpty()) {
             final Locale locale = fixedDepositActivationReq.getLocale();
             final DateTimeFormatter fmt = fixedDepositActivationReq.getFormatter();
@@ -282,10 +283,14 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                     final SavingsAccount fromSavingsAccount = null;
                     boolean isRegularTransaction = false;
                     final boolean isExceptionForBalanceCheck = false;
+                    Long linkeSavingsAccountId = accountAssociation.linkedSavingsAccount().getId();
+
+                    List<Note> notes = this.noteRepository.findOneSavingsTransactionId(account.getId());
+                    if (notes!=null && notes.size()>0) noteText = notes.get(0).getNote();
                     final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(account.getActivationLocalDate(),
                             amountForDeposit.getAmount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS,
-                            accountAssociation.linkedSavingsAccount().getId(), account.getId(), "Account Transfer", locale, fmt, null, null,
-                            null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, account,
+                            linkeSavingsAccountId, account.getId(), "Account Transfer", locale, fmt, null, null,
+                            null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, noteText, null, null, account,
                             fromSavingsAccount, isRegularTransaction, isExceptionForBalanceCheck);
                     this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
                 }
@@ -323,7 +328,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                     depositAccountOnHoldTransactions);
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
         }
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        postJournalEntriesWithNote(account, existingTransactionIds, existingReversedTransactionIds, noteText);
         return changes;
     }
 
@@ -1840,6 +1845,16 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
         this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null, null);
+    }
+
+    private void postJournalEntriesWithNote(final SavingsAccount savingsAccount, final Set<Long> existingTransactionIds,
+            final Set<Long> existingReversedTransactionIds, String noteText) {
+
+        final MonetaryCurrency currency = savingsAccount.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+        final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
+                existingTransactionIds, existingReversedTransactionIds);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData, null, noteText);
     }
 
     @Transactional

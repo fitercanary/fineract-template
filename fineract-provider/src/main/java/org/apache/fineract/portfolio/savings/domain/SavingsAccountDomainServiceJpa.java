@@ -148,6 +148,10 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         final SavingsAccountTransaction withdrawal = account.withdraw(transactionDTO, transactionBooleanValues.isApplyWithdrawFee(),
                 transactionBooleanValues.isApplyOverdraftFee(), glAccount);
+        if (StringUtils.isNotBlank(note)) {
+            Note transNarration = Note.savingsTransactionNote(account,withdrawal, note);
+            this.noteRepository.save(transNarration);
+        }
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastAccrualPostingPeriod(transactionDate)) {
             account.postAccrualInterest(mc, DateUtils.getLocalDateOfTenant(), transactionBooleanValues.isInterestTransfer(),
@@ -169,6 +173,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         }
         account.validateAccountBalanceDoesNotBecomeNegative(transactionAmount, transactionBooleanValues.isExceptionForBalanceCheck(),
                 depositAccountOnHoldTransactions);
+
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
@@ -176,7 +181,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             account.setPostingDate(postingDate.toDate());
 
         if (transactionBooleanValues.isRegularTransaction()) {
-            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
+             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
         }
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,

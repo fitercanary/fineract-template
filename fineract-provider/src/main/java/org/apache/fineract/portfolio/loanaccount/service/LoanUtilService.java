@@ -133,7 +133,7 @@ public class LoanUtilService {
                     loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_COMPOUNDING_DETAIL.getValue());
             overdurPenaltyWaitPeriod = this.configurationDomainService.retrievePenaltyWaitPeriod();
         }
-        final Boolean isInterestChargedFromDateAsDisbursementDateEnabled = this.configurationDomainService.isInterestChargedFromDateSameAsDisbursementDate();
+            final Boolean isInterestChargedFromDateAsDisbursementDateEnabled = this.configurationDomainService.isInterestChargedFromDateSameAsDisbursementDate();
         FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
         Boolean isSkipRepaymentOnFirstMonth = false;
         Integer numberOfDays = 0;

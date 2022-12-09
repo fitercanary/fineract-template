@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -74,10 +74,10 @@ public class LoanTransactionsApiResource {
 
     @Autowired
     public LoanTransactionsApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
-            final ApiRequestParameterHelper apiRequestParameterHelper,
-            final DefaultToApiJsonSerializer<LoanTransactionData> toApiJsonSerializer,
-            final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+                                       final ApiRequestParameterHelper apiRequestParameterHelper,
+                                       final DefaultToApiJsonSerializer<LoanTransactionData> toApiJsonSerializer,
+                                       final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+                                       PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
@@ -92,11 +92,11 @@ public class LoanTransactionsApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
     public String retrieveTransactionTemplate(@PathParam("loanId") final Long loanId, @QueryParam("command") final String commandParam,
-            @Context final UriInfo uriInfo, @QueryParam("dateFormat") final String dateFormat,
-            @QueryParam("transactionDate") final DateParam transactionDateParam, @QueryParam("locale") final String locale) {
+                                              @Context final UriInfo uriInfo, @QueryParam("dateFormat") final String dateFormat,
+                                              @QueryParam("transactionDate") final DateParam transactionDateParam, @QueryParam("locale") final String locale) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
@@ -157,10 +157,10 @@ public class LoanTransactionsApiResource {
 
     @GET
     @Path("{transactionId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
     public String retrieveTransaction(@PathParam("loanId") final Long loanId, @PathParam("transactionId") final Long transactionId,
-            @Context final UriInfo uriInfo) {
+                                      @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
@@ -175,10 +175,10 @@ public class LoanTransactionsApiResource {
     }
 
     @POST
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
     public String executeLoanTransaction(@PathParam("loanId") final Long loanId, @QueryParam("command") final String commandParam,
-            final String apiRequestBodyAsJson) {
+                                         final String apiRequestBodyAsJson) {
 
         final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
 
@@ -210,19 +210,24 @@ public class LoanTransactionsApiResource {
         } else if (is(commandParam, "foreclosure")) {
             final CommandWrapper commandRequest = builder.loanForeclosure(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "partLiquidate")) {
+            final CommandWrapper commandRequest = builder.partLiquidateLoan(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
-        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam); }
+        if (result == null) {
+            throw new UnrecognizedQueryParamException("command", commandParam);
+        }
 
         return this.toApiJsonSerializer.serialize(result);
     }
 
     @POST
     @Path("{transactionId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
     public String adjustLoanTransaction(@PathParam("loanId") final Long loanId, @PathParam("transactionId") final Long transactionId,
-            final String apiRequestBodyAsJson) {
+                                        final String apiRequestBodyAsJson) {
 
         final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
         final CommandWrapper commandRequest = builder.adjustTransaction(loanId, transactionId).build();

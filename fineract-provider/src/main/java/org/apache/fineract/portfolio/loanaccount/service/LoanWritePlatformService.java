@@ -111,4 +111,5 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult forecloseLoan(final Long loanId, JsonCommand command);
 
+    CommandProcessingResult makeLoanPartLiquidate(Long loanId, JsonCommand command, boolean isRecoveryRepayment);
 }

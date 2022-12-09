@@ -224,7 +224,7 @@ public class LoanTransactionData {
 	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
 							   final PaymentDetailData paymentDetailData, final CurrencyData currency, final LocalDate date, final BigDecimal amount,
 							   final BigDecimal principalPortion, final BigDecimal interestPortion, final BigDecimal feeChargesPortion,
-							   final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, BigDecimal unrecognizedIncomePortion,
+							   final BigDecimal  penaltyChargesPortion, final BigDecimal overpaymentPortion, BigDecimal unrecognizedIncomePortion,
 							   final Collection<PaymentTypeData> paymentTypeOptions, final String externalId, final AccountTransferData transfer,
 							   final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, boolean manuallyReversed) {
 		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,

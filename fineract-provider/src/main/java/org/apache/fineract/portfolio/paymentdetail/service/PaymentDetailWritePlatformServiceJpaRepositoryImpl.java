@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.paymentdetail.service;
 
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.portfolio.paymentdetail.PaymentDetailConstants;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
@@ -48,8 +49,9 @@ public class PaymentDetailWritePlatformServiceJpaRepositoryImpl implements Payme
     public PaymentDetail createPaymentDetail(final JsonCommand command, final Map<String, Object> changes) {
         Long paymentTypeId = command.longValueOfParameterNamed(PaymentDetailConstants.paymentTypeParamName);
         if (paymentTypeId == null) {
-            if (changes.get("paymentTypeId") != null) {
-                paymentTypeId = Long.parseLong(String.valueOf(changes.get("paymentTypeId")));
+            String paymentType = (String) changes.get("paymentTypeId");
+            if (!StringUtils.isBlank(paymentType)) {
+                paymentTypeId = Long.parseLong(paymentType);
             } else {
                 return null; 
             }

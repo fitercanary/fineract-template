@@ -3352,4 +3352,14 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?commad=updateInterestRate";
         return this;
     }
+
+    
+    public CommandWrapperBuilder partLiquidateLoan(final Long loanId) {
+        this.actionName = "PARTLIQUIDATELOAN";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId;
+        return this;
+    }
 }

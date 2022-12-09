@@ -248,7 +248,12 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                 if (localDate != null && localDate.isBefore(loan.getMaturityDate())) {
                     System.out.println("end date modified"+ localDate);
                     adjustedDueDate = localDate.toDate();
+                }else {
+                    Long pendingInstallments = jsonCommand.longValueOfParameterNamed(RestructureLoansApiConstants.pendingInstallmentsParamName);
+                    LocalDate newLocalD = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.scheduleStartDateParamName);
+                    adjustedDueDate = newLocalD.plusMonths(Math.toIntExact(pendingInstallments-1)).toDate();
                 }
+
             }
 
             final LoanRescheduleRequest loanRescheduleRequest = LoanRescheduleRequest.instance(loan,

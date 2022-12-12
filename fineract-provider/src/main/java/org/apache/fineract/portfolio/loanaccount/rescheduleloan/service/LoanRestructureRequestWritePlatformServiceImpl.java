@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -172,7 +172,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
     /**
      * create a new instance of the LoanRescheduleRequest object from the
      * JsonCommand object and persist
-     * 
+     *
      * @return CommandProcessingResult object
      **/
     @Override
@@ -198,7 +198,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             //if already exists request.
             LoanRescheduleRequest rescheduleRequest = this.loanRescheduleRequestRepositoryWrapper.findExistingRestructureRequest(
                     loan, LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue());
-            if (rescheduleRequest!=null) throw new LoanRestructureNotFoundException(loanId.toString());
+            if (rescheduleRequest != null) throw new LoanRestructureNotFoundException(loanId.toString());
 
             final String rescheduleReasonComment = jsonCommand
                     .stringValueOfParameterNamed(RestructureLoansApiConstants.rescheduleReasonCommentParamName);
@@ -241,26 +241,25 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                 }
             }
 
-            if (jsonCommand.hasParameter(RestructureLoansApiConstants.expectedMaturityDateParamName)) {
-                // create a LocalDate object from the "adjustedDueDate" Date
-                // string
-                LocalDate localDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.expectedMaturityDateParamName);
-                if (localDate != null && localDate.isBefore(loan.getMaturityDate())) {
-                    System.out.println("end date modified"+ localDate);
-                    adjustedDueDate = localDate.toDate();
-                }else {
-                    Long pendingInstallments = jsonCommand.longValueOfParameterNamed(RestructureLoansApiConstants.pendingInstallmentsParamName);
-                    LocalDate newLocalD = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.scheduleStartDateParamName);
-                    adjustedDueDate = newLocalD.plusMonths(Math.toIntExact(pendingInstallments-1)).toDate();
-                }
-
+//            if (jsonCommand.hasParameter(RestructureLoansApiConstants.expectedMaturityDateParamName)) {
+            // create a LocalDate object from the "adjustedDueDate" Date
+            // string
+            LocalDate expectedMaturityDt = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.expectedMaturityDateParamName);
+            if (expectedMaturityDt != null && expectedMaturityDt.isBefore(loan.getMaturityDate())) {
+                adjustedDueDate = expectedMaturityDt.toDate();
+            } else {
+                Long pendingInstallments = jsonCommand.longValueOfParameterNamed(RestructureLoansApiConstants.pendingInstallmentsParamName);
+                LocalDate newLocalD = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.scheduleStartDateParamName);
+                adjustedDueDate = newLocalD.plusMonths(Math.toIntExact(pendingInstallments)).toDate();
             }
+
+//            }
 
             final LoanRescheduleRequest loanRescheduleRequest = LoanRescheduleRequest.instance(loan,
                     LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(), 0, rescheduleFromDate,
                     recalculateInterest, rescheduleReasonCodeValue, rescheduleReasonComment, submittedOnDate,
                     this.platformSecurityContext.authenticatedUser(), null,
-                    null, null, null, true,adjustedDueDate);
+                    null, null, null, true, adjustedDueDate);
 
             // update reschedule request to term variations mapping
             List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings = new ArrayList<>();
@@ -280,9 +279,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 
             return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequest.getId())
                     .withLoanId(loan.getId()).build();
-        }
-
-        catch (final DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             // handle the data integrity violation
             handleDataIntegrityViolation(dve);
 
@@ -292,10 +289,10 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
     }
 
     private void createLoanTermVariationsForRegularLoans(final Loan loan, final Integer graceOnPrincipal, final Integer graceOnInterest,
-            final Integer extraTerms, final BigDecimal interestRate, Date rescheduleFromDate, Date adjustedDueDate,
-            final LoanRescheduleRequest loanRescheduleRequest,
-            List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings, final Boolean isActive,
-            final boolean isSpecificToInstallment, BigDecimal decimalValue, Date dueDate) {
+                                                         final Integer extraTerms, final BigDecimal interestRate, Date rescheduleFromDate, Date adjustedDueDate,
+                                                         final LoanRescheduleRequest loanRescheduleRequest,
+                                                         List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings, final Boolean isActive,
+                                                         final boolean isSpecificToInstallment, BigDecimal decimalValue, Date dueDate) {
 
         if (rescheduleFromDate != null && adjustedDueDate != null) {
             LoanTermVariations parent = null;
@@ -316,7 +313,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             LoanTermVariations parent = null;
             parent = createLoanTermVariations(termType, loan, rescheduleFromDate, dueDate, loanRescheduleRequestToTermVariationMappings,
                     isActive, isSpecificToInstallment, BigDecimal.valueOf(graceOnPrincipal), parent);
-            
+
             BigDecimal extraTermsBasedOnGracePeriods = BigDecimal.valueOf(graceOnPrincipal);
             createLoanTermVariations(LoanTermVariationType.EXTEND_REPAYMENT_PERIOD.getValue(), loan, rescheduleFromDate, dueDate,
                     loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, extraTermsBasedOnGracePeriods, parent);
@@ -340,8 +337,8 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
     }
 
     private LoanTermVariations createLoanTermVariations(final Integer termType, final Loan loan, Date rescheduleFromDate,
-            Date adjustedDueDate, List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings,
-            final Boolean isActive, final boolean isSpecificToInstallment, final BigDecimal decimalValue, LoanTermVariations parent) {
+                                                        Date adjustedDueDate, List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings,
+                                                        final Boolean isActive, final boolean isSpecificToInstallment, final BigDecimal decimalValue, LoanTermVariations parent) {
         LoanTermVariations loanTermVariation = new LoanTermVariations(termType, rescheduleFromDate, decimalValue, adjustedDueDate,
                 isSpecificToInstallment, loan, loan.status().getValue(), isActive, parent);
         loanRescheduleRequestToTermVariationMappings.add(LoanRescheduleRequestToTermVariationMapping.createNew(loanTermVariation));
@@ -357,7 +354,9 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 
             final LoanRescheduleRequest loanRescheduleRequest = this.loanRescheduleRequestRepository.findOne(loanRescheduleRequestId);
 
-            if (loanRescheduleRequest == null) { throw new LoanRescheduleRequestNotFoundException(loanRescheduleRequestId); }
+            if (loanRescheduleRequest == null) {
+                throw new LoanRescheduleRequestNotFoundException(loanRescheduleRequestId);
+            }
 
             // validate the request in the JsonCommand object passed as
             // parameter
@@ -393,8 +392,8 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 //            }
 
             List<LoanTransaction> loanTransactions = loan.getLoanTransactions();
-            for (LoanTransaction transaction: loanTransactions){
-                LoanTransactionToRepaymentScheduleMapping.updateMappingsList(scheduleMappings,transaction, loan.getCurrency());
+            for (LoanTransaction transaction : loanTransactions) {
+                LoanTransactionToRepaymentScheduleMapping.updateMappingsList(scheduleMappings, transaction, loan.getCurrency());
                 transaction.getLoanTransactionToRepaymentScheduleMappings();
                 this.loanTransactionRepository.saveAndFlush(transaction);
             }
@@ -504,7 +503,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             loan.updateLoanSchedule(loanSchedule.getInstallments(), appUser);
 
 //            loan.recalculateAllCharges();
-            ChangedTransactionDetail changedTransactionDetail =  loan.processTransactions();
+            ChangedTransactionDetail changedTransactionDetail = loan.processTransactions();
 
             for (LoanRepaymentScheduleHistory loanRepaymentScheduleHistory : loanRepaymentScheduleHistoryList) {
                 this.loanRepaymentScheduleHistoryRepository.save(loanRepaymentScheduleHistory);
@@ -525,8 +524,8 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             // update the status of the request
             loanRescheduleRequest.approve(appUser, approvedOnDate);
             //update installment numbers.
-            for (int i=0; i<loan.getRepaymentScheduleInstallments().size(); i++) {
-                loan.getRepaymentScheduleInstallments().get(i).updateInstallmentNumber(i+1);
+            for (int i = 0; i < loan.getRepaymentScheduleInstallments().size(); i++) {
+                loan.getRepaymentScheduleInstallments().get(i).updateInstallmentNumber(i + 1);
             }
 
             //clear off the first installment
@@ -559,7 +558,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 
             // update the loan object
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
-            
+
             if (changedTransactionDetail != null) {
                 for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
                     this.loanTransactionRepository.save(mapEntry.getValue());
@@ -570,14 +569,12 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                 }
             }
             postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
-            
+
             this.loanAccountDomainService.recalculateAccruals(loan, true);
 
             return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
                     .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).build();
-        }
-
-        catch (final DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             // handle the data integrity violation
             handleDataIntegrityViolation(dve);
 
@@ -602,8 +599,10 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
             if (realCause.getMessage().toLowerCase().contains("external_id_unique")) {
                 baseDataValidator.reset().parameter("externalId").failWithCode("value.must.be.unique");
             }
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
-                    "Validation errors exist.", dataValidationErrors); }
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                        "Validation errors exist.", dataValidationErrors);
+            }
         }
     }
 
@@ -624,7 +623,9 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 
             final LoanRescheduleRequest loanRescheduleRequest = loanRescheduleRequestRepository.findOne(loanRescheduleRequestId);
 
-            if (loanRescheduleRequest == null) { throw new LoanRescheduleRequestNotFoundException(loanRescheduleRequestId); }
+            if (loanRescheduleRequest == null) {
+                throw new LoanRescheduleRequestNotFoundException(loanRescheduleRequestId);
+            }
 
             // validate the request in the JsonCommand object passed as
             // parameter
@@ -653,9 +654,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
 
             return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
                     .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).build();
-        }
-
-        catch (final DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             // handle the data integrity violation
             handleDataIntegrityViolation(dve);
 
@@ -670,7 +669,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
      *
      * @param dve
      *            data integrity violation exception
-     * 
+     *
      **/
     private void handleDataIntegrityViolation(final DataIntegrityViolationException dve) {
 

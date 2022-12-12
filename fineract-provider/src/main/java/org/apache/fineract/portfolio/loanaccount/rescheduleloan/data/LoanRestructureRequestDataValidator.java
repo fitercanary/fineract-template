@@ -137,8 +137,17 @@ public class LoanRestructureRequestDataValidator {
         dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.rescheduleReasonCommentParamName).value(rescheduleReasonComment)
                 .ignoreIfNull().notExceedingLengthOf(500);
 
-        final LocalDate expectedMaturityDate = this.fromJsonHelper.extractLocalDateNamed(RestructureLoansApiConstants.expectedMaturityDateParamName,
+        LocalDate expectedMaturityDate = this.fromJsonHelper.extractLocalDateNamed(RestructureLoansApiConstants.expectedMaturityDateParamName,
                 jsonElement);
+
+        final Long pendingInstallments = this.fromJsonHelper.extractLongNamed(RestructureLoansApiConstants.pendingInstallmentsParamName,
+                jsonElement);
+
+        LocalDate originalMaturityDate = loan.getMaturityDate();
+
+        if (expectedMaturityDate==null)
+            expectedMaturityDate = originalMaturityDate.plusMonths(Math.toIntExact(pendingInstallments));
+        if (expectedMaturityDate.isAfter(originalMaturityDate)) expectedMaturityDate = originalMaturityDate;
 
         if (expectedMaturityDate != null && newStartDate != null && expectedMaturityDate.isBefore(newStartDate)) {
             dataValidatorBuilder
@@ -147,22 +156,21 @@ public class LoanRestructureRequestDataValidator {
                     .failWithCode("adjustedDueDate.before.rescheduleFromDate",
                             "Adjusted due date cannot be before the reschedule from date");
         }
-        LocalDate originalMaturityDate = loan.getMaturityDate();
-        if (originalMaturityDate.isBefore(expectedMaturityDate)) {
-            dataValidatorBuilder
-                    .reset()
-                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
-                    .failWithCode("new.maturity.date.after.original.maturity.date",
-                            "New maturity date cannot exceed the original schedule maturity");
-        }
+//        if (originalMaturityDate.isBefore(expectedMaturityDate)) {
+//            dataValidatorBuilder
+//                    .reset()
+//                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
+//                    .failWithCode("new.maturity.date.after.original.maturity.date",
+//                            "New maturity date cannot exceed the original schedule maturity");
+//        }
 
 
-        // at least one of the following must be provided => graceOnPrincipal,
-        // graceOnInterest, extraTerms, newInterestRate
-        if (!this.fromJsonHelper.parameterExists(RestructureLoansApiConstants.adjustedDueDateParamName, jsonElement)
-                && !this.fromJsonHelper.parameterExists(RestructureLoansApiConstants.expectedMaturityDateParamName, jsonElement)) {
-            dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.graceOnPrincipalParamName).notNull();
-        }
+//        // at least one of the following must be provided => graceOnPrincipal,
+//        // graceOnInterest, extraTerms, newInterestRate
+//        if (!this.fromJsonHelper.parameterExists(RestructureLoansApiConstants.adjustedDueDateParamName, jsonElement)
+//                && !this.fromJsonHelper.parameterExists(RestructureLoansApiConstants.expectedMaturityDateParamName, jsonElement)) {
+//            dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.graceOnPrincipalParamName).notNull();
+//        }
 
         if(loan.isMultiDisburmentLoan()) {
             dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(RestructureLoansApiConstants.resheduleForMultiDisbursementNotSupportedErrorCode,
@@ -173,7 +181,6 @@ public class LoanRestructureRequestDataValidator {
             dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(RestructureLoansApiConstants.resheduleWithInterestRecalculationNotSupportedErrorCode,
                     "Loan restructuring is not supported for the loan product with interest recalculation enabled");
         }
-//        validateForOverdueCharges(dataValidatorBuilder, loan, installment);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 

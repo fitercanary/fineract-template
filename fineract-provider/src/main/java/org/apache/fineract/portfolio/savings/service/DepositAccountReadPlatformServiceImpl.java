@@ -259,8 +259,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         sqlBuilder.append(" WHERE da.deposit_type_enum in (?, ?) and da.status_enum = ?");
 
         LocalDate today = DateUtils.getLocalDateOfTenant();
-        System.out.println("\n\ndate today: \n\n"+today);
-
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.depositAccountForMaturityNotificationMapper, formatter.print(today),
                 DepositAccountType.FIXED_DEPOSIT.getValue(), DepositAccountType.RECURRING_DEPOSIT.getValue(),
                 SavingsAccountStatusType.ACTIVE.getValue());

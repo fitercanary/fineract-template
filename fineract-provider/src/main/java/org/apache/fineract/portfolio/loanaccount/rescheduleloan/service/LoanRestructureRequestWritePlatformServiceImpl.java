@@ -61,7 +61,6 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepayme
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistoryRepository;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
-import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.RestructureLoansApiConstants;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureRequestDataValidator;
@@ -121,7 +120,6 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
     private final LoanAccountDomainService loanAccountDomainService;
     private final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository;
     private final LoanRescheduleRequestRepositoryWrapper loanRescheduleRequestRepositoryWrapper;
-    private final LoanTransactionToRepaymentScheduleMappingRepositoryWrapper loanTransactionToRepaymentScheduleMappingRepository;
 
     /**
      * LoanRescheduleRequestWritePlatformServiceImpl constructor
@@ -144,8 +142,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                                                           final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
                                                           final LoanAccountDomainService loanAccountDomainService,
                                                           final LoanRescheduleRequestRepositoryWrapper loanRescheduleRequestRepositoryWrapper,
-                                                          final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository,
-                                                          final LoanTransactionToRepaymentScheduleMappingRepositoryWrapper loanTransactionToRepaymentScheduleMappingRepository
+                                                          final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository
     ) {
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
         this.platformSecurityContext = platformSecurityContext;
@@ -166,7 +163,6 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
         this.loanAccountDomainService = loanAccountDomainService;
         this.repaymentScheduleInstallmentRepository = repaymentScheduleInstallmentRepository;
         this.loanRescheduleRequestRepositoryWrapper = loanRescheduleRequestRepositoryWrapper;
-        this.loanTransactionToRepaymentScheduleMappingRepository = loanTransactionToRepaymentScheduleMappingRepository;
     }
 
     /**
@@ -496,7 +492,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                     loanApplicationTerms.getHolidayDetailDTO(),
                     loanRepaymentScheduleTransactionProcessor,
                     rescheduleFromDate,
-                    loanRescheduleRequest.getRescheduleToDate()
+                    loanRescheduleRequest.getRescheduleToDate(),null
             );
 
 

@@ -27,6 +27,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
@@ -39,7 +40,7 @@ import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanResched
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureScheduleDetails;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequestRepositoryWrapper;
-import org.apache.fineract.portfolio.loanaccount.rescheduleloan.service.LoanReschedulePreviewPlatformService;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.service.LoanPartLiquidationPreviewPlatformService;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.service.LoanRescheduleRequestReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.service.LoanRestructurePreviewPlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
@@ -56,6 +57,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.util.HashSet;
 
@@ -70,6 +72,7 @@ public class ResctructureLoansApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final LoanRescheduleRequestReadPlatformService loanRescheduleRequestReadPlatformService;
     private final LoanRestructurePreviewPlatformService loanRestructurePreviewPlatformService;
+    private final LoanPartLiquidationPreviewPlatformService loanPartLiquidationPreviewPlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
@@ -85,7 +88,7 @@ public class ResctructureLoansApiResource {
                                         final LoanRestructurePreviewPlatformService loanRestructurePreviewPlatformService,
                                         final LoanRescheduleRequestRepositoryWrapper loanRescheduleRequestRepositoryWrapper,
                                         final LoanRepositoryWrapper loanRepositoryWrapper,
-                                        LoanReadPlatformService loanReadPlatformService) {
+                                        final LoanPartLiquidationPreviewPlatformService loanPartLiquidationPreviewPlatformService,                                        LoanReadPlatformService loanReadPlatformService) {
         this.loanRescheduleRequestToApiJsonSerializer = loanRescheduleRequestToApiJsonSerializer;
         this.platformSecurityContext = platformSecurityContext;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
@@ -96,6 +99,7 @@ public class ResctructureLoansApiResource {
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanRescheduleRequestRepositoryWrapper = loanRescheduleRequestRepositoryWrapper;
         this.loanRepositoryWrapper = loanRepositoryWrapper;
+        this.loanPartLiquidationPreviewPlatformService = loanPartLiquidationPreviewPlatformService;
     }
 
     @GET
@@ -110,13 +114,9 @@ public class ResctructureLoansApiResource {
         LoanRescheduleRequestData rescheduleRequestData = null;
 
         LoanRestructureScheduleDetails restructureScheduleDetails = this.loanReadPlatformService.retrieveInstallmentDetails(loanId, LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue());
-
-        //Long requestId = restructureScheduleDetails.getRestructureRequestId();
         LoanRescheduleRequest loanRescheduleRequest = null;
-        //if (requestId!=null) {
-        //     loanRescheduleRequest = loanRescheduleRequestRepositoryWrapper.findOneWithNotFoundDetection(requestId);
-        //}
-        LoanTransactionData loanTransactionData = this.loanReadPlatformService.retrieveLoanTransactionTemplate(loanId);
+
+        LoanTransactionData loanTransactionData = this.loanReadPlatformService.retrieveLoanPartLiquidationTemplate(loanId, DateUtils.getLocalDateOfTenant());
 
         rescheduleRequestData = this.loanRescheduleRequestReadPlatformService
                 .retrieveAllRescheduleReasons(RescheduleLoansApiConstants.LOAN_RESCHEDULE_REASON, loanTransactionData,
@@ -184,6 +184,37 @@ public class ResctructureLoansApiResource {
         final CommandProcessingResult commandProcessingResult = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
 
         return this.loanRescheduleRequestToApiJsonSerializer.serialize(commandProcessingResult);
+    }
+
+    @POST
+    @Path("/partLiquidate")
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
+    public String partLiquidateLoan(@PathParam("loanId") final Long loanId, @QueryParam("command") final String command,
+                                              final String apiRequestBodyAsJson) {
+        CommandWrapper commandWrapper = new CommandWrapperBuilder().confirmPartLiquidateLoan(loanId)
+                .withJson(apiRequestBodyAsJson).build();
+
+        final CommandProcessingResult commandProcessingResult = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
+
+        return this.loanRescheduleRequestToApiJsonSerializer.serialize(commandProcessingResult);
+    }
+
+
+    @GET
+    @Path("previewPartLiquidation")
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
+    public String previewPartLiquidation(@PathParam("loanId") final Long loanId,
+                                         @Context final UriInfo uriInfo) {
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(queryParameters);
+
+
+        final LoanScheduleModel loanRescheduleModel = this.loanPartLiquidationPreviewPlatformService.previewLoanPartLiquidation(loanId, queryParameters);
+
+        return this.loanRescheduleToApiJsonSerializer.serialize(settings, loanRescheduleModel.toData(), new HashSet<String>());
     }
 
     /**

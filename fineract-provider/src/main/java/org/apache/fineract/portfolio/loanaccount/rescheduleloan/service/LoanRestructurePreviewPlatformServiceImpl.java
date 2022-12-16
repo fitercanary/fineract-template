@@ -18,8 +18,6 @@
  */
 package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
 
-import com.google.gson.Gson;
-import org.apache.fineract.infrastructure.core.serialization.FromApiJsonDeserializer;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
@@ -42,7 +40,6 @@ import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanResch
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.exception.LoanRescheduleRequestNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.joda.time.LocalDate;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -142,7 +139,7 @@ public class LoanRestructurePreviewPlatformServiceImpl implements LoanRestructur
         loan.setHelpers(loanLifecycleStateMachine, this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
         final LoanScheduleDTO loanSchedule = loanScheduleGenerator.rescheduleNextInstallmentsRestructure(mathContext, loanApplicationTerms,
                 loan, loanApplicationTerms.getHolidayDetailDTO(),
-                loanRepaymentScheduleTransactionProcessor, rescheduleFromDate, loanRescheduleRequest.getRescheduleToDate());
+                loanRepaymentScheduleTransactionProcessor, rescheduleFromDate, loanRescheduleRequest.getRescheduleToDate(),null );
         final LoanScheduleModel loanScheduleModel = loanSchedule.getLoanScheduleModel();
         LoanScheduleModel loanScheduleModels = LoanScheduleModel.withLoanRestructureModelPeriods(loanScheduleModel.getPeriods(),
                 loanScheduleModel,loanRescheduleRequest);

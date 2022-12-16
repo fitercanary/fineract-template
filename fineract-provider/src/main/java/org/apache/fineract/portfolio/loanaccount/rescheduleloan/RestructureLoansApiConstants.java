@@ -56,6 +56,7 @@ public class RestructureLoansApiConstants {
     public static String totalInstallmentsParamName="totalInstallments";
     public static String scheduleStartDateParamName="startDate";
     public static String transactionDateParamName="transactionDate";
+    public static String transactionAmountParam="transactionAmount";
     public static String expectedMaturityDateParamName="expectedMaturityDate";
 
     

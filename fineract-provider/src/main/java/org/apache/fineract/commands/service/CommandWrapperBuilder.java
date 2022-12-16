@@ -2498,6 +2498,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder previewLoanPartLiquidation(final String entityName, final Long loanId) {
+        this.actionName = "PREVIEW";
+        this.entityName = entityName;
+        this.loanId = loanId;
+        this.href = "/restructureloans/" + loanId + "/previewPartLiquidation";
+        return this;
+    }
+
     public CommandWrapperBuilder rejectLoanRescheduleRequest(final String entityName, final Long requestId) {
         this.actionName = "REJECT";
         this.entityName = entityName;
@@ -3354,8 +3362,12 @@ public class CommandWrapperBuilder {
     }
 
     
-    public CommandWrapperBuilder partLiquidateLoan(final Long loanId) {
-        this.actionName = "PARTLIQUIDATELOAN";
+//    public CommandWrapperBuilder partLiquidateLoan(final Long loanId) {
+//
+//    }
+
+    public CommandWrapperBuilder confirmPartLiquidateLoan(Long loanId) {
+        this.actionName = "CONFIRMPARTLIQUIDATION";
         this.entityName = "LOAN";
         this.entityId = loanId;
         this.loanId = loanId;

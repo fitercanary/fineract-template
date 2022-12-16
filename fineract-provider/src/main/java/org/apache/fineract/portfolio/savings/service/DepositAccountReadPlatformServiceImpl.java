@@ -1559,7 +1559,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("da.deposit_type_enum as depositTypeId ");
             sqlBuilder.append("FROM m_savings_account da ");
             sqlBuilder.append("inner join m_deposit_account_term_and_preclosure dat on dat.savings_account_id = da.id ");
-            sqlBuilder.append("and dat.next_maturity_notification_date is not null and dat.next_maturity_notification_date <= ? ");
+            sqlBuilder.append("and dat.next_maturity_notification_date is not null and dat.next_maturity_notification_date = ? ");
 
             this.schemaSql = sqlBuilder.toString();
         }

@@ -2362,12 +2362,13 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
      * @param loanRepaymentScheduleTransactionProcessor
      * @param rescheduleFrom
      * @param scheduleTillDate
+     * @param transactionAmount
      * @return
      */
     public LoanScheduleDTO rescheduleNextInstallmentsRestructure(final MathContext mc, final LoanApplicationTerms loanApplicationTerms, Loan loan,
-            final HolidayDetailDTO holidayDetailDTO,
-            final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor, final LocalDate rescheduleFrom,
-            final LocalDate scheduleTillDate) {
+                                                                 final HolidayDetailDTO holidayDetailDTO,
+                                                                 final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor, final LocalDate rescheduleFrom,
+                                                                 final LocalDate scheduleTillDate, Money transactionAmount) {
         // Loan transactions to process and find the variation on payments
         Collection<RecalculationDetail> recalculationDetails = new ArrayList<>();
         List<LoanTransaction> transactions = loan.getLoanTransactions();

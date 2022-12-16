@@ -22,6 +22,7 @@ import java.math.MathContext;
 import java.util.Set;
 
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
@@ -41,7 +42,7 @@ public interface LoanScheduleGenerator {
 
     LoanScheduleDTO rescheduleNextInstallmentsRestructure(MathContext mc, LoanApplicationTerms loanApplicationTerms, Loan loan,
             final HolidayDetailDTO holidayDetailDTO, LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor,
-            LocalDate rescheduleFrom, LocalDate rescheduleTo);
+            LocalDate rescheduleFrom, LocalDate rescheduleTo, Money transactionAmount);
 
     LoanRepaymentScheduleInstallment calculatePrepaymentAmount(MonetaryCurrency currency, LocalDate onDate,
             LoanApplicationTerms loanApplicationTerms, MathContext mc, Loan loan, HolidayDetailDTO holidayDetailDTO,

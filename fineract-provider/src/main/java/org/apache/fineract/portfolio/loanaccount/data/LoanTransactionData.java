@@ -62,7 +62,7 @@ public class LoanTransactionData {
 	@SuppressWarnings("unused")
 	private final LocalDate possibleNextRepaymentDate;
 
-	private LocalDate nextInstallmentDate;
+	private LocalDate nextDate;
 
 	// templates
 	final Collection<PaymentTypeData> paymentTypeOptions;
@@ -122,7 +122,7 @@ public class LoanTransactionData {
 		this.possibleNextRepaymentDate = null;
 		this.paymentTypeOptions = null;
 		this.writeOffReasonOptions = null;
-		this.nextInstallmentDate = null;
+		this.nextDate = null;
 	}
 
 	public static LoanTransactionData importInstance(BigDecimal repaymentAmount, LocalDate repaymentDate,
@@ -176,7 +176,7 @@ public class LoanTransactionData {
 		this.possibleNextRepaymentDate = null;
 		this.paymentTypeOptions = null;
 		this.writeOffReasonOptions = null;
-		this.nextInstallmentDate = null;
+		this.nextDate = null;
 	}
 
 	public Integer getAccountId() {
@@ -195,7 +195,7 @@ public class LoanTransactionData {
 				loanTransactionData.feeChargesPortion, loanTransactionData.penaltyChargesPortion, loanTransactionData.overpaymentPortion,
 				loanTransactionData.unrecognizedIncomePortion, paymentTypeOptions, loanTransactionData.externalId,
 				loanTransactionData.transfer, loanTransactionData.fixedEmiAmount, loanTransactionData.outstandingLoanBalance, loanTransactionData.installment,
-				loanTransactionData.manuallyReversed,loanTransactionData.nextInstallmentDate);
+				loanTransactionData.manuallyReversed,loanTransactionData.nextDate);
 
 	}
 
@@ -230,6 +230,18 @@ public class LoanTransactionData {
 		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
 				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions, externalId,
 				transfer, fixedEmiAmount, outstandingLoanBalance, null, null, manuallyReversed,null);
+	}
+
+	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
+							   final PaymentDetailData paymentDetailData, final CurrencyData currency, final LocalDate date, final BigDecimal amount,
+							   final BigDecimal principalPortion, final BigDecimal interestPortion, final BigDecimal feeChargesPortion,
+							   final BigDecimal  penaltyChargesPortion, final BigDecimal overpaymentPortion, BigDecimal unrecognizedIncomePortion,
+							   final Collection<PaymentTypeData> paymentTypeOptions, final String externalId, final AccountTransferData transfer,
+							   final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, boolean manuallyReversed,
+							   LocalDate nextInstallmentDueDate) {
+		this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
+				feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions, externalId,
+				transfer, fixedEmiAmount, outstandingLoanBalance, null, null, manuallyReversed,nextInstallmentDueDate);
 	}
 
 	public LoanTransactionData(final Long id, final Long officeId, final String officeName, final LoanTransactionEnumData transactionType,
@@ -296,7 +308,7 @@ public class LoanTransactionData {
 		this.manuallyReversed = manuallyReversed;
 		this.installment = installment;
 		this.possibleNextRepaymentDate = null;
-		this.nextInstallmentDate = nextInstallmentDueDate;
+		this.nextDate = nextInstallmentDueDate;
 	}
 
 	public LoanTransactionData(Long id, LoanTransactionEnumData transactionType, LocalDate date, BigDecimal totalAmount,
@@ -364,7 +376,7 @@ public class LoanTransactionData {
 		this.submittedOnDate = submittedOnDate;
 		this.manuallyReversed = manuallyReversed;
 		this.possibleNextRepaymentDate = possibleNextRepaymentDate;
-		this.nextInstallmentDate = nextInstallmentDate;
+		this.nextDate = nextInstallmentDate;
 	}
 
 	public LocalDate dateOf() {
@@ -394,12 +406,12 @@ public class LoanTransactionData {
 		this.writeOffReasonOptions = writeOffReasonOptions;
 	}
 
-	public LocalDate getNextInstallmentDate() {
-		return nextInstallmentDate;
+	public LocalDate getNextDate() {
+		return nextDate;
 	}
 
-	public void setNextInstallmentDate(LocalDate nextInstallmentDate) {
-		this.nextInstallmentDate =nextInstallmentDate ;
+	public void setNextDate(LocalDate nextDate) {
+		this.nextDate = nextDate;
 	}
 
 	public Integer getInstallment(){

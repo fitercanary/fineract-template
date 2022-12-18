@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@CommandType(entity = "RESTRUCTURELOAN", action = "CONFIRMPARTLIQUIDATION")
+@CommandType(entity = "LOAN", action = "CONFIRMPARTLIQUIDATION")
 public class ConfirmPartLiquidationRequestCommandHandler implements NewCommandSourceHandler {
 	private final LoanPartLiquidationPreviewPlatformService loanPartLiquidationPreviewPlatformService;
 

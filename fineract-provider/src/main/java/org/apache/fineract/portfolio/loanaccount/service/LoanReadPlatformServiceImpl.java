@@ -2236,7 +2236,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Money outStandingAmount = loanRepaymentScheduleInstallment.getTotalOutstanding(currency);
 
         return new LoanTransactionData(null, null, null, transactionType, null, currencyData, nextInstallmentDate,
-                outStandingAmount.getAmount(), loanRepaymentScheduleInstallment.getPrincipalOutstanding(currency).getAmount(),
+                outStandingAmount.getAmount(), loan.getSummary().getTotalPrincipalOutstanding(),
                 loanRepaymentScheduleInstallment.getInterestOutstanding(currency).getAmount(), loanRepaymentScheduleInstallment
                 .getFeeChargesOutstanding(currency).getAmount(), loanRepaymentScheduleInstallment.getPenaltyChargesOutstanding(
                 currency).getAmount(), null, unrecognizedIncomePortion, paymentTypeOptions, null, null, null,

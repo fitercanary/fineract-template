@@ -905,4 +905,10 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
     public void setIncomePenaltyChargesPortion(BigDecimal incomePenaltyChargesPortion) {
         this.incomePenaltyChargesPortion = incomePenaltyChargesPortion;
     }
+
+    public void clearAllInstallmentAmount() {
+        this.principalPortion = BigDecimal.ZERO;
+        this.interestPortion = BigDecimal.ZERO;
+        this.amount = BigDecimal.ZERO;
+    }
 }

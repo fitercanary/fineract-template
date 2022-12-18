@@ -122,7 +122,18 @@ public class LoanPartLiquidatonDataValidator {
         dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.rescheduleFromDateParamName).value(newStartDate).notNull();
 
         final Money transactionAmount = Money.of(loan.getCurrency(),new BigDecimal(queryParams.getFirst(RestructureLoansApiConstants.transactionAmountParam)));
-        dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.transactionAmountParam).value(transactionAmount).notNull();
+        dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.transactionAmountParam).value(transactionAmount.getAmount()).notNull();
+
+        final Money interestPortion = Money.of(loan.getCurrency(),new BigDecimal(queryParams.getFirst(RestructureLoansApiConstants.interestPortionAmount)));
+        dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.interestPortionAmount).value(interestPortion.getAmount()).notNull();
+
+        if (interestPortion.isGreaterThan(transactionAmount)){
+            dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.transactionAmountParam)
+                    .failWithCode("part.liquidation.amount.less.than.outstanding.interest",
+                            "Part Liquidation Amount should be enough to cover " +
+                                    "total outstanding interest as of today");
+        }
+
 
         if (transactionAmount==null || transactionAmount.getAmount().compareTo(BigDecimal.ZERO)<=0){
             dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.transactionAmountParam)
@@ -130,6 +141,108 @@ public class LoanPartLiquidatonDataValidator {
 
         }
         LocalDate expectedMaturityDate = LocalDate.parse(queryParams.getFirst(RestructureLoansApiConstants.expectedMaturityDateParamName), formatter);
+
+
+        LocalDate originalMaturityDate = loan.getMaturityDate();
+
+        if (expectedMaturityDate.isAfter(originalMaturityDate)) {
+            dataValidatorBuilder
+                    .reset()
+                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
+                    .failWithCode("expected.maturity.date.cannot.exceed.original.maturity.date",
+                            "Expected Maturity Date cannot exceed original loan Maturity Date");
+        }
+        LoanRepaymentScheduleInstallment newMaturityInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
+        if (newMaturityInstallment==null){
+            dataValidatorBuilder
+                    .reset()
+                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
+                    .failWithCode("error.msg.maturity.date.installment.not.found",
+                            "Installment schedule with due date `" + newMaturityInstallment + "` was not found",
+                            "expectedMaturityDate", newMaturityInstallment);
+        }
+
+
+        LoanRepaymentScheduleInstallment newStartInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
+        if (newStartInstallment==null){
+            throw new PlatformDataIntegrityException("error.msg.start.date.installment.not.found",
+                    "Installment schedule with due date `" + newStartDate + "` was not found",
+                    "newStartDate", newStartDate);
+        }
+
+
+        MonetaryCurrency currency = loan.getCurrency();
+        if (newStartInstallment.getTotalOutstanding(currency).getAmount().compareTo(BigDecimal.ZERO)<=0){
+            throw new PlatformDataIntegrityException("error.msg.installment.no.outstanding.balance",
+                    "Installment schedule with due date `" + newStartDate + "` was already paid",
+                    "newStartDate", newStartDate);
+        }
+
+
+        if (expectedMaturityDate != null && newStartDate != null && expectedMaturityDate.isBefore(newStartDate)) {
+            dataValidatorBuilder
+                    .reset()
+                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
+                    .failWithCode("adjustedDueDate.before.rescheduleFromDate",
+                            "Adjusted due date cannot be before the reschedule from date");
+        }
+
+
+        if(loan.isMultiDisburmentLoan()) {
+            dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(RestructureLoansApiConstants.resheduleForMultiDisbursementNotSupportedErrorCode,
+                    "Loan part liquidation is not supported for multi-disbursement loans");
+        }
+
+        if(loan.isInterestRecalculationEnabledForProduct()) {
+            dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode(RestructureLoansApiConstants.resheduleWithInterestRecalculationNotSupportedErrorCode,
+                    "Loan part liquidation is not supported for the loan product with interest recalculation enabled");
+        }
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    public void validateForPartLiquidateAction(JsonCommand jsonCommand, final Loan loan) {
+
+        final String jsonString = jsonCommand.json();
+
+        if (StringUtils.isBlank(jsonString)) { throw new InvalidJsonException(); }
+        final JsonElement jsonElement = jsonCommand.parsedJson();
+
+        //TODO CHECK ALLOWED PARAMETERS
+//        final Type typeToken = new TypeToken<Map<String, Object>>() {}.getType();
+//        this.fromJsonHelper.checkForUnsupportedParameters(typeToken, jsonString, CREATE_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder dataValidatorBuilder = new DataValidatorBuilder(dataValidationErrors).resource(StringUtils
+                .lowerCase(RestructureLoansApiConstants.ENTITY_NAME));
+
+        if (!loan.status().isActive()) {
+            dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode("loan.is.not.active", "Loan is not active");
+        }
+
+        final LocalDate submittedOnDate = this.fromJsonHelper.extractLocalDateNamed(RestructureLoansApiConstants.submittedOnDateParamName,
+                jsonElement);
+        dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.submittedOnDateParamName).value(submittedOnDate).notNull();
+
+        if (submittedOnDate != null && loan.getDisbursementDate().isAfter(submittedOnDate)) {
+            dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.submittedOnDateParamName)
+                    .failWithCode("before.loan.disbursement.date", "Submission date cannot be before the loan disbursement date");
+        }
+
+
+        final LocalDate newStartDate = this.fromJsonHelper.extractLocalDateNamed(RestructureLoansApiConstants.rescheduleFromDateParamName, jsonElement);
+
+        dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.rescheduleFromDateParamName).value(newStartDate).notNull();
+
+        BigDecimal amountBigDecimal = this.fromJsonHelper.extractBigDecimalWithLocaleNamed(RestructureLoansApiConstants.transactionAmountParam, jsonElement);
+        final Money transactionAmount = Money.of(loan.getCurrency(),amountBigDecimal);
+        dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.transactionAmountParam).value(transactionAmount).notNull();
+
+        if (transactionAmount==null || transactionAmount.getAmount().compareTo(BigDecimal.ZERO)<=0){
+            dataValidatorBuilder.reset().parameter(RestructureLoansApiConstants.transactionAmountParam)
+                    .failWithCode("part.liquidatoin.amount.missing", "Part Liquidation Amount is required but was not provided");
+
+        }
+        LocalDate expectedMaturityDate = this.fromJsonHelper.extractLocalDateNamed(RestructureLoansApiConstants.expectedMaturityDateParamName, jsonElement);
 
 
         LocalDate originalMaturityDate = loan.getMaturityDate();
@@ -188,7 +301,6 @@ public class LoanPartLiquidatonDataValidator {
         }
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
-
 
 
     private void validateForOverdueCharges(DataValidatorBuilder dataValidatorBuilder, final Loan loan,

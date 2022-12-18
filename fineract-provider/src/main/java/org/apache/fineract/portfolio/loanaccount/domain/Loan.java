@@ -5256,6 +5256,37 @@ public class Loan extends AbstractPersistableCustom<Long> {
         return changedTransactionDetail;
     }
 
+    public ChangedTransactionDetail processPartLiquidationTransactions() {
+        final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
+                .determineProcessor(this.transactionProcessingStrategy);
+        final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
+        final List<LoanTransaction> updatedPostDisbursement = retreiveListOfTransactionsPostDisbursement();
+
+
+        for (LoanTransaction transactions :
+                allNonContraTransactionsPostDisbursement) {
+            transactions.clearAllInstallmentAmount();
+            updatedPostDisbursement.add(transactions);
+        }
+        ChangedTransactionDetail changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(
+                getDisbursementDate(), updatedPostDisbursement, getCurrency(), getRepaymentScheduleInstallments(),
+                charges());
+        for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+            mapEntry.getValue().updateLoan(this);
+        }
+        /***
+         * Commented since throwing exception if external id present for one of
+         * the transactions. for this need to save the reversed transactions
+         * first and then new transactions.
+         */
+        this.loanTransactions.addAll(changedTransactionDetail.getNewTransactionMappings().values());
+        updateLoanSummaryDerivedFields();
+
+        this.loanTransactions.removeAll(changedTransactionDetail.getNewTransactionMappings().values());
+
+        return changedTransactionDetail;
+    }
+
     public void regenerateRepaymentScheduleWithInterestRecalculation(final ScheduleGeneratorDTO generatorDTO, final AppUser currentUser) {
 
         LocalDate lastTransactionDate = getLastUserTransactionDate();
@@ -6900,5 +6931,17 @@ public class Loan extends AbstractPersistableCustom<Long> {
             }
         }
         return nextRepaymentDate;
+    }
+
+    public LoanRepaymentScheduleInstallment getNextUpdaidInstallmentSchedule() {
+        LoanRepaymentScheduleInstallment nextInstallment = null;
+        List<LoanRepaymentScheduleInstallment> installments = getRepaymentScheduleInstallments();
+        for (final LoanRepaymentScheduleInstallment installment : installments) {
+            if (!installment.isObligationsMet()) {
+                 nextInstallment = installment;
+                break;
+            }
+        }
+        return nextInstallment;
     }
 }

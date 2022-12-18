@@ -187,7 +187,7 @@ public class ResctructureLoansApiResource {
     }
 
     @POST
-    @Path("/partLiquidate")
+    @Path("partLiquidate")
     @Consumes({MediaType.APPLICATION_JSON})
     @Produces({MediaType.APPLICATION_JSON})
     public String partLiquidateLoan(@PathParam("loanId") final Long loanId, @QueryParam("command") final String command,

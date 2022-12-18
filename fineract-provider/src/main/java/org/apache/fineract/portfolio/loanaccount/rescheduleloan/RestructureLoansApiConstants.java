@@ -70,4 +70,5 @@ public class RestructureLoansApiConstants {
             approvedOnDateParam));
     
     public static final Set<String> commandParams = new HashSet<>(Arrays.asList(allCommandParamName, approveCommandParamName, pendingCommandParamName, rejectCommandParamName));
+    public static String interestPortionAmount = "interestPortion";
 }

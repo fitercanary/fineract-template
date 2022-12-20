@@ -17,4 +17,4 @@
 -- under the License.
 --
 INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`)
- VALUES ('portfolio', 'PARTLIQUIDATELOAN_LOAN', 'LOAN', 'PARTLIQUIDATELOAN', 1);
+ VALUES ('portfolio', 'CONFIRMPARTLIQUIDATION_LOAN', 'LOAN', 'CONFIRMPARTLIQUIDATION', 1);

@@ -152,31 +152,31 @@ public class LoanPartLiquidatonDataValidator {
                     .failWithCode("expected.maturity.date.cannot.exceed.original.maturity.date",
                             "Expected Maturity Date cannot exceed original loan Maturity Date");
         }
-        LoanRepaymentScheduleInstallment newMaturityInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
-        if (newMaturityInstallment==null){
-            dataValidatorBuilder
-                    .reset()
-                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
-                    .failWithCode("error.msg.maturity.date.installment.not.found",
-                            "Installment schedule with due date `" + newMaturityInstallment + "` was not found",
-                            "expectedMaturityDate", newMaturityInstallment);
-        }
+//        LoanRepaymentScheduleInstallment newMaturityInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
+//        if (newMaturityInstallment==null){
+//            dataValidatorBuilder
+//                    .reset()
+//                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
+//                    .failWithCode("error.msg.maturity.date.installment.not.found",
+//                            "Installment schedule with due date `" + newMaturityInstallment + "` was not found",
+//                            "expectedMaturityDate", newMaturityInstallment);
+//        }
 
 
-        LoanRepaymentScheduleInstallment newStartInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
-        if (newStartInstallment==null){
-            throw new PlatformDataIntegrityException("error.msg.start.date.installment.not.found",
-                    "Installment schedule with due date `" + newStartDate + "` was not found",
-                    "newStartDate", newStartDate);
-        }
+//        LoanRepaymentScheduleInstallment newStartInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
+//        if (newStartInstallment==null){
+//            throw new PlatformDataIntegrityException("error.msg.start.date.installment.not.found",
+//                    "Installment schedule with due date `" + newStartDate + "` was not found",
+//                    "newStartDate", newStartDate);
+//        }
 
 
-        MonetaryCurrency currency = loan.getCurrency();
-        if (newStartInstallment.getTotalOutstanding(currency).getAmount().compareTo(BigDecimal.ZERO)<=0){
-            throw new PlatformDataIntegrityException("error.msg.installment.no.outstanding.balance",
-                    "Installment schedule with due date `" + newStartDate + "` was already paid",
-                    "newStartDate", newStartDate);
-        }
+//        MonetaryCurrency currency = loan.getCurrency();
+//        if (newStartInstallment.getTotalOutstanding(currency).getAmount().compareTo(BigDecimal.ZERO)<=0){
+//            throw new PlatformDataIntegrityException("error.msg.installment.no.outstanding.balance",
+//                    "Installment schedule with due date `" + newStartDate + "` was already paid",
+//                    "newStartDate", newStartDate);
+//        }
 
 
         if (expectedMaturityDate != null && newStartDate != null && expectedMaturityDate.isBefore(newStartDate)) {
@@ -254,31 +254,31 @@ public class LoanPartLiquidatonDataValidator {
                     .failWithCode("expected.maturity.date.cannot.exceed.original.maturity.date",
                             "Expected Maturity Date cannot exceed original loan Maturity Date");
         }
-        LoanRepaymentScheduleInstallment newMaturityInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
-        if (newMaturityInstallment==null){
-            dataValidatorBuilder
-                    .reset()
-                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
-                    .failWithCode("error.msg.maturity.date.installment.not.found",
-                            "Installment schedule with due date `" + newMaturityInstallment + "` was not found",
-                            "expectedMaturityDate", newMaturityInstallment);
-        }
+//        LoanRepaymentScheduleInstallment newMaturityInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
+//        if (newMaturityInstallment==null){
+//            dataValidatorBuilder
+//                    .reset()
+//                    .parameter(RestructureLoansApiConstants.expectedMaturityDateParamName)
+//                    .failWithCode("error.msg.maturity.date.installment.not.found",
+//                            "Installment schedule with due date `" + newMaturityInstallment + "` was not found",
+//                            "expectedMaturityDate", newMaturityInstallment);
+//        }
 
 
-        LoanRepaymentScheduleInstallment newStartInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
-        if (newStartInstallment==null){
-            throw new PlatformDataIntegrityException("error.msg.start.date.installment.not.found",
-                    "Installment schedule with due date `" + newStartDate + "` was not found",
-                    "newStartDate", newStartDate);
-        }
+//        LoanRepaymentScheduleInstallment newStartInstallment = loan.getRepaymentScheduleInstallment(newStartDate);
+//        if (newStartInstallment==null){
+//            throw new PlatformDataIntegrityException("error.msg.start.date.installment.not.found",
+//                    "Installment schedule with due date `" + newStartDate + "` was not found",
+//                    "newStartDate", newStartDate);
+//        }
 
 
-        MonetaryCurrency currency = loan.getCurrency();
-        if (newStartInstallment.getTotalOutstanding(currency).getAmount().compareTo(BigDecimal.ZERO)<=0){
-            throw new PlatformDataIntegrityException("error.msg.installment.no.outstanding",
-                    "Installment schedule with due date `" + newStartDate + "` was already paid",
-                    "newStartDate", newStartDate);
-        }
+//        MonetaryCurrency currency = loan.getCurrency();
+//        if (newStartInstallment.getTotalOutstanding(currency).getAmount().compareTo(BigDecimal.ZERO)<=0){
+//            throw new PlatformDataIntegrityException("error.msg.installment.no.outstanding",
+//                    "Installment schedule with due date `" + newStartDate + "` was already paid",
+//                    "newStartDate", newStartDate);
+//        }
 
 
         if (expectedMaturityDate != null && newStartDate != null && expectedMaturityDate.isBefore(newStartDate)) {

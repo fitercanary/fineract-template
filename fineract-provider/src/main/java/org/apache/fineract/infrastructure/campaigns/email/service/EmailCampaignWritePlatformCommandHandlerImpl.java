@@ -121,7 +121,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
             final SmsMessageScheduledJobService smsMessageScheduledJobService,
             final EmailMessageJobEmailService emailMessageJobEmailService,
             final PlatformEmailService emailService
-            ) {
+    ) {
         this.context = context;
         this.emailCampaignRepository = emailCampaignRepository;
         this.emailCampaignValidator = emailCampaignValidator;
@@ -745,7 +745,8 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
 
     /**
      * creates and que up message it up for sending out the email alert
-     *  @param account
+     *
+     * @param account
      * @param contactInfo
      */
     @Override
@@ -759,8 +760,19 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
                 throw new JobExecutionException("No email provided on client data to execute the notification");
             }
             final String emailSubject = "INVESTMENT MATURITY NOTIFICATION";
-            final String emailBody = "Please Be notified that your Investment account is maturing on: "+
-                    account.getAccountTermAndPreClosure().getMaturityLocalDate();
+            final String emailBody = String.format(
+                    "<p>Dear Mr/Mrs. %s,</p> " +
+                            "<p>This is to inform you that your investment will be maturing on the %s.</p>" +
+                            "<p>We would appreciate it if we could receive your rollover plan on or before the maturity date.</p>"+
+                            "<p>If you plan to liquidate or part-liquidate, don't hesitate to contact your Relationship manager.</p>"+
+                            "<p>If you plan to top up your investment, please see below the account details to be credited.</p>" +
+                            "<p></p>"+
+                            "<p><strong>FCMB: 0623594011</strong></p>"+
+                            "<p><strong>KEYSTONE: %s</strong></p>"+
+                            "<p></p>"+
+                            "<p><strong>ASSETS MFB</strong></p>",
+                    client.getDisplayName(),
+                    account.getAccountTermAndPreClosure().getMaturityLocalDate(), account.getAccountNumber());
             if (emailAddress != null && isValidEmail(emailAddress)) {
                 EmailMessage emailMessage = EmailMessage.pendingEmail(
                         null, client, client.getStaff(), null,

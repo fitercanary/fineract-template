@@ -240,8 +240,6 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
                 loanRepaymentScheduleTransactionProcessor, rescheduleFromDate,
                 expectedMaturityDate, transactionAmount);
 
-        List<LoanRepaymentScheduleInstallment> installments = loanSchedule.getInstallments();
-
         final LoanScheduleModel loanScheduleModel = loanSchedule.getLoanScheduleModel();
         LoanScheduleModel loanScheduleModels = LoanScheduleModel.withPartLiquidationModelPeriods(loanScheduleModel.getPeriods(),
                 loanScheduleModel);
@@ -286,32 +284,10 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
             List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
             Collection<LoanTransactionToRepaymentScheduleMapping> scheduleMappings = new HashSet<>();
-//            for (LoanRepaymentScheduleInstallment installment: repaymentScheduleInstallments){
-//                List<LoanTransactionToRepaymentScheduleMapping> installmentMappings =
-//                        this.loanTransactionToRepaymentScheduleMappingRepository.
-//                                findAllWithInstallmentNumber(
-//                                        installment);
-//                LoanTransactionToRepaymentScheduleMapping.updateMappingsList(scheduleMappings, installmentMappings);
-//            }
-
-
-
-//            List<LoanTransaction> loanTransactions = loan.getLoanTransactions();
-//            for (LoanTransaction transaction : loanTransactions) {
-//                LoanTransactionToRepaymentScheduleMapping.updateMappingsList(scheduleMappings, transaction, loan.getCurrency());
-//                transaction.getLoanTransactionToRepaymentScheduleMappings();
-//                this.loanTransactionRepository.saveAndFlush(transaction);
-//            }
-
 
             Collection<LoanRepaymentScheduleHistory> loanRepaymentScheduleHistoryList = this.loanScheduleHistoryWritePlatformService
                     .createLoanScheduleArchive(repaymentScheduleInstallments, loan, null);
 
-
-            //create the loan schedule transactions schedule mapping history
-//            List<LoanTransaction> originalLoanTransactions = loan.getLoanTransactions();
-
-//            final LoanApplicationTerms loanApplicationTerms = loan.constructPartLiquidationTerms(scheduleGeneratorDTO, transactionAmount);
             final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);
 
             LocalDate rescheduleFromDate = null;
@@ -403,11 +379,11 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(jsonCommand, changes);
 
             String noteText = jsonCommand.stringValueOfParameterNamed(RestructureLoansApiConstants.rescheduleReasonCommentParamName);
-            this.loanAccountDomainService.recalculateAccruals(loan, true);
 
             this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, submittedOnDate, transactionAmount.getAmount(), paymentDetail,
                     noteText, null, false, false, scheduleGeneratorDTO.getHolidayDetailDTO(), scheduleGeneratorDTO.getHolidayDetailDTO().isHolidayEnabled());
 
+            this.loanAccountDomainService.recalculateAccruals(loan, true);
 
             return commandProcessingResultBuilder.withCommandId(jsonCommand.commandId()).withLoanId(loan.getId())
                     .with(changes).build();

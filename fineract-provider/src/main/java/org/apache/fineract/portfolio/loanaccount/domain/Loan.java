@@ -5679,7 +5679,7 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
         //TODO - ON RECALCULATION, TOTAL PRINCIPAL DUE LESS THE INTEREST DUE ON TOTAL LOAN
 //        this.loanRepaymentScheduleDetail.setPrincipal(totalOutstandingPrincipal.plus(totalInterestOutstandingOnLoan).getAmount());
-        this.loanRepaymentScheduleDetail.setPrincipal(totalOutstandingPrincipal.plus(totalInterestOverdueOnLoan).getAmount());
+//        this.loanRepaymentScheduleDetail.setPrincipal(totalOutstandingPrincipal.plus(totalInterestOverdueOnLoan).getAmount());
 
         final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFromRestructure(
                 loanTermFrequency, loanTermPeriodFrequencyType, nthDayType, dayOfWeekType,

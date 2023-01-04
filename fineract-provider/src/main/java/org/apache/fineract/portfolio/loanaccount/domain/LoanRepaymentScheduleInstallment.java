@@ -709,6 +709,10 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         this.principal = principal;
     }
 
+    public void updateFeesCharged(final BigDecimal feeChargesCharged){
+        this.feeChargesCharged = feeChargesCharged;
+    }
+
     public void updatePrincipalCompleted(final BigDecimal principalCompleted) {
         this.principalCompleted = principalCompleted;
     }

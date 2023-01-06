@@ -329,20 +329,17 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
 
             final LoanScheduleDTO loanSchedule = loanScheduleGenerator.rescheduleNextInstallmentsRestructure(
-                    mathContext,
-                    loanApplicationTerms,
-                    loan,
-                    loanApplicationTerms.getHolidayDetailDTO(),
-                    loanRepaymentScheduleTransactionProcessor,
-                    rescheduleFromDate,
-                    expectedMaturityDate,transactionAmount
-            );
+                    mathContext, loanApplicationTerms,
+                    loan, loanApplicationTerms.getHolidayDetailDTO(),
+                    loanRepaymentScheduleTransactionProcessor, rescheduleFromDate,
+                    expectedMaturityDate, transactionAmount);
 
 
 
             loan.updateLoanSchedule(loanSchedule.getInstallments(), appUser);
 
 //            loan.recalculateAllCharges();
+
             ChangedTransactionDetail changedTransactionDetail = loan.processPartLiquidationTransactions();
 
             for (LoanRepaymentScheduleHistory loanRepaymentScheduleHistory : loanRepaymentScheduleHistoryList) {
@@ -380,7 +377,8 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
             String noteText = jsonCommand.stringValueOfParameterNamed(RestructureLoansApiConstants.rescheduleReasonCommentParamName);
 
-            this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, submittedOnDate, transactionAmount.getAmount(), paymentDetail,
+
+            this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, loan.getRepaymentScheduleInstallments().get(0).getDueDate(), transactionAmount.getAmount(), paymentDetail,
                     noteText, null, false, false, scheduleGeneratorDTO.getHolidayDetailDTO(), scheduleGeneratorDTO.getHolidayDetailDTO().isHolidayEnabled());
 
             this.loanAccountDomainService.recalculateAccruals(loan, true);

@@ -2727,7 +2727,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         // this block is to retain the schedule installments prior to the
         // provided date and creates late and early payment details for further
         // calculations
-        LoanScheduleModelPeriod OldLoanScheduleModelPeriod = null;
         LoanScheduleModelPeriod liquidatedModelPeriod = null;
         if (rescheduleFrom != null) {
             Money principalToBeScheduled = getPrincipalToBeScheduled(loanApplicationTerms);
@@ -2836,8 +2835,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             Money interestPortion = receivables[0];
             Money feesPortion = receivables[1];
 
-            System.out.println("receivables \n\n");
-            System.out.println(JSONValue.toJSONString(receivables));
             Money principalPortion = transactionAmount.minus(interestPortion).minus(feesPortion);
             if (finalInstallment == null) {
                 finalInstallment = loan.getNextUpdaidInstallmentSchedule();

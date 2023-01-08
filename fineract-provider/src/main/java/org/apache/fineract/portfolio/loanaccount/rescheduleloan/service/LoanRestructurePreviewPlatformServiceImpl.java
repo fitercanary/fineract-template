@@ -139,7 +139,7 @@ public class LoanRestructurePreviewPlatformServiceImpl implements LoanRestructur
         loan.setHelpers(loanLifecycleStateMachine, this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
         final LoanScheduleDTO loanSchedule = loanScheduleGenerator.rescheduleNextInstallmentsRestructure(mathContext, loanApplicationTerms,
                 loan, loanApplicationTerms.getHolidayDetailDTO(),
-                loanRepaymentScheduleTransactionProcessor, rescheduleFromDate, loanRescheduleRequest.getRescheduleToDate(),null );
+                loanRepaymentScheduleTransactionProcessor, rescheduleFromDate, loanRescheduleRequest.getRescheduleToDate(),null, scheduleGeneratorDTO);
         final LoanScheduleModel loanScheduleModel = loanSchedule.getLoanScheduleModel();
         LoanScheduleModel loanScheduleModels = LoanScheduleModel.withLoanRestructureModelPeriods(loanScheduleModel.getPeriods(),
                 loanScheduleModel,loanRescheduleRequest);

@@ -385,7 +385,7 @@ public final class LoanApplicationTerms {
 
         Integer numberOfNewRepayments = calculateNumberOfRePayments(scheduleGeneratorDTO, holidayDetailDTO,
                 loanCalendar, loanProductRelatedDetail, loanTermPeriodFrequencyType);
-        loanProductRelatedDetail.updateNumberOfRepayments(numberOfNewRepayments);
+        loanProductRelatedDetail.updateNumberOfRepayments(numberOfNewRepayments-1);
         final Integer numberOfRepayments = loanProductRelatedDetail.getNumberOfRepayments();
         final Integer repaymentEvery = loanProductRelatedDetail.getRepayEvery();
         final PeriodFrequencyType repaymentPeriodFrequencyType = loanProductRelatedDetail.getRepaymentPeriodFrequencyType();
@@ -410,7 +410,7 @@ public final class LoanApplicationTerms {
         final boolean isInterestRecalculationEnabled = loanProductRelatedDetail.isInterestRecalculationEnabled();
         final boolean isInterestChargedFromDateSameAsDisbursalDateEnabled = false;
         final boolean isEqualAmortization = loanProductRelatedDetail.isEqualAmortization();
-        return new LoanApplicationTerms(scheduleGeneratorDTO.getApplicationCurrency(), loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
+        return new LoanApplicationTerms(scheduleGeneratorDTO.getApplicationCurrency(), loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments+1,
                 repaymentEvery, repaymentPeriodFrequencyType, ((nthDay != null) ? nthDay.getValue() : null), dayOfWeek, amortizationMethod,
                 interestMethod, interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate,
                 interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, principalMoney, scheduleGeneratorDTO.getRecalculateFrom(),

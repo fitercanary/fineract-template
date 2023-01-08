@@ -42,6 +42,7 @@ import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
 import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
+import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanInterestRecalcualtionAdditionalDetails;
@@ -57,7 +58,6 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.exception.Schedule
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
-import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -409,6 +409,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
     private LoanScheduleModel generateWithReschedule(final MathContext mc, final LoanApplicationTerms loanApplicationTerms,
                                                      final Set<LoanCharge> loanCharges, final HolidayDetailDTO holidayDetailDTO, final LoanScheduleParams loanScheduleParams, LoanScheduleModelPeriod lastSchedule) {
 
+
         final ApplicationCurrency applicationCurrency = loanApplicationTerms.getApplicationCurrency();
         // generate list of proposed schedule due dates
         LocalDate loanEndDate = this.scheduledDateGenerator.getLastRepaymentDate(loanApplicationTerms, holidayDetailDTO);
@@ -436,6 +437,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             scheduleParams = LoanScheduleParams.createLoanScheduleParams(currency, Money.of(currency, chargesDueAtTimeOfDisbursement),
                     loanApplicationTerms.getExpectedDisbursementDate(), Money.of(currency, loanSchedulePeriodData.principalLoanBalanceOutstanding()),
                     loanScheduleParams);
+//            loanApplicationTerms.updatePricipal(Money.of(currency,loanSchedulePeriodData.principalLoanBalanceOutstanding()));
         } else {
             scheduleParams = loanScheduleParams;
         }
@@ -611,6 +613,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             updateCompoundingDetails(scheduleParams, periodStartDateApplicableForInterest);
 
             // 5 determine principal,interest of repayment period
+
+
             PrincipalInterest principalInterestForThisPeriod = calculatePrincipalInterestComponentsForPeriod(
                     this.paymentPeriodsInOneYearCalculator, currentPeriodParams.getInterestCalculationGraceOnRepaymentPeriodFraction(),
                     scheduleParams.getTotalCumulativePrincipal().minus(scheduleParams.getReducePrincipal()),
@@ -2701,12 +2705,13 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
      * @param rescheduleFrom
      * @param scheduleTillDate
      * @param transactionAmount
+     * @param scheduleGeneratorDTO
      * @return
      */
     public LoanScheduleDTO rescheduleNextInstallmentsRestructure(final MathContext mc, final LoanApplicationTerms loanApplicationTerms, Loan loan,
                                                                  final HolidayDetailDTO holidayDetailDTO,
                                                                  final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor, final LocalDate rescheduleFrom,
-                                                                 final LocalDate scheduleTillDate, Money transactionAmount) {
+                                                                 final LocalDate scheduleTillDate, Money transactionAmount, ScheduleGeneratorDTO scheduleGeneratorDTO) {
         // Loan transactions to process and find the variation on payments
         Collection<RecalculationDetail> recalculationDetails = new ArrayList<>();
         List<LoanTransaction> transactions = loan.getLoanTransactions();
@@ -2788,7 +2793,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             LocalDate lastInstallmentDate = actualRepaymentDate;
             LocalDate periodStartDate = loanApplicationTerms.getExpectedDisbursementDate();
             // Set fixed Amortization Amounts(either EMI or Principal )
-            updateAmortization(mc, loanApplicationTerms, periodNumber, outstandingBalance);
 
             // count periods without interest grace to exclude for flat loan
             // calculations
@@ -2851,6 +2855,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             liquidatedModelPeriod = createLoanScheduleModelPeriod(
                     finalInstallment, outstandingBalance.plus(interestPortion).plus(feesPortion).minus(transactionAmount));
 
+            updateAmortization(mc, loanApplicationTerms,
+                    periodNumber, Money.of(currency,liquidatedModelPeriod.toData().principalLoanBalanceOutstanding()));
 
             totalRepaymentExpected = totalCumulativePrincipal.plus(totalCumulativeInterest).plus(totalFeeChargesCharged)
                     .plus(totalPenaltyChargesCharged);
@@ -2881,6 +2887,9 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     loanRepaymentScheduleTransactionProcessor, scheduleTillDate, applyInterestRecalculation);
             periods.clear();
         }
+        LoanApplicationTerms newLoanApplicationTerms = loan.constructPartLiquidationTerms(scheduleGeneratorDTO,
+                Money.of(loan.getCurrency(), liquidatedModelPeriod.toData().principalLoanBalanceOutstanding()));
+
         LoanScheduleModel loanScheduleModel = generateWithReschedule(mc, loanApplicationTerms, loan.charges(), holidayDetailDTO, loanScheduleParams, liquidatedModelPeriod);
         retainedInstallments.add(finalInstallment);
         for (LoanScheduleModelPeriod loanScheduleModelPeriod : loanScheduleModel.getPeriods()) {

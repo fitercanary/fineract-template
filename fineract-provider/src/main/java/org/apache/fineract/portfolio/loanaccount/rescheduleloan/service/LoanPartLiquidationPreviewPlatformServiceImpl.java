@@ -18,9 +18,7 @@
  */
 package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
 
-import com.google.gson.JsonElement;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
-import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -29,9 +27,9 @@ import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
-import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepository;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
@@ -46,7 +44,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanLifecycleStateMachin
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallmentRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRescheduleRequestToTermVariationMapping;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanSummaryWrapper;
@@ -66,11 +63,6 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.RestructureLoansApiConstants;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanPartLiquidatonDataValidator;
-import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRestructureRequestDataValidator;
-import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
-import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequestRepository;
-import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequestRepositoryWrapper;
-import org.apache.fineract.portfolio.loanaccount.rescheduleloan.exception.LoanRescheduleRequestNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
@@ -91,7 +83,6 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -185,7 +176,9 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
         LocalDate rescheduleFromDate = newStartDate;
         List<LoanTermVariationsData> removeLoanTermVariationsData = new ArrayList<>();
+
         final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);
+
         LoanTermVariations dueDateVariationInCurrentRequest = null;
         if(dueDateVariationInCurrentRequest != null){
             for (LoanTermVariationsData loanTermVariation : loanApplicationTerms.getLoanTermVariations().getDueDateVariation()) {
@@ -238,7 +231,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
                 mathContext, loanApplicationTerms,
                 loan, loanApplicationTerms.getHolidayDetailDTO(),
                 loanRepaymentScheduleTransactionProcessor, rescheduleFromDate,
-                expectedMaturityDate, transactionAmount);
+                expectedMaturityDate, transactionAmount, scheduleGeneratorDTO);
 
         final LoanScheduleModel loanScheduleModel = loanSchedule.getLoanScheduleModel();
         LoanScheduleModel loanScheduleModels = LoanScheduleModel.withPartLiquidationModelPeriods(loanScheduleModel.getPeriods(),
@@ -271,10 +264,8 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             final List<Long> existingTransactionIds = new ArrayList<>(loan.findExistingTransactionIds());
             final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
 
-            LocalDate transactionDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.submittedOnDateParamName);
             LocalDate expectedMaturityDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.expectedMaturityDateParamName);
             final LocalDate newStartDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.rescheduleFromDateParamName);
-            final LocalDate submittedOnDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.submittedOnDateParamName);
 
             ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildRestructureScheduleGeneratorDTO(loan,
                     newStartDate, expectedMaturityDate);
@@ -283,7 +274,6 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             final Money transactionAmount = Money.of(loan.getCurrency(),amountBigDecimal);
 
             List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
-            Collection<LoanTransactionToRepaymentScheduleMapping> scheduleMappings = new HashSet<>();
 
             Collection<LoanRepaymentScheduleHistory> loanRepaymentScheduleHistoryList = this.loanScheduleHistoryWritePlatformService
                     .createLoanScheduleArchive(repaymentScheduleInstallments, loan, null);
@@ -332,8 +322,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
                     mathContext, loanApplicationTerms,
                     loan, loanApplicationTerms.getHolidayDetailDTO(),
                     loanRepaymentScheduleTransactionProcessor, rescheduleFromDate,
-                    expectedMaturityDate, transactionAmount);
-
+                    expectedMaturityDate, transactionAmount, scheduleGeneratorDTO);
 
 
             loan.updateLoanSchedule(loanSchedule.getInstallments(), appUser);
@@ -342,6 +331,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
             ChangedTransactionDetail changedTransactionDetail = loan.processPartLiquidationTransactions();
 
+            loan.getLoanRepaymentScheduleDetail().setPrincipal(loanApplicationTerms.getPrincipal().getAmount());
             for (LoanRepaymentScheduleHistory loanRepaymentScheduleHistory : loanRepaymentScheduleHistoryList) {
                 this.loanRepaymentScheduleHistoryRepository.save(loanRepaymentScheduleHistory);
             }

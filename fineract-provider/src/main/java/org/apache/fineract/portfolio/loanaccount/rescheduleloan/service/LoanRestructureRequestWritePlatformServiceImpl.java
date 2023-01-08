@@ -491,8 +491,7 @@ public class LoanRestructureRequestWritePlatformServiceImpl implements LoanRestr
                     loanApplicationTerms.getHolidayDetailDTO(),
                     loanRepaymentScheduleTransactionProcessor,
                     rescheduleFromDate,
-                    loanRescheduleRequest.getRescheduleToDate(),null,
-                    scheduleGeneratorDTO);
+                    loanRescheduleRequest.getRescheduleToDate(),null);
 
 
             loan.updateLoanSchedule(loanSchedule.getInstallments(), appUser);

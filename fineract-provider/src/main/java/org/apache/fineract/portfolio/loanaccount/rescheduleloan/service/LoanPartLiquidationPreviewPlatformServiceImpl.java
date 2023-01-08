@@ -231,7 +231,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
                 mathContext, loanApplicationTerms,
                 loan, loanApplicationTerms.getHolidayDetailDTO(),
                 loanRepaymentScheduleTransactionProcessor, rescheduleFromDate,
-                expectedMaturityDate, transactionAmount, scheduleGeneratorDTO);
+                expectedMaturityDate, transactionAmount);
 
         final LoanScheduleModel loanScheduleModel = loanSchedule.getLoanScheduleModel();
         LoanScheduleModel loanScheduleModels = LoanScheduleModel.withPartLiquidationModelPeriods(loanScheduleModel.getPeriods(),
@@ -322,7 +322,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
                     mathContext, loanApplicationTerms,
                     loan, loanApplicationTerms.getHolidayDetailDTO(),
                     loanRepaymentScheduleTransactionProcessor, rescheduleFromDate,
-                    expectedMaturityDate, transactionAmount, scheduleGeneratorDTO);
+                    expectedMaturityDate, transactionAmount);
 
 
             loan.updateLoanSchedule(loanSchedule.getInstallments(), appUser);

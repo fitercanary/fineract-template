@@ -385,7 +385,7 @@ public final class LoanApplicationTerms {
 
         Integer numberOfNewRepayments = calculateNumberOfRePayments(scheduleGeneratorDTO, holidayDetailDTO,
                 loanCalendar, loanProductRelatedDetail, loanTermPeriodFrequencyType);
-        loanProductRelatedDetail.updateNumberOfRepayments(numberOfNewRepayments-1);
+        loanProductRelatedDetail.updateNumberOfRepayments(numberOfNewRepayments);
         final Integer numberOfRepayments = loanProductRelatedDetail.getNumberOfRepayments();
         final Integer repaymentEvery = loanProductRelatedDetail.getRepayEvery();
         final PeriodFrequencyType repaymentPeriodFrequencyType = loanProductRelatedDetail.getRepaymentPeriodFrequencyType();

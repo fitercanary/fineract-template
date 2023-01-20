@@ -368,8 +368,10 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             String noteText = jsonCommand.stringValueOfParameterNamed(RestructureLoansApiConstants.rescheduleReasonCommentParamName);
 
 
-            this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, loan.getRepaymentScheduleInstallments().get(0).getDueDate(), transactionAmount.getAmount(), paymentDetail,
-                    noteText, null, false, false, scheduleGeneratorDTO.getHolidayDetailDTO(), scheduleGeneratorDTO.getHolidayDetailDTO().isHolidayEnabled());
+            this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder,
+                    DateUtils.getLocalDateOfTenant(), transactionAmount.getAmount(), paymentDetail,
+                    noteText, null, false, false, scheduleGeneratorDTO.getHolidayDetailDTO(),
+                    scheduleGeneratorDTO.getHolidayDetailDTO().isHolidayEnabled());
 
             this.loanAccountDomainService.recalculateAccruals(loan, true);
 

@@ -116,8 +116,8 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 			qualification = command.stringValueOfParameterNamed("qualification");
 			}
 		
-		if (command.stringValueOfParameterNamed("mobileNumber") != null) {
-			mobileNumber = command.stringValueOfParameterNamed("mobileNumber");
+		if (command.stringValueOfParameterNamed("phoneNumber") != null) {
+			mobileNumber = command.stringValueOfParameterNamed("phoneNumber");
 			}
 		
 		

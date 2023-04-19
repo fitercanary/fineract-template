@@ -46,8 +46,8 @@ import com.google.gson.reflect.TypeToken;
 public class ClientFamilyMemberCommandFromApiJsonDeserializer 
 {
 	private final FromJsonHelper fromApiJsonHelper;
-	 private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("id","clientId","firstName","middleName","lastName","qualification","mobileNumber",
-			 "age","isDependent","relationshipId","maritalStatusId","genderId","dateOfBirth","professionId","locale","dateFormat","familyMembers"));
+	 private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("id","clientId","firstName","middleName","lastName","qualification","phoneNumber",
+			 "age","isDependent","relationshipId","maritalStatusId","genderId","dateOfBirth","professionId","locale","dateFormat","familyMembers","emailAddress","address"));
 	
 	@Autowired
 	private ClientFamilyMemberCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper)

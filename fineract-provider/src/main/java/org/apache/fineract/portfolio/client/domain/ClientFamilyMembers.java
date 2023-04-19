@@ -52,7 +52,13 @@ public class ClientFamilyMembers extends AbstractPersistableCustom<Long> {
 	
 	@Column(name="mobile_number")
 	private String mobileNumber;
-	
+
+	@Column(name="email_address")
+	private String emailAddress;
+
+	@Column(name="address")
+	private String address;
+
 	@Column(name="age")
 	private Long age;
 	
@@ -85,7 +91,7 @@ public class ClientFamilyMembers extends AbstractPersistableCustom<Long> {
 				final String middleName,final String lastName,final String qualification,
 				final String mobileNumber,final Long age,final Boolean isDependent,
 				final CodeValue relationship,final CodeValue maritalStatus,final CodeValue gender,
-				final Date dateOfBirth,final CodeValue profession)
+				final Date dateOfBirth,final CodeValue profession,final String emailAddress,final String address)
 		{
 			
 			this.client=client;
@@ -101,6 +107,8 @@ public class ClientFamilyMembers extends AbstractPersistableCustom<Long> {
 			this.gender=gender;
 			this.dateOfBirth=dateOfBirth;
 			this.profession=profession;
+			this.emailAddress=emailAddress;
+			this.address=address;
 		}
 		
 		
@@ -113,11 +121,11 @@ public class ClientFamilyMembers extends AbstractPersistableCustom<Long> {
 				final String middleName,final String lastName,final String qualification,
 				final String mobileNumber,final Long age,final Boolean isDependent,
 				final CodeValue relationship,final CodeValue maritalStatus,final CodeValue gender,
-				final Date dateOfBirth,final CodeValue profession)
+				final Date dateOfBirth,final CodeValue profession,final String emailAddress,final String address)
 		{
 			return new ClientFamilyMembers(client,firstName,middleName,lastName,qualification,
 					mobileNumber,age,isDependent,relationship,maritalStatus,gender,
-					dateOfBirth,profession);
+					dateOfBirth,profession, emailAddress,address);
 		}
 
 		public Client getClient() {

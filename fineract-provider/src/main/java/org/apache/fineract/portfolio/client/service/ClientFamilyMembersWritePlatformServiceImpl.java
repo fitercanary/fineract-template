@@ -29,6 +29,7 @@ import org.apache.fineract.infrastructure.codes.domain.CodeValueRepository;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientFamilyMembers;
@@ -85,6 +86,8 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 		String lastName="";
 		String qualification="";
 		String mobileNumber="";
+		String emailAddress="";
+		String address="";
 		Long age=null;
 		Boolean isDependent=false;
 		Date dateOfBirth=null;
@@ -151,8 +154,15 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 			dateOfBirth=command.DateValueOfParameterNamed("dateOfBirth");
 					
 		}
+
+		if (command.stringValueOfParameterNamed("emailAddress") != null) {
+			emailAddress = command.stringValueOfParameterNamed("emailAddress");
+		}
+		if (command.stringValueOfParameterNamed("address") != null) {
+			address = command.stringValueOfParameterNamed("address");
+		}
 		
-		ClientFamilyMembers clientFamilyMembers=ClientFamilyMembers.fromJson(client, firstName, middleName, lastName, qualification,mobileNumber,age,isDependent, relationship, maritalStatus, gender, dateOfBirth, profession);
+		ClientFamilyMembers clientFamilyMembers=ClientFamilyMembers.fromJson(client, firstName, middleName, lastName, qualification,mobileNumber,age,isDependent, relationship, maritalStatus, gender, dateOfBirth, profession, emailAddress,address);
 		
 		this.clientFamilyRepository.save(clientFamilyMembers);
 		
@@ -180,7 +190,9 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 		String lastName="";
 		String qualification="";
 		Date dateOfBirth=null;
-		String mobileNumber="";
+		String mobileNumber=null;
+		String address=null;
+		String emailAddress=null;
 		Long age=null;
 		Boolean isDependent=false;
 		
@@ -224,11 +236,18 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 				qualification = member.get("qualification").getAsString();
 				}
 			
-			if (member.get("mobileNumber") != null) {
-				mobileNumber = member.get("mobileNumber").getAsString();
+			if (member.get("phoneNumber") != null) {
+				mobileNumber = member.get("phoneNumber").getAsString();
 				}
-			
-			
+
+			if (member.get("address") != null) {
+				address = member.get("address").getAsString();
+				}
+
+			if (member.get("emailAddress") != null) {
+				emailAddress = member.get("emailAddress").getAsString();
+				}
+
 			if (member.get("age") != null) {
 				age = member.get("age").getAsLong();
 				}
@@ -256,7 +275,7 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 				professionId = member.get("professionId").getAsLong();
 				profession = this.codeValueRepository.getOne(professionId);
 			}
-			
+
 			if(member.get("dateOfBirth")!=null)
 			{
 				
@@ -265,6 +284,7 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 				try {
 					date = format.parse(member.get("dateOfBirth").getAsString());
 					dateOfBirth=date;
+					age = Long.valueOf(DateUtils.getDateOfTenant().getYear() - date.getYear());
 				} catch (ParseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -277,7 +297,7 @@ public class ClientFamilyMembersWritePlatformServiceImpl implements ClientFamily
 						
 			}
 			
-			familyMember=ClientFamilyMembers.fromJson(client, firstName, middleName, lastName, qualification,mobileNumber,age,isDependent, relationship, maritalStatus, gender, dateOfBirth, profession);
+			familyMember=ClientFamilyMembers.fromJson(client, firstName, middleName, lastName, qualification,mobileNumber,age,isDependent, relationship, maritalStatus, gender, dateOfBirth, profession, emailAddress,address);
 			
 			this.clientFamilyRepository.save(familyMember);	
 			

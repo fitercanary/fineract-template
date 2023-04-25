@@ -442,8 +442,37 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+        Client client = account.getClient();
 
-        GLAccount glAccount = null;
+        BigDecimal dailyWithdrawLimit = client.getDailyWithdrawLimit();
+        BigDecimal singleWithdrawLimit = client.getSingleWithdrawLimit();
+        if (singleWithdrawLimit !=null){
+            if (transactionAmount.compareTo(singleWithdrawLimit)>0){
+                throw new PlatformServiceUnavailableException("error.msg.saving.account.single.withdrawal.limit",
+                        "Savings account transaction single withdrawal limit of - "+ singleWithdrawLimit+" can not be exceeded",singleWithdrawLimit);
+            }
+        }
+
+        if (dailyWithdrawLimit !=null) {
+            List<SavingsAccountTransaction> withdrawalTransactions = this.savingsAccountTransactionRepository.findByTransactionTypeAndAccountIdAndDate(SavingsAccountTransactionType.WITHDRAWAL.getValue(),
+                    account.getId(), transactionDate.toDate());
+
+            BigDecimal totalWithdrawAmount = BigDecimal.ZERO;
+            for (SavingsAccountTransaction transaction :
+                    withdrawalTransactions) {
+                totalWithdrawAmount = totalWithdrawAmount.add(transaction.getAmount());
+            }
+            totalWithdrawAmount = totalWithdrawAmount.add(transactionAmount);
+            if (totalWithdrawAmount.compareTo(dailyWithdrawLimit)>0){
+                BigDecimal currentWithdrawAmount = totalWithdrawAmount.subtract(transactionAmount);
+                throw new PlatformServiceUnavailableException("error.msg.saving.account.daily.withdrawal.limit",
+                        "Savings account transaction daily withdrawal limit of - "+ dailyWithdrawLimit+" can not be exceeded. Current Withdraw Total: "+ currentWithdrawAmount,singleWithdrawLimit, currentWithdrawAmount);
+            }
+
+        }
+
+
+            GLAccount glAccount = null;
         if (glAccountId != null) {
             glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
         }

@@ -57,7 +57,9 @@ public class ClientFamilyMembersData {
 	private final String profession;
 	
 	private final String mobileNumber;
-	
+	private final String address;
+	private final String emailAddress;
+
 	private final Long age;
 	
 	private final Boolean isDependent;
@@ -73,7 +75,7 @@ public class ClientFamilyMembersData {
 			final String maritalStatus, final Long maritalStatusId, final String gender, final Long genderId,
 			final LocalDate dateOfBirth, final String profession, final Long professionId,
 			final Collection<CodeValueData> relationshipIdOptions,final Collection<CodeValueData> genderIdOptions,final Collection<CodeValueData> maritalStatusIdOptions,
-			final Collection<CodeValueData> professionIdOptions) {
+			final Collection<CodeValueData> professionIdOptions, final String address, final String emailAddress) {
 		this.id = id;
 		this.clientId = clientId;
 		this.firstName = firstName;
@@ -96,17 +98,19 @@ public class ClientFamilyMembersData {
 		this.genderIdOptions=genderIdOptions;
 		this.maritalStatusIdOptions=maritalStatusIdOptions;
 		this.professionIdOptions=professionIdOptions;
-		
+		this.emailAddress=emailAddress;
+		this.address=address;
+
 	}
 
 	public static ClientFamilyMembersData instance(final Long id, final Long clientId, final String firstName,
 			final String middleName, final String lastName, final String qualification,final String mobileNumber,final Long age,final Boolean isDependent, final String relationship,
 			final Long relationshipId, final String maritalStatus, final Long maritalStatusId, final String gender,
 			final Long genderId, final LocalDate dateOfBirth, final String profession, final Long professionId
-			) {
+			, final String address, final String emailAddress) {
 		return new ClientFamilyMembersData(id, clientId, firstName, middleName, lastName, qualification,mobileNumber,age,isDependent, relationship,
 				relationshipId, maritalStatus, maritalStatusId, gender, genderId, dateOfBirth, profession,
-				professionId,null,null,null,null);
+				professionId,null,null,null,null, address,emailAddress);
 	}
 	
 	
@@ -117,7 +121,7 @@ public class ClientFamilyMembersData {
 		
 		return new ClientFamilyMembersData(null, null, null, null, null, null,null,
 				null, null, null, null, null, null, null,
-				null,null,null,null,relationshipIdOptions,genderIdOptions,maritalStatusIdOptions,professionIdOptions);
+				null,null,null,null,relationshipIdOptions,genderIdOptions,maritalStatusIdOptions,professionIdOptions, null,null);
 	}
 
 	public Long getId() {

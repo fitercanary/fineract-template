@@ -56,7 +56,8 @@ public class ClientFamilyMembersReadPlatformServiceImpl implements ClientFamilyM
 
 	private static final class ClientFamilyMembersMapper implements RowMapper<ClientFamilyMembersData> {
 		public String schema() {
-			return "fmb.id AS id, fmb.client_id AS clientId, fmb.firstname AS firstName, fmb.middlename AS middleName,"
+			return "fmb.id AS id, fmb.client_id AS clientId, fmb.firstname AS firstName, fmb.middlename AS middleName, " +
+					"fmb.address, fmb.email_address AS emailAddress,"
 					+"fmb.lastname AS lastName,fmb.qualification AS qualification,fmb.mobile_number as mobileNumber,fmb.age as age,fmb.is_dependent as isDependent,cv.code_value AS relationship,fmb.relationship_cv_id AS relationshipId,"
 					+"c.code_value AS maritalStatus,fmb.marital_status_cv_id AS maritalStatusId,"
 					+"c1.code_value AS gender, fmb.gender_cv_id AS genderId, fmb.date_of_birth AS dateOfBirth, c2.code_value AS profession, fmb.profession_cv_id AS professionId"
@@ -88,9 +89,12 @@ public class ClientFamilyMembersReadPlatformServiceImpl implements ClientFamilyM
 			final LocalDate dateOfBirth = JdbcSupport.getLocalDate(rs, "dateOfBirth");
 			final String profession = rs.getString("profession");
 			final long professionId = rs.getLong("professionId");
-					
+			final String address = rs.getString("address");
+			final String emailAddress = rs.getString("emailAddress");
+
 			return ClientFamilyMembersData.instance(id, clientId, firstName, middleName, lastName,
-					qualification,mobileNumber,age,isDependent,relationship,relationshipId,maritalStatus,maritalStatusId,gender,genderId,dateOfBirth,profession,professionId);
+					qualification,mobileNumber,age,isDependent,relationship,relationshipId,maritalStatus,maritalStatusId,
+					gender,genderId,dateOfBirth,profession,professionId,address, emailAddress);
 			
 			
 

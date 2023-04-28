@@ -95,9 +95,6 @@ public class ClientFamilyMembersReadPlatformServiceImpl implements ClientFamilyM
 			return ClientFamilyMembersData.instance(id, clientId, firstName, middleName, lastName,
 					qualification,mobileNumber,age,isDependent,relationship,relationshipId,maritalStatus,maritalStatusId,
 					gender,genderId,dateOfBirth,profession,professionId,address, emailAddress);
-			
-			
-
 		}
 	}
 	

@@ -25,7 +25,7 @@ public enum LegalForm {
 	
 	PERSON(1, "legalFormType.person"),
 	
-	ENTITY(2, "legalFormType.entity");
+	COMPANY(2, "legalFormType.entity");
 	
 	private final Integer value;
     private final String code;
@@ -51,7 +51,7 @@ public enum LegalForm {
                 legalForm = LegalForm.PERSON;
             break;
             case 2:
-                legalForm = LegalForm.ENTITY;
+                legalForm = LegalForm.COMPANY;
             break;           
         }
         return legalForm;
@@ -62,6 +62,6 @@ public enum LegalForm {
     }
     
     public boolean isEntity() {
-        return this.value.equals(LegalForm.ENTITY.getValue());
+        return this.value.equals(LegalForm.COMPANY.getValue());
     }
 }

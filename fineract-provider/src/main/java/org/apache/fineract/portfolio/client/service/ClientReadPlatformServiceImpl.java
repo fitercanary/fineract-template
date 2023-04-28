@@ -189,6 +189,13 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         final List<EnumOptionData> clientLegalFormOptions = ClientEnumerations.legalForm(LegalForm.values());
 
+        final GlobalConfigurationPropertyData mandatoryBVN = this.configurationReadPlatformService
+                .retrieveGlobalConfiguration("Mandatory-BVN");
+        Boolean isBVNMandatory=false;
+        if (mandatoryBVN.isEnabled())
+            isBVNMandatory =true;
+
+
         final List<CodeValueData> clientLevelOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_LEVELS));
 
@@ -198,7 +205,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         ClientData clientData = ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions,
                 savingsProductDatas, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, familyMemberOptions, address, isAddressEnabled,
-                datatableTemplates, clientLevelOptions);
+                datatableTemplates, clientLevelOptions, isBVNMandatory);
         return clientData;
     }
 
@@ -1006,7 +1013,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final List<CodeValueData> clientLevelOptions = null;
         return ClientData.template(null, null, null, null, narrations, null, null, clientTypeOptions, clientClassificationOptions,
                 clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, null, null, null, null,
-                clientLevelOptions);
+                clientLevelOptions,false);
     }
 
     @Override

@@ -32,6 +32,9 @@ public class WebFrontEndConfiguration extends WebMvcConfigurerAdapter {
         registry.addResourceHandler("/apps/**").addResourceLocations("file:" +
                 System.getProperty("user.dir") + System.getProperty("file.separator") +
                 "apps" + System.getProperty("file.separator"));
+        if (!registry.hasMappingForPattern("/**")) {
+            registry.addResourceHandler("/**").addResourceLocations("classpath:/static/", "classpath:/public/");
+        }
     }
 
 }

@@ -1086,7 +1086,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_savings_account_charge_paid_by sacp on sacp.savings_account_transaction_id=tr.id ");
             sqlBuilder.append("left join m_savings_account_charge sac on sac.id=sacp.savings_account_charge_id ");
             sqlBuilder.append("left join m_charge mc on mc.id=sac.charge_id ");
-            sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id and nt.savings_account_transaction_id=? ");
+            sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id and nt.savings_account_id=? ");
             sqlBuilder.append(" left join m_transaction_request req ON req.transaction_id=tr.id ");
             this.schemaSql = sqlBuilder.toString();
         }

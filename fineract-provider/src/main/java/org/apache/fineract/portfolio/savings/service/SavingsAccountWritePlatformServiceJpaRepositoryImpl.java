@@ -370,10 +370,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         this.saveTransactionRequest(command, deposit);
 
-        if (StringUtils.isNotBlank(noteText)) {
-            final Note note = Note.savingsTransactionNote(account, deposit, noteText);
-            this.noteRepository.save(note);
-        }
+        //this is already handled in handle deposit method
+//        if (StringUtils.isNotBlank(noteText)) {
+//            final Note note = Note.savingsTransactionNote(account, deposit, noteText);
+//            this.noteRepository.save(note);
+//        }
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(deposit.getId()) //
@@ -503,10 +504,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         this.saveTransactionRequest(command, withdrawal);
 
-        if (StringUtils.isNotBlank(noteText)) {
-            final Note note = Note.savingsTransactionNote(account, withdrawal, noteText);
-            this.noteRepository.save(note);
-        }
+        //this is already hadnled in the savingsAccountDomainService.handleWithdrawal method
+//        if (StringUtils.isNotBlank(noteText)) {
+//            final Note note = Note.savingsTransactionNote(account, withdrawal, noteText);
+//            this.noteRepository.save(note);
+//        }
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(withdrawal.getId()) //

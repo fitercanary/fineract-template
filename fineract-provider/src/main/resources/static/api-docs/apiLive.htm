@@ -6310,6 +6310,1310 @@ GET https://DomainName/api/v1/clients/{clientId}
 				</div>
 			</div>
 
+            <a id="clients_details" name="clients_details" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Retrieve a Client Details</h4>
+                    <p>Example Requests:</p>
+                    <div class=apiClick>clients/1/details</div>
+                    <br>
+                    <br>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+                        GET https://DomainName/api/v1/clients/{clientId}/details
+                    </code>
+                    <code class="method-response">
+                        {
+                        "clientSummary": {
+                        "id": 1,
+                        "accountNo": "000001",
+                        "externalId": "34636464526",
+                        "status": {
+                        "id": 300,
+                        "code": "clientStatusType.active",
+                        "value": "Active"
+                        },
+                        "subStatus": {
+                        "active": false,
+                        "mandatory": false
+                        },
+                        "active": true,
+                        "activationDate": [
+                        2023,
+                        4,
+                        1
+                        ],
+                        "firstname": "Nakabaale",
+                        "lastname": "Joseph",
+                        "displayName": "Nakabaale Joseph",
+                        "gender": {
+                        "active": false,
+                        "mandatory": false
+                        },
+                        "clientType": {
+                        "active": false,
+                        "mandatory": false
+                        },
+                        "clientClassification": {
+                        "active": false,
+                        "mandatory": false
+                        },
+                        "isStaff": false,
+                        "officeId": 1,
+                        "officeName": "Head Office",
+                        "imageId": 6,
+                        "imagePresent": true,
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        4,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        4,
+                        1
+                        ],
+                        "activatedByUsername": "mifos",
+                        "activatedByFirstname": "App",
+                        "activatedByLastname": "Administrator"
+                        },
+                        "legalForm": {
+                        "id": 1,
+                        "code": "legalFormType.person",
+                        "value": "PERSON"
+                        },
+                        "clientLevel": {
+                        "id": 14,
+                        "name": "TIER_1",
+                        "active": false,
+                        "mandatory": false
+                        },
+                        "groups": [],
+                        "clientNonPersonDetails": {
+                        "constitution": {
+                        "active": false,
+                        "mandatory": false
+                        },
+                        "mainBusinessLine": {
+                        "active": false,
+                        "mandatory": false
+                        }
+                        },
+                        "dailyWithdrawLimit": 700,
+                        "singleWithdrawLimit": 500,
+                        "requireAuthorizationToView": false,
+                        "bvnEnabled": false
+                        },
+                        "accountSummary": {
+                        "loanAccounts": [
+                        {
+                        "id": 747,
+                        "accountNo": "2000007479",
+                        "productId": 4,
+                        "productName": "ASSETS MICRO LOAN",
+                        "shortProductName": "ASM",
+                        "status": {
+                        "id": 300,
+                        "code": "loanStatusType.active",
+                        "value": "Active",
+                        "pendingApproval": false,
+                        "waitingForDisbursal": false,
+                        "active": true,
+                        "closedObligationsMet": false,
+                        "closedWrittenOff": false,
+                        "closedRescheduled": false,
+                        "closed": false,
+                        "overpaid": false
+                        },
+                        "loanType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "loanCycle": 1,
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        28
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        28
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "expectedDisbursementDate": [
+                        2023,
+                        7,
+                        28
+                        ],
+                        "actualDisbursementDate": [
+                        2023,
+                        7,
+                        28
+                        ],
+                        "disbursedByUsername": "mifos",
+                        "disbursedByFirstname": "App",
+                        "disbursedByLastname": "Administrator",
+                        "expectedMaturityDate": [
+                        2023,
+                        12,
+                        30
+                        ]
+                        },
+                        "inArrears": false,
+                        "originalLoan": 5000,
+                        "loanBalance": 3847.62,
+                        "amountPaid": 1200
+                        },
+                        {
+                        "id": 749,
+                        "accountNo": "2000007493",
+                        "productId": 4,
+                        "productName": "ASSETS MICRO LOAN",
+                        "shortProductName": "ASM",
+                        "status": {
+                        "id": 300,
+                        "code": "loanStatusType.active",
+                        "value": "Active",
+                        "pendingApproval": false,
+                        "waitingForDisbursal": false,
+                        "active": true,
+                        "closedObligationsMet": false,
+                        "closedWrittenOff": false,
+                        "closedRescheduled": false,
+                        "closed": false,
+                        "overpaid": false
+                        },
+                        "loanType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "loanCycle": 2,
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "expectedDisbursementDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "actualDisbursementDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "disbursedByUsername": "mifos",
+                        "disbursedByFirstname": "App",
+                        "disbursedByLastname": "Administrator",
+                        "expectedMaturityDate": [
+                        2023,
+                        12,
+                        30
+                        ]
+                        },
+                        "inArrears": false,
+                        "originalLoan": 10000,
+                        "loanBalance": 7058.41,
+                        "amountPaid": 3000
+                        },
+                        {
+                        "id": 750,
+                        "accountNo": "2000007503",
+                        "productId": 4,
+                        "productName": "ASSETS MICRO LOAN",
+                        "shortProductName": "ASM",
+                        "status": {
+                        "id": 300,
+                        "code": "loanStatusType.active",
+                        "value": "Active",
+                        "pendingApproval": false,
+                        "waitingForDisbursal": false,
+                        "active": true,
+                        "closedObligationsMet": false,
+                        "closedWrittenOff": false,
+                        "closedRescheduled": false,
+                        "closed": false,
+                        "overpaid": false
+                        },
+                        "loanType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "loanCycle": 3,
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "expectedDisbursementDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "actualDisbursementDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "disbursedByUsername": "mifos",
+                        "disbursedByFirstname": "App",
+                        "disbursedByLastname": "Administrator",
+                        "expectedMaturityDate": [
+                        2024,
+                        6,
+                        30
+                        ]
+                        },
+                        "inArrears": false,
+                        "originalLoan": 5000,
+                        "loanBalance": 4083.75,
+                        "amountPaid": 1000
+                        },
+                        {
+                        "id": 751,
+                        "accountNo": "2000007510",
+                        "productId": 4,
+                        "productName": "ASSETS MICRO LOAN",
+                        "shortProductName": "ASM",
+                        "status": {
+                        "id": 300,
+                        "code": "loanStatusType.active",
+                        "value": "Active",
+                        "pendingApproval": false,
+                        "waitingForDisbursal": false,
+                        "active": true,
+                        "closedObligationsMet": false,
+                        "closedWrittenOff": false,
+                        "closedRescheduled": false,
+                        "closed": false,
+                        "overpaid": false
+                        },
+                        "loanType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "loanCycle": 4,
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "expectedDisbursementDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "actualDisbursementDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "disbursedByUsername": "mifos",
+                        "disbursedByFirstname": "App",
+                        "disbursedByLastname": "Administrator",
+                        "expectedMaturityDate": [
+                        2024,
+                        8,
+                        1
+                        ]
+                        },
+                        "inArrears": false,
+                        "originalLoan": 5407.16,
+                        "loanBalance": 5028.62,
+                        "amountPaid": 515
+                        }
+                        ],
+                        "savingsAccounts": [
+                        {
+                        "id": 2260,
+                        "accountNo": "1000022608",
+                        "productId": 6,
+                        "productName": "ASSETS FIXED DEPOSIT",
+                        "shortProductName": "AFD",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 5000,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        29
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        29
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        29
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        7,
+                        29
+                        ],
+                        "depositType": {
+                        "id": 200,
+                        "code": "depositAccountType.fixedDeposit",
+                        "value": "Fixed Deposit"
+                        }
+                        },
+                        {
+                        "id": 2261,
+                        "accountNo": "1000022615",
+                        "productId": 1,
+                        "productName": "ASSETS SAVINGS ACCOUNT",
+                        "shortProductName": "ASSA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 1300,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        29
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        29
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        29
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2263,
+                        "accountNo": "1000022639",
+                        "productId": 1,
+                        "productName": "ASSETS SAVINGS ACCOUNT",
+                        "shortProductName": "ASSA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 1300,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2264,
+                        "accountNo": "1000022646",
+                        "productId": 1,
+                        "productName": "ASSETS SAVINGS ACCOUNT",
+                        "shortProductName": "ASSA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 3100,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        31
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        31
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        31
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2265,
+                        "accountNo": "1000022653",
+                        "productId": 1,
+                        "productName": "ASSETS SAVINGS ACCOUNT",
+                        "shortProductName": "ASSA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 2725,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2266,
+                        "accountNo": "1000022660",
+                        "productId": 6,
+                        "productName": "ASSETS FIXED DEPOSIT",
+                        "shortProductName": "AFD",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 10000,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "depositType": {
+                        "id": 200,
+                        "code": "depositAccountType.fixedDeposit",
+                        "value": "Fixed Deposit"
+                        }
+                        },
+                        {
+                        "id": 2267,
+                        "accountNo": "1000022677",
+                        "productId": 3,
+                        "productName": "INDIVIDUAL CURRENT ACCOUNT",
+                        "shortProductName": "ICA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 3875,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        5,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        5,
+                        1
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        5,
+                        1
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2268,
+                        "accountNo": "1000022684",
+                        "productId": 5,
+                        "productName": "STAFF SAVINGS ACCOUNT",
+                        "shortProductName": "SST",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 600,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2269,
+                        "accountNo": "1000022691",
+                        "productId": 1,
+                        "productName": "ASSETS SAVINGS ACCOUNT",
+                        "shortProductName": "ASSA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 1700,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2270,
+                        "accountNo": "1000022701",
+                        "productId": 1,
+                        "productName": "ASSETS SAVINGS ACCOUNT",
+                        "shortProductName": "ASSA",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 3900,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        7,
+                        30
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 100,
+                        "code": "depositAccountType.savingsDeposit",
+                        "value": "Savings"
+                        }
+                        },
+                        {
+                        "id": 2271,
+                        "accountNo": "1000022718",
+                        "productId": 6,
+                        "productName": "ASSETS FIXED DEPOSIT",
+                        "shortProductName": "AFD",
+                        "status": {
+                        "id": 300,
+                        "code": "savingsAccountStatusType.active",
+                        "value": "Active",
+                        "submittedAndPendingApproval": false,
+                        "approved": false,
+                        "rejected": false,
+                        "withdrawnByApplicant": false,
+                        "active": true,
+                        "closed": false,
+                        "prematureClosed": false,
+                        "transferInProgress": false,
+                        "transferOnHold": false,
+                        "matured": false
+                        },
+                        "currency": {
+                        "code": "NGN",
+                        "name": "Nigerian Naira",
+                        "decimalPlaces": 2,
+                        "inMultiplesOf": 1,
+                        "nameCode": "currency.NGN",
+                        "displayLabel": "Nigerian Naira [NGN]"
+                        },
+                        "accountBalance": 10000,
+                        "accountType": {
+                        "id": 1,
+                        "code": "accountType.individual",
+                        "value": "Individual"
+                        },
+                        "timeline": {
+                        "submittedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "submittedByUsername": "mifos",
+                        "submittedByFirstname": "App",
+                        "submittedByLastname": "Administrator",
+                        "approvedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "approvedByUsername": "mifos",
+                        "approvedByFirstname": "App",
+                        "approvedByLastname": "Administrator",
+                        "activatedOnDate": [
+                        2023,
+                        8,
+                        1
+                        ]
+                        },
+                        "subStatus": {
+                        "id": 0,
+                        "code": "SavingsAccountSubStatusEnum.none",
+                        "value": "None",
+                        "none": true,
+                        "inactive": false,
+                        "dormant": false,
+                        "escheat": false,
+                        "block": false,
+                        "blockCredit": false,
+                        "blockDebit": false
+                        },
+                        "lastActiveTransactionDate": [
+                        2023,
+                        8,
+                        1
+                        ],
+                        "depositType": {
+                        "id": 200,
+                        "code": "depositAccountType.fixedDeposit",
+                        "value": "Fixed Deposit"
+                        }
+                        }
+                        ]
+                        },
+                        "familyMembers": [
+                        {
+                        "id": 69,
+                        "clientId": 1,
+                        "firstName": "John",
+                        "middleName": "",
+                        "lastName": "Williams",
+                        "qualification": "",
+                        "relationshipId": 33,
+                        "relationship": "BROTHER",
+                        "maritalStatusId": 0,
+                        "genderId": 24,
+                        "gender": "MALE",
+                        "professionId": 0,
+                        "mobileNumber": "",
+                        "address": "",
+                        "emailAddress": "john.williams@gmail.com",
+                        "age": 30,
+                        "isDependent": false
+                        }
+                        ],
+                        "documents": [],
+                        "address": [
+                        {
+                        "client_id": 1,
+                        "Email Address": "joseph@fiter.io"
+                        }
+                        ],
+                        "contact": [
+                        {
+                        "enable_sms": "true",
+                        "enable_email": "true",
+                        "phonenumber": "0774296975",
+                        "client_id": 1,
+                        "email": "joseph@fiter.io"
+                        }
+                        ]
+                        }
+                    </code>
+                </div>
+            </div>
+
+
+
 			<a id="client_list" name="clients_list" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -52999,6 +54303,14 @@ Request Body:
 					<td><a href="#clients_update">Update a Client</a></td>
 					<td><a href="#clients_delete">Delete a Client</a></td>
 				</tr>
+                <tr>
+                    <td></td>
+                    <td>clients/{clientId}/details</td>
+                    <td></td>
+                    <td><a href="#clients_details">Retrieve a Client Details</a></td>
+                    <td></td>
+                    <td></td>
+                </tr>
 				<tr>
 					<td></td>
 					<td>clients/{clientId}?command=activate</td>

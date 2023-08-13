@@ -198,6 +198,11 @@ public class ClientApiConstants {
     public static String singleWithdrawLimit = "singleWithdrawLimit";
     public static final String singleDepositLimit = "singleDepositLimit";
     public static final String requireAuthorizationToViewParamName = "requireAuthorizationToView";
+    public static final String accountSummary = "accountSummary";
+    public static final String family = "familyMemberOptions";
+    private static final String clientSummary = "clientSummary";
+    private static final String documents = "documents";
+    private static final String contact = "contact";
 
     /**
      * These parameters will match the class level parameters of
@@ -224,6 +229,8 @@ public class ClientApiConstants {
             (idParamName,
             transactionAmountParamName, paymentDetailDataParamName, reversedParamName, dateParamName, officeIdParamName,
             officeNameParamName, transactionTypeParamName, transactionCurrencyParamName, externalIdParamName, submittedOnDateParamName));
+
+    protected static final Set<String> CLIENT_DETAIL_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList(clientSummary, accountSummary, family, documents, address, contact));
 
 
 }

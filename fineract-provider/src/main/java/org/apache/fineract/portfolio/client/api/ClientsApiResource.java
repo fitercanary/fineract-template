@@ -38,6 +38,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.portfolio.accountdetails.data.AccountSummaryCollectionData;
 import org.apache.fineract.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
 import org.apache.fineract.portfolio.client.data.ClientData;
+import org.apache.fineract.portfolio.client.data.ClientDetailsData;
 import org.apache.fineract.portfolio.client.data.ReferralStatusData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
@@ -48,6 +49,20 @@ import org.apache.fineract.portfolio.validation.limit.data.ValidationLimitData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.apache.fineract.portfolio.client.data.ClientFamilyMembersData;
+import org.apache.fineract.portfolio.client.service.ClientFamilyMembersReadPlatformService;
+import org.apache.fineract.infrastructure.documentmanagement.service.DocumentReadPlatformService;
+import org.apache.fineract.infrastructure.documentmanagement.data.DocumentData;
+import org.apache.fineract.infrastructure.dataqueries.api.DatatablesApiResource;
+import org.apache.fineract.infrastructure.dataqueries.data.GenericResultsetData;
+import org.apache.fineract.infrastructure.dataqueries.service.ReadWriteNonCoreDataService;
+import org.apache.fineract.infrastructure.dataqueries.service.GenericDataService;
+
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -63,16 +78,22 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
 
 @Path("/clients")
 @Component
 @Scope("singleton")
 public class ClientsApiResource {
+
+    private final static Logger logger = LoggerFactory.getLogger(ClientsApiResource.class);
 
     private final PlatformSecurityContext context;
     private final ClientReadPlatformService clientReadPlatformService;
@@ -87,6 +108,11 @@ public class ClientsApiResource {
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
     private final SavingsAccountDomainService savingsAccountDomainService;
+    private final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService;
+    private final DocumentReadPlatformService documentReadPlatformService;
+    private final ToApiJsonSerializer<ClientDetailsData> clientDatatoApiJsonSerializer;
+    private final ReadWriteNonCoreDataService readWriteNonCoreDataService;
+    private final GenericDataService genericDataService;
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
@@ -98,7 +124,12 @@ public class ClientsApiResource {
                               final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
                               final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
                               final BulkImportWorkbookService bulkImportWorkbookService,
-                              final SavingsAccountDomainService savingsAccountDomainService) {
+                              final SavingsAccountDomainService savingsAccountDomainService,
+                              final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
+                              final DocumentReadPlatformService documentReadPlatformService,
+                              final ToApiJsonSerializer<ClientDetailsData> clientDatatoApiJsonSerializer,
+                              final ReadWriteNonCoreDataService readWriteNonCoreDataService,
+                              final GenericDataService genericDataService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -112,6 +143,11 @@ public class ClientsApiResource {
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.bulkImportWorkbookService = bulkImportWorkbookService;
         this.savingsAccountDomainService = savingsAccountDomainService;
+        this.clientFamilyMembersReadPlatformService = clientFamilyMembersReadPlatformService;
+        this.documentReadPlatformService = documentReadPlatformService;
+        this.clientDatatoApiJsonSerializer = clientDatatoApiJsonSerializer;
+        this.readWriteNonCoreDataService = readWriteNonCoreDataService;
+        this.genericDataService = genericDataService;
     }
 
     @GET
@@ -459,5 +495,52 @@ public class ClientsApiResource {
         boolean requiresAuthorization = this.clientReadPlatformService.doesClientRequireAuthrorization(clientId);
 
         return this.toApiJsonSerializer.serialize(new ClientData(clientId, requiresAuthorization));
+    }
+
+    @GET
+    @Path("{clientId}/details")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveOneDetails(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo,
+                              @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly)
+            throws IOException {
+
+        this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+        ClientData clientData = this.clientReadPlatformService.retrieveOne(clientId);
+        final Collection<ClientFamilyMembersData> familyMembers = this.clientFamilyMembersReadPlatformService.getClientFamilyMembers(clientId);
+        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId);
+        final Collection<DocumentData> documentDatas = this.documentReadPlatformService.retrieveAllDocuments("clients", clientId);
+
+        final GenericResultsetData addressResponse = this.readWriteNonCoreDataService.retrieveDataTableGenericResultSet("Address Info", clientId,
+                null, null);
+        final GenericResultsetData contactResponse = this.readWriteNonCoreDataService.retrieveDataTableGenericResultSet("Contact Information", clientId,
+                null, null);
+        List<HashMap<String, Object>> address = new ArrayList<>();
+        List<HashMap<String, Object>> contact = new ArrayList<>();
+        try {
+            final String addressJSON = this.genericDataService.generateJsonFromGenericResultsetData(addressResponse);
+            address = new ObjectMapper().readValue(addressJSON, new TypeReference<List<HashMap<String, Object>>>() {});
+            final String contactJSON = this.genericDataService.generateJsonFromGenericResultsetData(contactResponse);
+            contact = new ObjectMapper().readValue(contactJSON, new TypeReference<List<HashMap<String, Object>>>() {});
+        } catch (JsonParseException e) {
+            logger.info("Conversion of data table info for address or contact info failed: " + e.getMessage() + " - Location: " + e.getLocation());
+
+        }
+
+        if (settings.isTemplate()) {
+            final ClientData templateData = this.clientReadPlatformService.retrieveTemplate(clientData.officeId(),
+                    staffInSelectedOfficeOnly);
+            Long referredById = clientData.getReferredById();
+            clientData = ClientData.templateOnTop(clientData, templateData);
+            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null);
+            if (savingAccountOptions != null && savingAccountOptions.size() > 0) {
+                clientData = ClientData.templateWithSavingAccountOptions(clientData, savingAccountOptions);
+            }
+            clientData.setReferredById(referredById);
+        }
+        ClientDetailsData clientDetailsData = new ClientDetailsData(clientData, clientAccount, familyMembers, documentDatas, address, contact);
+        return this.clientDatatoApiJsonSerializer.serialize(settings, clientDetailsData, ClientApiConstants.CLIENT_DETAIL_RESPONSE_DATA_PARAMETERS);
     }
 }

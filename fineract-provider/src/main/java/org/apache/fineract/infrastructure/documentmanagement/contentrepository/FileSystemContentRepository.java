@@ -19,12 +19,14 @@
 package org.apache.fineract.infrastructure.documentmanagement.contentrepository;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.fineract.infrastructure.core.domain.Base64EncodedImage;
@@ -59,12 +61,10 @@ public class FileSystemContentRepository implements ContentRepository {
                 documentCommand.getParentEntityId());
 
         ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(documentCommand.getSize(), fileName);
-        makeDirectories(uploadDocumentLocation);
 
-        final String fileLocation = uploadDocumentLocation + File.separator + fileName;
+        writeFileToFileSystem(fileName, uploadedInputStream, uploadDocumentLocation);
 
-        writeFileToFileSystem(fileName, uploadedInputStream, fileLocation);
-        return fileLocation;
+        return uploadDocumentLocation + File.separator + fileName;
     }
 
     @Override
@@ -74,10 +74,9 @@ public class FileSystemContentRepository implements ContentRepository {
         ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(fileSize, imageName);
         makeDirectories(uploadImageLocation);
 
-        final String fileLocation = uploadImageLocation + File.separator + imageName;
+        writeFileToFileSystem(imageName, uploadedInputStream, uploadImageLocation);
 
-        writeFileToFileSystem(imageName, uploadedInputStream, fileLocation);
-        return fileLocation;
+        return uploadImageLocation + File.separator + imageName;
     }
 
     @Override
@@ -168,16 +167,19 @@ public class FileSystemContentRepository implements ContentRepository {
     /**
      * Recursively create the directory if it does not exist *
      */
-    private void makeDirectories(final String uploadDocumentLocation) {
-        if (!new File(uploadDocumentLocation).isDirectory()) {
-            new File(uploadDocumentLocation).mkdirs();
+    private void makeDirectories(final String directoryPath){
+        Path path = Paths.get(directoryPath);
+        try {
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            throw new ContentManagementException(directoryPath, e.getMessage());
         }
     }
 
     private void writeFileToFileSystem(final String fileName, final InputStream uploadedInputStream, final String fileLocation) {
         try (BufferedInputStream bis = new BufferedInputStream(uploadedInputStream)) {
-            String sanitizedPath = pathSanitizer.sanitize(fileLocation, bis);
-            makeDirectories(sanitizedPath);
+            String sanitizedPath = pathSanitizer.sanitize(fileLocation + File.separator + fileName, bis);
+            makeDirectories(fileLocation);
             FileUtils.copyInputStreamToFile(bis, new File(sanitizedPath)); // NOSONAR
         } catch (final IOException ioException) {
             throw new ContentManagementException(fileName, ioException.getMessage());

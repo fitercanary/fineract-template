@@ -22,11 +22,13 @@ import com.google.gson.JsonArray;
 import net.fortuna.ical4j.model.ValidationException;
 import net.fortuna.ical4j.model.property.RRule;
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.joda.time.LocalDate;
 import org.quartz.CronExpression;
 import org.springframework.util.ObjectUtils;
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -42,6 +44,10 @@ public class DataValidatorBuilder {
     private Integer arrayIndex;
     private Object value;
     private boolean ignoreNullValue = false;
+
+    public DataValidatorBuilder() {
+        this(new ArrayList<>());
+    }
 
     public DataValidatorBuilder(final List<ApiParameterError> dataValidationErrors) {
         this.dataValidationErrors = dataValidationErrors;
@@ -1004,6 +1010,18 @@ public class DataValidatorBuilder {
             }
         }
         return this;
+    }
+
+    /**
+     * Throws Exception if validation errors.
+     *
+     * @throws PlatformApiDataValidationException
+     *             unchecked exception (RuntimeException) thrown if there are any validation error
+     */
+    public void throwValidationErrors() throws PlatformApiDataValidationException {
+        if (!dataValidationErrors.isEmpty()) {
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
     }
 
 }

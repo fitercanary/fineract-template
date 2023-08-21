@@ -44,6 +44,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.documentmanagement.command.DocumentCommand;
+import org.apache.fineract.infrastructure.documentmanagement.contentrepository.FileUploadValidator;
 import org.apache.fineract.infrastructure.documentmanagement.data.DocumentData;
 import org.apache.fineract.infrastructure.documentmanagement.data.FileData;
 import org.apache.fineract.infrastructure.documentmanagement.service.DocumentReadPlatformService;
@@ -72,16 +73,18 @@ public class DocumentManagementApiResource {
     private final DocumentWritePlatformService documentWritePlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final ToApiJsonSerializer<DocumentData> toApiJsonSerializer;
+    private final FileUploadValidator fileUploadValidator;
 
     @Autowired
     public DocumentManagementApiResource(final PlatformSecurityContext context,
             final DocumentReadPlatformService documentReadPlatformService, final DocumentWritePlatformService documentWritePlatformService,
-            final ApiRequestParameterHelper apiRequestParameterHelper, final ToApiJsonSerializer<DocumentData> toApiJsonSerializer) {
+            final ApiRequestParameterHelper apiRequestParameterHelper, final ToApiJsonSerializer<DocumentData> toApiJsonSerializer, final FileUploadValidator fileUploadValidator) {
         this.context = context;
         this.documentReadPlatformService = documentReadPlatformService;
         this.documentWritePlatformService = documentWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.toApiJsonSerializer = toApiJsonSerializer;
+        this.fileUploadValidator = fileUploadValidator;
     }
 
     @GET
@@ -110,6 +113,7 @@ public class DocumentManagementApiResource {
          * TODO: also need to have a backup and stop reading from stream after
          * max size is reached to protect against malicious clients
          **/
+        fileUploadValidator.validate(fileSize, inputStream, fileDetails, bodyPart);
 
         /**
          * TODO: need to extract the actual file type and determine if they are

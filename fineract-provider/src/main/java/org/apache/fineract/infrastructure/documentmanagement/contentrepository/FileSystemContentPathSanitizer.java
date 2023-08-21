@@ -20,7 +20,10 @@ package org.apache.fineract.infrastructure.documentmanagement.contentrepository;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -47,11 +50,11 @@ public class FileSystemContentPathSanitizer implements ContentPathSanitizer {
 
     @Value("${fineract.content.regex-whitelist-enabled}")
     private boolean isRegexWhitelistEnabled;
-    @Value("${fineract.content.regex-whitelist}")
+    @Value("#{'${fineract.content.regex-whitelist}'.split(',')}")
     private List<String> regexWhitelist;
     @Value("${fineract.content.mime-whitelist-enabled}")
     private boolean isMimeWhitelistEnabled;
-    @Value("${fineract.content.mime-whitelist}")
+    @Value("#{'${fineract.content.mime-whitelist}'.split(',')}")
     private List<String> mimeWhitelist;
     private List<Pattern> regexWhitelistPatterns;
 

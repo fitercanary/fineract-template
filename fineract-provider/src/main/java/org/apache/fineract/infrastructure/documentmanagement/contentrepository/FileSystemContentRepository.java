@@ -177,10 +177,10 @@ public class FileSystemContentRepository implements ContentRepository {
     }
 
     private void writeFileToFileSystem(final String fileName, final InputStream uploadedInputStream, final String fileLocation) {
-        try (BufferedInputStream bis = new BufferedInputStream(uploadedInputStream)) {
-            String sanitizedPath = pathSanitizer.sanitize(fileLocation + File.separator + fileName, bis);
+        try{
+            String sanitizedPath = pathSanitizer.sanitize(fileLocation + File.separator + fileName);
             makeDirectories(fileLocation);
-            FileUtils.copyInputStreamToFile(bis, new File(sanitizedPath)); // NOSONAR
+            FileUtils.copyInputStreamToFile(uploadedInputStream, new File(sanitizedPath));// NOSONAR
         } catch (final IOException ioException) {
             throw new ContentManagementException(fileName, ioException.getMessage());
         }

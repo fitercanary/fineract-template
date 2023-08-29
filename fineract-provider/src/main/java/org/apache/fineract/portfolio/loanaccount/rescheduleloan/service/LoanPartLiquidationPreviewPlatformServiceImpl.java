@@ -179,6 +179,21 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
         final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);
 
+        LoanRepaymentScheduleInstallment repaymentScheduleInstallment = loan.getRepaymentScheduleInstallment(rescheduleFromDate);
+        if (repaymentScheduleInstallment ==null){
+            throw new PlatformDataIntegrityException("error.msg.loan.schedule.date.existing.installment",
+                    "No installment on the next start date selected. Please select the date of an existing installment");
+        }
+
+        if (newStartDate.isAfter(DateUtils.getLocalDateOfTenant())) {
+            throw new PlatformDataIntegrityException("error.msg.loan.start.date.cannot.be.in.past",
+                    "The new start date cannot be in the past: ");
+        }
+        if (newStartDate.isBefore(loan.getLastUserTransactionDate())) {
+            throw new PlatformDataIntegrityException("error.msg.loan.start.date.cannot.be.in.before.the.last.transaction",
+                    "The new start date cannot be before the last transaction date: ");
+        }
+
         LoanTermVariations dueDateVariationInCurrentRequest = null;
         if(dueDateVariationInCurrentRequest != null){
             for (LoanTermVariationsData loanTermVariation : loanApplicationTerms.getLoanTermVariations().getDueDateVariation()) {
@@ -345,6 +360,8 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             }
 
             loan.updateLoanSummaryDerivedFields();
+            loanApplicationTerms.updatePricipal(loanApplicationTerms.getApprovedPrincipal());
+
             // update the loan object
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
 

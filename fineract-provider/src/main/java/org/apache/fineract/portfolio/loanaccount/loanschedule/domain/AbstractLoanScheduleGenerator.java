@@ -455,10 +455,14 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         // Determine the total interest owed over the full loan for FLAT
         // interest method .
         if (!scheduleParams.isPartialUpdate() && !loanApplicationTerms.isEqualAmortization()) {
+            Money originalPrincipal = loanApplicationTerms.getPrincipal();
+            loanApplicationTerms.updatePricipal(scheduleParams.getPrincipalToBeScheduled());
             Money totalInterestChargedForFullLoanTerm = loanApplicationTerms
                     .calculateTotalInterestCharged(this.paymentPeriodsInOneYearCalculator, mc);
 
             loanApplicationTerms.updateTotalInterestDue(totalInterestChargedForFullLoanTerm);
+
+//            loanApplicationTerms.updatePricipal(originalPrincipal);
 
         }
 
@@ -2841,13 +2845,14 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             Money principalPortion = transactionAmount.minus(interestPortion).minus(feesPortion);
             if (finalInstallment == null) {
                 finalInstallment = loan.getNextUpdaidInstallmentSchedule();
-//                periods.add(liquidatedModelPeriod);
             }
 
             finalInstallment.updateInstallmentNumber(0);
             finalInstallment.updatePrincipal(principalPortion.getAmount());
             finalInstallment.updateFeesCharged(feesPortion.getAmount());
             finalInstallment.updateInterestCharged(interestPortion.getAmount());
+            finalInstallment.updateFromDate(DateUtils.getLocalDateOfTenant().minusMonths(1));
+            finalInstallment.updateDueDate(DateUtils.getLocalDateOfTenant());
 
             newRepaymentScheduleInstallments.add(finalInstallment);
 
@@ -2869,7 +2874,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                         loanTermInDays, periodStartDate, actualRepaymentDate, totalCumulativePrincipal, totalCumulativeInterest,
                         totalFeeChargesCharged, totalPenaltyChargesCharged, totalRepaymentExpected,
                         totalOutstandingInterestPaymentDueToGrace, reducePrincipal, principalPortionMap, latePaymentMap, compoundingMap,
-                        uncompoundedAmount, disburseDetailMap, principalToBeScheduled.minus(transactionAmount), outstandingBalance.minus(transactionAmount), outstandingBalanceAsPerRest,
+                        uncompoundedAmount, disburseDetailMap, principalToBeScheduled.plus(interestPortion).minus(transactionAmount), outstandingBalance.plus(interestPortion).minus(transactionAmount), outstandingBalanceAsPerRest,
                         newRepaymentScheduleInstallments, recalculationDetails, loanRepaymentScheduleTransactionProcessor, scheduleTillDate,
                         currency, applyInterestRecalculation);
                 retainedInstallments.addAll(newRepaymentScheduleInstallments);
@@ -2887,6 +2892,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             periods.clear();
         }
 
+
         LoanScheduleModel loanScheduleModel = generateWithReschedule(mc, loanApplicationTerms, loan.charges(), holidayDetailDTO, loanScheduleParams, liquidatedModelPeriod);
         retainedInstallments.add(finalInstallment);
         for (LoanScheduleModelPeriod loanScheduleModelPeriod : loanScheduleModel.getPeriods()) {
@@ -2903,7 +2909,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         periods.add(disbursementItePeriod);
         periods.add(liquidatedModelPeriod);
         periods.addAll(repaymentPeriods);
-
 
 
         LoanScheduleModel loanScheduleModelwithPeriodChanges = LoanScheduleModel.withLoanScheduleModelPeriods(periods, loanScheduleModel);

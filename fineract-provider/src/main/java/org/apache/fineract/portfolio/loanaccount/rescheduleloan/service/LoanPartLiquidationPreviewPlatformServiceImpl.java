@@ -179,6 +179,13 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
 
         final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);
 
+        LoanRepaymentScheduleInstallment repaymentScheduleInstallment = loan.getRepaymentScheduleInstallment(rescheduleFromDate);
+        if (repaymentScheduleInstallment ==null){
+            List<ApiParameterError> errors = new ArrayList<>();
+            throw new PlatformDataIntegrityException("error.msg.loan.schedule.date.existing.installment",
+                    "No installment on the next start date selected. Please select the date of an existing installment");
+        }
+
         LoanTermVariations dueDateVariationInCurrentRequest = null;
         if(dueDateVariationInCurrentRequest != null){
             for (LoanTermVariationsData loanTermVariation : loanApplicationTerms.getLoanTermVariations().getDueDateVariation()) {
@@ -345,6 +352,8 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             }
 
             loan.updateLoanSummaryDerivedFields();
+            loanApplicationTerms.updatePricipal(loanApplicationTerms.getApprovedPrincipal());
+
             // update the loan object
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
 

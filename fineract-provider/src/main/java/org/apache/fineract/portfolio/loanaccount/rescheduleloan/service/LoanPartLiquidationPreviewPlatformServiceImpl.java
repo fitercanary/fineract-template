@@ -185,10 +185,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
                     "No installment on the next start date selected. Please select the date of an existing installment");
         }
 
-        if (newStartDate.isAfter(DateUtils.getLocalDateOfTenant())) {
-            throw new PlatformDataIntegrityException("error.msg.loan.start.date.cannot.be.in.past",
-                    "The new start date cannot be in the past: ");
-        }
+
         if (newStartDate.isBefore(loan.getLastUserTransactionDate())) {
             throw new PlatformDataIntegrityException("error.msg.loan.start.date.cannot.be.in.before.the.last.transaction",
                     "The new start date cannot be before the last transaction date: ");

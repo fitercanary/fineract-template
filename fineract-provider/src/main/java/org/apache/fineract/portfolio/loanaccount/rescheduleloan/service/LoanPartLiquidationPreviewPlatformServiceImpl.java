@@ -166,27 +166,29 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
         final Money transactionAmount = Money.of(loan.getCurrency(),new BigDecimal(queryParameters.getFirst(RestructureLoansApiConstants.transactionAmountParam)));
 
 //        loan.getLoanSummary().getTotalPrincipalOutstanding();
-        final LocalDate newStartDate = LocalDate.parse(queryParameters.getFirst(RestructureLoansApiConstants.rescheduleFromDateParamName),formatter);
+        final LocalDate nextStartDate = LocalDate.parse(queryParameters.getFirst(RestructureLoansApiConstants.rescheduleFromDateParamName),formatter);
+
+        final LocalDate nextPaymentDate = nextStartDate.minusMonths(1);
 
         LocalDate expectedMaturityDate = LocalDate.parse(queryParameters.getFirst(RestructureLoansApiConstants.expectedMaturityDateParamName),formatter);
 
 
         ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildRestructureScheduleGeneratorDTO(loan,
-                newStartDate, expectedMaturityDate);
+                nextPaymentDate, expectedMaturityDate);
 
-        LocalDate rescheduleFromDate = newStartDate;
+        LocalDate rescheduleFromDate = nextPaymentDate;
         List<LoanTermVariationsData> removeLoanTermVariationsData = new ArrayList<>();
 
         final LoanApplicationTerms loanApplicationTerms = loan.constructLoanRestructureTerms(scheduleGeneratorDTO);
 
-        LoanRepaymentScheduleInstallment repaymentScheduleInstallment = loan.getRepaymentScheduleInstallment(rescheduleFromDate);
+        LoanRepaymentScheduleInstallment repaymentScheduleInstallment = loan.getRepaymentScheduleInstallment(nextStartDate);
         if (repaymentScheduleInstallment ==null){
             throw new PlatformDataIntegrityException("error.msg.loan.schedule.date.existing.installment",
                     "No installment on the next start date selected. Please select the date of an existing installment");
         }
 
 
-        if (newStartDate.isBefore(loan.getLastUserTransactionDate())) {
+        if (nextStartDate.isBefore(loan.getLastUserTransactionDate())) {
             throw new PlatformDataIntegrityException("error.msg.loan.start.date.cannot.be.in.before.the.last.transaction",
                     "The new start date cannot be before the last transaction date: ");
         }
@@ -277,10 +279,11 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
 
             LocalDate expectedMaturityDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.expectedMaturityDateParamName);
-            final LocalDate newStartDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.rescheduleFromDateParamName);
+            final LocalDate nextStartDate = jsonCommand.localDateValueOfParameterNamed(RestructureLoansApiConstants.rescheduleFromDateParamName);
 
+            final LocalDate nextPaymentDate = nextStartDate.minusMonths(1);
             ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildRestructureScheduleGeneratorDTO(loan,
-                    newStartDate, expectedMaturityDate);
+                    nextPaymentDate, expectedMaturityDate);
 
             BigDecimal amountBigDecimal = jsonCommand.bigDecimalValueOfParameterNamed(RestructureLoansApiConstants.transactionAmountParam);
             final Money transactionAmount = Money.of(loan.getCurrency(),amountBigDecimal);
@@ -295,7 +298,7 @@ public class LoanPartLiquidationPreviewPlatformServiceImpl implements LoanPartLi
             LocalDate rescheduleFromDate = null;
 
             if (rescheduleFromDate == null) {
-                rescheduleFromDate = newStartDate;
+                rescheduleFromDate = nextPaymentDate;
             }
 
             BigDecimal annualNominalInterestRate = null;

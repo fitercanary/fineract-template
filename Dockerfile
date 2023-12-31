@@ -2,7 +2,8 @@
 FROM tomcat:8.5.57-jdk8
 
 #RUN apk add --no-cache mysql-client curl
-RUN apt-get install curl gettext
+RUN apt update
+RUN apt-get -y install curl gettext
 
 #RUN apk --update add fontconfig ttf-dejavu ttf-liberation nano
 

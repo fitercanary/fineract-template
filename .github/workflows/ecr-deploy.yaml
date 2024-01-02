@@ -13,22 +13,8 @@ env:
   github_deploy_role: "arn:aws:iam::814938215759:role/canary-eu-west-2-prod-ghdeploy-role-fineract-backend"
 
 jobs:
-  check-upstream:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if this is the upstream repository
-        env:
-          UPSTREAM_REPO: "Assets-MFB/mifosx-cba-backend"
-        run: |
-          if [ "$GITHUB_REPOSITORY" != "$UPSTREAM_REPO" ]; then
-            echo "This action is running in a mirror repository. Exiting..."
-            exit 78 # Exiting with a neutral status
-          else
-            echo "This action is running in the upstream repository."
-          fi
-
   build:
-    needs: check-upstream
+    if: github.repository == 'Assets-MFB/mifosx-cba-backend'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

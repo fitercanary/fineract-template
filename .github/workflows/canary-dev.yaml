@@ -1,4 +1,4 @@
-name: Mirror to Bitbucket
+name: Mirror to Github
 
 on:
   push:
@@ -24,6 +24,6 @@ jobs:
           git remote add upstream git@github.com:Assets-MFB/mifosx-cba-backend.git
           git fetch upstream --prune
 
-      - name: Mirror to Bitbucket
+      - name: Mirror to Canary Remote
         run: |
           git push --mirror upstream

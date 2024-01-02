@@ -1,4 +1,4 @@
-name: Fineract Canary Build
+name: Mirror to Bitbucket
 
 on:
   push:
@@ -6,77 +6,24 @@ on:
       - canary-dev
 
 jobs:
-  build:
+  mirror:
     runs-on: ubuntu-latest
-    env:
-      SHA8: ${GITHUB_SHA::8}
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: kamiazya/setup-graphviz@v1
-      
-      - name: Get short SHA
-        id: slug
-        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-      - name: Set up JDK 8
-        uses: actions/setup-java@v1
+      - name: Setup SSH
+        uses: MrSquaare/ssh-setup-action@v3
         with:
-          java-version: 8
+          host: github.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
-
-      - name: Gradlew Validation
-        uses: gradle/wrapper-validation-action@v1
-
-      - name: Build with Gradles
-        run: ./gradlew clean war
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_CANARY_STAGING_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_CANARY_STAGING_SECRET_KEY }}
-          aws-region: eu-west-2
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-
-      - name: tag, and push image to Amazon ECR
-        id: push-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: fineract-rest-canary
-          IMAGE_TAG: "${{ steps.extract_branch.outputs.branch }}-${{ steps.slug.outputs.sha8 }}"
+      - name: Add upstream Remote
         run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          git remote add upstream git@github.com:Assets-MFB/mifosx-cba-backend.git
+          git fetch upstream --prune
 
-      - name: Setup Staging EKS Kubectl
-        uses: zachguo/setup-eks-kubectl@v1
-        with:
-          cluster: canary-staging
-          region: eu-west-2
-
-      - name: Pull Staging latest images
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: fineract-rest-canary
-          IMAGE_TAG: "${{ steps.extract_branch.outputs.branch }}-${{ steps.slug.outputs.sha8 }}"
+      - name: Mirror to Bitbucket
         run: |
-          kubectl set image deploy/backend-fineract-rest fineract-rest=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -n application
+          git push --mirror upstream

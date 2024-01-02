@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     branches:
-      - "feat/use-env-configurations"
+      - "non/use-env-configurations"
 
 env:
   aws_region: eu-west-2

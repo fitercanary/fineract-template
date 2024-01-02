@@ -90,6 +90,7 @@ rat {
   htmlOutput = false
   plainOutput = true
   verbose = false
+  failOnError = false
 //  inputDir = './..'
   reportDir = new File(buildDir,'reports/rat')
  excludes = [

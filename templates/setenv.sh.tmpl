@@ -1,0 +1,3 @@
+#!/bin/sh
+
+JAVA_OPTS="-Dfineract.datasource.host=${FINERACT_DEFAULT_TENANTDB_HOSTNAME} -Dfineract.datasource.db=${FINERACT_TENANT_NAME} -Dfineract.datasource.username=${FINERACT_DEFAULT_TENANTDB_UID} -Dfineract.datasource.password=${FINERACT_DEFAULT_TENANTDB_PWD} -Dfineract.allowJobs=true -Xms1G -Xmx4G"

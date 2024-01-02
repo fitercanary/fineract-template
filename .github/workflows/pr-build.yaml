@@ -1,0 +1,72 @@
+name: Fineract Canary Build
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - "non/use-env-configurations"
+
+env:
+  aws_region: eu-west-2
+  github_deploy_role: "arn:aws:iam::814938215759:role/canary-eu-west-2-prod-ghdeploy-role-fineract-backend"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: kamiazya/setup-graphviz@v1
+      
+      - name: Get short SHA
+        id: commit
+        uses: pr-mpt/actions-commit-hash@v1
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      - name: Gradlew Validation
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Build with Gradles
+        run: ./gradlew clean war
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ env.github_deploy_role }}
+          aws-region: ${{ env.aws_region }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: tag, and push image to Amazon ECR
+        id: push-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fineract-rest-canary
+          IMAGE_TAG: "${{ steps.commit.outputs.short }}"
+        run: |
+          # Build a docker container and
+          # push it to ECR so that it can
+          # be deployed to ECS.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"

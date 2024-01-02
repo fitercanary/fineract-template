@@ -2,7 +2,8 @@
 FROM tomcat:8.5.57-jdk8
 
 #RUN apk add --no-cache mysql-client curl
-RUN apt-get install curl
+RUN apt update
+RUN apt-get -y install curl gettext
 
 #RUN apk --update add fontconfig ttf-dejavu ttf-liberation nano
 
@@ -27,6 +28,10 @@ ADD ./fineract-provider/src/main/pentahoReports/ /root/.mifosx/pentahoReports
 ADD ./docker/keystore.jks /usr/local/tomcat/keystore.jks
 
 #ADD ./images/signature.png /root/.fineract/default/signature/signature.png
+
+ADD templates/server.xml.tmpl /usr/local/tomcat/templates/server.xml.tmpl
+
+ADD templates/setenv.sh.tmpl /usr/local/tomcat/templates/setenv.sh.tmpl
 
 ADD ./docker/entrypoint.sh /entrypoint.sh
 

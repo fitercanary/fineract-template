@@ -6,21 +6,8 @@ on:
       - canary-dev
 
 jobs:
-  check-downstream:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if this is the Downstream repository
-        env:
-          DOWNSTREAM_REPO: "fitercanary/fineract-template"
-        run: |
-          if [ "$GITHUB_REPOSITORY" != "$DOWNSTREAM_REPO" ]; then
-            echo "This action is running in a mirror repository. Exiting..."
-            exit 78 # Exiting with a neutral status
-          else
-            echo "This action is running in the Downstream repository."
-          fi
   mirror:
-    needs: check-downstream
+    if: github.repository == 'fitercanary/fineract-template'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

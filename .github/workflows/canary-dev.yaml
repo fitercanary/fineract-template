@@ -3,24 +3,11 @@ name: Mirror to Github
 on:
   push:
     branches:
-      - canary-dev
+      - test/cleanup-ci
 
 jobs:
-  check-downstream:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if this is the Downstream repository
-        env:
-          DOWNSTREAM_REPO: "fitercanary/fineract-template"
-        run: |
-          if [ "$GITHUB_REPOSITORY" != "$DOWNSTREAM_REPO" ]; then
-            echo "This action is running in a mirror repository. Exiting..."
-            exit 78 # Exiting with a neutral status
-          else
-            echo "This action is running in the Downstream repository."
-          fi
   mirror:
-    needs: check-downstream
+    if: github.repository == 'fitercanary/fineract-template'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -33,12 +20,3 @@ jobs:
         with:
           host: github.com
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add upstream Remote
-        run: |
-          git remote add upstream git@github.com:Assets-MFB/mifosx-cba-backend.git
-          git fetch upstream --prune
-
-      - name: Mirror to Canary Remote
-        run: |
-          git push --mirror upstream

@@ -1,4 +1,4 @@
-name: Fineract Canary Build
+name: Upstream Canary ECR Build
 permissions:
   id-token: write
   contents: read
@@ -6,20 +6,34 @@ permissions:
 on:
   push:
     branches:
-      - "non/use-env-configurations"
+      - "canary-dev"
 
 env:
   aws_region: eu-west-2
   github_deploy_role: "arn:aws:iam::814938215759:role/canary-eu-west-2-prod-ghdeploy-role-fineract-backend"
 
 jobs:
-  build:
+  check-upstream:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v1
-      - uses: kamiazya/setup-graphviz@v1
-      
+      - name: Check if this is the upstream repository
+        env:
+          UPSTREAM_REPO: "Assets-MFB/mifosx-cba-backend"
+        run: |
+          if [ "$GITHUB_REPOSITORY" != "$UPSTREAM_REPO" ]; then
+            echo "This action is running in a mirror repository. Exiting..."
+            exit 78 # Exiting with a neutral status
+          else
+            echo "This action is running in the upstream repository."
+          fi
+
+  build:
+    needs: check-upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Get short SHA
         id: commit
         uses: pr-mpt/actions-commit-hash@v1

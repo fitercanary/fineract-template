@@ -11,6 +11,7 @@ on:
 env:
   aws_region: eu-west-2
   github_deploy_role: "arn:aws:iam::814938215759:role/canary-eu-west-2-prod-ghdeploy-role-fineract-backend"
+  commitmsg: ${{ github.event.head_commit.message }}
 
 jobs:
   build:
@@ -70,3 +71,28 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Clone Manifest Repository
+        uses: actions/checkout@v2
+        with:
+          repository: "Assets-MFB/cba-manifests"
+          ref: 'main'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          path: helm-chart
+
+      - name: Update Image Tag in Values File
+        env:
+          IMAGE_TAG: "${{ steps.commit.outputs.short }}"
+        run: |
+          yq eval -i '.fineract.tag = strenv(IMAGE_TAG)' helm-chart/environments/canary/stage/values.yaml
+
+      - name: Commit and Push Changes
+        env:
+          IMAGE_TAG: "${{ steps.commit.outputs.short }}"
+          COMMIT_MSG: ${{ env.commitmsg }}
+        run: |
+          cd helm-chart
+          git config --global user.name 'CI Bot'
+          git config --global user.email 'cibot@cba.com'
+          git commit -am "($IMAGE_TAG): $COMMIT_MSG"
+          git push

@@ -152,7 +152,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistableCustom<L
         this.onAccountClosureType = (accountOnClosureType == null) ? null : accountOnClosureType.getValue();
         this.transferInterestToLinkedAccount = transferInterest;
         this.interestCarriedForwardOnTopUp = interestCarriedForwardOnTopUp;
-        this.maturitySmsNotification = enableMaturitySmsAlerts;
+        this.maturitySmsNotification = Boolean.TRUE.equals(enableMaturitySmsAlerts);
         this.maturityNotificationPeriod = maturityPeriod;
         this.setMaturityNotificationFrequency((maturityPeriodFrequency == null) ?
                 null : maturityPeriodFrequency.getValue());

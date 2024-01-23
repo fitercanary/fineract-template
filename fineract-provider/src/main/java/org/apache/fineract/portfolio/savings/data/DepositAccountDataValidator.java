@@ -301,16 +301,9 @@ public class DepositAccountDataValidator {
             }
         }
 
-        boolean isLinkedAccRequired = false;
-        if (fromApiJsonHelper.parameterExists(transferInterestToSavingsParamName, element)) {
-            isLinkedAccRequired = fromApiJsonHelper.extractBooleanNamed(transferInterestToSavingsParamName, element);
-        }
-
-        final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkedAccountParamName, element);
-        if (isLinkedAccRequired) {
+        if (depositType.isFixedDeposit()) {
+            final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkedAccountParamName, element);
             baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).notNull().longGreaterThanZero();
-        } else {
-            baseDataValidator.reset().parameter(linkedAccountParamName).value(linkAccountId).ignoreIfNull().longGreaterThanZero();
         }
 
         boolean notifyMaturity = false;

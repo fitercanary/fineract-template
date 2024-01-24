@@ -206,13 +206,14 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         objectArray[0] = hierarchySearchString;
         int arrayPos = 1;
 
+//        Commenting this out since the join for this table was commented out above
         // restrict access to account field officer
-        if (!allowedToReadAllAccounts) {
-            sqlBuilder.append(" and aus.id = ?");
-
-            objectArray[arrayPos] = currentUser.getId();
-            arrayPos = arrayPos + 1;
-        }
+//        if (!allowedToReadAllAccounts) {
+//            sqlBuilder.append(" and aus.id = ?");
+//
+//            objectArray[arrayPos] = currentUser.getId();
+//            arrayPos = arrayPos + 1;
+//        }
 
         if (searchParameters != null) {
             String sqlQueryCriteria = searchParameters.getSqlSearch();

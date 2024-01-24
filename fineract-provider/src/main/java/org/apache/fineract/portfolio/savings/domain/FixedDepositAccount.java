@@ -645,7 +645,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, false);
         super.postInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate);
-        this.postCarriedForwardInterest(postInterestOnDate);
+        this.postCarriedForwardInterest(postInterestOnDate != null ? postInterestOnDate : interestPostingUpToDate);
     }
 
     private void postCarriedForwardInterest(LocalDate postInterestOnDate) {

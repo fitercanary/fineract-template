@@ -372,7 +372,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy, ");
             sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
             sqlBuilder.append("sa.block_narration_id as blockNarrationId, ");
-            sqlBuilder.append("cvn.code_value as blockNarrationValue ");
+            sqlBuilder.append("cvn.code_value as blockNarrationValue, ");
+            sqlBuilder.append("c.date_of_birth as dateOfBirth, ");
+            sqlBuilder.append("ci.phonenumber as phoneNumber ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -387,6 +389,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_appuser cbu on cbu.id = sa.closedon_userid ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sa.tax_group_id  ");
             sqlBuilder.append("left join m_code_value cvn on cvn.id = sa.block_narration_id  ");
+            sqlBuilder.append("left join `Contact Information` ci on ci.client_id = c.id  ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -610,7 +613,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
             final CodeValueData blockNarration = CodeValueData.instance(blockNarrationId, blockNarrationValue);
 
-            return SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
+            SavingsAccountData savingsAccountData = SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                     interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary,
@@ -618,6 +621,13 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, overdraftStartedOnDate,
                     overdraftClosedOnDate, withHoldTax, taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive,
                     daysToDormancy, daysToEscheat, onHoldAmount, blockNarration, nickname);
+
+            final LocalDate clientBirthDate = JdbcSupport.getLocalDate(rs, "dateOfBirth");
+            final String clientMobileNo = rs.getString("phoneNumber");
+            savingsAccountData.setClientDateOfBirth(clientBirthDate);
+            savingsAccountData.setClientMobileNo(clientMobileNo);
+
+            return savingsAccountData;
         }
     }
 

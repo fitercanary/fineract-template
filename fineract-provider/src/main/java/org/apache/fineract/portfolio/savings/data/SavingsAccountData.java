@@ -46,6 +46,10 @@ public class SavingsAccountData {
     private final String groupName;
     private final Long clientId;
     private final String clientName;
+
+    private String clientMobileNo;
+
+    private LocalDate clientDateOfBirth;
     private final Long savingsProductId;
     private final String savingsProductName;
     private final Long fieldOfficerId;
@@ -1144,4 +1148,21 @@ public class SavingsAccountData {
         this.blockNarrationOptions = null;
         this.nickname = nickname;
     }
+
+    public String getClientMobileNo() {
+        return clientMobileNo;
+    }
+
+    public void setClientMobileNo(String clientMobileNo) {
+        this.clientMobileNo = clientMobileNo;
+    }
+
+    public LocalDate getClientDateOfBirth() {
+        return clientDateOfBirth;
+    }
+
+    public void setClientDateOfBirth(LocalDate clientDateOfBirth) {
+        this.clientDateOfBirth = clientDateOfBirth;
+    }
 }
+

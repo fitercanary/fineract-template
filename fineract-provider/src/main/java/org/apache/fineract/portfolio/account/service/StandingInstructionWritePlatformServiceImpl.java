@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.account.service;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -64,6 +65,8 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.persistence.PersistenceException;
 
 import static org.apache.fineract.portfolio.account.AccountDetailConstants.fromAccountTypeParamName;
 import static org.apache.fineract.portfolio.account.AccountDetailConstants.fromClientIdParamName;
@@ -124,21 +127,26 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
             if (isSavingsToSavingsAccountTransfer(fromAccountType, toAccountType)) {
                 final AccountTransferDetails standingInstruction = this.standingInstructionAssembler
                         .assembleSavingsToSavingsTransfer(command);
-                this.accountTransferDetailRepository.save(standingInstruction);
+                this.accountTransferDetailRepository.saveAndFlush(standingInstruction);
                 standingInstructionId = standingInstruction.accountTransferStandingInstruction().getId();
             } else if (isSavingsToLoanAccountTransfer(fromAccountType, toAccountType)) {
                 final AccountTransferDetails standingInstruction = this.standingInstructionAssembler.assembleSavingsToLoanTransfer(command);
-                this.accountTransferDetailRepository.save(standingInstruction);
+                this.accountTransferDetailRepository.saveAndFlush(standingInstruction);
                 standingInstructionId = standingInstruction.accountTransferStandingInstruction().getId();
             } else if (isLoanToSavingsAccountTransfer(fromAccountType, toAccountType)) {
 
                 final AccountTransferDetails standingInstruction = this.standingInstructionAssembler.assembleLoanToSavingsTransfer(command);
-                this.accountTransferDetailRepository.save(standingInstruction);
+                this.accountTransferDetailRepository.saveAndFlush(standingInstruction);
                 standingInstructionId = standingInstruction.accountTransferStandingInstruction().getId();
 
             }
         } catch (final DataIntegrityViolationException dve) {
-            handleDataIntegrityIssues(command, dve);
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause());
+            return CommandProcessingResult.empty();
+        }
+        catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleDataIntegrityIssues(command, throwable);
             return CommandProcessingResult.empty();
         }
         final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder().withEntityId(standingInstructionId)
@@ -146,15 +154,14 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
         return builder.build();
     }
 
-    private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
+    private void handleDataIntegrityIssues(final JsonCommand command, Throwable realCause) {
 
-        final Throwable realCause = dve.getMostSpecificCause();
         if (realCause.getMessage().contains("name")) {
             final String name = command.stringValueOfParameterNamed(StandingInstructionApiConstants.nameParamName);
             throw new PlatformDataIntegrityException("error.msg.standinginstruction.duplicate.name", "Standinginstruction with name `"
                     + name + "` already exists", "name", name);
         }
-        logger.error(dve.getMessage(), dve);
+        logger.error(realCause.getMessage(), realCause);
         throw new PlatformDataIntegrityException("error.msg.client.unknown.data.integrity.issue",
                 "Unknown data integrity issue with resource.");
     }

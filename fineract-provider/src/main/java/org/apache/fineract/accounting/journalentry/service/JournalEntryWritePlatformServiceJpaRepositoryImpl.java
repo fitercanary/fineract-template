@@ -172,13 +172,13 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
 
             final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
-            if (savingsCredits.size() > 0) {
+            if (savingsCredits !=null && savingsCredits.size() > 0) {
                 addSavingsTransactionId(journalEntryCommand.getCredits(), savingsCreditTransactionId);
             }
 
 
             final JsonArray savingsDebits = command.arrayOfParameterNamed("savingsDebits");
-            if (savingsDebits.size() > 0) {
+            if (savingsDebits !=null && savingsDebits.size() > 0) {
                 addSavingsTransactionId(journalEntryCommand.getDebits(), savingsDebitTransactionId);
             }
 

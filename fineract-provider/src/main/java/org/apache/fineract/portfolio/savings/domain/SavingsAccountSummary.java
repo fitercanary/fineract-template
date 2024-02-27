@@ -157,7 +157,7 @@ public final class SavingsAccountSummary {
         this.lastInterestCalculationDate = interestCalculationDate.toDate();
         if(startInterestCalculationDate != null){
 
-            this.totalInterestEarned = this.totalInterestPosted.add(totalEarned.getAmount());
+            this.totalInterestEarned = this.totalInterestPosted != null ? this.totalInterestPosted.add(totalEarned.getAmount()) : totalEarned.getAmount();
         }else{
             this.totalInterestEarned = totalEarned.getAmount();
         }

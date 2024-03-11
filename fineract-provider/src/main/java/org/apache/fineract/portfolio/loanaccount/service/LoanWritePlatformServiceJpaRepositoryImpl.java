@@ -506,6 +506,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, null, null, fromSavingsAccount, isRegularTransaction,
                     isExceptionForBalanceCheck);
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+            loan.getSummary().updateSummary(loan.getCurrency(), Money.of(loan.getCurrency(), loan.getSummary().getTotalPrincipalDisbursed()), loan.getRepaymentScheduleInstallments(), loanSummaryWrapper, isPaymnetypeApplicableforDisbursementCharge, loanCharges);
         }
 
         updateRecurringCalendarDatesForInterestRecalculation(loan);

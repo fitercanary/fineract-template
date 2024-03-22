@@ -61,19 +61,15 @@ public final class SavingsHelper {
 
             LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
                     interestPostingUpToDate, financialYearBeginningMonth);
-            
-            if(maturityDate != null) {
-                if(interestPostingLocalDate.isAfter(maturityDate)) {
-                    interestPostingLocalDate = maturityDate;
-                }
-            }
+
 
             periodEndDate = interestPostingLocalDate.minusDays(1);
 
             if (!postInterestAsOn.isEmpty()) {
                 for (LocalDate transactionDate : postInterestAsOn) {
-                    if (periodStartDate.isBefore(transactionDate)
-                            && (periodEndDate.isAfter(transactionDate) || periodEndDate.isEqual(transactionDate))) {
+                    final boolean periodStartDateBeforeTransDate = periodStartDate.isBefore(transactionDate);
+                    final boolean periodEndDateEqualOrAfterTransDate = periodEndDate.isAfter(transactionDate) || periodEndDate.isEqual(transactionDate);
+                    if (periodStartDateBeforeTransDate && periodEndDateEqualOrAfterTransDate) {
                         periodEndDate = transactionDate.minusDays(1);
                         actualPeriodStartDate = periodEndDate;
                         break;

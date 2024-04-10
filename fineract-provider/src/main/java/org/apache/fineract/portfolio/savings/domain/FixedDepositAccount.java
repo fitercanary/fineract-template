@@ -210,7 +210,7 @@ public class FixedDepositAccount extends SavingsAccount {
                     final PreClosurePenalInterestOnType preClosurePenalInterestOnType = this.accountTermAndPreClosure
                             .depositPreClosureDetail().preClosurePenalInterestOnType();
                     if (preClosurePenalInterestOnType.isWholeTerm()) {
-                        depositCloseDate = interestCalculatedUpto(false);
+                        depositCloseDate = interestCalculatedUpto();
                     } else if (preClosurePenalInterestOnType.isTillPrematureWithdrawal()) {
                         depositCloseDate = interestPostingUpToDate;
                     }
@@ -240,7 +240,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
         this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date(), null, false);
         transaction.updateRunningBalance(transactionAmountMoney);
-        transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto(false));
+        transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto());
         allTransactions.add(transaction);
         updateMaturityDateAndAmount(mc, allTransactions, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth);
@@ -642,7 +642,7 @@ public class FixedDepositAccount extends SavingsAccount {
     public void postInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, false);
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         super.postInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate);
         this.postCarriedForwardInterest(postInterestOnDate != null ? postInterestOnDate : interestPostingUpToDate);
@@ -663,7 +663,7 @@ public class FixedDepositAccount extends SavingsAccount {
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate, LocalDate maturityDate) {
         maturityDate = calculateMaturityDate();
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, true);
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         super.postAccrualInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postInterestOnDate, maturityDate);
     }
@@ -672,14 +672,14 @@ public class FixedDepositAccount extends SavingsAccount {
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postAsInterestOn) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate, false);
+        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postAsInterestOn);
     }
 
-    private LocalDate interestPostingUpToDate(final LocalDate interestPostingDate, Boolean isAccrualPosting) {
+    private LocalDate interestPostingUpToDate(final LocalDate interestPostingDate) {
         LocalDate interestPostingUpToDate = interestPostingDate;
-        final LocalDate uptoMaturityDate = interestCalculatedUpto(isAccrualPosting);
+        final LocalDate uptoMaturityDate = interestCalculatedUpto();
         if (uptoMaturityDate != null && uptoMaturityDate.isBefore(interestPostingDate)) {
             interestPostingUpToDate = uptoMaturityDate;
         }
@@ -712,9 +712,9 @@ public class FixedDepositAccount extends SavingsAccount {
         return depositStartDate;
     }
 
-    private LocalDate interestCalculatedUpto(Boolean isAccrualPosting) {
+    private LocalDate interestCalculatedUpto() {
         LocalDate uptoMaturityDate = calculateMaturityDate();
-        if (uptoMaturityDate != null && !isAccrualPosting) {
+        if (uptoMaturityDate != null ) {
             // interest should not be calculated for maturity day
             uptoMaturityDate = uptoMaturityDate.minusDays(1);
         }

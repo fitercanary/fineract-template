@@ -177,12 +177,11 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
-        if(postingDate!=null && !transactionDate.equals(postingDate))
+        if(postingDate!=null && !transactionDate.equals(postingDate)) {
             account.setPostingDate(postingDate.toDate());
-
-        if (transactionBooleanValues.isRegularTransaction()) {
-             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
         }
+
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, glAccount, note);
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,
                 constructEntityMap(withdrawal));

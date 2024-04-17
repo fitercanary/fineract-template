@@ -215,6 +215,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     @JoinColumn(name = "closedon_userid", nullable = true)
     protected AppUser closedBy;
 
+    @Temporal(TemporalType.DATE)
+    @Column(name = "start_interest_accrual_calculation_date")
+    protected Date startInterestAccrualCalculationDate;
+
     @Embedded
     protected MonetaryCurrency currency;
 
@@ -1066,6 +1070,15 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         } else
             startInterestCalculationLocalDate = getActivationLocalDate();
         return startInterestCalculationLocalDate;
+    }
+
+    public LocalDate getStartInterestAccrualCalculationDate() {
+        LocalDate startInterestAccrualCalculationLocalDate = null;
+        if (this.startInterestAccrualCalculationDate != null) {
+            startInterestAccrualCalculationLocalDate = new LocalDate(this.startInterestAccrualCalculationDate);
+        } else
+            startInterestAccrualCalculationLocalDate = getActivationLocalDate();
+        return startInterestAccrualCalculationLocalDate;
     }
 
     public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee) {
@@ -3471,6 +3484,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         // update existing transactions so derived balance fields are
         // correct.
         recalculateDailyBalances(openingAccountBalance, interestPostingUpToDate);
+        // updating the startInterestCalculationDate based on the last interest accrual posting transaction
+        if (this.startInterestAccrualCalculationDate != null) {
+            LocalDate startInterestAccrualCalculationOn = new LocalDate(this.startInterestAccrualCalculationDate);
+            final SavingsAccountTransaction transaction = findLastTransaction(startInterestAccrualCalculationOn);
+            if (transaction != null) {
+                this.startInterestAccrualCalculationDate = transaction.getDateOf();
+            }
+        }
         // 1. default to calculate interest based on entire history OR
         // 2. determine latest 'posting period' and find interest credited to
         // that period
@@ -3500,15 +3521,15 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             postedAsOnDates.add(postInterestOnDate);
         }
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
-                getStartInterestCalculationDate(), interestPostingUpToDate, postingPeriodType, financialYearBeginningMonth,
+                getStartInterestAccrualCalculationDate(), interestPostingUpToDate, postingPeriodType, financialYearBeginningMonth,
                 postedAsOnDates, maturityDate);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
         Money periodStartingBalance;
-        if (this.startInterestCalculationDate != null) {
-            LocalDate startInterestCalculationDate = new LocalDate(this.startInterestCalculationDate);
-            final SavingsAccountTransaction transaction = findLastTransaction(startInterestCalculationDate);
+        if (this.startInterestAccrualCalculationDate != null) {
+            LocalDate startInterestAccrualCalculationOn = new LocalDate(this.startInterestAccrualCalculationDate);
+            final SavingsAccountTransaction transaction = findLastTransaction(startInterestAccrualCalculationOn);
 
             if (transaction == null) {
                 final String defaultUserMessage = "No transactions were found on the specified date "
@@ -3584,14 +3605,18 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             interestPostingsInPeriod.clear();
             interestPostingsInPeriod.add(positiveInterest);
             interestPostingsInPeriod.add(negativeInterest);
-            if (postingTransactions.isEmpty()) {
+            //if (postingTransactions.isEmpty()) {
                 for (Money interestEarnedToBePostedForPeriod : interestPostingsInPeriod) {
 
-                    if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate) ||
-                       ((this instanceof FixedDepositAccount && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType))
-                       || (this instanceof RecurringDepositAccount && SavingsPostingInterestPeriodType.MONTHLY.getValue().equals(this.interestPostingPeriodType))
-                            && (interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate)))) {
-                        
+                    if (interestEarnedToBePostedForPeriod.isZero()) {
+                        continue;
+                    }
+
+                    if ((!interestPostingTransactionDate.isAfter(interestPostingUpToDate) || ((this instanceof FixedDepositAccount
+                            && SavingsPostingInterestPeriodType.TENURE.getValue().equals(this.interestPostingPeriodType))
+                            && (interestPostingTransactionDate.minusDays(1).equals(interestPostingUpToDate))))
+                            && postingTransactions.isEmpty()) {
+
                         interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
                         SavingsAccountTransaction newPostingTransaction = null;
@@ -3641,7 +3666,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
                     }
                 }
-            }
+            //}
         }
 
         if (recalculateDailyBalanceDetails) {
@@ -3654,7 +3679,11 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             // correct.
             recalculateDailyBalances(openingBalance, interestPostingUpToDate);
         }
-
+        if (postInterestOnDate != null) {
+            this.startInterestAccrualCalculationDate = postInterestOnDate.toDate();
+        } else {
+            this.startInterestAccrualCalculationDate = interestPostingUpToDate.toDate();
+        }
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 

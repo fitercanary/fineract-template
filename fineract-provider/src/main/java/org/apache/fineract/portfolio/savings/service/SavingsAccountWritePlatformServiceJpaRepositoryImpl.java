@@ -303,7 +303,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 final JsonElement transactionAmount = savingsCredits.get(i).getAsJsonObject()
                     .get("amount");
                 if (savingsAccountId != null) {
-                    CommandProcessingResult deposit = deposit(savingsAccountId.getAsLong(), command);
+                    JsonObject savingsCredit = savingsCredits.get(i).getAsJsonObject();
+                    JsonCommand depositCommand = JsonCommand.fromExistingCommand(command,savingsCredit);
+                    depositCommand.remove(savingsCredit,"glAccountId");
+                    CommandProcessingResult deposit = deposit(savingsAccountId.getAsLong(), depositCommand);
                     savingsCreditTransactionId.add(deposit.resourceId());
                 }
             }
@@ -317,7 +320,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 final JsonElement transactionAmount = savingsDebits.get(i).getAsJsonObject()
                     .get("amount");
                 if (savingsAccountId != null) {
-                    CommandProcessingResult withdrawal = withdrawal(savingsAccountId.getAsLong(), command);
+                    JsonObject savingsDebit = savingsDebits.get(i).getAsJsonObject();
+                    JsonCommand withdrawalCommand = JsonCommand.fromExistingCommand(command,savingsDebit);
+                    withdrawalCommand.remove(savingsDebit,"glAccountId");
+                    CommandProcessingResult withdrawal = withdrawal(savingsAccountId.getAsLong(), withdrawalCommand);
                     savingsDebitTransactionId.add(withdrawal.resourceId());                
                 }
             }

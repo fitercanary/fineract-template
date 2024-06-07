@@ -616,4 +616,9 @@ public final class JsonCommand {
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, requestDataParameters);
     }
 
+    public static void remove(JsonObject element, String paramName) {
+        if (element.has(paramName)) {
+            element.remove(paramName);
+        }
+    }
 }

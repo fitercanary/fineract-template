@@ -41,6 +41,7 @@ import org.joda.time.format.DateTimeFormatter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonObject;
 
 /**
  * Immutable representation of a command.

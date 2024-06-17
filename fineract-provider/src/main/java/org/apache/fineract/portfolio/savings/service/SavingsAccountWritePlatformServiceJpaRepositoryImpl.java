@@ -304,10 +304,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 final JsonElement transactionAmount = savingsCredits.get(i).getAsJsonObject()
                     .get("amount");
                 if (savingsAccountId != null) {
-                    JsonObject savingsCredit = savingsCredits.get(i).getAsJsonObject();
-                    JsonCommand depositCommand = JsonCommand.fromExistingCommand(command,savingsCredit);
-                    depositCommand.remove(savingsCredit,"glAccountId");
-                    CommandProcessingResult deposit = deposit(savingsAccountId.getAsLong(), depositCommand);
+                    CommandProcessingResult deposit = deposit(savingsAccountId.getAsLong(), command, true);
                     savingsCreditTransactionId.add(deposit.resourceId());
                 }
             }
@@ -321,20 +318,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 final JsonElement transactionAmount = savingsDebits.get(i).getAsJsonObject()
                     .get("amount");
                 if (savingsAccountId != null) {
-                    JsonObject savingsDebit = savingsDebits.get(i).getAsJsonObject();
-                    JsonCommand withdrawalCommand = JsonCommand.fromExistingCommand(command,savingsDebit);
-                    withdrawalCommand.remove(savingsDebit,"glAccountId");
-                    CommandProcessingResult withdrawal = withdrawal(savingsAccountId.getAsLong(), withdrawalCommand);
-                    savingsDebitTransactionId.add(withdrawal.resourceId());                
+                    CommandProcessingResult withdrawal = withdrawal(savingsAccountId.getAsLong(), command, true);
+                    savingsDebitTransactionId.add(withdrawal.resourceId());
                 }
             }
         }
         return this.journalEntryWritePlatformService.createJournalEntry(command, savingsCreditTransactionId, savingsDebitTransactionId);
     }
 
-    @Transactional
-    @Override
-    public CommandProcessingResult deposit(final Long savingsId, final JsonCommand command) {
+    private CommandProcessingResult deposit(final Long savingsId, final JsonCommand command,boolean shouldIgnoreGlAccountId) {
 
         this.context.authenticatedUser();
 
@@ -351,9 +343,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final String noteText = command.stringValueOfParameterNamed("note");
         final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
         final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
-        
+
         GLAccount glAccount = null;
-        if (glAccountId != null) {
+        if (glAccountId != null && !shouldIgnoreGlAccountId) {
             glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
         }
         final Map<String, Object> changes = new LinkedHashMap<>();
@@ -364,7 +356,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         if (command.hasParameter("isManualTransaction")) {
             isRegularTransaction = !command.booleanPrimitiveValueOfParameterNamed("isManualTransaction");
         }
-        
+
         if (savingsCredits != null && savingsCredits.size() > 0) {
             for (int i = 0; i < savingsCredits.size(); i++) {
                 if (savingsCredits.get(i).getAsJsonObject().get("savingsAccountId").getAsLong() == savingsId) {
@@ -391,6 +383,14 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .withSavingsId(savingsId) //
                 .with(changes) //
                 .build();
+
+    }
+
+    @Transactional
+    @Override
+    public CommandProcessingResult deposit(final Long savingsId, final JsonCommand command) {
+
+        return deposit(savingsId, command, false);
 
     }
 
@@ -435,6 +435,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     @Override
     public CommandProcessingResult withdrawal(final Long savingsId, final JsonCommand command) {
 
+        return withdrawal(savingsId, command, false);
+    }
+    public CommandProcessingResult withdrawal(final Long savingsId, final JsonCommand command, boolean shouldIgnoreGlAccountId) {
+
         this.savingsAccountTransactionDataValidator.validate(command);
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
@@ -453,7 +457,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         Client client = account.getClient();
 
         GLAccount glAccount = null;
-        if (glAccountId != null) {
+        if (glAccountId != null && !shouldIgnoreGlAccountId) {
             glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
         }
         if (savingsDebits != null && savingsDebits.size() > 0) {

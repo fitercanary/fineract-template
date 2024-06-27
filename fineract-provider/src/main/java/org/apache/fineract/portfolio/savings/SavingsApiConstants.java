@@ -193,6 +193,8 @@ public class    SavingsApiConstants {
     public static final String chargeOptionsParamName = "chargeOptions";
     public static final String chargePaymentModeParamName = "chargePaymentMode";
     public static final String nicknameParamName = "nickname";
+    public static final String savingsAccountIdParamName = "savingsAccountId";
+    public static final String savingsProductIdParamName = "savingsProductId";
 
     public static final String noteParamName = "note";
 

@@ -326,7 +326,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         return this.journalEntryWritePlatformService.createJournalEntry(command, savingsCreditTransactionId, savingsDebitTransactionId);
     }
 
-    private CommandProcessingResult deposit(final Long savingsId, final JsonCommand command,boolean shouldIgnoreGlAccountId) {
+    private CommandProcessingResult deposit(final Long savingsId, final JsonCommand command, boolean shouldIgnoreGlAccountId) {
 
         this.context.authenticatedUser();
 

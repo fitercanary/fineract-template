@@ -88,9 +88,11 @@ public class FromJsonHelper {
         final Map<String, Object> requestMap = this.gsonConverter.fromJson(json, typeOfMap);
 
         final List<String> unsupportedParameterList = new ArrayList<>();
-        for (final String providedParameter : requestMap.keySet()) {
-            if (!supportedParams.contains(providedParameter)) {
-                unsupportedParameterList.add(providedParameter);
+        if (requestMap != null) {
+            for (final String providedParameter : requestMap.keySet()) {
+                if (!supportedParams.contains(providedParameter)) {
+                    unsupportedParameterList.add(providedParameter);
+                }
             }
         }
 

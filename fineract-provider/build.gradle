@@ -21,22 +21,21 @@ Run as:
 gradle clean tomcatrunwar
 '''
 buildscript {
-  repositories {
-  	 jcenter()
-  	 mavenCentral()
-  	 maven { url "https://plugins.gradle.org/m2/" }
-  }
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
 
-  dependencies {
-     classpath 'org.gradle.api.plugins:gradle-tomcat-plugin:1.0',
-               'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0',
-               'org.apache.pdfbox:pdfbox:2.0.20',
-               'org.zeroturnaround:gradle-jrebel-plugin:1.1.2',
-               'org.springframework.boot:spring-boot-gradle-plugin:1.1.6.RELEASE' // also change springDataJpaVersion below
-     classpath 'org.apache.openjpa:openjpa-all:2.4.1'
-     classpath 'at.schmutterer.oss.gradle:gradle-openjpa:0.2.0'
-     classpath 'gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.2.2'
-  }
+    dependencies {
+        classpath 'org.gradle.api.plugins:gradle-tomcat-plugin:1.0',
+                'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0',
+                'org.apache.pdfbox:pdfbox:2.0.20',
+                'org.zeroturnaround:gradle-jrebel-plugin:1.1.2',
+                'org.springframework.boot:spring-boot-gradle-plugin:1.1.6.RELEASE' // also change springDataJpaVersion below
+        classpath 'org.apache.openjpa:openjpa-all:2.4.1'
+        classpath 'at.schmutterer.oss.gradle:gradle-openjpa:0.2.0'
+        classpath 'gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.2.2'
+    }
 }
 
 apply plugin: "org.nosphere.apache.rat"
@@ -73,134 +72,134 @@ project.ext.mysqlPassword='mysql'
 group = 'org.apache.fineract'
 buildDir = new File(rootProject.projectDir, "../build")
 repositories {
-	jcenter()
-	// mavenLocal() // useful for local dev using MariaDB4j SNAPSHOTs (not needed for real-world non-SNAPHOT builds)
+    jcenter()
+    // mavenLocal() // useful for local dev using MariaDB4j SNAPSHOTs (not needed for real-world non-SNAPHOT builds)
 }
 openjpa {
     files = fileTree(sourceSets.main.output.classesDir).matching {
-		include '**/AbstractPersistableCustom.class'
-		include '**/domain/*.class'
-		
+        include '**/AbstractPersistableCustom.class'
+        include '**/domain/*.class'
+
     }
     enforcePropertyRestrictions = true
 }
 
 rat {
-  xmlOutput = false
-  htmlOutput = false
-  plainOutput = true
-  verbose = false
-  failOnError = false
+    xmlOutput = false
+    htmlOutput = false
+    plainOutput = true
+    verbose = false
+    failOnError = false
 //  inputDir = './..'
-  reportDir = new File(buildDir,'reports/rat')
- excludes = [
-	'**/licenses/**',
-	'**/*.md',
-	'**/MANIFEST.MF',
-	'**/*.txt',
-	'**/*.log',
-	'**/fineractdev-eclipse-preferences.epf',
-	'**/template-expected.html',
-	'**/template.mustache',
-	'**/.classpath',
-	'**/.project',
-	'**/.idea/**',
-    "**/legacy-docs/**",
-    '**/.settings/**',
-	'**/bin/**',
-	'**/.git/**',
-    '**/.gitignore',
-    '**/.gitkeep',
-	'**/*.iml',
-    '**/*.ipr',
-    '**/*.iws',
-    '**/*.prpt',
-    '**/*.properties',
-    '**/*.PROPERTIES',
-	//Notice files
-	'**/NOTICE_RELEASE',
-	'**/NOTICE_SOURCE',	
-    // gradle
-    '**/.gradle/**',
-    '**/gradlew',
-    '**/gradlew.bat',
-    '**/gradle/wrapper/gradle-wrapper.properties',
-    '**/caches/**',
-    '**/daemon/**',
-    '**/native/**',
-    '**/wrapper/**',
-	'**/build/**',
-	
-	//Api Docs 
-	'**/api-docs/*.*',
-	'**/docs/system-architecture/.htaccess',
-	'**/docs/system-architecture/404.html',
-	'**/docs/system-architecture/index.html',
-	'**/docs/system-architecture/**/*.xml',
-	'**/bootstrap-3.0.0/assets/application.js',
-	'**/system-architecture/js/plugins.js',
-	
-	//Apache License
-	'**/bootstrap-3.0.0/assets/less.js',
-	'**/css/bootstrap-3.0.0/**/*.*',
-	
-	//Public Domain See http://www.JSON.org/js.html
-	'**/bootstrap-3.0.0/assets/json2.js.htm',
-	
-	// MIT License
-	'**/modernizr-2.6.2.min.js',
-	'**/css/normalize.css',
-	'**/assets/filesaver.js',
-	'**/css/fonts/glyphicons-halflings-regular.svg',
-	'**/assets/jszip.js',
-	'**/assets/jquery.js',
-	'**/api-docs/jquery-1.7.min.js',
-	'**/css/toc-0.1.2/**/*.*',
-	'**/docs/system-architecture/css/main.css',
-	'**/system-architecture/js/vendor/jquery-1.9.1.min.js',
-	'**/system-architecture/js/vendor/toc-0.1.2/jquery.toc.min.js',
-	'**/assets/respond.min.js',
-	'**/assets/html5shiv.js',
-	
-	//BSD License
-	'**/assets/uglify.js',
+    reportDir = new File(buildDir,'reports/rat')
+    excludes = [
+            '**/licenses/**',
+            '**/*.md',
+            '**/MANIFEST.MF',
+            '**/*.txt',
+            '**/*.log',
+            '**/fineractdev-eclipse-preferences.epf',
+            '**/template-expected.html',
+            '**/template.mustache',
+            '**/.classpath',
+            '**/.project',
+            '**/.idea/**',
+            "**/legacy-docs/**",
+            '**/.settings/**',
+            '**/bin/**',
+            '**/.git/**',
+            '**/.gitignore',
+            '**/.gitkeep',
+            '**/*.iml',
+            '**/*.ipr',
+            '**/*.iws',
+            '**/*.prpt',
+            '**/*.properties',
+            '**/*.PROPERTIES',
+            //Notice files
+            '**/NOTICE_RELEASE',
+            '**/NOTICE_SOURCE',
+            // gradle
+            '**/.gradle/**',
+            '**/gradlew',
+            '**/gradlew.bat',
+            '**/gradle/wrapper/gradle-wrapper.properties',
+            '**/caches/**',
+            '**/daemon/**',
+            '**/native/**',
+            '**/wrapper/**',
+            '**/build/**',
 
-    // GIT HUB
-    '**/.github/**',
+            //Api Docs
+            '**/api-docs/*.*',
+            '**/docs/system-architecture/.htaccess',
+            '**/docs/system-architecture/404.html',
+            '**/docs/system-architecture/index.html',
+            '**/docs/system-architecture/**/*.xml',
+            '**/bootstrap-3.0.0/assets/application.js',
+            '**/system-architecture/js/plugins.js',
 
-    // Docker files
-    '**/docker/**',
-    '**/Dockerfile'
+            //Apache License
+            '**/bootstrap-3.0.0/assets/less.js',
+            '**/css/bootstrap-3.0.0/**/*.*',
 
-	]
+            //Public Domain See http://www.JSON.org/js.html
+            '**/bootstrap-3.0.0/assets/json2.js.htm',
+
+            // MIT License
+            '**/modernizr-2.6.2.min.js',
+            '**/css/normalize.css',
+            '**/assets/filesaver.js',
+            '**/css/fonts/glyphicons-halflings-regular.svg',
+            '**/assets/jszip.js',
+            '**/assets/jquery.js',
+            '**/api-docs/jquery-1.7.min.js',
+            '**/css/toc-0.1.2/**/*.*',
+            '**/docs/system-architecture/css/main.css',
+            '**/system-architecture/js/vendor/jquery-1.9.1.min.js',
+            '**/system-architecture/js/vendor/toc-0.1.2/jquery.toc.min.js',
+            '**/assets/respond.min.js',
+            '**/assets/html5shiv.js',
+
+            //BSD License
+            '**/assets/uglify.js',
+
+            // GIT HUB
+            '**/.github/**',
+
+            // Docker files
+            '**/docker/**',
+            '**/Dockerfile'
+
+    ]
 }
 
 configurations {
-	providedRuntime // needed for Spring Boot executable WAR
+    providedRuntime // needed for Spring Boot executable WAR
     providedCompile
-	compile() {
-		exclude module: 'hibernate-entitymanager'
-		exclude module: 'hibernate-validator'
-		exclude module: 'activation'
-		exclude module: 'bcmail-jdk14'
-		exclude module: 'bcprov-jdk14'
-		exclude module: 'bctsp-jdk14'
-		exclude module: 'bval-core'
-		exclude module: 'org.apache.bval.bundle'
-		exclude module: 'bval-jsr303'
-		exclude module: 'c3p0'
-		exclude module: 'stax-api'
-		exclude module: 'jaxb-api'
-		exclude module: 'jaxb-impl'
-		exclude module: 'jboss-logging'
-		exclude module: 'itext-rtf'
-		exclude module: 'classworlds'
-		exclude module: 'jcl-over-slf4j'
-		exclude module: 'jul-to-slf4j'
-		exclude module: 'serp'
-	}
-	runtime
-	all*.exclude group: 'commons-logging'
+    compile() {
+        exclude module: 'hibernate-entitymanager'
+        exclude module: 'hibernate-validator'
+        exclude module: 'activation'
+        exclude module: 'bcmail-jdk14'
+        exclude module: 'bcprov-jdk14'
+        exclude module: 'bctsp-jdk14'
+        exclude module: 'bval-core'
+        exclude module: 'org.apache.bval.bundle'
+        exclude module: 'bval-jsr303'
+        exclude module: 'c3p0'
+        exclude module: 'stax-api'
+        exclude module: 'jaxb-api'
+        exclude module: 'jaxb-impl'
+        exclude module: 'jboss-logging'
+        exclude module: 'itext-rtf'
+        exclude module: 'classworlds'
+        exclude module: 'jcl-over-slf4j'
+        exclude module: 'jul-to-slf4j'
+        exclude module: 'serp'
+    }
+    runtime
+    all*.exclude group: 'commons-logging'
 }
 /* Pick up dependencies based on the environemnt, defaults to production */
 if (project.hasProperty('env') && project.getProperty('env') == 'dev') {
@@ -214,7 +213,7 @@ repositories {
     jcenter()
     maven {
         url "${project.pentahoRepoURL}"
-  }
+    }
     // mavenLocal() // useful for local dev using MariaDB4j SNAPSHOTs (not needed for real-world non-SNAPHOT builds)
 }
 
@@ -250,22 +249,22 @@ if (project.hasProperty('security') && project.getProperty('security') == 'oauth
 }
 
 task dist(type:Zip){
-	baseName = 'fineractplatform'
-	version = qualifyVersionIfNecessary(releaseVersion)
+    baseName = 'fineractplatform'
+    version = qualifyVersionIfNecessary(releaseVersion)
     includeEmptyDirs = true
-	from('../') {
-		fileMode = 0755
-		include '*.md'
-	}
+    from('../') {
+        fileMode = 0755
+        include '*.md'
+    }
     from('src/main/dist') {
         fileMode = 0755
         include '*'
     }
-	from('../apps') {
-		fileMode = 0755
+    from('../apps') {
+        fileMode = 0755
         include '**/*'
-		into('apps')
-	}
+        into('apps')
+    }
     from('src/main/pentahoReports/') {
         fileMode = 0755
         include '*'
@@ -291,7 +290,7 @@ task dist(type:Zip){
         include '**/*'
         into('database/migrations')
     }
-    
+
     from war.outputs.files
     into(baseName + '-' + version)
 }
@@ -317,7 +316,7 @@ pmd {
 }
 findbugs {
     ignoreFailures = true
-    sourceSets = [sourceSets.main] 
+    sourceSets = [sourceSets.main]
 }
 
 war {
@@ -325,21 +324,21 @@ war {
     from('../licenses') { // notice the parens
         into "WEB-INF/licenses/" // no leading slash
     }
-	from('../licenses/binary/') { // notice the parens
-		into "WEB-INF/licenses/binary/" // no leading slash
-	}
-	from('../LICENSE_RELEASE') { // notice the parens
-		into "WEB-INF/" // no leading slash
-	}
-	from('../NOTICE_RELEASE') { // notice the parens
-		into "WEB-INF/" // no leading slash
-	}
-	rename ('LICENSE_RELEASE', 'LICENSE')
-	rename ('NOTICE_RELEASE', 'NOTICE')
-	
-	from('../DISCLAIMER') { // notice the parens
-		into "WEB-INF/" // no leading slash
-	}
+    from('../licenses/binary/') { // notice the parens
+        into "WEB-INF/licenses/binary/" // no leading slash
+    }
+    from('../LICENSE_RELEASE') { // notice the parens
+        into "WEB-INF/" // no leading slash
+    }
+    from('../NOTICE_RELEASE') { // notice the parens
+        into "WEB-INF/" // no leading slash
+    }
+    rename ('LICENSE_RELEASE', 'LICENSE')
+    rename ('NOTICE_RELEASE', 'NOTICE')
+
+    from('../DISCLAIMER') { // notice the parens
+        into "WEB-INF/" // no leading slash
+    }
     war.finalizedBy(bootRepackage)
 }
 
@@ -371,7 +370,10 @@ tomcatRunWar {
     enableSSL = true
     keystoreFile = file('src/main/resources/keystore.jks')
     keystorePass = 'openmf'
-     configFile = file('src/test/resources/META-INF/context.xml')
+    configFile = file('src/test/resources/META-INF/context.xml')
+    doFirst {
+        ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005']
+    }
 }
 
 /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
@@ -380,25 +382,25 @@ sourceSets.test.output.resourcesDir = sourceSets.test.output.classesDir
 
 /* Exclude maria db and embedded tomcat related files for non dev builds */
 if (!(project.hasProperty('env') && project.getProperty('env') == 'dev')) {
-sourceSets {
-    main {
-        java {
-            exclude '**/Server*'
-            exclude '**/MariaDB4j*'
-            exclude '**/EmbeddedTomcatWithSSLConfiguration.java'
+    sourceSets {
+        main {
+            java {
+                exclude '**/Server*'
+                exclude '**/MariaDB4j*'
+                exclude '**/EmbeddedTomcatWithSSLConfiguration.java'
+            }
+        }
+        test {
+            java {
+                exclude '**/core/boot/tests/**'
+            }
         }
     }
-    test {
-    	java {
-    		exclude '**/core/boot/tests/**'
-    	}
-    }
-}
 }
 
 sourceSets {
- integrationTest {
-    	compileClasspath += main.output + test.output
+    integrationTest {
+        compileClasspath += main.output + test.output
         runtimeClasspath += main.output + test.output
     }
 }
@@ -433,7 +435,7 @@ dependencies {
 }
 
 test {
-	filter {
+    filter {
         //includeTestsMatching "org.apache.fineract.infrastructure.configuration.spring.SpringConfigurationTest.*"
         includeTestsMatching "org.apache.fineract.template.TemplateMergeServiceTest.*"
     }
@@ -476,7 +478,7 @@ buildscript {
 
 flyway {
     url = "jdbc:mysql://localhost:3306/mifostenant-default"
-	driver = "com.mysql.jdbc.Driver"
+    driver = "com.mysql.jdbc.Driver"
     user = mysqlUser
     password = mysqlPassword
 }
@@ -484,14 +486,14 @@ flyway {
 task migrateTenantDB<<{
     description="Migrates a Tenant DB. Optionally can pass dbName. Defaults to 'mifostenant-default' (Example: -PdbName=someTenantDBname)"
 
-	def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/core_db'
-	def tenantDbName = 'mifostenant-default';
+    def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/core_db'
+    def tenantDbName = 'mifostenant-default';
     if (rootProject.hasProperty("dbName")) {
-		tenantDbName = rootProject.getProperty("dbName")
-	}
-	
+        tenantDbName = rootProject.getProperty("dbName")
+    }
+
     flyway.url= "jdbc:mysql://localhost:3306/$tenantDbName"
-	flyway.driver = "com.mysql.jdbc.Driver"
+    flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     /**We use ${ as the prefix for strecthy reporting, do not want them to be interpreted by Flyway**/
     flyway.placeholderPrefix = "\$\${"
@@ -500,15 +502,15 @@ task migrateTenantDB<<{
 
 task showTenantDBInfo<<{
     description="Shows the migration info for a Tenant DB. Optionally can pass dbName. Defaults to 'mifostenant-default' (Example: -PdbName=someTenantDBname)"
-    
-	def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/core_db'
+
+    def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/core_db'
     def tenantDbName = 'mifostenant-default';
     if (rootProject.hasProperty("dbName")) {
-		tenantDbName = rootProject.getProperty("dbName")
-	}
-	
+        tenantDbName = rootProject.getProperty("dbName")
+    }
+
     flyway.url= "jdbc:mysql://localhost:3306/$tenantDbName"
-	flyway.driver = "com.mysql.jdbc.Driver"
+    flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     flywayInfo.execute()
 }
@@ -517,18 +519,18 @@ task showTenantDBInfo<<{
 task migrateTenantListDB<<{
     description="Migrates a Tenant List DB. Optionally can pass dbName. Defaults to 'mifosplatform-tenants' (Example: -PdbName=someDBname)"
 
-	def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/list_db'
- 	def tenantsDbName = 'mifosplatform-tenants';
+    def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/list_db'
+    def tenantsDbName = 'mifosplatform-tenants';
     if (rootProject.hasProperty("dbName")) {
-		tenantsDbName = rootProject.getProperty("dbName")
-	}
+        tenantsDbName = rootProject.getProperty("dbName")
+    }
 
     if (tenantsDbName.contains("-test")) {
         filePath = "filesystem:$projectDir" + '/src/test/resources/sql/migrations/list_db'
     }
-	
+
     flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
-	flyway.driver = "com.mysql.jdbc.Driver"
+    flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
 
     flywayMigrate.execute()
@@ -536,30 +538,30 @@ task migrateTenantListDB<<{
 
 task showTenantListDBInfo<<{
     description="Shows the migration info for a List DB. Optionally can pass dbName. Defaults to 'mifosplatform-tenants' (Example: -PdbName=someDBname)"
-    
-	def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/list_db'
+
+    def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/list_db'
     def tenantsDbName = 'mifosplatform-tenants';
     if (rootProject.hasProperty("dbName")) {
-		tenantsDbName = rootProject.getProperty("dbName")
-	}
-    
+        tenantsDbName = rootProject.getProperty("dbName")
+    }
+
     flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
-	flyway.driver = "com.mysql.jdbc.Driver"
+    flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     flywayInfo.execute()
 }
 
 task repairTenantDB<<{
     description="repair migrate"
-    
-	def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/list_db'
+
+    def filePath = "filesystem:$projectDir" + '/src/main/resources/sql/migrations/list_db'
     def tenantsDbName = 'mifosplatform-tenants';
     if (rootProject.hasProperty("dbName")) {
         tenantsDbName = rootProject.getProperty("dbName")
     }
-    
+
     flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
-	flyway.driver = "com.mysql.jdbc.Driver"
+    flyway.driver = "com.mysql.jdbc.Driver"
     flyway.locations= [filePath]
     flywayRepair.execute()
 }
@@ -573,13 +575,13 @@ task repairTenantDB<<{
 */
 def qualifyVersionIfNecessary(version) {
 
-	if (rootProject.hasProperty("BRANCH_NAME")) {
-		def qualifier = rootProject.getProperty("BRANCH_NAME")
-		if (qualifier.startsWith("MIFOSX-")) {
-			return version.replace('BUILD', qualifier)
-		}
-	}
-	return version
+    if (rootProject.hasProperty("BRANCH_NAME")) {
+        def qualifier = rootProject.getProperty("BRANCH_NAME")
+        if (qualifier.startsWith("MIFOSX-")) {
+            return version.replace('BUILD', qualifier)
+        }
+    }
+    return version
 }
 
 springBoot {

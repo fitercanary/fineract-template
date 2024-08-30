@@ -323,7 +323,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
         }
-        return this.journalEntryWritePlatformService.createJournalEntry(command, null, null);
+        return this.journalEntryWritePlatformService.createJournalEntry(command, savingsCreditTransactionId, savingsDebitTransactionId);
     }
 
     private CommandProcessingResult deposit(final Long savingsId, final JsonCommand command, boolean shouldIgnoreGlAccountId, BigDecimal tranAmount) {

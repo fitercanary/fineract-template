@@ -3533,7 +3533,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
             if (transaction == null) {
                 final String defaultUserMessage = "No transactions were found on the specified date "
-                        + getStartInterestCalculationDate().toString() + " for account number " + this.accountNumber.toString()
+                        + getStartInterestAccrualCalculationDate().toString() + " for account number " + this.accountNumber.toString()
                         + " and resource id " + getId();
 
                 final ApiParameterError error = ApiParameterError.parameterError(
@@ -3680,9 +3680,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             recalculateDailyBalances(openingBalance, interestPostingUpToDate);
         }
         if (postInterestOnDate != null) {
-            this.startInterestAccrualCalculationDate = postInterestOnDate.toDate();
+            this.startInterestAccrualCalculationDate = postInterestOnDate.minusDays(1).toDate();
         } else {
-            this.startInterestAccrualCalculationDate = interestPostingUpToDate.toDate();
+            this.startInterestAccrualCalculationDate = interestPostingUpToDate.minusDays(1).toDate();
         }
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }

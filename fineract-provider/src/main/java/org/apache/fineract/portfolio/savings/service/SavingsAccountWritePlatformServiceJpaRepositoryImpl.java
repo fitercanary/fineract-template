@@ -291,9 +291,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     @Transactional
     @Override
     public CommandProcessingResult makeMultiplePostings(final JsonCommand command) {
-        final Map<String, Object> changes = new LinkedHashMap<>();
+        Map<String, Object> changes = new LinkedHashMap<>();
         final ArrayList<Long> savingsCreditTransactionId = new ArrayList<>();
         final ArrayList<Long> savingsDebitTransactionId = new ArrayList<>();
+        CommandProcessingResult result = null;
+        Long officeId = null;
 
         final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
         if (savingsCredits.size() > 0) {
@@ -306,6 +308,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 if (savingsAccountId != null) {
                     CommandProcessingResult deposit = deposit(savingsAccountId.getAsLong(), command, true, transactionAmount.getAsBigDecimal());
                     savingsCreditTransactionId.add(deposit.resourceId());
+                    officeId = deposit.getOfficeId();
+                   
                 }
             }
         }
@@ -320,10 +324,23 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 if (savingsAccountId != null) {
                     CommandProcessingResult withdrawal = withdrawal(savingsAccountId.getAsLong(), command, true, transactionAmount.getAsBigDecimal());
                     savingsDebitTransactionId.add(withdrawal.resourceId());
+                    officeId = withdrawal.getOfficeId();
                 }
             }
         }
-        return this.journalEntryWritePlatformService.createJournalEntry(command, savingsCreditTransactionId, savingsDebitTransactionId);
+        
+        if(savingsCredits.size() == 0 && savingsDebits.size()== 0) {
+        	result = this.journalEntryWritePlatformService.createJournalEntry(command, null, null);
+        }else 
+        	if(savingsCreditTransactionId.size() > 0) {
+        		result = new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
+        	            .withTransactionId("S"+savingsCreditTransactionId.get(0).toString()).build();
+        	}else if(savingsDebitTransactionId.size() > 0) {
+        		result = new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
+        	            .withTransactionId("S"+savingsDebitTransactionId.get(0).toString()).build();
+        	}
+        	
+        return result;
     }
 
     private CommandProcessingResult deposit(final Long savingsId, final JsonCommand command, boolean shouldIgnoreGlAccountId, BigDecimal tranAmount) {
@@ -341,10 +358,20 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
         BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String noteText = command.stringValueOfParameterNamed("note");
-        final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
+        
+        Long glAccountId = null;
+        final JsonArray debits = command.arrayOfParameterNamed("debits");
+        if(debits.size() > 0) {
+          for (int i = 0; i < debits.size(); i++) {
+         	 
+             final JsonElement glAccount = debits.get(i).getAsJsonObject()
+                         .get("glAccountId");
+             glAccountId = glAccount.getAsLong();
+		  }
+        }
 
         GLAccount glAccount = null;
-        if (glAccountId != null && !shouldIgnoreGlAccountId) {
+        if (glAccountId != null && shouldIgnoreGlAccountId) {
             glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
         }
         final Map<String, Object> changes = new LinkedHashMap<>();
@@ -432,7 +459,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
         final LocalDate postingDate = command.localDateValueOfParameterNamed("postingDate");
-        final Long glAccountId = command.longValueOfParameterNamed("glAccountId");
         BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String noteText = command.stringValueOfParameterNamed("note");
         final Locale locale = command.extractLocale();
@@ -442,9 +468,20 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+        
+        Long glAccountId = null;
+        final JsonArray credits = command.arrayOfParameterNamed("credits");
+        if(credits.size() > 0) {
+          for (int i = 0; i < credits.size(); i++) {
+         	 
+             final JsonElement glAccount = credits.get(i).getAsJsonObject()
+                         .get("glAccountId");
+             glAccountId = glAccount.getAsLong();
+		  }
+        }
 
         GLAccount glAccount = null;
-        if (glAccountId != null && !shouldIgnoreGlAccountId) {
+        if (glAccountId != null && shouldIgnoreGlAccountId) {
             glAccount = this.glAccountRepositoryWrapper.findOneWithNotFoundDetection(glAccountId);
         }
         
@@ -2100,5 +2137,24 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
 
         this.savingsAccountChargeRepository.saveAndFlush(savingsAccountCharge);
+    }
+    
+    private void removeDebitCreditByGlAccountId(JsonCommand command, Long glAccountIdToRemove, String paramName) {
+        // Get the debits array from the command
+        final JsonArray array = command.arrayOfParameterNamed(paramName);
+
+        // Iterate over the debits array using an iterator
+        Iterator<JsonElement> iterator = array.iterator();
+
+        while (iterator.hasNext()) {
+            JsonObject jsonObject = iterator.next().getAsJsonObject();
+
+            // Check if the "glAccountId" exists and matches the value to remove
+            if (jsonObject.has("glAccountId") && jsonObject.get("glAccountId").getAsLong() == glAccountIdToRemove) {
+                iterator.remove(); // Remove the object from the array
+            }
+        }
+
+        // The debits array is now updated with the matching object removed
     }
 }

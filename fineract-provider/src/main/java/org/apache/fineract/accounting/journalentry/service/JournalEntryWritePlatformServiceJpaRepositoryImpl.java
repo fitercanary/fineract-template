@@ -171,16 +171,6 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final String transactionId = generateTransactionId(officeId);
             final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
 
-            final JsonArray savingsCredits = command.arrayOfParameterNamed("savingsCredits");
-            if (savingsCredits !=null && savingsCredits.size() > 0) {
-                addSavingsTransactionId(journalEntryCommand.getCredits(), savingsCreditTransactionId);
-            }
-
-
-            final JsonArray savingsDebits = command.arrayOfParameterNamed("savingsDebits");
-            if (savingsDebits !=null && savingsDebits.size() > 0) {
-                addSavingsTransactionId(journalEntryCommand.getDebits(), savingsDebitTransactionId);
-            }
 
             if (accountRuleId != null) {
 
@@ -242,17 +232,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         }
     }
 
-    private void addSavingsTransactionId(SingleDebitOrCreditEntryCommand[] debitOrCredits,
-            final ArrayList<Long> savingsTransactionId) {
-        Integer elementIndx = 0;
-        for (int i = 0; i < debitOrCredits.length; i++) {
-            System.out.println(debitOrCredits[i].isSavings());
-            if (debitOrCredits[i].isSavings()) {
-                debitOrCredits[i].updateSavingsTransactionId(savingsTransactionId.get(elementIndx));
-                elementIndx = elementIndx + 1;
-            }
-        }
-    }
+
 
     private void validateDebitOrCreditArrayForExistingGLAccount(final GLAccount glaccount,
             final SingleDebitOrCreditEntryCommand[] creditOrDebits) {

@@ -361,7 +361,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         Long glAccountId = null;
         final JsonArray debits = command.arrayOfParameterNamed("debits");
-        if(debits.size() > 0) {
+        if(debits !=null && debits.size() > 0) {
           for (int i = 0; i < debits.size(); i++) {
 
              final JsonElement glAccount = debits.get(i).getAsJsonObject()

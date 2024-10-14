@@ -344,10 +344,10 @@ public class AccountingProcessorHelper {
     /**
      * Convenience method that creates a pair of related Debits and Credits for
      * Accrual Based accounting.
-     * 
+     *
      * The target accounts for debits and credits are switched in case of a
      * reversal
-     * 
+     *
      * @param office
      * @param accountTypeToBeDebited
      *            Enum of the placeholder GLAccount to be debited
@@ -378,10 +378,10 @@ public class AccountingProcessorHelper {
     /**
      * Convenience method that creates a pair of related Debits and Credits for
      * Accrual Based accounting.
-     * 
+     *
      * The target accounts for debits and credits are switched in case of a
      * reversal
-     * 
+     *
      * @param office
      *            office
      * @param currencyCode
@@ -451,10 +451,10 @@ public class AccountingProcessorHelper {
     /**
      * Convenience method that creates a pair of related Debits and Credits for
      * Cash Based accounting.
-     * 
+     *
      * The target accounts for debits and credits are switched in case of a
      * reversal
-     * 
+     *
      * @param office
      * @param accountTypeToBeDebited
      *            Enum of the placeholder GLAccount to be debited
@@ -475,7 +475,7 @@ public class AccountingProcessorHelper {
             final Boolean isReversal) {
         createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited, accountTypeToBeCredited,
                 savingsProductId, paymentTypeId, loanId, transactionId, transactionDate, amount, isReversal, null, null, null);
-    } 
+    }
 
     public void createCashBasedJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,
             final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
@@ -496,7 +496,7 @@ public class AccountingProcessorHelper {
             final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
             final Long paymentTypeId, final Long loanId, final String transactionId, final Date transactionDate, final BigDecimal amount,
             final Boolean isReversal) {
-        createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited, accountTypeToBeCredited, 
+        createAccrualBasedJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited, accountTypeToBeCredited,
                 savingsProductId, paymentTypeId, loanId, transactionId, transactionDate, amount, isReversal, null, null, null);
     }
 
@@ -534,10 +534,10 @@ public class AccountingProcessorHelper {
     /**
      * Convenience method that creates a pair of related Debits and Credits for
      * Cash Based accounting.
-     * 
+     *
      * The target accounts for debits and credits are switched in case of a
      * reversal
-     * 
+     *
      * @param office
      * @param accountTypeToBeDebited
      *            Enum of the placeholder GLAccount to be debited
@@ -617,7 +617,7 @@ public class AccountingProcessorHelper {
 
     private void createJournalEntriesForSavings(final Office office, final String currencyCode, final int accountTypeToDebitId,
             final int accountTypeToCreditId, final Long savingsProductId, final Long paymentTypeId, final Long savingsId,
-            final String transactionId, final Date transactionDate, final BigDecimal amount, final GLAccount glAccount, 
+            final String transactionId, final Date transactionDate, final BigDecimal amount, final GLAccount glAccount,
             final String action, final String note) {
         final GLAccount debitAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToDebitId, paymentTypeId);
         final GLAccount creditAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToCreditId, paymentTypeId);
@@ -626,10 +626,10 @@ public class AccountingProcessorHelper {
             createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount, note);
             return;
         }
-        if (action == "deposit") {
+        if (StringUtils.equals(action, "deposit")) {
             createDebitJournalEntryForSavings(office, currencyCode, glAccount, savingsId, transactionId, transactionDate, amount, note);
             createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount, note);
-        } else if (action == "withdrawal") {
+        } else if (StringUtils.equals(action , "withdrawal")) {
             createCreditJournalEntryForSavings(office, currencyCode, glAccount, savingsId, transactionId, transactionDate, amount, note);
             createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount, note);
         }
@@ -638,10 +638,10 @@ public class AccountingProcessorHelper {
     /**
      * Convenience method that creates a pair of related Debits and Credits for
      * Cash Based accounting.
-     * 
+     *
      * The target accounts for debits and credits are switched in case of a
      * reversal
-     * 
+     *
      * @param office
      * @param currencyCode
      * @param accountTypeToBeDebited
@@ -822,10 +822,10 @@ public class AccountingProcessorHelper {
     /**
      * Convenience method that creates a pair of related Debits and Credits for
      * Cash Based accounting.
-     * 
+     *
      * The target accounts for debits and credits are switched in case of a
      * reversal
-     * 
+     *
      * @param office
      *            office
      * @param currencyCode
